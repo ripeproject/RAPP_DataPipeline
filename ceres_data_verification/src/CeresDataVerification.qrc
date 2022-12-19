@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="ripe.illinois.edu">
+        <file alias="ripe.icns">./Resources/Icons/ripe.icns</file>
+        <file alias="ripe.ico">./Resources/Icons/ripe.ico</file>
+        <file alias="about.png">./Resources/Images/About.png</file>
+        <file alias="splash.png">./Resources/Images/splash.png</file>
+        <file alias="bottom_logo.png">./Resources/Images/bottom_logo.png</file>
+        <file alias="load_exp.png">./Resources/Images/load_exp.png</file>
+        <file alias="start_exp.png">./Resources/Images/start_exp.png</file>
+        <file alias="pause_exp.png">./Resources/Images/pause_exp.png</file>
+        <file alias="stop_exp.png">./Resources/Images/stop_exp.png</file>
+        <file alias="one_button.png">./Resources/Images/button_one.png</file>
+        <file alias="two_button.png">./Resources/Images/button_two.png</file>
+        <file alias="three_button.png">./Resources/Images/button_three.png</file>
+        <file alias="four_button.png">./Resources/Images/button_four.png</file>
+    </qresource>
+</RCC>
