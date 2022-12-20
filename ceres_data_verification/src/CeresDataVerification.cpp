@@ -5,6 +5,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 int main(int argc, char** argv)
 {
@@ -16,11 +17,40 @@ int main(int argc, char** argv)
 		| lyra::arg(input_directory, "input directory")
 		("The path to input directory for verification of ceres data.");
 
-	const std::filesystem::path input{ input_directory };
+	auto result = cli.parse({argc, argv});
 
+	const std::filesystem::path input{ input_directory };
+	const std::filesystem::path failed = input / "failed";
+
+	std::vector<directory_entry> files_to_check;
 	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 	{
-		std::cout << dir_entry.path() << '\n';
+		if (!dir_entry.is_regular_file())
+			continue;
+
+		if (dir_entry.path().extension() == "ceres")
+			continue;
+
+		files_to_check.push_back(dir_entry);
+	}
+
+	for (auto& file : files_to_check)
+	{
+		cDataVerifier* dv = nullptr;
+		
+		try
+		{
+			dv = new cDataVerifier(file, failed);
+		}
+		catch(const std::exception& e)
+		{
+			continue;
+		}
+
+		dv->run();
+		delete dv;
+
+		return 0;
 	}
 
 	return 0;

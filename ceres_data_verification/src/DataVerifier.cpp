@@ -5,38 +5,41 @@
 
 #include <CBDF/BlockDataFileExceptions.hpp>
 
-//#include <QDir>
-//#include <QFileInfo>
-
 #include <memory>
 
+namespace
+{
+    void create_directory(std::filesystem::path failed_dir)
+    {
+        if (!std::filesystem::exists(failed_dir))
+        {
+            std::filesystem::create_directory(failed_dir);
+        }
+    }
+}
 
 //-----------------------------------------------------------------------------
-cDataVerifier::cDataVerifier(int id, const std::string& dataDir, void* parent)
-    : mId(id)
+cDataVerifier::cDataVerifier(std::filesystem::directory_entry file_to_check,
+    std::filesystem::path failed_dir)
 {
-    mCurrentDataDirectory = dataDir;
+    mFailedDirectory = failed_dir;
+    mCurrentFile = file_to_check;
+    mFileReader.open(file_to_check.path().string());
+
+    if (!mFileReader.isOpen())
+    {
+        throw std::logic_error(mCurrentFile.string());
+    }
 }
 
 cDataVerifier::~cDataVerifier()
-{}
-
-//-----------------------------------------------------------------------------
-bool cDataVerifier::open(const std::string& file_name)
 {
-    mCurrentFileName = file_name;
-    return mFileReader.open(file_name);
+    mFileReader.close();
 }
 
 //-----------------------------------------------------------------------------
 void cDataVerifier::run()
 {
-    if (!mFileReader.isOpen())
-    {
-        fileResults(mId, false, "File is not open!");
-        return;
-    }
-
     auto ouster = std::make_unique<cOusterVerificationParser>();
 
     mFileReader.attach(ouster.get());
@@ -48,7 +51,6 @@ void cDataVerifier::run()
         {
             if (mFileReader.fail())
             {
-                fileResults(mId, false, "I/O Error: failbit is set.");
                 mFileReader.close();
                 return;
             }
@@ -60,27 +62,19 @@ void cDataVerifier::run()
     {
         mFileReader.close();
         std::string msg = e.what();
-        fileResults(mId, false, e.what());
 
         moveFileToFailed();
         return;
     }
     catch (const std::exception& e)
     {
-        if (mFileReader.eof())
+        if (!mFileReader.eof())
         {
-            fileResults(mId, true, std::string());
-        }
-        else
-        {
-            fileResults(mId, false, e.what());
             moveFileToFailed();
         }
-        mFileReader.close();
         return;
     }
 
-    fileResults(mId, true, std::string());
     mFileReader.close();
 }
 
@@ -90,25 +84,10 @@ void cDataVerifier::moveFileToFailed()
     if (mFileReader.isOpen())
         mFileReader.close();
 
-/*
-    if (!QDir().exists(mCurrentDataDirectory))
-        return;
+    ::create_directory(mFailedDirectory);
 
-    QString path = mCurrentDataDirectory;
-    path += "/failed";
-
-    QDir failedDir(path);
-    if (!failedDir.exists())
-    {
-        if (!QDir().mkdir(path))
-            return;
-    }
-
-    QString filename = QFileInfo(mCurrentFileName).fileName();
-    QString newName = path + "/" + filename;
-
-    QDir().rename(mCurrentFileName, newName);
-*/
+    std::filesystem::path dest = mFailedDirectory / mCurrentFile.filename();
+    std::filesystem::rename(mCurrentFile, dest);
 }
 
 //-----------------------------------------------------------------------------
