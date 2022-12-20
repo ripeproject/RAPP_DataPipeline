@@ -156,7 +156,7 @@ FIND_PACKAGE(Catch2 QUIET)
 
 
 # Find and include my libraries for data collection
-FIND_PACKAGE(CBDF REQUIRED cbdf sensors)
+#FIND_PACKAGE(CBDF QUIET cbdf sensors)
 FIND_PACKAGE(Ouster REQUIRED)
 FIND_PACKAGE(ssnx REQUIRED)
 #FIND_PACKAGE(ssnx2net REQUIRED)
