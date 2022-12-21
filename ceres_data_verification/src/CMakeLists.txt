@@ -19,15 +19,14 @@ PRIVATE
 
 	DataVerifier.hpp
 	DataVerifier.cpp
-	
 	CeresDataVerification.cpp
 )
 
 
 target_include_directories(CeresDataVerification PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
-target_link_libraries(CeresDataVerification PRIVATE CBDF::cbdf)
-target_link_libraries(CeresDataVerification PRIVATE CBDF::sensors)
+target_link_libraries(CeresDataVerification PRIVATE cbdf::cbdf)
+target_link_libraries(CeresDataVerification PRIVATE cbdf::sensors)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

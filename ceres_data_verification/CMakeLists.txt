@@ -151,13 +151,13 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 # Find all the packages needed by this code
 
 FIND_PACKAGE(lyra REQUIRED)
-FIND_PACKAGE(Catch2 QUIET)
+FIND_PACKAGE(catch2 QUIET)
 #FIND_PACKAGE(nlohmann_json REQUIRED)
 
 
 # Find and include my libraries for data collection
-#FIND_PACKAGE(CBDF QUIET cbdf sensors)
-FIND_PACKAGE(Ouster REQUIRED)
+FIND_PACKAGE(CBDF REQUIRED cbdf sensors)
+FIND_PACKAGE(ouster REQUIRED)
 FIND_PACKAGE(ssnx REQUIRED)
 #FIND_PACKAGE(ssnx2net REQUIRED)
 #FIND_PACKAGE(spidercam REQUIRED)
