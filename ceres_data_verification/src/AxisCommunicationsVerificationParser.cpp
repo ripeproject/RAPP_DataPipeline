@@ -1,182 +1,51 @@
 
-#if 0
 
-#include "AxisCommunicationsParser.hpp"
-#include "AxisDataIdentifiers.hpp"
-#include "BlockDataFile.hpp"
-#include "../Sensors/RGB/AxisCommunications/AxisCommunicationsUtils.hpp"
+#include "AxisCommunicationsVerificationParser.hpp"
+#include "ParserExceptions.hpp"
 
-#include <QBitmap>
-#include <QImage>
+#include <stdexcept>
 
-#include <cassert>
-
-using namespace axis;
-
-cAxisCommunicationsParser::cAxisCommunicationsParser()
-:
-    cBlockParser(),
-    mImageData(),
-    mImageBuffer(&mImageData)
+void cAxisCommunicationsVerificationParser::onActiveCameraId(int id)
 {
-    mImageBuffer.open(QIODevice::ReadWrite);
-    mImageReader.setDevice(&mImageBuffer);
-
-    auto list = QImageReader::supportedImageFormats();
-}
-
-cBlockID& cAxisCommunicationsParser::blockID()
-{
-	return mBlockID;
-}
-
-void cAxisCommunicationsParser::processData(BLOCK_MAJOR_VERSION_t major_version,
-    BLOCK_MINOR_VERSION_t minor_version,
-    BLOCK_DATA_ID_t data_id,
-    cDataBuffer& buffer)
-{
-    mBlockID.setVersion(major_version, minor_version);
-    mBlockID.dataID(static_cast<axis::DataID>(data_id));
-
-    switch (static_cast<axis::DataID>(data_id))
+    if ((id < 1) || (id > 4))
     {
-    case DataID::CAMERA_ID:
-        processActiveCameraId(buffer);
-        break;
-    case DataID::FRAMES_PER_SECOND:
-        processFramesPerSecond(buffer);
-        break;
-    case DataID::BITMAP:
-        processBitmap(buffer);
-        break;
-    case DataID::JPEG:
-        processJPEG(buffer);
-        break;
-    case DataID::MPEG_FRAME:
-        processMpegFrame(buffer);
-        break;
-    case DataID::RESOLUTION:
-        processImageSize(buffer);
-        break;
-    case DataID::TIMESTAMP:
-        //(buffer);
-        break;
+        throw bdf::invalid_data("Invalid active camera id!");
     }
 }
 
-void cAxisCommunicationsParser::processActiveCameraId(cDataBuffer& buffer)
+void cAxisCommunicationsVerificationParser::onFramesPerSecond(int frames_per_sec)
 {
-    int id = buffer.get<int32_t>();
-
-    onActiveCameraId(id);
+    if ((frames_per_sec < 1) || (frames_per_sec > 30))
+    {
+        throw bdf::invalid_data("Invalid frames per second!");
+    }
 }
 
-void cAxisCommunicationsParser::processFramesPerSecond(cDataBuffer& buffer)
+/*
+void cAxisCommunicationsVerificationParser::onBitmap(const QBitmap& in)
+{}
+
+void cAxisCommunicationsVerificationParser::onJPEG(const QImage& image)
+{}
+
+void cAxisCommunicationsVerificationParser::onMpegFrame(const QImage& image)
+{}
+*/
+
+void cAxisCommunicationsVerificationParser::onImageSize(int width, int height)
 {
-    int frames_per_sec = buffer.get<int32_t>();
+    bool validWidth = (width == 480) || (width == 640) || (width == 800) ||
+        (width == 854) || (width == 1024) || (width == 1280) || (width == 1920);
 
-    onFramesPerSecond(frames_per_sec);
-}
+    bool validHeight = (height == 270) || (height == 300) || (height == 360)
+        || (height == 400) || (height == 450) || (height == 480) || (height == 500)
+        || (height == 600) || (height == 640) || (height == 720) || (height == 768)
+        || (height == 1080);
 
-void cAxisCommunicationsParser::processBitmap(cDataBuffer& buffer)
-{
-    QBitmap bitmap;
-    mImageReader.setFormat("bmp");
-
-    uint32_t size;
-    buffer >> size;
-
-}
-
-void cAxisCommunicationsParser::processJPEG(cDataBuffer& buffer)
-{
-    mImageReader.setFormat("jpeg");
-}
-
-void cAxisCommunicationsParser::processMpegFrame(cDataBuffer& buffer)
-{
-    mImageReader.setDevice(&mImageBuffer);
-    mImageReader.setFormat("jpeg");
-
-    uint32_t size;
-    buffer >> size;
-
-    mImageData.resize(size+16);
-    buffer.read(mImageData.data(), size);
-
-    mImageBuffer.seek(0);
-
-    auto can_read = mImageReader.canRead();
-
-    QImage image = mImageReader.read();
-    auto ok = image.isNull();
-
-    onMpegFrame(image);
-
-    mImageData.clear();
-    mImageBuffer.seek(0);
-}
-
-void cAxisCommunicationsParser::processImageSize(cDataBuffer& buffer)
-{
-    uint16_t width = 0;
-    uint16_t height = 0;
-
-    buffer >> width;
-    buffer >> height;
-
-    onImageSize(width, height);
+    if (!validWidth || !validHeight)
+    {
+        throw bdf::invalid_data("Invalid image size!");
+    }
 }
 
 
-#if 0
-
-void cAxisCommunicationsSerializer::writeBitmap(const QBitmap& in)
-{
-    assert(mpDataFile);
-
-    mImageWriter.setFormat("bmp");
-    mImageWriter.write(in.toImage());
-
-    mBlockID.dataID(DataID::JPEG);
-
-    mDataBuffer.clear();
-    mDataBuffer << mImageData.size();
-    mDataBuffer.write(mImageData.constData(), mImageData.size());
-
-    mpDataFile->writeBlock(mBlockID, mDataBuffer.data(), mDataBuffer.size());
-    mImageData.clear();
-}
-
-void cAxisCommunicationsSerializer::writeJPEG(const QImage& in)
-{
-    assert(mpDataFile);
-
-    mImageWriter.setFormat("jpeg");
-    mImageWriter.write(in);
-
-    mBlockID.dataID(DataID::JPEG);
-
-    mDataBuffer.clear();
-    mDataBuffer << mImageData.size();
-    mDataBuffer.write(mImageData.constData(), mImageData.size());
-
-    mpDataFile->writeBlock(mBlockID, mDataBuffer.data(), mDataBuffer.size());
-    mImageData.clear();
-}
-
-void cAxisCommunicationsSerializer::write(const axis::sImageSize_t& in)
-{
-    assert(mpDataFile);
-
-    mBlockID.dataID(DataID::RESOLUTION);
-
-    mDataBuffer.clear();
-    mDataBuffer << in.width;
-    mDataBuffer << in.height;
-
-    mpDataFile->writeBlock(mBlockID, mDataBuffer.data(), mDataBuffer.size());
-}
-#endif
-
-#endif

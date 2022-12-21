@@ -34,23 +34,14 @@ int main(int argc, char** argv)
 		files_to_check.push_back(dir_entry);
 	}
 
+	cDataVerifier dv(failed);
+
 	for (auto& file : files_to_check)
 	{
-		cDataVerifier* dv = nullptr;
-		
-		try
-		{
-			dv = new cDataVerifier(file, failed);
-		}
-		catch(const std::exception& e)
-		{
+		if (!dv.open(file) )
 			continue;
-		}
 
-		dv->run();
-		delete dv;
-
-		return 0;
+		dv.run();
 	}
 
 	return 0;

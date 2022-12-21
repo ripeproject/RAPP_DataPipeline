@@ -4,7 +4,6 @@
 #pragma once
 
 #include <CBDF/BlockDataFile.hpp>
-//#include "AxisCommunicationsParser.hpp"
 
 #include <filesystem>
 #include <string>
@@ -13,9 +12,12 @@
 class cDataVerifier 
 {
 public:
-    cDataVerifier(std::filesystem::directory_entry file_to_check,
+	explicit cDataVerifier(std::filesystem::path failed_dir);
+	cDataVerifier(std::filesystem::directory_entry file_to_check,
 		std::filesystem::path failed_dir);
     ~cDataVerifier();
+
+	bool open(std::filesystem::directory_entry file_to_check);
 
     void run();
 
