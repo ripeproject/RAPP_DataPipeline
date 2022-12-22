@@ -19,7 +19,8 @@ public:
 
 	bool open(std::filesystem::directory_entry file_to_check);
 
-    void run();
+	void run1(std::filesystem::directory_entry file_to_check);
+	void run();
 
 protected:
 	void moveFileToFailed();

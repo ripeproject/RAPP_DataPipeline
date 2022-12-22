@@ -56,6 +56,13 @@ bool cDataVerifier::open(std::filesystem::directory_entry file_to_check)
 }
 
 //-----------------------------------------------------------------------------
+void cDataVerifier::run1(std::filesystem::directory_entry file_to_check)
+{
+    if (open(file_to_check))
+        run();
+}
+
+//-----------------------------------------------------------------------------
 void cDataVerifier::run()
 {
     auto ouster = std::make_unique<cOusterVerificationParser>();

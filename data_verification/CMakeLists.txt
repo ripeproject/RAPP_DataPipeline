@@ -90,7 +90,7 @@ SET(DATA_VERIFICATOR_VERSION "${DATA_VERIFICATOR_MAJOR}.${DATA_VERIFICATOR_MINOR
 #******************************************************************************
 
 # We need a C and C++ compiler, so make sure project() test for it.
-project(DATA_VERIFICATOR VERSION "${DATA_VERIFICATOR_VERSION}" LANGUAGES C CXX)
+project(data_verificator VERSION "${DATA_VERIFICATOR_VERSION}" LANGUAGES C CXX)
 
 
 set(CMAKE_CXX_STANDARD 17)
@@ -151,7 +151,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 # Find all the packages needed by this code
 
 FIND_PACKAGE(lyra REQUIRED)
-FIND_PACKAGE(catch2 QUIET)
+FIND_PACKAGE(Catch2 QUIET)
 #FIND_PACKAGE(nlohmann_json REQUIRED)
 
 
