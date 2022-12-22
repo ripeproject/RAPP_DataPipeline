@@ -19,7 +19,7 @@ public:
 
 	bool open(std::filesystem::directory_entry file_to_check);
 
-	void run1(std::filesystem::directory_entry file_to_check);
+	void process_file(std::filesystem::directory_entry file_to_check);
 	void run();
 
 protected:

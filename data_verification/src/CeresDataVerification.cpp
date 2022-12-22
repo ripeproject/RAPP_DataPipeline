@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <iostream>
 
 int main(int argc, char** argv)
 {
@@ -53,6 +54,9 @@ int main(int argc, char** argv)
 
 	// Constructs a thread pool with as many threads as available in the hardware.
 	BS::thread_pool pool(num_of_threads);
+	int n = pool.get_thread_count();
+
+	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 
 	std::vector<cDataVerifier*> data_verifiers;
 
@@ -60,7 +64,7 @@ int main(int argc, char** argv)
 	{
 		cDataVerifier* dv = new cDataVerifier(failed);
 
-		pool.push_task(&cDataVerifier::run1, dv, file);
+		pool.push_task(&cDataVerifier::process_file, dv, file);
 
 		data_verifiers.push_back(dv);
 	}

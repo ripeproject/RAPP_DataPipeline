@@ -7,6 +7,9 @@
 #include <cbdf/BlockDataFileExceptions.hpp>
 
 #include <memory>
+#include <string>
+#include <iostream>
+
 
 namespace
 {
@@ -56,10 +59,14 @@ bool cDataVerifier::open(std::filesystem::directory_entry file_to_check)
 }
 
 //-----------------------------------------------------------------------------
-void cDataVerifier::run1(std::filesystem::directory_entry file_to_check)
+void cDataVerifier::process_file(std::filesystem::directory_entry file_to_check)
 {
     if (open(file_to_check))
+    {
+        std::cout << "Processing " << file_to_check << "..." << std::endl;
+
         run();
+    }
 }
 
 //-----------------------------------------------------------------------------
