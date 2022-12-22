@@ -4,7 +4,7 @@
 #include "OusterVerificationParser.hpp"
 #include "AxisCommunicationsVerificationParser.hpp"
 
-#include <CBDF/BlockDataFileExceptions.hpp>
+#include <cbdf/BlockDataFileExceptions.hpp>
 
 #include <memory>
 

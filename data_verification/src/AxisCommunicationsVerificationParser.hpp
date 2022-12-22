@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include <CBDF/AxisCommunicationsParser.hpp>
+#include <cbdf/AxisCommunicationsParser.hpp>
 
 class cAxisCommunicationsVerificationParser : public cAxisCommunicationsParser
 {

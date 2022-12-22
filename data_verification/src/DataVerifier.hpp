@@ -3,7 +3,7 @@
  */
 #pragma once
 
-#include <CBDF/BlockDataFile.hpp>
+#include <cbdf/BlockDataFile.hpp>
 
 #include <filesystem>
 #include <string>
