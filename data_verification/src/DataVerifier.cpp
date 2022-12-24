@@ -63,7 +63,7 @@ void cDataVerifier::process_file(std::filesystem::directory_entry file_to_check)
 {
     if (open(file_to_check))
     {
-        std::cout << "Processing " << file_to_check << "..." << std::endl;
+        std::cout << "Processing " << file_to_check.path().string() << "..." << std::endl;
 
         run();
     }
