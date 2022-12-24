@@ -8,8 +8,9 @@
 
 #include <memory>
 #include <string>
-#include <iostream>
 
+
+extern void console_message(const std::string& msg);
 
 namespace
 {
@@ -63,7 +64,10 @@ void cDataVerifier::process_file(std::filesystem::directory_entry file_to_check)
 {
     if (open(file_to_check))
     {
-        std::cout << "Processing " << file_to_check.path().string() << "..." << std::endl;
+        std::string msg = "Processing ";
+        msg += file_to_check.path().string();
+        msg += "...";
+        console_message(msg);
 
         run();
     }

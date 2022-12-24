@@ -8,6 +8,18 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <mutex>
+
+
+std::mutex g_console_mutex;
+
+
+void console_message(const std::string& msg)
+{
+	std::lock_guard<std::mutex> guard(g_console_mutex);
+	std::cout << msg << std::endl;
+}
+
 
 int main(int argc, char** argv)
 {
