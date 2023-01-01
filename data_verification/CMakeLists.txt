@@ -1,4 +1,4 @@
-# The cppCBDF project will build a C++ library for reading/writing the 
+# The Data Verificator project will build an application for verification of 
 # Ceres Block Data Format files
 
 # Usage:
