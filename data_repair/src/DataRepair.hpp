@@ -3,41 +3,45 @@
  */
 #pragma once
 
-#include "BlockDataFile.hpp"
+#include <cbdf/BlockDataFile.hpp>
 
-#include <QObject>
-#include <QRunnable>
+#include <filesystem>
+#include <string>
 
-class cDataRepair : public QObject, public QRunnable, private cBlockDataFileReader
+class cDataRepair : private cBlockDataFileReader
 {
-    Q_OBJECT
-
 public:
-	cDataRepair(int id, const QString& dataDir, const QString& repairedDir, 
-                QObject* parent = nullptr);
+	explicit cDataRepair(std::filesystem::path repaired_dir);
+    cDataRepair(std::filesystem::directory_entry file_to_repair,
+		std::filesystem::path repaired_dir);
     ~cDataRepair();
 
-    bool open(const std::string& file_name);
+	bool open(std::filesystem::directory_entry file_to_repair);
 
-    void run() override;
+	void process_file(std::filesystem::directory_entry file_to_repair);
+	void run();
 
-signals:
-    void statusMessage(QString msg);
-    void fileResults(int id, bool valid, QString msg);
+//signals:
+//    void statusMessage(QString msg);
+//    void fileResults(int id, bool valid, QString msg);
 
 private:
-    void processBlock(const cBlockID& id) override;
-    void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len) override;
+//    void processBlock(const cBlockID& id) override;
+//    void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len) override;
 
     bool moveFileToRepaired(bool size_check = true);
 
 private:
     const int mId;
+    cBlockDataFileReader mFileReader;
     cBlockDataFileWriter mFileWriter;
 
-    QString     mCurrentDataDirectory;
-    QString     mRepairedDataDirectory;
-    QString     mCurrentFileName;
-    QString     mRepairedFileName;
+//    QString     mCurrentDataDirectory;
+//    QString     mRepairedDataDirectory;
+//    QString     mCurrentFileName;
+//    QString     mRepairedFileName;
+
+	std::filesystem::path mFailedDirectory;
+	std::filesystem::path mCurrentFile;
 };
 

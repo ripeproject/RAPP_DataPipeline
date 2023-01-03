@@ -1,6 +1,11 @@
 
 #include "DataRepair.hpp"
-#include "BlockDataFileExceptions.hpp"
+#include "ParserExceptions.hpp"
+
+#include <cbdf/BlockDataFileExceptions.hpp>
+
+#include <memory>
+#include <string>
 
 #include <QDir>
 #include <QFileInfo>

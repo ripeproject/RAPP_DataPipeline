@@ -1,18 +1,94 @@
 
+#include "DataRepair.hpp"
+#include "BS_thread_pool.hpp"
 
-#include <QApplication>
+#include <lyra/lyra.hpp>
 
-#include "MainWindow.hpp"
+#include <filesystem>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <mutex>
+
+
+std::mutex g_console_mutex;
+
+
+void console_message(const std::string& msg)
+{
+	std::lock_guard<std::mutex> guard(g_console_mutex);
+	std::cout << msg << std::endl;
+}
+
 
 int main(int argc, char** argv)
 {
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-    QApplication app(argc, argv);
+	using namespace std::filesystem;
 
-    cMainWindow mainWin;
-    mainWin.initialize();
-    mainWin.show();
+	int num_of_threads = 0;
+	std::string input_directory = current_path().string();
 
-	return app.exec();
+	auto cli = lyra::cli()
+		| lyra::opt(num_of_threads, "threads")
+		["-t"]["--threads"]
+		("The number of threads to use for repairing data files.")
+		.optional()
+		| lyra::arg(input_directory, "input directory")
+		("The path to input directory for repairing of ceres data.");
+
+	auto result = cli.parse({argc, argv});
+
+	if (!result)
+	{
+		std::cerr << "Error in command line: " << result.message() << std::endl;
+		return 1;
+	}
+
+	const std::filesystem::path input{ input_directory };
+	const std::filesystem::path failed = input / "failed";
+	const std::filesystem::path repaired = input / "repaired";
+
+	std::vector<directory_entry> files_to_repair;
+	for (auto const& dir_entry : std::filesystem::directory_iterator{ failed })
+	{
+		if (!dir_entry.is_regular_file())
+			continue;
+
+		if (dir_entry.path().extension() == "ceres")
+			continue;
+
+		files_to_repair.push_back(dir_entry);
+	}
+
+	int max_threads = std::thread::hardware_concurrency();
+
+	num_of_threads = std::max(num_of_threads, 0);
+	num_of_threads = std::min(num_of_threads, max_threads);
+
+	// Constructs a thread pool with as many threads as available in the hardware.
+	BS::thread_pool pool(num_of_threads);
+	int n = pool.get_thread_count();
+
+	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+
+	std::vector<cDataRepair*> data_repairs;
+
+	for (auto& file : files_to_repair)
+	{
+		cDataRepair* dv = new cDataRepair(repaired);
+
+		pool.push_task(&cDataRepair::process_file, dv, file);
+
+		data_repairs.push_back(dv);
+	}
+
+	pool.wait_for_tasks();
+
+	for (auto data_repair : data_repairs)
+	{
+		delete data_repair;
+	}
+
+	return 0;
 }
 
