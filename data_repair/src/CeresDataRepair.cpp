@@ -97,8 +97,6 @@ int main(int argc, char** argv)
 		pool.push_task(&cDataRepair::process_file, dv, file);
 
 		data_repairs.push_back(dv);
-
-		break;
 	}
 
 	pool.wait_for_tasks();
