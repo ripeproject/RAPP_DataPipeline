@@ -76,6 +76,11 @@ void cDataVerifier::process_file(std::filesystem::directory_entry file_to_check)
 //-----------------------------------------------------------------------------
 void cDataVerifier::run()
 {
+    if (!mFileReader.isOpen())
+    {
+        throw std::logic_error("No file is open for verification.");
+    }
+
     auto ouster = std::make_unique<cOusterVerificationParser>();
     auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
 
