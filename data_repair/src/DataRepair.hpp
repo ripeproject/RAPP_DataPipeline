@@ -3,12 +3,12 @@
  */
 #pragma once
 
-#include <cbdf/BlockDataFile.hpp>
+#include "BlockDataFileRepair.hpp"
 
 #include <filesystem>
 #include <string>
 
-class cDataRepair : private cBlockDataFileReader
+class cDataRepair : private cBlockDataFileRepair
 {
 public:
 	explicit cDataRepair(std::filesystem::path repaired_dir);
@@ -21,27 +21,17 @@ public:
 	void process_file(std::filesystem::directory_entry file_to_repair);
 	void run();
 
-//signals:
-//    void statusMessage(QString msg);
-//    void fileResults(int id, bool valid, QString msg);
-
 private:
-//    void processBlock(const cBlockID& id) override;
-//    void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len) override;
+    void processBlock(const cBlockID& id) override;
+    void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len) override;
 
     bool moveFileToRepaired(bool size_check = true);
 
 private:
-    const int mId;
-    cBlockDataFileReader mFileReader;
     cBlockDataFileWriter mFileWriter;
 
-//    QString     mCurrentDataDirectory;
-//    QString     mRepairedDataDirectory;
-//    QString     mCurrentFileName;
-//    QString     mRepairedFileName;
-
-	std::filesystem::path mFailedDirectory;
+	std::filesystem::path mRepairedDirectory;
 	std::filesystem::path mCurrentFile;
+	std::filesystem::path mRepairedFile;
 };
 

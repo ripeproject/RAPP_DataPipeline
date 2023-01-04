@@ -46,7 +46,12 @@ int main(int argc, char** argv)
 
 	const std::filesystem::path input{ input_directory };
 	const std::filesystem::path failed = input / "failed";
-	const std::filesystem::path repaired = input / "repaired";
+
+	if (!std::filesystem::exists(failed))
+	{
+		// If the failed directory does not exists, we are done!
+		return 0;
+	}
 
 	std::vector<directory_entry> files_to_repair;
 	for (auto const& dir_entry : std::filesystem::directory_iterator{ failed })
@@ -58,6 +63,18 @@ int main(int argc, char** argv)
 			continue;
 
 		files_to_repair.push_back(dir_entry);
+	}
+
+	if (files_to_repair.empty())
+	{
+		// No files to repair!
+		return 0;
+	}
+
+	const std::filesystem::path repaired = input / "repaired";
+	if (!std::filesystem::exists(repaired))
+	{
+		std::filesystem::create_directory(repaired);
 	}
 
 	int max_threads = std::thread::hardware_concurrency();
@@ -80,6 +97,8 @@ int main(int argc, char** argv)
 		pool.push_task(&cDataRepair::process_file, dv, file);
 
 		data_repairs.push_back(dv);
+
+		break;
 	}
 
 	pool.wait_for_tasks();

@@ -6,51 +6,93 @@
 
 #include <memory>
 #include <string>
+#include <stdexcept>
 
-#include <QDir>
-#include <QFileInfo>
+
+extern void console_message(const std::string& msg);
+
+namespace
+{
+    void create_directory(std::filesystem::path recovered_dir)
+    {
+        if (!std::filesystem::exists(recovered_dir))
+        {
+            std::filesystem::create_directory(recovered_dir);
+        }
+    }
+}
 
 
 //-----------------------------------------------------------------------------
-cDataRepair::cDataRepair(int id, const QString& dataDir, const QString& repairedDir, QObject* parent)
-    : QObject(parent), mId(id)
+cDataRepair::cDataRepair(std::filesystem::path repaired_dir)
 {
-    mCurrentDataDirectory = dataDir;
-    mRepairedDataDirectory = repairedDir;
+    mRepairedDirectory = repaired_dir;
+}
+
+cDataRepair::cDataRepair(std::filesystem::directory_entry file_to_repair,
+    std::filesystem::path repaired_dir)
+{
+    mRepairedDirectory = repaired_dir;
+    mCurrentFile = file_to_repair;
+
+    mRepairedFile = mRepairedDirectory / mCurrentFile.filename();
+
+    if (std::filesystem::exists(mRepairedFile))
+    {
+        throw std::logic_error("File already exists");
+    }
+
+    mFileWriter.open(mRepairedFile.string());
+
+    if (!cBlockDataFileRepair::open(file_to_repair.path().string()))
+    {
+        throw std::logic_error(mCurrentFile.string());
+    }
 }
 
 cDataRepair::~cDataRepair()
 {
-    cBlockDataFileReader::close();
     mFileWriter.close();
 }
 
+
 //-----------------------------------------------------------------------------
-bool cDataRepair::open(const std::string& file_name)
+bool cDataRepair::open(std::filesystem::directory_entry file_to_repair)
 {
-    mCurrentFileName = QString::fromStdString(file_name);
-    QString filename = QFileInfo(mCurrentFileName).fileName();
-    mRepairedFileName = mRepairedDataDirectory + filename;
+    mCurrentFile = file_to_repair;
+    mRepairedFile = mRepairedDirectory / mCurrentFile.filename();
 
-    if (QDir().exists(mRepairedFileName))
-        return false;
-
-    std::string repairFilename = mRepairedFileName.toStdString();
-    if (!mFileWriter.open(repairFilename))
+    if (std::filesystem::exists(mRepairedFile))
     {
         return false;
     }
 
-    return cBlockDataFileReader::open(file_name);
+    mFileWriter.open(mRepairedFile.string());
+    cBlockDataFileRepair::open(file_to_repair.path().string());
+
+    return mFileWriter.isOpen() && cBlockDataFileRepair::isOpen();
+}
+
+//-----------------------------------------------------------------------------
+void cDataRepair::process_file(std::filesystem::directory_entry file_to_repair)
+{
+    if (open(file_to_repair))
+    {
+        std::string msg = "Processing ";
+        msg += file_to_repair.path().string();
+        msg += "...";
+        console_message(msg);
+
+        run();
+    }
 }
 
 //-----------------------------------------------------------------------------
 void cDataRepair::run()
 {
-    if (!cBlockDataFileReader::isOpen())
+    if (!cBlockDataFileRepair::isOpen())
     {
-        emit fileResults(mId, false, "File is not open!");
-        return;
+        throw std::logic_error("No file is open for repair.");
     }
 
     try
@@ -59,56 +101,64 @@ void cDataRepair::run()
         {
             if (fail())
             {
-                emit fileResults(mId, false, "I/O Error: failbit is set.");
-                cBlockDataFileReader::close();
+//                emit fileResults(mId, false, "I/O Error: failbit is set.");
+                cBlockDataFileRepair::close();
+                mFileWriter.close();
                 return;
             }
 
-//            try
-            {
-                cBlockDataFileReader::processBlock();
-            }
-//            catch (const bdf::crc_error& e)
-            {
-                // CRC error are not necessarily corrupt files
-//                emit statusMessage(e.what());
-            }
+            cBlockDataFileRepair::processBlock();
         }
     }
     catch (const bdf::stream_error& e)
     {
         std::string msg = e.what();
-        emit fileResults(mId, false, e.what());
+//        emit fileResults(mId, false, e.what());
+    }
+    catch (const bdf::crc_error& e)
+    {
+        moveFileToRepaired(false);
+        std::string msg = e.what();
+        //        emit fileResults(mId, false, e.what());
+        return;
     }
     catch (const bdf::unexpected_eof& e)
     {
         moveFileToRepaired(false);
 
-        QString msg = "Unexpected EOF: ";
+        std::string msg = "Unexpected EOF: ";
         msg += e.what();
-        emit fileResults(mId, true, msg);
+//        emit fileResults(mId, true, msg);
         return;
     }
     catch (const std::exception& e)
     {
+        std::string msg = e.what();
+
         if (eof())
         {
+            moveFileToRepaired();
+            /*
             if (!moveFileToRepaired())
                 emit fileResults(mId, false, "File size mismatch!");
             else
                 emit fileResults(mId, true, QString());
+            */
         }
         else
         {
-            emit fileResults(mId, false, e.what());
+//            emit fileResults(mId, false, e.what());
         }
         return;
     }
 
+    moveFileToRepaired();
+/*
     if (!moveFileToRepaired())
         emit fileResults(mId, false, "File size mismatch!");
     else
         emit fileResults(mId, true, QString());
+*/
 }
 
 void cDataRepair::processBlock(const cBlockID& id)
@@ -132,8 +182,8 @@ bool cDataRepair::moveFileToRepaired(bool size_check)
 
     if (size_check)
     {
-        auto src = QFileInfo(mCurrentFileName).size();
-        auto dst = QFileInfo(mRepairedFileName).size();
+        auto src = std::filesystem::file_size(mCurrentFile);
+        auto dst = std::filesystem::file_size(mRepairedFile);
         std::size_t diff = 0;
         if (dst > src)
             diff = dst - src;
@@ -147,45 +197,36 @@ bool cDataRepair::moveFileToRepaired(bool size_check)
         }
     }
 
-    if (!QDir().exists(mCurrentDataDirectory))
+    auto failedDirectory = mCurrentFile.parent_path();
+
+    if (!std::filesystem::exists(failedDirectory))
         return false;
 
     // Move the failed data file to a "recovered" directory
     // to signal that the file was fully repaired!
     {
-        QString path = mCurrentDataDirectory;
-        path += "/recovered";
+        auto recoveredDirectory = failedDirectory / "recovered";
 
-        QDir recoveredDir(path);
-        if (!recoveredDir.exists())
-        {
-            if (!QDir().mkdir(path))
-                return false;
-        }
+        ::create_directory(recoveredDirectory);
 
-        QString filename = QFileInfo(mCurrentFileName).fileName();
-        QString newName = path + "/" + filename;
-
-        QDir().rename(mCurrentFileName, newName);
+        std::filesystem::path dest = recoveredDirectory / mCurrentFile.filename();
+        std::filesystem::rename(mCurrentFile, dest);
     }
 
     // Move the fully repaired data file back into the main data
     // directory.
     {
-        QDir path = mRepairedDataDirectory;
-        path.cdUp();
+        auto dataDirectory = mRepairedDirectory.parent_path();
 
-        QString filename = QFileInfo(mRepairedFileName).fileName();
-        auto fi = QFileInfo(path, filename);
-        if (!fi.exists())
-        {
-            QString newName = fi.absoluteFilePath();
-            if (!QDir().rename(mRepairedFileName, newName))
-            {
-                std::string fn1 = mRepairedFileName.toStdString();
-                std::string fn2 = newName.toStdString();
-            }
-        }
+        if (!std::filesystem::exists(dataDirectory))
+            return false;
+
+        std::filesystem::path dest = dataDirectory / mRepairedFile.filename();
+
+        if (std::filesystem::exists(dest))
+            return false;
+
+        std::filesystem::rename(mRepairedFile, dest);
     }
 
     return true;

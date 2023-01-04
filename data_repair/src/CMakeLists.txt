@@ -11,13 +11,10 @@ target_sources(DataRepair
 PRIVATE
 
 	BS_thread_pool.hpp
-
-	OusterTypes.hpp
-	OusterVerificationParser.hpp
-	OusterVerificationParser.cpp
-	AxisCommunicationsVerificationParser.hpp
-	AxisCommunicationsVerificationParser.cpp
 	ParserExceptions.hpp
+
+	BlockDataFileRepair.hpp
+	BlockDataFileRepair.cpp
 
 	DataRepair.hpp
 	DataRepair.cpp
