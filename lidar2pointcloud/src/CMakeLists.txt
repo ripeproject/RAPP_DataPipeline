@@ -13,14 +13,22 @@ PRIVATE
 	BS_thread_pool.hpp
 	ParserExceptions.hpp
 
+	lidar2pointcloud.hpp
 	lidar2pointcloud.cpp
+	
+	FileProcessor.hpp
+	FileProcessor.cpp
+	main.cpp
 )
 
 
 target_include_directories(lidar2point PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(lidar2point PRIVATE "../support/PointCloud")
 
 target_link_libraries(lidar2point PRIVATE cbdf::cbdf)
 target_link_libraries(lidar2point PRIVATE cbdf::sensors)
+target_link_libraries(lidar2point PRIVATE pointcloud_io)
+
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

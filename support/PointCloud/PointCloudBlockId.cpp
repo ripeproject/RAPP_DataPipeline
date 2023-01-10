@@ -1,8 +1,9 @@
 
 #include "PointCloudBlockId.hpp"
 
-#include "../include/ProcessingClassIdentifiers.hpp"
+#include "ProcessingClassIdentifiers.hpp"
 
+#include <cstdint>
 
 cPointCloudID::cPointCloudID(uint8_t majorVer, uint8_t minorVer)
 :

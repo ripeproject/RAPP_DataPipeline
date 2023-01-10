@@ -1,61 +1,43 @@
 /**
  * @file
- * @brief Serializer for storing OUSTER LiDAR data into a block based data file
+ * @brief Serializer for storing point cloud data into a block based data file
  */
 #pragma once
 
-#include "BlockSerializer.hpp"
+#include <cbdf/BlockSerializer.hpp>
 
 #include <memory>
 
 
 // Forward Declarations
-namespace ouster
+namespace pointcloud
 {
-	struct config_param_2_t;
-	struct sensor_info_2_t;
-	struct timestamp_2_t;
-	struct sync_pulse_in_2_t;
-	struct sync_pulse_out_2_t;
-	struct multipurpose_io_2_t;
-	struct nmea_2_t;
-	struct time_info_2_t;
-	struct beam_intrinsics_2_t;
-	struct imu_intrinsics_2_t;
-	struct lidar_intrinsics_2_t;
-	struct lidar_data_format_2_t;
+	enum class eCOORDINATE_SYSTEM : uint8_t;
 	struct imu_data_t;
+	struct reduced_point_cloud_by_frame_t;
+	struct sensor_point_cloud_by_frame_t;
 }
-class cOusterLidarData;
-class cOusterLidarID;
+
+class cPointCloudID;
+class cPointCloud;
 
 
-class cOusterSerializer : public cBlockSerializer
+class cPointCloudSerializer : public cBlockSerializer
 {
 public:
-	cOusterSerializer();
-	explicit cOusterSerializer(std::size_t n, cBlockDataFileWriter* pDataFile);
-	virtual ~cOusterSerializer();
+	cPointCloudSerializer();
+	explicit cPointCloudSerializer(std::size_t n, cBlockDataFileWriter* pDataFile);
+	virtual ~cPointCloudSerializer();
 
-	void write(const ouster::config_param_2_t& in);
-	void write(const ouster::sensor_info_2_t& in);
-	void write(const ouster::timestamp_2_t& in);
-	void write(const ouster::sync_pulse_in_2_t& in);
-	void write(const ouster::sync_pulse_out_2_t& in);
-	void write(const ouster::multipurpose_io_2_t& in);
-	void write(const ouster::nmea_2_t& in);
-	void write(const ouster::time_info_2_t& in);
-	void write(const ouster::beam_intrinsics_2_t& in);
-	void write(const ouster::imu_intrinsics_2_t& in);
-	void write(const ouster::lidar_intrinsics_2_t& in);
-	void write(const ouster::lidar_data_format_2_t& in);
-	void write(const ouster::imu_data_t& in);
-	void write(uint16_t frameID, const cOusterLidarData& data);
+	void write(const pointcloud::eCOORDINATE_SYSTEM& in);
+	void write(const pointcloud::imu_data_t& in);
+	void write(const pointcloud::reduced_point_cloud_by_frame_t& in);
+	void write(uint16_t frameID, const cPointCloud& data);
 
 protected:
 	cBlockID& blockID() override;
 
 private:
-	std::unique_ptr<cOusterLidarID> mBlockID;
+	std::unique_ptr<cPointCloudID> mBlockID;
 };
 
