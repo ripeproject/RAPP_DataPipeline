@@ -9,7 +9,10 @@
 
 #include <filesystem>
 #include <string>
-#include <numbers>
+#include <memory>
+
+// Forward Declarations
+class cLidar2PointCloud;
 
 
 class cFileProcessor
@@ -35,4 +38,6 @@ private:
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
+
+	std::unique_ptr<cLidar2PointCloud> mConverter;
 };
