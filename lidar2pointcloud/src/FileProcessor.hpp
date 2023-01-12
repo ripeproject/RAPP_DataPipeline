@@ -22,10 +22,10 @@ public:
 	~cFileProcessor();
 
 	bool open(std::filesystem::directory_entry in, 
-				std::filesystem::directory_entry out);
+				std::filesystem::path out);
 
 	void process_file(std::filesystem::directory_entry in,
-				std::filesystem::directory_entry out);
+				std::filesystem::path out);
 	void run();
 
 private:

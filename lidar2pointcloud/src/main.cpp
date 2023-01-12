@@ -31,7 +31,16 @@ sFilenameAndExtension removeTimestamp(const std::string& filename)
 	}
 	else
 	{
+		auto ext = filename.find_last_of('.');
+		if (ext != std::string::npos)
+		{
+			base = filename.substr(0, ext);
+			extension = filename.substr(ext + 1);
+			return { base, extension };
+		}
 
+		base = filename;
+		return { base, extension };
 	}
 
 	auto ext = filename.find_last_of('.');
@@ -43,6 +52,18 @@ sFilenameAndExtension removeTimestamp(const std::string& filename)
 	return {base, extension};
 }
 
+std::string add_timestamp(std::string filename)
+{
+	char timestamp[100] = { '\0' };
+
+	std::time_t t = std::time(nullptr);
+	std::strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M%S", std::localtime(&t));
+
+	filename += "_";
+	filename += timestamp;
+
+	return filename;
+}
 
 std::mutex g_console_mutex;
 
@@ -134,6 +155,8 @@ int main(int argc, char** argv)
 			continue;
 
 		files_to_process.push_back(dir_entry);
+
+		break;
 	}
 
 	int max_threads = std::thread::hardware_concurrency();
@@ -149,14 +172,22 @@ int main(int argc, char** argv)
 
 	std::vector<cFileProcessor*> file_processors;
 
-	for (auto& file : files_to_process)
+	for (auto& in_file : files_to_process)
 	{
-		std::filesystem::path file_path = file;
-		auto fe = removeTimestamp(file_path.filename().string());
+		auto fe = removeTimestamp(in_file.path().filename().string());
+
+		std::string out_filename = fe.filename;
+		std::filesystem::path out_file = output_directory;
+		out_file /= add_timestamp(out_filename);
+
+		if (!fe.extension.empty())
+		{
+			out_file.replace_extension(fe.extension);
+		}
 
 		cFileProcessor* fp = new cFileProcessor();
 
-//		pool.push_task(&cFileProcessor::process_file, fp, file);
+		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
 
 		file_processors.push_back(fp);
 	}

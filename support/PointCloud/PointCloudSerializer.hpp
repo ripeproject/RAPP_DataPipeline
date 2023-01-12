@@ -26,7 +26,7 @@ class cPointCloudSerializer : public cBlockSerializer
 {
 public:
 	cPointCloudSerializer();
-	explicit cPointCloudSerializer(std::size_t n, cBlockDataFileWriter* pDataFile);
+	explicit cPointCloudSerializer(std::size_t n, cBlockDataFileWriter* pDataFile = nullptr);
 	virtual ~cPointCloudSerializer();
 
 	void write(const pointcloud::eCOORDINATE_SYSTEM& in);

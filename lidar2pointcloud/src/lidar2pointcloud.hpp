@@ -2,6 +2,7 @@
 #pragma once
 
 #include "PointCloudSerializer.hpp"
+#include "PointCloudTypes.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/OusterParser.hpp>
@@ -11,7 +12,6 @@
 #include <string>
 #include <numbers>
 #include <optional>
-
 
 struct sPoint_t
 {
@@ -23,17 +23,8 @@ struct sPoint_t
     sPoint_t(double i, double j, double k) : x(i), y(j), z(k) {}
 };
 
-struct sCloudPoint_t : public ouster::lidar_data_block_t
-{
-    double x;
-    double y;
-    double z;
 
-    sCloudPoint_t() : x(0), y(0), z(0) {}
-};
-
-
-class cLidar2PointCloud : public cOusterParser
+class cLidar2PointCloud : public cOusterParser, public cPointCloudSerializer
 {
 public:
 	static void setValidRange_m(double min_dist_m, double max_dist_m);
@@ -80,11 +71,8 @@ private:
 	std::optional<ouster::imu_intrinsics_2_t>    mImuIntrinsics;
 
 private:
-    ouster::matrix_col_major<sCloudPoint_t> mCloud;
+    ouster::matrix_col_major<pointcloud::sCloudPoint_t> mCloud;
 
     std::vector<sPoint_t> mUnitVectors;
     std::vector<sPoint_t> mOffsets;
-
-private:
-	cPointCloudSerializer mSerializer;
 };

@@ -1,5 +1,6 @@
 
 #include "lidar2pointcloud.hpp"
+#include "PointCloudTypes.hpp"
 
 #include <ouster/simple_blas.h>
 
@@ -7,6 +8,7 @@
 #include <numbers>
 #include <cmath>
 #include <valarray>
+#include <iostream>
 
 using namespace ouster;
 
@@ -25,6 +27,28 @@ namespace
 		std::vector<sPoint_t> direction;
 		std::vector<sPoint_t> offset;
 	};
+
+	template<typename T1, typename T2>
+	inline void rotate(T1& x, T1& y, T1& z, const ouster::cRotationMatrix<T2>& r)
+	{
+		const auto& rX = r.column(0);
+		const auto& rY = r.column(1);
+		const auto& rZ = r.column(2);
+
+		double a = x * rX[0] + y * rX[1] + z * rX[2];
+		double b = x * rY[0] + y * rY[1] + z * rY[2];
+		double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+
+		x = static_cast<T1>(a);
+		y = static_cast<T1>(b);
+		z = static_cast<T1>(c);
+	}
+
+	template<typename T>
+	inline void rotate(pointcloud::sCloudPoint_t& p, const ouster::cRotationMatrix<T>& r)
+	{
+		rotate(p.X_m, p.Y_m, p.Z_m, r);
+	}
 
 	template<typename T>
 	inline void rotate(std::vector<sPoint_t>& lhs, const ouster::cRotationMatrix<T>& r)
@@ -172,24 +196,26 @@ void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, d
 	auto roll = roll_deg * std::numbers::pi / 180.0;
 	auto yaw = yaw_deg * std::numbers::pi / 180.0;
 
+	double e; // Used for debugging;
+
 	auto c1 = mSensorToENU.column(0);
-	c1[0] = cos(yaw) * cos(pitch);
-	c1[1] = sin(yaw) * cos(pitch);
-	c1[2] = -sin(pitch);
+	c1[0] = e = cos(yaw) * cos(pitch);
+	c1[1] = e = sin(yaw) * cos(pitch);
+	c1[2] = e = -sin(pitch);
 
 	auto c2 = mSensorToENU.column(1);
-	c2[0] = cos(yaw) * sin(pitch) * sin(roll) - sin(yaw) * cos(roll);
-	c2[1] = sin(yaw) * sin(pitch) * sin(roll) + cos(yaw) * cos(roll);
-	c2[2] = cos(pitch) * sin(roll);
+	c2[0] = e = cos(yaw) * sin(pitch) * sin(roll) - sin(yaw) * cos(roll);
+	c2[1] = e = sin(yaw) * sin(pitch) * sin(roll) + cos(yaw) * cos(roll);
+	c2[2] = e = cos(pitch) * sin(roll);
 
 	auto c3 = mSensorToENU.column(2);
-	c3[0] = cos(yaw) * sin(pitch) * cos(roll) + sin(yaw) * sin(roll);
-	c3[1] = sin(yaw) * sin(pitch) * cos(roll) - cos(yaw) * sin(roll);
-	c3[2] = cos(pitch) * cos(roll);
+	c3[0] = e = cos(yaw) * sin(pitch) * cos(roll) + sin(yaw) * sin(roll);
+	c3[1] = e = sin(yaw) * sin(pitch) * cos(roll) - cos(yaw) * sin(roll);
+	c3[2] = e = cos(pitch) * cos(roll);
 }
 
 
-cLidar2PointCloud::cLidar2PointCloud()
+cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(1024)
 {}
 
 cLidar2PointCloud::~cLidar2PointCloud()
@@ -200,16 +226,24 @@ void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
 {
     cTransformMatrix<double> transform(lidar.lidar_to_sensor_transform, true);
 
-    auto xyz = make_xyz_lut(format.columns_per_frame, format.pixels_per_column, range_unit_m,
+    auto xyz = make_xyz_lut(format.columns_per_frame, format.pixels_per_column, range_unit_mm,
         beam.lidar_to_beam_origins_mm, transform, beam.azimuth_angles_deg, beam.altitude_angles_deg);
 
     mUnitVectors = xyz.direction;
     mOffsets = xyz.offset;
+
+	write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_ENU);
 }
 
 
 void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
 {
+	double minDistance_mm = mMinDistance_m * m_to_mm;
+	double maxDistance_mm = mMaxDistance_m * m_to_mm;
+
+
+	auto frameID = data.frame_id();
+	auto timestamp_ns = data.timestamp_ns();
     auto columns_per_frame = data.columnsPerFrame();
     auto pixels_per_column = data.pixelsPerColumn();
     mCloud.resize(pixels_per_column, columns_per_frame);
@@ -219,6 +253,7 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
     //    auto lidar_data = destagger(data, mPixelShiftByRow);
     auto lidar_data = ouster::to_matrix_row_major(data.data());
 
+	pointcloud::sCloudPoint_t point;
 
     for (int c = 0; c < columns_per_frame; ++c)
     {
@@ -230,23 +265,29 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
             auto unit_vec = mUnitVectors[i];
             auto offset = mOffsets[i];
 
-            sCloudPoint_t point;
             auto range_mm = column[p].range_mm;
-            double x_mm = point.x = unit_vec.x * range_mm;
-            double y_mm = point.y = unit_vec.y * range_mm;
-            double z_mm = point.z = unit_vec.z * range_mm;
+			if ((range_mm < minDistance_mm) || (range_mm > maxDistance_mm))
+			{
+				point.X_m = 0.0;
+				point.Y_m = 0.0;
+				point.Z_m = 0.0;
+			}
+			else
+			{
+				double x_mm = unit_vec.x * range_mm;
+				double y_mm = unit_vec.y * range_mm;
+				double z_mm = unit_vec.z * range_mm;
 
-            x_mm += offset.x;
-            y_mm += offset.y;
-            z_mm += offset.z;
+				x_mm += offset.x;
+				y_mm += offset.y;
+				z_mm += offset.z;
 
-            point.x += offset.x;
-            point.y += offset.y;
-            point.z += offset.z;
+				point.X_m = x_mm * mm_to_m;
+				point.Y_m = y_mm * mm_to_m;
+				point.Z_m = z_mm * mm_to_m;
 
-//            point.x = x_mm * mm_to_m;
-//            point.y = y_mm * mm_to_m;
-//            point.z = z_mm * mm_to_m;
+				rotate(point, mSensorToENU);
+			}
 
             point.range_mm = range_mm;
             point.signal = column[p].signal;
@@ -257,57 +298,24 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
         }
     }
 
-/*
-    for (int c = 0; c < cols; ++c)
-    {
-        auto column = cloud_data.column(c);
-        for (int p = 0; p < rows; ++p)
-        {
-            if (column[p].range_mm == 0)
-                continue;
+	pointcloud::reduced_point_cloud_by_frame_t pc;
+	pc.frameID = frameID;
+	pc.timestamp_ns = timestamp_ns;
 
-            auto x_m = column[p].x;
-            auto y_m = column[p].y;
-            auto z_m = column[p].z;
+	for (int c = 0; c < columns_per_frame; ++c)
+	{
+		auto column = mCloud.column(c);
+		for (int p = 0; p < pixels_per_column; ++p)
+		{
+			auto point = column[p];
+			if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+				continue;
 
-            // Translate due to moving sensor...
-            x_m += mX_m;
-            y_m += mY_m;
-            z_m += mZ_m;
-
-            auto d_m = sqrt(x_m * x_m + y_m * y_m);
-
-            if (d_m < mSensorMinDistance_m)
-                continue;
-
-            if (d_m > mSensorMaxDistance_m)
-                continue;
-
-
-            // Apply rotation matrix
-            auto r1 = mRotation.row(0);
-            auto r2 = mRotation.row(1);
-            auto r3 = mRotation.row(2);
-
-            float3 xyz;
-            xyz.x = r1[0] * x_m + r1[1] * y_m + r1[2] * z_m;
-            xyz.y = r2[0] * x_m + r2[1] * y_m + r2[2] * z_m;
-            xyz.z = r3[0] * x_m + r3[1] * y_m + r3[2] * z_m;
-
-            vertices.push_back(xyz);
-
-            ranges.push_back(column[p].range_mm);
-
-            uint3 data;
-            data.a = column[p].nir;
-            data.s = column[p].signal;
-            data.r = column[p].reflectivity;
-            returns.push_back(data);
-
-            frameIDs.push_back(source.lidarFrameCount());
-        }
+			pc.pointCloud.push_back(point);
+		}
 	}
-*/
+
+	write(pc);
 }
 
 void cLidar2PointCloud::onConfigParam(ouster::config_param_2_t config_param) {}
@@ -348,6 +356,10 @@ void cLidar2PointCloud::onLidarDataFormat(ouster::lidar_data_format_2_t format)
 {
 	mLidarDataFormat = format;
 
+	setBufferCapacity(static_cast<std::size_t>(format.pixels_per_column) *
+		static_cast<std::size_t>(format.columns_per_frame) *
+		sizeof(pointcloud::sensor_point_cloud_by_frame_t) + 32);
+
 	if (mLidarDataFormat.has_value() && mLidarIntrinsics.has_value() && mBeamIntrinsics.has_value())
 	{
 		createXyzLookupTable(mBeamIntrinsics.value(), mLidarIntrinsics.value(), mLidarDataFormat.value());
@@ -355,7 +367,21 @@ void cLidar2PointCloud::onLidarDataFormat(ouster::lidar_data_format_2_t format)
 }
 
 void cLidar2PointCloud::onImuData(ouster::imu_data_t data)
-{}
+{
+	pointcloud::imu_data_t imu;
+	imu.accelerometer_read_time_ns = data.accelerometer_read_time_ns;
+	imu.gyroscope_read_time_ns = data.gyroscope_read_time_ns;
+	imu.acceleration_X_g = data.acceleration_Xaxis_g;
+	imu.acceleration_Y_g = data.acceleration_Yaxis_g;
+	imu.acceleration_Z_g = data.acceleration_Zaxis_g;
+	imu.angular_velocity_Xaxis_deg_per_sec = data.angular_velocity_Xaxis_deg_per_sec;
+	imu.angular_velocity_Yaxis_deg_per_sec = data.angular_velocity_Yaxis_deg_per_sec;
+	imu.angular_velocity_Zaxis_deg_per_sec = data.angular_velocity_Zaxis_deg_per_sec;
+
+	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mSensorToENU);
+
+	write(imu);
+}
 
 void cLidar2PointCloud::onLidarData(cOusterLidarData data)
 {

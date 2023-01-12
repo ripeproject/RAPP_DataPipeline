@@ -25,7 +25,7 @@ cFileProcessor::~cFileProcessor()
 }
 
 bool cFileProcessor::open(std::filesystem::directory_entry in,
-							std::filesystem::directory_entry out)
+							std::filesystem::path out)
 {
     mInputFile = in;
     mOutputFile = out;
@@ -42,7 +42,7 @@ bool cFileProcessor::open(std::filesystem::directory_entry in,
 }
 
 void cFileProcessor::process_file(std::filesystem::directory_entry in,
-									std::filesystem::directory_entry out)
+									std::filesystem::path out)
 {
     if (open(in, out))
     {
@@ -65,6 +65,7 @@ void cFileProcessor::run()
 	mFileReader.registerCallback([this](const cBlockID& id){ this->processBlock(id); });
 	mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });
 	mFileReader.attach(mConverter.get());
+    mConverter.get()->attach(&mFileWriter);
 
 	try
     {
