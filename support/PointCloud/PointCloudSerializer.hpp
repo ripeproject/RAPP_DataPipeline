@@ -32,7 +32,7 @@ public:
 	void write(const pointcloud::eCOORDINATE_SYSTEM& in);
 	void write(const pointcloud::imu_data_t& in);
 	void write(const pointcloud::reduced_point_cloud_by_frame_t& in);
-	void write(uint16_t frameID, const cPointCloud& data);
+	void write(const pointcloud::sensor_point_cloud_by_frame_t& in);
 
 protected:
 	cBlockID& blockID() override;
