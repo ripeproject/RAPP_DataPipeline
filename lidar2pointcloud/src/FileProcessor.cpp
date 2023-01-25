@@ -51,6 +51,8 @@ void cFileProcessor::process_file(std::filesystem::directory_entry in,
         msg += "...";
         console_message(msg);
 
+        mConverter.get()->setOutputPath(out);
+
         run();
     }
 }

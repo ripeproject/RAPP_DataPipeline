@@ -190,6 +190,8 @@ int main(int argc, char** argv)
 		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
 
 		file_processors.push_back(fp);
+
+		break;
 	}
 
 	files_to_process.clear();
