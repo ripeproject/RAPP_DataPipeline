@@ -112,7 +112,7 @@ void cPointCloudSerializer::write(const reduced_point_cloud_by_frame_t& in)
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
 }
 
-void cPointCloudSerializer::write(uint16_t frameID, const cPointCloud& cloud_data)
+void cPointCloudSerializer::write(const pointcloud::sensor_point_cloud_by_frame_t& in)
 {
     assert(mpDataFile);
 
@@ -120,11 +120,12 @@ void cPointCloudSerializer::write(uint16_t frameID, const cPointCloud& cloud_dat
 
     mDataBuffer.clear();
 
-    mDataBuffer << frameID;
+    mDataBuffer << in.frameID;
 
-    uint64_t timestamp = cloud_data.timestamp_ns();
+    uint64_t timestamp = in.timestamp_ns;
     mDataBuffer << timestamp;
 
+/*
     uint32_t num_points = cloud_data.size();
 
     mDataBuffer << num_points;
@@ -148,5 +149,45 @@ void cPointCloudSerializer::write(uint16_t frameID, const cPointCloud& cloud_dat
         throw std::runtime_error("ERROR, Buffer Overrun in writing cPointCloud data.");
 
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
+*/
 }
 
+/*
+assert(mpDataFile);
+
+mBlockID.dataID(DataID::LIDAR_DATA_FRAME_TIMESTAMP);
+
+mDataBuffer.clear();
+
+mDataBuffer << frameID;
+
+uint64_t timestamp = lidar_data.timestamp_ns();
+mDataBuffer << timestamp;
+
+auto& data = lidar_data.data();
+uint16_t pixels_per_column = data.num_rows();
+uint16_t columns_per_frame = data.num_columns();
+
+mDataBuffer << pixels_per_column;
+mDataBuffer << columns_per_frame;
+
+for (uint16_t col = 0; col < columns_per_frame; ++col)
+{
+    auto pixels = data.column(col);
+    for (uint16_t r = 0; r < pixels_per_column; ++r)
+    {
+        auto& pixel = pixels[r];
+        mDataBuffer << pixel.range_mm;
+        mDataBuffer << pixel.signal;
+        mDataBuffer << pixel.reflectivity;
+        mDataBuffer << pixel.nir;
+    }
+}
+
+assert(!mDataBuffer.overrun());
+
+if (mDataBuffer.overrun())
+throw std::runtime_error("ERROR, Buffer Overrun in writing cOusterLidarData data.");
+
+mpDataFile->writeBlock(mBlockID, mDataBuffer.data(), mDataBuffer.size());
+*/
