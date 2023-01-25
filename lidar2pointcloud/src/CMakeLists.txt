@@ -1,13 +1,13 @@
 
 
 
-add_executable(lidar2point)
+add_executable(lidar2pointcloud)
 
-set_target_properties(lidar2point PROPERTIES LANGUAGE CXX)
+set_target_properties(lidar2pointcloud PROPERTIES LANGUAGE CXX)
 
-target_compile_features(lidar2point PRIVATE cxx_std_20)
+target_compile_features(lidar2pointcloud PRIVATE cxx_std_20)
 
-target_sources(lidar2point
+target_sources(lidar2pointcloud
 PRIVATE
 
 	BS_thread_pool.hpp
@@ -22,18 +22,18 @@ PRIVATE
 )
 
 
-target_include_directories(lidar2point PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
-target_include_directories(lidar2point PRIVATE "../support/PointCloud")
+target_include_directories(lidar2pointcloud PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(lidar2pointcloud PRIVATE "../support/PointCloud")
 
-target_link_libraries(lidar2point PRIVATE cbdf::cbdf)
-target_link_libraries(lidar2point PRIVATE cbdf::sensors)
-target_link_libraries(lidar2point PRIVATE pointcloud_io)
+target_link_libraries(lidar2pointcloud PRIVATE cbdf::cbdf)
+target_link_libraries(lidar2pointcloud PRIVATE cbdf::sensors)
+target_link_libraries(lidar2pointcloud PRIVATE pointcloud_io)
 
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
 # Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
-set_property(TARGET lidar2point PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+set_property(TARGET lidar2pointcloud PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 
 #******************************************************************************

@@ -29,7 +29,28 @@ struct sPoint_t
 class cLidar2PointCloud : public cOusterParser, public cPointCloudSerializer
 {
 public:
+	/**
+	 * Set the valid range in meters
+	 * 
+	 * The lidar return range is considered valid if:
+	 * 		min_dist_m < range_m < max_dist_m
+	 * 
+	 * @param	min_dist_m	: The minimum distance to be considered valid
+	 * @param	max_dist_m	: The maximum distance to be considered valid
+	 */
 	static void setValidRange_m(double min_dist_m, double max_dist_m);
+
+	/**
+	 * Sets the sensor orientation
+	 * 
+	 * Compute the rotation matrix needed to convert the pointcloud from
+	 * the LiDAR sensor coordinate system to a earth East-North-Up (ENU)
+	 * coordinate system.
+	 * 
+	 * @param	yaw_deg		: The yaw angle of the sensor referenced to the east direction
+	 * @param	pitch_deg	: The pitch angle of the sensor
+	 * @param	roll_deg	: The roll angle of the sensor
+	 */
 	static void setSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg);
 
 public:

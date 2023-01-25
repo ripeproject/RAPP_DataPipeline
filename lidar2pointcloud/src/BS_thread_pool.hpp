@@ -135,7 +135,7 @@ private:
  * @tparam T2 The type of the index after the last index in the range. Should be a signed or unsigned integer. If T1 is not the same as T2, a common type will be automatically inferred.
  * @tparam T The common type of T1 and T2.
  */
-template <typename T1, typename T2, typename T = std::common_type_t<T1, T2>>
+template < typename T1, typename T2, typename T = std::common_type_t<T1, T2> >
 class [[nodiscard]] blocks
 {
 public:

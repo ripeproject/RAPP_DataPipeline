@@ -4,6 +4,8 @@
 
 #include <ouster/simple_blas.h>
 
+#include <eigen3/Eigen/Eigen>
+
 #include <algorithm>
 #include <numbers>
 #include <cmath>
@@ -194,6 +196,35 @@ void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
 
 void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg)
 {
+	auto pitch = -pitch_deg * std::numbers::pi / 180.0;
+	auto roll = -roll_deg * std::numbers::pi / 180.0;
+	auto yaw = -yaw_deg * std::numbers::pi / 180.0;
+
+	Eigen::AngleAxisd rollAngle(roll, Eigen::Vector3d::UnitX());
+	Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitZ());
+	Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitY());
+
+	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
+	Eigen::Matrix3d rotationMatrix = q.matrix();
+
+	double e; // Used for debugging;
+
+	auto c1 = mSensorToENU.column(0);
+	c1[0] = e = rotationMatrix.col(0)[0];
+	c1[1] = e = rotationMatrix.col(0)[1];
+	c1[2] = e = rotationMatrix.col(0)[2];
+
+	auto c2 = mSensorToENU.column(1);
+	c2[0] = e = rotationMatrix.col(1)[0];
+	c2[1] = e = rotationMatrix.col(1)[1];
+	c2[2] = e = rotationMatrix.col(1)[2];
+
+	auto c3 = mSensorToENU.column(2);
+	c3[0] = e = rotationMatrix.col(2)[0];
+	c3[1] = e = rotationMatrix.col(2)[1];
+	c3[2] = e = rotationMatrix.col(2)[2];
+
+/*
 	auto pitch = pitch_deg * std::numbers::pi / 180.0;
 	auto roll = roll_deg * std::numbers::pi / 180.0;
 	auto yaw = yaw_deg * std::numbers::pi / 180.0;
@@ -214,6 +245,7 @@ void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, d
 	c3[0] = e = cos(yaw) * sin(pitch) * cos(roll) + sin(yaw) * sin(roll);
 	c3[1] = e = sin(yaw) * sin(pitch) * cos(roll) - cos(yaw) * sin(roll);
 	c3[2] = e = cos(pitch) * cos(roll);
+*/
 }
 
 
@@ -381,7 +413,7 @@ void cLidar2PointCloud::onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsics)
 void cLidar2PointCloud::onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics)
 {
 	mImuIntrinsics = intrinsics;
-	mImuTransform.set(mImuIntrinsics.imu_to_sensor_transform, true);
+//	mImuTransform.set(mImuIntrinsics.imu_to_sensor_transform, true);
 }
 
 void cLidar2PointCloud::onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics)
@@ -462,13 +494,9 @@ void cLidar2PointCloud::onImuData(ouster::imu_data_t data)
 
 void cLidar2PointCloud::onLidarData(cOusterLidarData data)
 {
-	if (mImuCount < 20)
-	{
-		int n = mImuHistogram[mImuCount] + 1;
-		mImuHistogram[mImuCount] = n;
-	}
-	else
-		std::cout << "IMU count = " << mImuCount << std::endl;
+	int n = mImuHistogram[mImuCount] + 1;
+	mImuHistogram[mImuCount] = n;
+
 	mImuCount = 0;
 
 	if (mUnitVectors.empty())

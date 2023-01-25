@@ -6,6 +6,8 @@
 
 #include <lyra/lyra.hpp>
 
+#include <eigen3/Eigen/Eigen>
+
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -127,18 +129,69 @@ int main(int argc, char** argv)
 	cLidar2PointCloud::setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
 
 /*
+	pitch_deg = -90.0;
+	roll_deg = 10.0;
+	yaw_deg = 60.0;
+
 	auto pitch = pitch_deg * std::numbers::pi / 180.0;
 	auto roll = roll_deg * std::numbers::pi / 180.0;
 	auto yaw = yaw_deg * std::numbers::pi / 180.0;
 
-	Eigen::AngleAxisd rollAngle(roll, Eigen::Vector3d::UnitX());
-	Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitZ());
-	Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitY());
+	Eigen::Vector3d imu(0,0,-1);
 
-	Eigen::Quaternion<double> q = yawAngle * pitchAngle * rollAngle;
-	Eigen::Matrix3d rotationMatrix = q.matrix();
+	Eigen::AngleAxisd rollAngle1(roll, Eigen::Vector3d::UnitX());
+	Eigen::AngleAxisd rollAngle2(-roll, Eigen::Vector3d::UnitX());
+	Eigen::AngleAxisd yawAngle1(yaw, Eigen::Vector3d::UnitZ());
+	Eigen::AngleAxisd yawAngle2(-yaw, Eigen::Vector3d::UnitZ());
+	Eigen::AngleAxisd pitchAngle1(pitch, Eigen::Vector3d::UnitY());
+	Eigen::AngleAxisd pitchAngle2(-pitch, Eigen::Vector3d::UnitY());
+
+	Eigen::Quaternion<double> q1 = yawAngle1 * pitchAngle1 * rollAngle1;
+	Eigen::Matrix3d rotationMatrix1 = q1.matrix();
+
+	std::cout << "IMU" << std::endl;
+	std::cout << imu[0] << ", " << imu[1] << ", " << imu[2] << std::endl;
+
+	std::cout << std::endl;
+	std::cout << "Yaw, Pitch, Roll" << std::endl;
+	auto r1_0 = rotationMatrix1.row(0);
+	std::cout << r1_0[0] << ", " << r1_0[1] << ", " << r1_0[2] << std::endl;
+
+	auto r1_1 = rotationMatrix1.row(1);
+	std::cout << r1_1[0] << ", " << r1_1[1] << ", " << r1_1[2] << std::endl;
+
+	auto r1_2 = rotationMatrix1.row(2);
+	std::cout << r1_2[0] << ", " << r1_2[1] << ", " << r1_2[2] << std::endl;
+
+	imu = rotationMatrix1 * imu;
+
+	std::cout << std::endl;
+	std::cout << "IMU" << std::endl;
+	std::cout << imu[0] << ", " << imu[1] << ", " << imu[2] << std::endl;
+
+	Eigen::Quaternion<double> q2 = rollAngle2 * pitchAngle2 * yawAngle2;
+	Eigen::Matrix3d rotationMatrix2 = q2.matrix();
+
+	std::cout << std::endl;
+	std::cout << "Roll, Pitch, Yaw" << std::endl;
+
+	auto r2_0 = rotationMatrix2.row(0);
+	std::cout << r2_0[0] << ", " << r2_0[1] << ", " << r2_0[2] << std::endl;
+
+	auto r2_1 = rotationMatrix2.row(1);
+	std::cout << r2_1[0] << ", " << r2_1[1] << ", " << r2_1[2] << std::endl;
+
+	auto r2_2 = rotationMatrix2.row(2);
+	std::cout << r2_2[0] << ", " << r2_2[1] << ", " << r2_2[2] << std::endl;
+
+	imu = rotationMatrix2 * imu;
+
+	std::cout << std::endl;
+	std::cout << "IMU" << std::endl;
+	std::cout << imu[0] << ", " << imu[1] << ", " << imu[2] << std::endl;
+
+	return 0;
 */
-
 
 	const std::filesystem::path input{ input_directory };
 
