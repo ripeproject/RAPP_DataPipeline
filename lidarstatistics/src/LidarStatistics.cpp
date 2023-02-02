@@ -10,6 +10,7 @@
 #include <cmath>
 #include <valarray>
 #include <iostream>
+#include <fmt/core.h>
 
 using namespace ouster;
 
@@ -50,7 +51,13 @@ namespace
 	template<typename T>
 	inline void rotate(sPoint_t& p, const ouster::cRotationMatrix<T>& r)
 	{
-		rotate(p.x, p.y, p.z, r);
+		rotate(p.x_mm, p.y_mm, p.z_mm, r);
+	}
+
+	template<typename T>
+	inline void rotate(sCloudPoint_t& p, const ouster::cRotationMatrix<T>& r)
+	{
+		rotate(p.x_m, p.y_m, p.z_m, r);
 	}
 
 	template<typename T>
@@ -64,9 +71,9 @@ namespace
 		{
 			sPoint_t p = lhs[i];
 
-			double x = p.x * rX[0] + p.y * rX[1] + p.z * rX[2];
-			double y = p.x * rY[0] + p.y * rY[1] + p.z * rY[2];
-			double z = p.x * rZ[0] + p.y * rZ[1] + p.z * rZ[2];
+			double x = p.x_mm * rX[0] + p.y_mm * rX[1] + p.z_mm * rX[2];
+			double y = p.x_mm * rY[0] + p.y_mm * rY[1] + p.z_mm * rY[2];
+			double z = p.x_mm * rZ[0] + p.y_mm * rZ[1] + p.z_mm * rZ[2];
 
 			lhs[i] = sPoint_t(x, y, z);
 		}
@@ -79,9 +86,9 @@ namespace
 		{
 			sPoint_t& p = lhs[i];
 
-			p.x += t.x();
-			p.y += t.y();
-			p.z += t.z();
+			p.x_mm += t.x();
+			p.y_mm += t.y();
+			p.z_mm += t.z();
 		}
 	}
 
@@ -89,30 +96,30 @@ namespace
 	{
 		assert(lhs.size() == x.size());
 		for (std::size_t i = 0; i < x.size(); ++i)
-			lhs[i].x = x[i];
+			lhs[i].x_mm = x[i];
 	}
 
 	void set_y(std::vector<sPoint_t>& lhs, const std::valarray<double>& y)
 	{
 		assert(lhs.size() == y.size());
 		for (std::size_t i = 0; i < y.size(); ++i)
-			lhs[i].y = y[i];
+			lhs[i].y_mm = y[i];
 	}
 
 	void set_z(std::vector<sPoint_t>& lhs, const std::valarray<double>& z)
 	{
 		assert(lhs.size() == z.size());
 		for (std::size_t i = 0; i < z.size(); ++i)
-			lhs[i].z = z[i];
+			lhs[i].z_mm = z[i];
 	}
 
 	void operator*=(std::vector<sPoint_t>& lhs, const double rhs)
 	{
 		for (std::size_t i = 0; i < lhs.size(); ++i)
 		{
-			lhs[i].x *= rhs;
-			lhs[i].y *= rhs;
-			lhs[i].z *= rhs;
+			lhs[i].x_mm *= rhs;
+			lhs[i].y_mm *= rhs;
+			lhs[i].z_mm *= rhs;
 		}
 	}
 
@@ -180,16 +187,15 @@ namespace
 
 		return lut;
 	}
-
 }
 
-double cLidarStatistics::mMinDistance_m = 0.0;
+double cLidarStatistics::mMinDistance_m = 0.001;
 double cLidarStatistics::mMaxDistance_m = 1000.0;
 ouster::cRotationMatrix<double> cLidarStatistics::mSensorToENU;
 
 void cLidarStatistics::setValidRange_m(double min_dist_m, double max_dist_m)
 {
-	mMinDistance_m = std::max(min_dist_m, 0.0);
+	mMinDistance_m = std::max(min_dist_m, 0.001);
 	mMaxDistance_m = std::min(max_dist_m, 1000.0);
 }
 
@@ -271,21 +277,32 @@ cLidarStatistics::~cLidarStatistics()
 
 	histogram.close();
 
-	std::cout << "Average Accelerations:" << std::endl;
+
+	filename = mBaseFilename + ".imu.averages.csv";
+	auto imu_averages = mOutDir / filename;
+
+	std::ofstream averages;
+	averages.open(imu_averages);
+
+	averages << "Average Accelerations:\n";
+	averages << "X (g), Y (g), Z (g)\n";
+
 	mAvg_X_g /= mCount;
 	mAvg_Y_g /= mCount;
 	mAvg_Z_g /= mCount;
 
-	std::cout << mAvg_X_g << ", " << mAvg_Y_g << ", " << mAvg_Z_g << std::endl;
+	averages << mAvg_X_g << ", " << mAvg_Y_g << ", " << mAvg_Z_g << "\n\n";
 
-	std::cout << std::endl;
+	averages << "Average Orientation Rates:\n";
+	averages << "Pitch Rate (deg/sec), Roll Rate (deg/sec), Yaw Rate (deg/sec)\n";
 
-	std::cout << "Average Orientation Rates:" << std::endl;
 	mAvgPitchRate_deg_per_sec /= mCount;
 	mAvgRollRate_deg_per_sec /= mCount;
 	mAvgYawRate_deg_per_sec /= mCount;
 
-	std::cout << mAvgPitchRate_deg_per_sec << ", " << mAvgRollRate_deg_per_sec << ", " << mAvgYawRate_deg_per_sec << std::endl;
+	averages << mAvgPitchRate_deg_per_sec << ", " << mAvgRollRate_deg_per_sec << ", " << mAvgYawRate_deg_per_sec << std::endl;
+
+	averages.close();
 }
 
 void cLidarStatistics::setOutputPath(std::filesystem::path path)
@@ -293,17 +310,18 @@ void cLidarStatistics::setOutputPath(std::filesystem::path path)
 	mBaseFilename = path.filename().string();
 	mOutDir = path.parent_path();
 
-/*
-	auto accelerations = p / "accelerations.csv";
-	auto orientationRates = p / "orientation_rates.csv";
-	auto positions = p / "positions.csv";
-	auto ranges = p / "ranges.csv";
+	std::string filename = mBaseFilename + ".imu.accelerations.csv";
+	auto accelerations = mOutDir / filename;
 
+	filename = mBaseFilename + ".imu.orientation_rates.csv";
+	auto orientationRates = mOutDir / filename;
+
+	filename = mBaseFilename + ".positions.csv";
+	auto positions = mOutDir / filename;
+
+	mPosition.open(positions);
 	mAccelerations.open(accelerations);
 	mOrientationRates.open(orientationRates);
-	mPosition.open(positions);
-	mRanges.open(ranges);
-*/
 }
 
 void cLidarStatistics::createXyzLookupTable(const beam_intrinsics_2_t& beam,
@@ -332,22 +350,23 @@ void cLidarStatistics::computerPointCloud(const cOusterLidarData& data)
 	auto frameID = data.frame_id();
 	auto timestamp_ns = data.timestamp_ns();
 
-	if (mStartTimestamp_ns == 0)
-		mStartTimestamp_ns = timestamp_ns;
+	if (mLidarStartTimestamp_ns == 0)
+	{
+		mLidarStartTimestamp_ns = timestamp_ns;
+	}
 
-	auto time_us = static_cast<double>(timestamp_ns - mStartTimestamp_ns)/1000.0;
+	auto time_ms = static_cast<double>(timestamp_ns - mLidarStartTimestamp_ns)/1000000.0;
 
     auto columns_per_frame = data.columnsPerFrame();
     auto pixels_per_column = data.pixelsPerColumn();
-//    mCloud.resize(pixels_per_column, columns_per_frame);
+    mCloud.resize(pixels_per_column, columns_per_frame);
 
     // Their example code seems to indicate that we need to destagger the image, but
     // that does not seem to be true!
     //    auto lidar_data = destagger(data, mPixelShiftByRow);
     auto lidar_data = ouster::to_matrix_row_major(data.data());
 
-/*
-	pointcloud::sCloudPoint_t point;
+	sCloudPoint_t point;
 
     for (int c = 0; c < columns_per_frame; ++c)
     {
@@ -361,60 +380,43 @@ void cLidarStatistics::computerPointCloud(const cOusterLidarData& data)
 
             auto range_mm = column[p].range_mm;
 
-			if (p == 20 && c == 127)
-			{
-				mRanges << frameID << ", " << time_us << ", " << range_mm << "\n";
-
-				//				mX.push_back(point.X_m);
-				//				mY.push_back(point.Y_m);
-				//				mZ.push_back(point.Z_m);
-				//				mR.push_back(range_mm * mm_to_m);
-			}
-
 			if ((range_mm < minDistance_mm) || (range_mm > maxDistance_mm))
 			{
-				point.X_m = 0.0;
-				point.Y_m = 0.0;
-				point.Z_m = 0.0;
+				point.x_m = 0.0;
+				point.y_m = 0.0;
+				point.z_m = 0.0;
+				point.r_m = 0.0;
 			}
 			else
 			{
-				double x_mm = unit_vec.x * range_mm;
-				double y_mm = unit_vec.y * range_mm;
-				double z_mm = unit_vec.z * range_mm;
+				double x_mm = unit_vec.x_mm * range_mm;
+				double y_mm = unit_vec.y_mm * range_mm;
+				double z_mm = unit_vec.z_mm * range_mm;
 
-				x_mm += offset.x;
-				y_mm += offset.y;
-				z_mm += offset.z;
+				x_mm += offset.x_mm;
+				y_mm += offset.y_mm;
+				z_mm += offset.z_mm;
 
-				point.X_m = x_mm * mm_to_m;
-				point.Y_m = y_mm * mm_to_m;
-				point.Z_m = z_mm * mm_to_m;
+				point.x_m = x_mm * mm_to_m;
+				point.y_m = y_mm * mm_to_m;
+				point.z_m = z_mm * mm_to_m;
+				point.r_m = range_mm * mm_to_m;
 
 				rotate(point, mSensorToENU);
+
+				if (p == mCenterRow && c == mCenterCol)
+				{
+					mPosition << frameID << ", " 
+						<< fmt::format("{:10.3f}", time_ms)
+						<< ", " << point.x_m << ", "
+						<< point.y_m << ", " << point.z_m << ", "
+						<< point.r_m << "\n";
+				}
 			}
 
-			if (p == 20 && c == 127)
-			{
-				mPosition << point.X_m << ", "
-					<< point.Y_m << ", " << point.Z_m << ", "
-					<< range_mm * mm_to_m << "\n";
-
-//				mX.push_back(point.X_m);
-//				mY.push_back(point.Y_m);
-//				mZ.push_back(point.Z_m);
-//				mR.push_back(range_mm * mm_to_m);
-			}
-
-            point.range_mm = range_mm;
-            point.signal = column[p].signal;
-            point.reflectivity = column[p].reflectivity;
-            point.nir = column[p].nir;
-
- //           mCloud.set(p, c, point);
+            mCloud.set(p, c, point);
         }
     }
-*/
 }
 
 void cLidarStatistics::onConfigParam(ouster::config_param_2_t config_param) {}
@@ -458,6 +460,9 @@ void cLidarStatistics::onLidarDataFormat(ouster::lidar_data_format_2_t format)
 {
 	mLidarDataFormat = format;
 
+	mCenterCol = (format.columns_per_frame / 2) - 1;
+	mCenterRow = (format.pixels_per_column / 2) - 1;
+
 	if (mLidarDataFormat.has_value() && mLidarIntrinsics.has_value() && mBeamIntrinsics.has_value())
 	{
 		createXyzLookupTable(mBeamIntrinsics.value(), mLidarIntrinsics.value(), mLidarDataFormat.value());
@@ -470,6 +475,26 @@ void cLidarStatistics::onImuData(ouster::imu_data_t data)
 
 	auto accelerometer_read_time_ns = data.accelerometer_read_time_ns;
 	auto gyroscope_read_time_ns = data.gyroscope_read_time_ns;
+
+	if (mAccelStartTimestamp_ns == 0)
+	{
+		mAccelStartTimestamp_ns = accelerometer_read_time_ns;
+
+		mAccelerations << "Time (ms), X (g), Y (g), Z (g)\n";
+	}
+
+	auto accel_time_ms = static_cast<double>(accelerometer_read_time_ns - mAccelStartTimestamp_ns) / 1000000.0;
+
+	if (mGyroStartTimestamp_ns == 0)
+	{
+		mGyroStartTimestamp_ns = gyroscope_read_time_ns;
+
+		mOrientationRates << "Time (ms), Pitch Rate (deg/sec), Roll Rate (deg/sec), Yaw Rate (deg/sec)\n";
+
+	}
+
+	auto gyro_time_ms = static_cast<double>(gyroscope_read_time_ns - mGyroStartTimestamp_ns) / 1000000.0;
+
 	double acceleration_X_g = data.acceleration_Xaxis_g;
 	double acceleration_Y_g = data.acceleration_Yaxis_g;
 	double acceleration_Z_g = data.acceleration_Zaxis_g;
@@ -492,13 +517,13 @@ void cLidarStatistics::onImuData(ouster::imu_data_t data)
 	mY_g = acceleration_Y_g;
 	mZ_g = acceleration_Z_g;
 
-	mAccelerations << accelerometer_read_time_ns << ", " << mX_g << ", " << mY_g << ", " << mZ_g << "\n";
+	mAccelerations << fmt::format("{:10.3f}", accel_time_ms) << ", " << mX_g << ", " << mY_g << ", " << mZ_g << "\n";
 
 	mPitchRate_deg_per_sec = angular_velocity_Yaxis_deg_per_sec;
 	mRollRate_deg_per_sec = angular_velocity_Xaxis_deg_per_sec;
 	mYawRate_deg_per_sec = angular_velocity_Zaxis_deg_per_sec;
 
-	mOrientationRates << gyroscope_read_time_ns << ", " 
+	mOrientationRates << fmt::format("{:10.3f}", gyro_time_ms) << ", "
 		<< mPitchRate_deg_per_sec << ", " << mRollRate_deg_per_sec << ", " 
 		<< mYawRate_deg_per_sec << "\n";
 

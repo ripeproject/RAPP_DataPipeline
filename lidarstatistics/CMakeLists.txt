@@ -150,6 +150,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 
 # Find all the packages needed by this code
 
+FIND_PACKAGE(fmt REQUIRED)
 FIND_PACKAGE(lyra REQUIRED)
 FIND_PACKAGE(Catch2 QUIET)
 FIND_PACKAGE(Eigen3 REQUIRED)

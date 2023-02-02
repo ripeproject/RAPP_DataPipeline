@@ -14,12 +14,23 @@
 
 struct sPoint_t
 {
-    double x;
-    double y;
-    double z;
+    double x_mm;
+    double y_mm;
+    double z_mm;
 
-    sPoint_t() : x(0), y(0), z(0) {}
-    sPoint_t(double i, double j, double k) : x(i), y(j), z(k) {}
+    sPoint_t() : x_mm(0), y_mm(0), z_mm(0) {}
+    sPoint_t(double i, double j, double k) : x_mm(i), y_mm(j), z_mm(k) {}
+};
+
+struct sCloudPoint_t
+{
+	double x_m;
+	double y_m;
+	double z_m;
+	double r_m;
+
+	sCloudPoint_t() : x_m(0), y_m(0), z_m(0), r_m(0) {}
+	sCloudPoint_t(double i, double j, double k) : x_m(i), y_m(j), z_m(k), r_m(0) {}
 };
 
 
@@ -102,7 +113,7 @@ private:
 	ouster::cRotationMatrix<double>		mImuToSensor;
 
 private:
-//    ouster::matrix_col_major<pointcloud::sCloudPoint_t> mCloud;
+    ouster::matrix_col_major<sCloudPoint_t> mCloud;
 
     std::vector<sPoint_t> mUnitVectors;
     std::vector<sPoint_t> mOffsets;
@@ -113,10 +124,14 @@ private:
 	std::ofstream mAccelerations;
 	std::ofstream mOrientationRates;
 	std::ofstream mPosition;
-	std::ofstream mRanges;
 
-	uint64_t mStartTimestamp_ns = 0;
+	uint64_t mLidarStartTimestamp_ns = 0;
+	uint64_t mAccelStartTimestamp_ns = 0;
+	uint64_t mGyroStartTimestamp_ns = 0;
 
+	/**
+	 * Data used to compute average imu data
+	 */
 	std::size_t mCount = 0;
 	double mAvg_X_g = 0.0;
 	double mAvg_Y_g = 0.0;
@@ -125,11 +140,17 @@ private:
 	double mAvgRollRate_deg_per_sec = 0.0;
 	double mAvgYawRate_deg_per_sec = 0.0;
 
+	/**
+	 * Imu Histogram Data for packet arrives
+	 */
 	int mImuCount = 0;
 	std::array<int, 20> mImuHistogram = { 0 };
 
-	std::vector<double> mX;
-	std::vector<double> mY;
-	std::vector<double> mZ;
-	std::vector<double> mR;
+	/**
+	 * LiDAR center point statistics
+	 */
+	uint32_t mCenterCol = 0;
+	uint32_t mCenterRow = 0;
+	double mSumCenterRange = 0.0;
+	double mSumCenterRange2 = 0.0;
 };

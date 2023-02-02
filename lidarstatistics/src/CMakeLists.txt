@@ -26,7 +26,7 @@ target_include_directories(lidar_stats PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
 target_link_libraries(lidar_stats PRIVATE cbdf::cbdf)
 target_link_libraries(lidar_stats PRIVATE cbdf::sensors)
-
+target_link_libraries(lidar_stats PRIVATE fmt::fmt)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

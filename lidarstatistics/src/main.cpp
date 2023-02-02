@@ -143,8 +143,6 @@ int main(int argc, char** argv)
 			continue;
 
 		files_to_process.push_back(dir_entry);
-
-		break;
 	}
 
 	int max_threads = std::thread::hardware_concurrency();
