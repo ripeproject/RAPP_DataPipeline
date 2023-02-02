@@ -57,15 +57,6 @@ public:
 	cLidar2PointCloud();
 	~cLidar2PointCloud();
 
-	void setOutputPath(std::filesystem::path path);
-
-	double mX_g = 0.0;
-	double mY_g = 0.0;
-	double mZ_g = 0.0;
-	double mPitchRate_deg_per_sec = 0.0;
-	double mRollRate_deg_per_sec = 0.0;
-	double mYawRate_deg_per_sec = 0.0;
-
 private:
 	void onConfigParam(ouster::config_param_2_t config_param) override;
 	void onSensorInfo(ouster::sensor_info_2_t sensor_info) override;
@@ -102,6 +93,7 @@ private:
 
 	ouster::imu_intrinsics_2_t			mImuIntrinsics;
 	ouster::cTransformMatrix<double>	mImuTransform;
+	ouster::cRotationMatrix<double>		mImuToSensor;
 
 private:
     ouster::matrix_col_major<pointcloud::sCloudPoint_t> mCloud;
@@ -109,17 +101,5 @@ private:
     std::vector<sPoint_t> mUnitVectors;
     std::vector<sPoint_t> mOffsets;
 
-	std::ofstream mAccelerations;
-	std::ofstream mOrientationRates;
-
-	std::size_t mCount = 0;
-	double mAvg_X_g = 0.0;
-	double mAvg_Y_g = 0.0;
-	double mAvg_Z_g = 0.0;
-	double mAvgPitchRate_deg_per_sec = 0.0;
-	double mAvgRollRate_deg_per_sec = 0.0;
-	double mAvgYawRate_deg_per_sec = 0.0;
-
-	int mImuCount = 0;
-	std::array<int, 20> mImuHistogram = { 0 };
+	uint64_t mStartTimestamp_ns = 0;
 };

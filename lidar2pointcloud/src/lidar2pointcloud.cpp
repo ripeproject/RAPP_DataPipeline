@@ -184,13 +184,13 @@ namespace
 
 }
 
-double cLidar2PointCloud::mMinDistance_m = 0.0;
+double cLidar2PointCloud::mMinDistance_m = 0.001;
 double cLidar2PointCloud::mMaxDistance_m = 1000.0;
 ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToENU;
 
 void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
 {
-	mMinDistance_m = std::max(min_dist_m, 0.0);
+	mMinDistance_m = std::max(min_dist_m, 0.001);
 	mMaxDistance_m = std::min(max_dist_m, 1000.0);
 }
 
@@ -250,49 +250,10 @@ void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, d
 
 
 cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(1024)
-{
-	for (int i = 0; i < 20; ++i)
-	{
-		mImuHistogram[i] = 0;
-	}
-}
+{}
 
 cLidar2PointCloud::~cLidar2PointCloud()
-{
-	for (int i = 0; i < 20; ++i)
-	{
-		std::cout << i << ": " << mImuHistogram[i] << std::endl;
-	}
-
-	std::cout << std::endl;
-
-	std::cout << "Average Accelerations:" << std::endl;
-	mAvg_X_g /= mCount;
-	mAvg_Y_g /= mCount;
-	mAvg_Z_g /= mCount;
-
-	std::cout << mAvg_X_g << ", " << mAvg_Y_g << ", " << mAvg_Z_g << std::endl;
-
-	std::cout << std::endl;
-
-	std::cout << "Average Orientation Rates:" << std::endl;
-	mAvgPitchRate_deg_per_sec /= mCount;
-	mAvgRollRate_deg_per_sec /= mCount;
-	mAvgYawRate_deg_per_sec /= mCount;
-
-	std::cout << mAvgPitchRate_deg_per_sec << ", " << mAvgRollRate_deg_per_sec << ", " << mAvgYawRate_deg_per_sec << std::endl;
-}
-
-void cLidar2PointCloud::setOutputPath(std::filesystem::path path)
-{
-	auto p = path.parent_path();
-
-	auto accelerations = p / "accelerations.csv";
-	auto orientationRates = p / "orientation_rates.csv";
-
-	mAccelerations.open(accelerations);
-	mOrientationRates.open(orientationRates);
-}
+{}
 
 void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
     const lidar_intrinsics_2_t& lidar, const lidar_data_format_2_t& format)
@@ -314,9 +275,19 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
 	double minDistance_mm = mMinDistance_m * m_to_mm;
 	double maxDistance_mm = mMaxDistance_m * m_to_mm;
 
+	if (!data.rangeDataIsValid())
+	{
+		std::cout << "Invalid range data!" << std::endl;
+	}
 
 	auto frameID = data.frame_id();
 	auto timestamp_ns = data.timestamp_ns();
+
+	if (mStartTimestamp_ns == 0)
+		mStartTimestamp_ns = timestamp_ns;
+
+	auto time_us = static_cast<double>(timestamp_ns - mStartTimestamp_ns)/1000.0;
+
     auto columns_per_frame = data.columnsPerFrame();
     auto pixels_per_column = data.pixelsPerColumn();
     mCloud.resize(pixels_per_column, columns_per_frame);
@@ -339,6 +310,7 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
             auto offset = mOffsets[i];
 
             auto range_mm = column[p].range_mm;
+
 			if ((range_mm < minDistance_mm) || (range_mm > maxDistance_mm))
 			{
 				point.X_m = 0.0;
@@ -413,7 +385,9 @@ void cLidar2PointCloud::onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsics)
 void cLidar2PointCloud::onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics)
 {
 	mImuIntrinsics = intrinsics;
-//	mImuTransform.set(mImuIntrinsics.imu_to_sensor_transform, true);
+	mImuTransform.set(mImuIntrinsics.imu_to_sensor_transform, true);
+	mImuToSensor = mImuTransform.rotation();
+
 }
 
 void cLidar2PointCloud::onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics)
@@ -442,16 +416,6 @@ void cLidar2PointCloud::onLidarDataFormat(ouster::lidar_data_format_2_t format)
 
 void cLidar2PointCloud::onImuData(ouster::imu_data_t data)
 {
-	++mImuCount;
-
-	auto rot = mImuTransform.rotation();
-	auto trans = mImuTransform.translation();
-
-//	rotate(lut.direction, rot);
-//	rotate(lut.offset, rot);
-
-//	translate(lut.offset, trans);
-
 	pointcloud::imu_data_t imu;
 	imu.accelerometer_read_time_ns = data.accelerometer_read_time_ns;
 	imu.gyroscope_read_time_ns = data.gyroscope_read_time_ns;
@@ -462,43 +426,19 @@ void cLidar2PointCloud::onImuData(ouster::imu_data_t data)
 	imu.angular_velocity_Yaxis_deg_per_sec = data.angular_velocity_Yaxis_deg_per_sec;
 	imu.angular_velocity_Zaxis_deg_per_sec = data.angular_velocity_Zaxis_deg_per_sec;
 
+	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mImuToSensor);
 	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mSensorToENU);
 
 	rotate(imu.angular_velocity_Xaxis_deg_per_sec, imu.angular_velocity_Yaxis_deg_per_sec,
+		imu.angular_velocity_Zaxis_deg_per_sec, mImuToSensor);
+	rotate(imu.angular_velocity_Xaxis_deg_per_sec, imu.angular_velocity_Yaxis_deg_per_sec,
 		imu.angular_velocity_Zaxis_deg_per_sec, mSensorToENU);
-
-	mX_g = imu.acceleration_X_g;
-	mY_g = imu.acceleration_Y_g;
-	mZ_g = imu.acceleration_Z_g;
-
-	mAccelerations << imu.accelerometer_read_time_ns << ", " << mX_g << ", " << mY_g << ", " << mZ_g << "\n";
-
-	mPitchRate_deg_per_sec = imu.angular_velocity_Yaxis_deg_per_sec;
-	mRollRate_deg_per_sec = imu.angular_velocity_Xaxis_deg_per_sec;
-	mYawRate_deg_per_sec = imu.angular_velocity_Zaxis_deg_per_sec;
-
-	mOrientationRates << imu.gyroscope_read_time_ns << ", " 
-		<< mPitchRate_deg_per_sec << ", " << mRollRate_deg_per_sec << ", " 
-		<< mYawRate_deg_per_sec << "\n";
-
-	++mCount;
-	mAvg_X_g += mX_g;
-	mAvg_Y_g += mY_g;
-	mAvg_Z_g += mZ_g;
-	mAvgPitchRate_deg_per_sec += mPitchRate_deg_per_sec;
-	mAvgRollRate_deg_per_sec += mRollRate_deg_per_sec;
-	mAvgYawRate_deg_per_sec += mYawRate_deg_per_sec;
 
 	write(imu);
 }
 
 void cLidar2PointCloud::onLidarData(cOusterLidarData data)
 {
-	int n = mImuHistogram[mImuCount] + 1;
-	mImuHistogram[mImuCount] = n;
-
-	mImuCount = 0;
-
 	if (mUnitVectors.empty())
 	{
 		return;
