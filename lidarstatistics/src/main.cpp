@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 
 	int num_of_threads = 0;
 	std::string input_directory = current_path().string();
-	std::string output_directory = current_path().string();
+	std::string output_directory;
 
 	auto cli = lyra::cli()
 		| lyra::opt(pitch_deg, "pitch (deg)")
@@ -156,6 +156,26 @@ int main(int argc, char** argv)
 
 	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 
+	std::filesystem::path out_dir;
+
+	if (output_directory.empty())
+	{
+		out_dir = input_directory;
+		out_dir /= "statistics";
+	}
+	else
+	{
+		out_dir = output_directory;
+	}
+
+	if (!std::filesystem::exists(out_dir))
+	{
+		if (!std::filesystem::create_directory(out_dir))
+		{
+			return -1;
+		}
+	}
+
 	std::vector<cFileProcessor*> file_processors;
 
 	for (auto& in_file : files_to_process)
@@ -163,7 +183,7 @@ int main(int argc, char** argv)
 		auto fe = removeTimestamp(in_file.path().filename().string());
 
 		std::string out_filename = fe.filename;
-		std::filesystem::path out_file = output_directory;
+		std::filesystem::path out_file = out_dir;
 		out_file /= out_filename;
 
 		cFileProcessor* fp = new cFileProcessor();
