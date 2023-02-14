@@ -35,6 +35,8 @@ protected:
 protected:
 	void processCoordinateSystem(cDataBuffer& buffer);
 	void processImuData(cDataBuffer& buffer);
+	void processReducedPointCloudByFrame(cDataBuffer& buffer);
+	void processSensorPointCloudByFrame(cDataBuffer& buffer);
 	void processPointCloudData(cDataBuffer& buffer);
 
 protected:

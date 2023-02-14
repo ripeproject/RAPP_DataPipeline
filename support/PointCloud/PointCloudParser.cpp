@@ -47,8 +47,14 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::IMU_DATA:
         processImuData(buffer);
         break;
+    case DataID::REDUCED_POINT_CLOUD_DATA_BY_FRAME:
+        processReducedPointCloudByFrame(buffer);
+        break;
+    case DataID::SENSOR_POINT_CLOUD_DATA_BY_FRAME:
+        processSensorPointCloudByFrame(buffer);
+        break;
     case DataID::POINT_CLOUD_DATA:
-//        processLidarData(buffer);
+        processPointCloudData(buffer);
         break;
     }
 }
@@ -82,6 +88,21 @@ void cPointCloudParser::processImuData(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processImuData.");
 
     onImuData(data);
+}
+
+void cPointCloudParser::processReducedPointCloudByFrame(cDataBuffer& buffer)
+{
+
+}
+
+void cPointCloudParser::processSensorPointCloudByFrame(cDataBuffer& buffer)
+{
+
+}
+
+void cPointCloudParser::processPointCloudData(cDataBuffer& buffer)
+{
+
 }
 
 /*

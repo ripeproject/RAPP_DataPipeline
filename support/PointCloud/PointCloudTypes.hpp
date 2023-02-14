@@ -68,5 +68,11 @@ namespace pointcloud
         uint64_t timestamp_ns;
         std::vector<pointcloud::sCloudPoint_t> pointCloud;
     };
+
+
+    struct point_cloud_t
+    {
+        std::vector<pointcloud::sCloudPoint_t> pointCloud;
+    };
 }
 

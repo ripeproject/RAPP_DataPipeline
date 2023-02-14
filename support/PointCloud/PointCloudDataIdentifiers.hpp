@@ -12,6 +12,8 @@ namespace pointcloud
     {
 		COORDINATE_SYSTEM,
         IMU_DATA,
+        REDUCED_POINT_CLOUD_DATA_BY_FRAME,
+        SENSOR_POINT_CLOUD_DATA_BY_FRAME,
         POINT_CLOUD_DATA,
     };
 }
