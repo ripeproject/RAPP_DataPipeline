@@ -24,7 +24,11 @@ public:
 
 	virtual void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) = 0;
 	virtual void onImuData(pointcloud::imu_data_t data) = 0;
-//	virtual void onLidarData(cOusterLidarData data) = 0;
+	virtual void onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns,
+									std::vector<pointcloud::sCloudPoint_t> pointCloud) = 0;
+	virtual void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, 
+									std::vector<pointcloud::sCloudPoint_t> pointCloud) = 0;
+	virtual void onPointCloudData(std::vector<pointcloud::sCloudPoint_t> pointCloud) = 0;
 
 protected:
 	void processData(BLOCK_MAJOR_VERSION_t major_version,
@@ -38,9 +42,6 @@ protected:
 	void processReducedPointCloudByFrame(cDataBuffer& buffer);
 	void processSensorPointCloudByFrame(cDataBuffer& buffer);
 	void processPointCloudData(cDataBuffer& buffer);
-
-protected:
-//	cOusterLidarData	mLidarData;
 
 private:
 	std::unique_ptr<cPointCloudID> mBlockID;
