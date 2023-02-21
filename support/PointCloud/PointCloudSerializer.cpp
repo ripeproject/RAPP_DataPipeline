@@ -73,7 +73,7 @@ void cPointCloudSerializer::write(const imu_data_t& in)
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
 }
 
-void cPointCloudSerializer::write(const reduced_point_cloud_by_frame_t& in)
+void cPointCloudSerializer::write(const cReducedPointCloudByFrame& in)
 {
     assert(mpDataFile);
 
@@ -81,12 +81,12 @@ void cPointCloudSerializer::write(const reduced_point_cloud_by_frame_t& in)
 
     mDataBuffer.clear();
 
-    mDataBuffer << in.frameID;
+    mDataBuffer << in.frameID();
 
-    uint64_t timestamp = in.timestamp_ns;
+    uint64_t timestamp = in.timestamp_ns();
     mDataBuffer << timestamp;
 
-    auto& data = in.pointCloud;
+    auto& data = in.data();
 
     uint32_t num_points = data.size();
 
@@ -107,12 +107,12 @@ void cPointCloudSerializer::write(const reduced_point_cloud_by_frame_t& in)
     assert(!mDataBuffer.overrun());
 
     if (mDataBuffer.overrun())
-        throw std::runtime_error("ERROR, Buffer Overrun in writing reduced_point_cloud_by_frame_t data.");
+        throw std::runtime_error("ERROR, Buffer Overrun in writing cReducedPointCloudByFrame data.");
 
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
 }
 
-void cPointCloudSerializer::write(const pointcloud::sensor_point_cloud_by_frame_t& in)
+void cPointCloudSerializer::write(const cSensorPointCloudByFrame& in)
 {
     assert(mpDataFile);
 
@@ -120,10 +120,16 @@ void cPointCloudSerializer::write(const pointcloud::sensor_point_cloud_by_frame_
 
     mDataBuffer.clear();
 
-    mDataBuffer << in.frameID;
+    mDataBuffer << in.frameID();
 
-    uint64_t timestamp = in.timestamp_ns;
+    uint64_t timestamp = in.timestamp_ns();
     mDataBuffer << timestamp;
+
+    uint32_t pixelsPerColumn = in.pixelsPerColumn();
+    uint32_t columnsPerFrame = in.columnsPerFrame();
+
+    mDataBuffer << pixelsPerColumn;
+    mDataBuffer << columnsPerFrame;
 
 /*
     uint32_t num_points = cloud_data.size();
@@ -142,6 +148,7 @@ void cPointCloudSerializer::write(const pointcloud::sensor_point_cloud_by_frame_
         mDataBuffer << point.reflectivity;
         mDataBuffer << point.nir;
     }
+*/
 
     assert(!mDataBuffer.overrun());
 
@@ -149,11 +156,10 @@ void cPointCloudSerializer::write(const pointcloud::sensor_point_cloud_by_frame_
         throw std::runtime_error("ERROR, Buffer Overrun in writing cPointCloud data.");
 
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
-*/
 }
 
 
-void cPointCloudSerializer::write(const point_cloud_t& in)
+void cPointCloudSerializer::write(const cPointCloud& in)
 {
     assert(mpDataFile);
 
@@ -161,7 +167,7 @@ void cPointCloudSerializer::write(const point_cloud_t& in)
 
     mDataBuffer.clear();
 
-    auto& data = in.pointCloud;
+    auto& data = in.data();
 
     uint32_t num_points = data.size();
 

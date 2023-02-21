@@ -14,12 +14,12 @@ namespace pointcloud
 {
 	enum class eCOORDINATE_SYSTEM : uint8_t;
 	struct imu_data_t;
-	struct reduced_point_cloud_by_frame_t;
-	struct sensor_point_cloud_by_frame_t;
-	struct point_cloud_t;
 }
 
 class cPointCloudID;
+
+class cReducedPointCloudByFrame;
+class cSensorPointCloudByFrame;
 class cPointCloud;
 
 
@@ -32,9 +32,9 @@ public:
 
 	void write(const pointcloud::eCOORDINATE_SYSTEM& in);
 	void write(const pointcloud::imu_data_t& in);
-	void write(const pointcloud::reduced_point_cloud_by_frame_t& in);
-	void write(const pointcloud::sensor_point_cloud_by_frame_t& in);
-	void write(const pointcloud::point_cloud_t& in);
+	void write(const cReducedPointCloudByFrame& in);
+	void write(const cSensorPointCloudByFrame& in);
+	void write(const cPointCloud& in);
 
 protected:
 	cBlockID& blockID() override;

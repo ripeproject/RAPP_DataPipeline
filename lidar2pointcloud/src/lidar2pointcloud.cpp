@@ -1,6 +1,7 @@
 
 #include "lidar2pointcloud.hpp"
 #include "PointCloudTypes.hpp"
+#include "PointCloud.hpp"
 
 #include <ouster/simple_blas.h>
 
@@ -343,9 +344,9 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
         }
     }
 
-	pointcloud::reduced_point_cloud_by_frame_t pc;
-	pc.frameID = frameID;
-	pc.timestamp_ns = timestamp_ns;
+	cReducedPointCloudByFrame pc;
+	pc.frameID(frameID);
+	pc.timestamp_ns(timestamp_ns);
 
 	for (int c = 0; c < columns_per_frame; ++c)
 	{
@@ -353,10 +354,7 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
 		for (int p = 0; p < pixels_per_column; ++p)
 		{
 			auto point = column[p];
-			if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
-				continue;
-
-			pc.pointCloud.push_back(point);
+			pc.addPoint(point);
 		}
 	}
 

@@ -52,27 +52,5 @@ namespace pointcloud
             range_mm(0), signal(0), reflectivity(0), nir(0)
         {}
     };
-
-
-    struct reduced_point_cloud_by_frame_t
-    {
-        uint16_t frameID;
-        uint64_t timestamp_ns;
-        std::vector<pointcloud::sCloudPoint_t> pointCloud;
-    };
-
-
-    struct sensor_point_cloud_by_frame_t
-    {
-        uint16_t frameID;
-        uint64_t timestamp_ns;
-        std::vector<pointcloud::sCloudPoint_t> pointCloud;
-    };
-
-
-    struct point_cloud_t
-    {
-        std::vector<pointcloud::sCloudPoint_t> pointCloud;
-    };
 }
 

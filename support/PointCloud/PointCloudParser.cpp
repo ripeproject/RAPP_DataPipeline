@@ -94,14 +94,18 @@ void cPointCloudParser::processReducedPointCloudByFrame(cDataBuffer& buffer)
 {
     uint16_t frameID = 0;
     uint64_t timestamp_ns = 0;
-    std::vector<pointcloud::sCloudPoint_t> pointCloud;
 
     buffer >> frameID;
     buffer >> timestamp_ns;
 
+    cReducedPointCloudByFrame pointCloud;
+    pointCloud.frameID(frameID);
+    pointCloud.timestamp_ns(timestamp_ns);
+
     uint32_t num_points = 0;
 
     buffer >> num_points;
+    pointCloud.resize(num_points);
 
     for (uint32_t n = 0; n < num_points; ++n)
     {
@@ -114,7 +118,7 @@ void cPointCloudParser::processReducedPointCloudByFrame(cDataBuffer& buffer)
         buffer >> point.reflectivity;
         buffer >> point.nir;
 
-        pointCloud.push_back(point);
+        pointCloud.set(n, point);
     }
 
     if (buffer.underrun())
@@ -158,11 +162,12 @@ void cPointCloudParser::processSensorPointCloudByFrame(cDataBuffer& buffer)
 
 void cPointCloudParser::processPointCloudData(cDataBuffer& buffer)
 {
-    std::vector<pointcloud::sCloudPoint_t> pointCloud;
-
     uint32_t num_points = 0;
 
     buffer >> num_points;
+
+    cPointCloud pointCloud;
+    pointCloud.resize(num_points);
 
     for (uint32_t n = 0; n < num_points; ++n)
     {
@@ -175,7 +180,7 @@ void cPointCloudParser::processPointCloudData(cDataBuffer& buffer)
         buffer >> point.reflectivity;
         buffer >> point.nir;
 
-        pointCloud.push_back(point);
+        pointCloud.set(n, point);
     }
 
     if (buffer.underrun())
