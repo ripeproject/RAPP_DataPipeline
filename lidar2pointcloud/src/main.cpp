@@ -88,6 +88,8 @@ int main(int argc, char** argv)
 	double min_dist_m = 0;
 	double max_dist_m = 1000;
 
+	bool saveReducedPointCloud = false;
+
 	int num_of_threads = 0;
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
@@ -108,6 +110,9 @@ int main(int argc, char** argv)
 		| lyra::opt(max_dist_m, "max distance (m)")
 		["-x"]["--max_distance_m"]
 		("The maximum distance of the lidar return to use in meters.")
+		| lyra::opt(saveReducedPointCloud)
+		["-c"]["--compact"]
+		("Save a reduced pointcloud.  Points outside min/max distances are not stored.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")
@@ -127,6 +132,11 @@ int main(int argc, char** argv)
 
 	cLidar2PointCloud::setValidRange_m(min_dist_m, max_dist_m);
 	cLidar2PointCloud::setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
+
+	if (saveReducedPointCloud)
+	{
+		cLidar2PointCloud::saveReducedPointCloud();
+	}
 
 /*
 	pitch_deg = -90.0;

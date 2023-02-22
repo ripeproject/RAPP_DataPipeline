@@ -53,6 +53,8 @@ public:
 	 */
 	static void setSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg);
 
+	static void saveReducedPointCloud();
+
 public:
 	cLidar2PointCloud();
 	~cLidar2PointCloud();
@@ -85,6 +87,8 @@ private:
 	static double mMaxDistance_m;
 
 	static ouster::cRotationMatrix<double> mSensorToENU;
+
+	static bool mSaveReducedPointCloud;
 
 private:
 	std::optional<ouster::beam_intrinsics_2_t>   mBeamIntrinsics;

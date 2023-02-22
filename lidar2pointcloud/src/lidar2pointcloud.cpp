@@ -185,9 +185,15 @@ namespace
 
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// S t a t i c   V a r i a b l e s   a n d   M e t h o d s
+///////////////////////////////////////////////////////////////////////////////
+
 double cLidar2PointCloud::mMinDistance_m = 0.001;
 double cLidar2PointCloud::mMaxDistance_m = 1000.0;
 ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToENU;
+bool cLidar2PointCloud::mSaveReducedPointCloud = false;
 
 void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
 {
@@ -249,6 +255,15 @@ void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, d
 */
 }
 
+void cLidar2PointCloud::saveReducedPointCloud()
+{
+	mSaveReducedPointCloud = true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// M a i n   C l a s s
+///////////////////////////////////////////////////////////////////////////////
 
 cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(1024)
 {}
@@ -344,21 +359,43 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
         }
     }
 
-	cReducedPointCloudByFrame pc;
-	pc.frameID(frameID);
-	pc.timestamp_ns(timestamp_ns);
-
-	for (int c = 0; c < columns_per_frame; ++c)
+	if (mSaveReducedPointCloud)
 	{
-		auto column = mCloud.column(c);
-		for (int p = 0; p < pixels_per_column; ++p)
-		{
-			auto point = column[p];
-			pc.addPoint(point);
-		}
-	}
+		cReducedPointCloudByFrame pc;
+		pc.frameID(frameID);
+		pc.timestamp_ns(timestamp_ns);
 
-	write(pc);
+		for (int c = 0; c < columns_per_frame; ++c)
+		{
+			auto column = mCloud.column(c);
+			for (int p = 0; p < pixels_per_column; ++p)
+			{
+				auto point = column[p];
+				pc.addPoint(point);
+			}
+		}
+
+		write(pc);
+	}
+	else
+	{
+		cSensorPointCloudByFrame pc;
+		pc.frameID(frameID);
+		pc.timestamp_ns(timestamp_ns);
+		pc.resize(mCloud.num_rows(), mCloud.num_columns());
+
+		for (int c = 0; c < columns_per_frame; ++c)
+		{
+			auto column = mCloud.column(c);
+			for (int p = 0; p < pixels_per_column; ++p)
+			{
+				auto point = column[p];
+				pc.set(c, p, point);
+			}
+		}
+
+		write(pc);
+	}
 }
 
 void cLidar2PointCloud::onConfigParam(ouster::config_param_2_t config_param) {}
@@ -402,11 +439,9 @@ void cLidar2PointCloud::onLidarDataFormat(ouster::lidar_data_format_2_t format)
 {
 	mLidarDataFormat = format;
 
-/*
 	setBufferCapacity(static_cast<std::size_t>(format.pixels_per_column) *
 		static_cast<std::size_t>(format.columns_per_frame) *
-		sizeof(pointcloud::sensor_point_cloud_by_frame_t) + 32);
-*/
+		sizeof(pointcloud::sCloudPoint_t) + 32);
 
 	if (mLidarDataFormat.has_value() && mLidarIntrinsics.has_value() && mBeamIntrinsics.has_value())
 	{
