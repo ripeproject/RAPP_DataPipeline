@@ -81,10 +81,8 @@ void cPointCloudSerializer::write(const cReducedPointCloudByFrame& in)
 
     mDataBuffer.clear();
 
-    mDataBuffer << in.frameID();
-
-    uint64_t timestamp = in.timestamp_ns();
-    mDataBuffer << timestamp;
+    mDataBuffer.put<uint16_t>(in.frameID());
+    mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
     auto& data = in.data();
 
@@ -120,16 +118,11 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame& in)
 
     mDataBuffer.clear();
 
-    mDataBuffer << in.frameID();
+    mDataBuffer.put<uint16_t>(in.frameID());
+    mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
-    uint64_t timestamp = in.timestamp_ns();
-    mDataBuffer << timestamp;
-
-    uint32_t channelsPerColumn = in.channelsPerColumn();
-    uint32_t columnsPerFrame = in.columnsPerFrame();
-
-    mDataBuffer << channelsPerColumn;
-    mDataBuffer << columnsPerFrame;
+    mDataBuffer.put<uint32_t>(in.channelsPerColumn());
+    mDataBuffer.put<uint32_t>(in.columnsPerFrame());
 
     auto& data = in.data();
     for (uint32_t n = 0; n < data.size(); ++n)

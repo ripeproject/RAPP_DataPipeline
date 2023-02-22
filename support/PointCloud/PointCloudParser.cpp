@@ -92,19 +92,15 @@ void cPointCloudParser::processImuData(cDataBuffer& buffer)
 
 void cPointCloudParser::processReducedPointCloudByFrame(cDataBuffer& buffer)
 {
-    uint16_t frameID = 0;
-    uint64_t timestamp_ns = 0;
-
-    buffer >> frameID;
-    buffer >> timestamp_ns;
+    uint16_t frameID = buffer.get<uint16_t>();
+    uint64_t timestamp_ns = buffer.get<uint64_t>();
 
     cReducedPointCloudByFrame pointCloud;
     pointCloud.frameID(frameID);
     pointCloud.timestamp_ns(timestamp_ns);
 
-    uint32_t num_points = 0;
+    uint32_t num_points = buffer.get<uint32_t>();
 
-    buffer >> num_points;
     pointCloud.resize(num_points);
 
     for (uint32_t n = 0; n < num_points; ++n)
@@ -129,40 +125,33 @@ void cPointCloudParser::processReducedPointCloudByFrame(cDataBuffer& buffer)
 
 void cPointCloudParser::processSensorPointCloudByFrame(cDataBuffer& buffer)
 {
-    uint16_t frameID = 0;
-    uint64_t timestamp_ns = 0;
-
-    buffer >> frameID;
-    buffer >> timestamp_ns;
+    uint16_t frameID = buffer.get<uint16_t>();
+    uint64_t timestamp_ns = buffer.get<uint64_t>();
 
     cSensorPointCloudByFrame pointCloud;
     pointCloud.frameID(frameID);
     pointCloud.timestamp_ns(timestamp_ns);
 
-    uint32_t channelsPerColumn = 0;
-    uint32_t columnsPerFrame = 0;
-
-    buffer >> channelsPerColumn;
-    buffer >> columnsPerFrame;
+    uint32_t channelsPerColumn = buffer.get<uint32_t>();
+    uint32_t columnsPerFrame = buffer.get<uint32_t>();
 
     pointCloud.resize(channelsPerColumn, columnsPerFrame);
 
-    uint32_t num_points = 0;
-
-    buffer >> num_points;
-
-    for (uint32_t n = 0; n < num_points; ++n)
+    for (int c = 0; c < columnsPerFrame; ++c)
     {
-        pointcloud::sCloudPoint_t point;
-        buffer >> point.X_m;
-        buffer >> point.Y_m;
-        buffer >> point.Z_m;
-        buffer >> point.range_mm;
-        buffer >> point.signal;
-        buffer >> point.reflectivity;
-        buffer >> point.nir;
+        for (int p = 0; p < channelsPerColumn; ++p)
+        {
+            pointcloud::sCloudPoint_t point;
+            buffer >> point.X_m;
+            buffer >> point.Y_m;
+            buffer >> point.Z_m;
+            buffer >> point.range_mm;
+            buffer >> point.signal;
+            buffer >> point.reflectivity;
+            buffer >> point.nir;
 
-//        pointCloud.push_back(point);
+            pointCloud.set(c, p, point);
+        }
     }
 
     if (buffer.underrun())
@@ -173,9 +162,7 @@ void cPointCloudParser::processSensorPointCloudByFrame(cDataBuffer& buffer)
 
 void cPointCloudParser::processPointCloudData(cDataBuffer& buffer)
 {
-    uint32_t num_points = 0;
-
-    buffer >> num_points;
+    uint32_t num_points = buffer.get<uint32_t>();
 
     cPointCloud pointCloud;
     pointCloud.resize(num_points);
