@@ -2,9 +2,7 @@
 #pragma once
 
 #include "PointCloudParser.hpp"
-#include "PointCloudTypes.hpp"
-
-#include <cbdf/BlockDataFile.hpp>
+#include "PointCloud.hpp"
 
 #include <filesystem>
 #include <string>
@@ -33,12 +31,24 @@ public:
 private:
     void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;
     void onImuData(pointcloud::imu_data_t data) override;
-
+    void onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
+    void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
+    void onPointCloudData(cPointCloud pointCloud) override;
 
 private:
 
 private:
-//    ouster::matrix_col_major<pointcloud::sCloudPoint_t> mCloud;
+    uint32_t    mFrameCount = 0;
+
+    struct float3 { float x, y, z; };
+    struct uint3 { uint16_t s, r, a; };
+
+    uint16_t mFrameID = 0;
+    std::vector<float3>   mVertices;
+    std::vector<uint32_t> mRanges;
+    std::vector<uint3>    mReturns;
+    std::vector<uint16_t> mFrameIDs;
+
 
     std::vector<sPoint_t> mUnitVectors;
     std::vector<sPoint_t> mOffsets;
