@@ -125,19 +125,14 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame& in)
     uint64_t timestamp = in.timestamp_ns();
     mDataBuffer << timestamp;
 
-    uint32_t pixelsPerColumn = in.pixelsPerColumn();
+    uint32_t channelsPerColumn = in.channelsPerColumn();
     uint32_t columnsPerFrame = in.columnsPerFrame();
 
-    mDataBuffer << pixelsPerColumn;
+    mDataBuffer << channelsPerColumn;
     mDataBuffer << columnsPerFrame;
 
-/*
-    uint32_t num_points = cloud_data.size();
-
-    mDataBuffer << num_points;
-
-    auto& data = cloud_data.data();
-    for (uint32_t n = 0; n < num_points; ++n)
+    auto& data = in.data();
+    for (uint32_t n = 0; n < data.size(); ++n)
     {
         auto point = data[n];
         mDataBuffer << point.X_m;
@@ -148,7 +143,6 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame& in)
         mDataBuffer << point.reflectivity;
         mDataBuffer << point.nir;
     }
-*/
 
     assert(!mDataBuffer.overrun());
 

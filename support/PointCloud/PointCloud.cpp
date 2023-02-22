@@ -1,6 +1,7 @@
 
 #include "PointCloud.hpp"
 
+#include <cassert>
 
 /******************************************************************************
  * 
@@ -35,8 +36,71 @@ std::size_t cPointCloudBase::size() const
  *
  *****************************************************************************/
 
+
+ /////////////////////////////////////////////////////////////////////////////////////
+ // View
+ /////////////////////////////////////////////////////////////////////////////////////
+
+cSensorPointCloudByFrame::view::view(const_pointer start, const_pointer last, std::size_t stride)
+	: mpStart(start), mpLast(last), mStride(stride)
+{}
+
+bool cSensorPointCloudByFrame::view::empty() const
+{
+	return mpLast == mpStart;
+}
+
+std::size_t cSensorPointCloudByFrame::view::size() const
+{
+	if (mpLast == mpStart) return 0;
+	return (std::distance(mpStart, mpLast) / mStride) + 1;
+}
+
+cSensorPointCloudByFrame::view::const_reference cSensorPointCloudByFrame::view::operator[](std::size_t i) const
+{
+	return *(mpStart + i * mStride);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Span
+/////////////////////////////////////////////////////////////////////////////////////
+cSensorPointCloudByFrame::span::span(pointer start, pointer last, std::size_t stride)
+	: mpStart(start), mpLast(last), mStride(stride)
+{}
+
+bool cSensorPointCloudByFrame::span::empty() const
+{
+	return mpLast == mpStart;
+}
+
+std::size_t cSensorPointCloudByFrame::span::size() const
+{
+	if (mpLast == mpStart) return 0;
+	return (std::distance(mpStart, mpLast) / mStride) + 1;
+}
+
+cSensorPointCloudByFrame::span::const_reference cSensorPointCloudByFrame::span::operator[](std::size_t i) const
+{
+	return *(mpStart + i * mStride);
+}
+
+cSensorPointCloudByFrame::span::reference cSensorPointCloudByFrame::span::operator[](std::size_t i)
+{
+	return *(mpStart + i * mStride);
+}
+
+cSensorPointCloudByFrame::view cSensorPointCloudByFrame::span::to_view() const
+{
+	return view(mpStart, mpLast, mStride);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+// Sensor Point Cloud By Frame
+/////////////////////////////////////////////////////////////////////////////////////
 cSensorPointCloudByFrame::cSensorPointCloudByFrame()
-    : mFrameID(0), mTimestamp_ns(0), mNumOfPixelsPerColumn(0), mNumOfCols(0)
+    : mFrameID(0), mTimestamp_ns(0), mNumOfChannelsPerColumn(0), mNumOfColumnsPerFrame(0)
 {}
 
 void cSensorPointCloudByFrame::frameID(uint16_t id)
@@ -49,60 +113,47 @@ void cSensorPointCloudByFrame::timestamp_ns(uint64_t ts)
     mTimestamp_ns = ts;
 }
 
-
-std::size_t cSensorPointCloudByFrame::pixelsPerColumn() const
+std::size_t cSensorPointCloudByFrame::channelsPerColumn() const
 {
-	return mNumOfPixelsPerColumn;
+	return mNumOfChannelsPerColumn;
 }
 
 std::size_t cSensorPointCloudByFrame::columnsPerFrame() const
 {
-	return mNumOfCols;
+	return mNumOfColumnsPerFrame;
 }
 
 void cSensorPointCloudByFrame::resize(std::uint16_t pixels_per_column, uint16_t columns_per_frame)
 {
-	mNumOfPixelsPerColumn = pixels_per_column;
-	mNumOfCols = columns_per_frame;
+	mNumOfChannelsPerColumn = pixels_per_column;
+	mNumOfColumnsPerFrame = columns_per_frame;
 	mCloud.resize(pixels_per_column * columns_per_frame);
 }
 
-template<typename T>
-inline ouster::view<T> ouster::matrix_col_major<T>::row(std::size_t r) const
+cSensorPointCloudByFrame::view cSensorPointCloudByFrame::channels(uint16_t column) const
 {
-	return view<T>(&mData[r], &mData[(mNumOfCols - 1) * mNumOfPixelsPerColumn + r], mNumOfPixelsPerColumn);
+	return view(&mCloud[column * mNumOfChannelsPerColumn],
+				&mCloud[(column + 1) * mNumOfChannelsPerColumn - 1], 1);
 }
 
-template<typename T>
-inline ouster::span<T> ouster::matrix_col_major<T>::row(std::size_t r)
+cSensorPointCloudByFrame::span cSensorPointCloudByFrame::channels(uint16_t column)
 {
-	return span<T>(&mData[r], &mData[(mNumOfCols - 1) * mNumOfPixelsPerColumn + r], mNumOfPixelsPerColumn);
+	return span(&mCloud[column * mNumOfChannelsPerColumn],
+				&mCloud[(column + 1) * mNumOfChannelsPerColumn - 1], 1);
 }
 
-template<typename T>
-inline ouster::view<T> ouster::matrix_col_major<T>::column(std::size_t c) const
+const pointcloud::sCloudPoint_t& cSensorPointCloudByFrame::get(uint16_t column, uint16_t chn) const
 {
-	return view<T>(&mData[c * mNumOfPixelsPerColumn], &mData[(c + 1) * mNumOfPixelsPerColumn - 1], 1);
+	return mCloud[chn + column * mNumOfChannelsPerColumn];
 }
 
-template<typename T>
-inline ouster::span<T> ouster::matrix_col_major<T>::column(std::size_t c)
+void cSensorPointCloudByFrame::set(uint16_t column, uint16_t chn, const pointcloud::sCloudPoint_t& v)
 {
-	return span<T>(&mData[c * mNumOfPixelsPerColumn], &mData[(c + 1) * mNumOfPixelsPerColumn - 1], 1);
-}
+	assert(chn < mNumOfChannelsPerColumn);
+	assert(column < mNumOfColumnsPerFrame);
 
-template<typename T>
-inline const typename ouster::matrix_col_major<T>::value_type& ouster::matrix_col_major<T>::get(std::size_t row, std::size_t col) const
-{
-	return mData[row + col * mNumOfPixelsPerColumn];
+	mCloud[chn + column * mNumOfChannelsPerColumn] = v;
 }
-
-template<typename T>
-void ouster::matrix_col_major<T>::set(std::size_t row, std::size_t col, const value_type& v)
-{
-	mData[row + col * mNumOfPixelsPerColumn] = v;
-}
-
 
 
 /******************************************************************************

@@ -402,9 +402,11 @@ void cLidar2PointCloud::onLidarDataFormat(ouster::lidar_data_format_2_t format)
 {
 	mLidarDataFormat = format;
 
+/*
 	setBufferCapacity(static_cast<std::size_t>(format.pixels_per_column) *
 		static_cast<std::size_t>(format.columns_per_frame) *
 		sizeof(pointcloud::sensor_point_cloud_by_frame_t) + 32);
+*/
 
 	if (mLidarDataFormat.has_value() && mLidarIntrinsics.has_value() && mBeamIntrinsics.has_value())
 	{
