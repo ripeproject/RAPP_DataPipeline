@@ -89,12 +89,15 @@ int main(int argc, char** argv)
 	double max_dist_m = 1000;
 
 	bool saveReducedPointCloud = false;
+	bool showHelp = false;
 
 	int num_of_threads = 0;
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
 
 	auto cli = lyra::cli()
+		| lyra::help(showHelp)
+		("Show usage information.")
 		| lyra::opt(pitch_deg, "pitch (deg)")
 		["-p"]["--pitch_deg"]
 		("The pitch angle of the sensor with respect to the horizontal.  Range is +90 to -90 degrees.")
@@ -119,14 +122,24 @@ int main(int argc, char** argv)
 		.optional()
 		| lyra::arg(input_directory, "input directory")
 		("The path to input directory for converting lidar to pointcloud data.")
+		.required()
 		| lyra::arg(output_directory, "output directory")
-		("The path to output directory for converting lidar to pointcloud data.");
+		("The path to output directory for converted pointcloud data.")
+		.required();
 
 	auto result = cli.parse({argc, argv});
+
+	if (showHelp)
+	{
+		std::cout << cli << std::endl;
+		return 0;
+	}
 
 	if (!result)
 	{
 		std::cerr << "Error in command line: " << result.message() << std::endl;
+		std::cerr << std::endl;
+		std::cerr << cli << std::endl;
 		return 1;
 	}
 
