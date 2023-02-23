@@ -28,7 +28,6 @@ private:
 	cBlockDataFileReader mFileReader;
 
 	std::filesystem::path mInputFile;
-	std::filesystem::path mOutputFile;
 
 	std::unique_ptr<cPointCloud2Ply> mConverter;
 };

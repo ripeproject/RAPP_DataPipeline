@@ -17,6 +17,11 @@ cPointCloud2Ply::cPointCloud2Ply() : cPointCloudParser()
 cPointCloud2Ply::~cPointCloud2Ply()
 {}
 
+void cPointCloud2Ply::setOutputPath(std::filesystem::path out)
+{
+    mOutputPath = out;
+}
+
 void cPointCloud2Ply::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) {}
 void cPointCloud2Ply::onImuData(pointcloud::imu_data_t data) {}
 void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) {}

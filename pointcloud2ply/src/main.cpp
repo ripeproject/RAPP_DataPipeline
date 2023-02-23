@@ -83,21 +83,35 @@ int main(int argc, char** argv)
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
 
+	bool showHelp = false;
+
 	auto cli = lyra::cli()
+		| lyra::help(showHelp)
+		("Show usage information.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")
 		.optional()
 		| lyra::arg(input_directory, "input directory")
 		("The path to input directory for converting pointcloud data to a ply file(s).")
+		.required()
 		| lyra::arg(output_directory, "output directory")
-		("The path to output directory for converting pointcloud data to a ply file(s).");
+		("The path to output directory for the ply file(s).")
+		.required();
 
 	auto result = cli.parse({argc, argv});
+
+	if (showHelp)
+	{
+		std::cout << cli << std::endl;
+		return 0;
+	}
 
 	if (!result)
 	{
 		std::cerr << "Error in command line: " << result.message() << std::endl;
+		std::cerr << std::endl;
+		std::cerr << cli << std::endl;
 		return 1;
 	}
 

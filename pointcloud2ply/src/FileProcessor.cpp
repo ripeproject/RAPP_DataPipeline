@@ -27,12 +27,16 @@ bool cFileProcessor::open(std::filesystem::directory_entry in,
 							std::filesystem::path out)
 {
     mInputFile = in;
-    mOutputFile = out;
 
-    if (std::filesystem::exists(mOutputFile))
+    std::filesystem::path outFile = out / mInputFile.filename();
+    outFile = outFile.replace_extension();
+
+    if (std::filesystem::exists(outFile))
     {
         return false;
     }
+
+    mConverter->setOutputPath(outFile);
 
     mFileReader.open(mInputFile.string());
 
