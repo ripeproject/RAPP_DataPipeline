@@ -25,6 +25,8 @@ private:
     void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
     void onPointCloudData(cPointCloud pointCloud) override;
 
+    void writePlyFile();
+
 private:
     std::filesystem::path mOutputPath;
 
@@ -38,7 +40,6 @@ private:
     std::vector<uint32_t> mRanges;
     std::vector<uint3>    mReturns;
     std::vector<uint16_t> mFrameIDs;
-
 
 	uint64_t mStartTimestamp_ns = 0;
 };

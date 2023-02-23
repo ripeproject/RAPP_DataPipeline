@@ -28,10 +28,10 @@ bool cFileProcessor::open(std::filesystem::directory_entry in,
 {
     mInputFile = in;
 
-    std::filesystem::path outFile = out / mInputFile.filename();
-    outFile = outFile.replace_extension();
-
-    if (std::filesystem::exists(outFile))
+    std::filesystem::path outFile  = out.replace_extension();
+    std::filesystem::path testFile = outFile;
+    testFile.replace_extension(".0.ply");
+    if (std::filesystem::exists(testFile))
     {
         return false;
     }
