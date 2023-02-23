@@ -88,6 +88,9 @@ int main(int argc, char** argv)
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
 		("Show usage information.")
+		| lyra::opt(cPointCloud2Ply::mIndividualPlyFiles)
+		["-i"]["--individual"]
+		("Export individual ply files by frame number.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")

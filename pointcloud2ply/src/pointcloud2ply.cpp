@@ -4,18 +4,31 @@
 
 #include <tinyply.h>
 
-#include <algorithm>
-#include <numbers>
-#include <cmath>
-#include <valarray>
 #include <iostream>
+
+
+//#define USE_BINARY
+
+bool cPointCloud2Ply::mIndividualPlyFiles = false;
 
 
 cPointCloud2Ply::cPointCloud2Ply() : cPointCloudParser()
 {}
 
 cPointCloud2Ply::~cPointCloud2Ply()
-{}
+{
+    if (!mVertices.empty())
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePlyFile(filename);
+    }
+}
 
 void cPointCloud2Ply::setOutputPath(std::filesystem::path out)
 {
@@ -24,17 +37,15 @@ void cPointCloud2Ply::setOutputPath(std::filesystem::path out)
 
 void cPointCloud2Ply::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) {}
 void cPointCloud2Ply::onImuData(pointcloud::imu_data_t data) {}
-void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) {}
 
-void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
+void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
 {
-    mFrameID = frameID;
     auto cloud_data = pointCloud.data();
 
-    mVertices.clear();
-    mRanges.clear();
-    mReturns.clear();
-    mFrameIDs.clear();
+    std::vector<float3>   vertices;
+    std::vector<uint32_t> ranges;
+    std::vector<uint3>    returns;
+    std::vector<uint16_t> frameIDs;
 
     for (const auto& point : cloud_data)
     {
@@ -46,34 +57,149 @@ void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t times
         xyz.y = point.Y_m;
         xyz.z = point.Z_m;
 
-        mVertices.push_back(xyz);
+        vertices.push_back(xyz);
 
-        mRanges.push_back(point.range_mm);
+        ranges.push_back(point.range_mm);
 
         uint3 data;
         data.a = point.nir;
         data.s = point.signal;
         data.r = point.reflectivity;
-        mReturns.push_back(data);
+        returns.push_back(data);
 
-        mFrameIDs.push_back(mFrameID);
+        frameIDs.push_back(frameID);
     }
 
-    writePlyFile();
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext;
+
+        if (mIndividualPlyFiles)
+        {
+           ext = std::to_string(mFrameCount);
+           ext += ".";
+        }
+
+        ext += "ply";
+
+        filename.replace_extension(ext);
+
+        writePlyFile(filename);
+    }
+
     ++mFrameCount;
 }
 
-void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud) {}
-
-void cPointCloud2Ply::writePlyFile()
+void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
 {
-    std::filesystem::path filename = mOutputPath;
+    auto cloud_data = pointCloud.data();
 
-    std::string ext = std::to_string(mFrameCount);
-    ext += ".ply";
+    std::vector<float3>   vertices;
+    std::vector<uint32_t> ranges;
+    std::vector<uint3>    returns;
+    std::vector<uint16_t> frameIDs;
 
-    filename.replace_extension(ext);
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
 
+        float3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        uint3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(frameID);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePlyFile(filename);
+    }
+
+    ++mFrameCount;
+}
+
+void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<float3>   vertices;
+    std::vector<uint32_t> ranges;
+    std::vector<uint3>    returns;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        float3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        uint3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePlyFile(filename);
+    }
+
+    ++mFrameCount;
+}
+
+void cPointCloud2Ply::writePlyFile(std::filesystem::path filename)
+{
     using namespace tinyply;
 
 #ifdef USE_BINARY
@@ -101,8 +227,11 @@ void cPointCloud2Ply::writePlyFile()
     ply_file.add_properties_to_element("vertex", { "intensity", "reflectivity", "ambient_noise" },
         Type::UINT16, mReturns.size(), reinterpret_cast<uint8_t*>(mReturns.data()), Type::INVALID, 0);
 
-    ply_file.add_properties_to_element("vertex", { "frame_id" },
-        Type::UINT16, mFrameIDs.size(), reinterpret_cast<uint8_t*>(mFrameIDs.data()), Type::INVALID, 0);
+    if (!mFrameIDs.empty())
+    {
+        ply_file.add_properties_to_element("vertex", { "frame_id" },
+            Type::UINT16, mFrameIDs.size(), reinterpret_cast<uint8_t*>(mFrameIDs.data()), Type::INVALID, 0);
+    }
 
 #ifdef USE_BINARY
     // Write a binary file

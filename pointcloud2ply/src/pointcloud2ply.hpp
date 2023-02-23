@@ -13,6 +13,9 @@
 class cPointCloud2Ply : public cPointCloudParser
 {
 public:
+    static bool mIndividualPlyFiles;
+
+public:
 	cPointCloud2Ply();
 	~cPointCloud2Ply();
 
@@ -25,7 +28,7 @@ private:
     void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
     void onPointCloudData(cPointCloud pointCloud) override;
 
-    void writePlyFile();
+    void writePlyFile(std::filesystem::path filename);
 
 private:
     std::filesystem::path mOutputPath;
@@ -35,7 +38,6 @@ private:
     struct float3 { float x, y, z; };
     struct uint3 { uint16_t s, r, a; };
 
-    uint16_t mFrameID = 0;
     std::vector<float3>   mVertices;
     std::vector<uint32_t> mRanges;
     std::vector<uint3>    mReturns;
