@@ -145,41 +145,44 @@ void cExtractFeatures::onSensorPointCloudByFrame(uint16_t frameID, uint64_t time
     LineDetection3D detector;
     std::vector<PLANE> planes;
     std::vector<std::vector<cv::Point3d>> lines;
-    std::vector<double> ts;
-    detector.run(cloud, k, planes, lines, ts);
-    std::cout << "lines number: " << lines.size() << std::endl;
-    std::cout << "planes number: " << planes.size() << std::endl;
-
-    {
-        std::filesystem::path filename = mOutputPath;
-
-        std::string ext = std::to_string(mFrameCount);
-        ext += ".planes.ply";
-
-        filename.replace_extension(ext);
-        writePlaneFile(filename, planes, detector.mScale);
-    }
-
-    {
-        std::filesystem::path filename = mOutputPath;
-
-        std::string ext = std::to_string(mFrameCount);
-        ext += ".lines.ply";
-
-        filename.replace_extension(ext);
-        writeLineFile(filename, lines, detector.mScale);
-    }
+    detector.run(cloud, k, planes, lines);
 
     if (mIndividualPlyFiles)
     {
-        std::filesystem::path filename = mOutputPath;
+        // Write out the detected planes from the point clound
+        {
+            std::filesystem::path filename = mOutputPath;
 
-        std::string ext = std::to_string(mFrameCount);
-        ext += ".ply";
+            std::string ext = std::to_string(mFrameCount);
+            ext += ".planes.ply";
 
-        filename.replace_extension(ext);
+            filename.replace_extension(ext);
+            writePlaneFile(filename, planes, detector.mScale);
+        }
 
-        writePlyFile(filename);
+
+        // Write out the detected lines from the point clound
+        {
+            std::filesystem::path filename = mOutputPath;
+
+            std::string ext = std::to_string(mFrameCount);
+            ext += ".lines.ply";
+
+            filename.replace_extension(ext);
+            writeLineFile(filename, lines, detector.mScale);
+        }
+
+        // Write out the main frame point clound
+        {
+            std::filesystem::path filename = mOutputPath;
+
+            std::string ext = std::to_string(mFrameCount);
+            ext += ".ply";
+
+            filename.replace_extension(ext);
+
+            writePlyFile(filename);
+        }
     }
 
     ++mFrameCount;
@@ -297,17 +300,23 @@ void cExtractFeatures::writePlaneFile(std::filesystem::path filename,
 
         color3 color = { R, G, B };
 
-        for (int i = 0; i < planes[p].lines3d.size(); ++i)
+        const auto& plane = planes[p];
+
+        for (int i = 0; i < plane.lines3d.size(); ++i)
         {
-            for (int j = 0; j < planes[p].lines3d[i].size(); ++j)
+            const auto& lines = plane.lines3d[i];
+
+            for (int j = 0; j < lines.size(); ++j)
             {
-                cv::Point3d dev = planes[p].lines3d[i][j][1] - planes[p].lines3d[i][j][0];
+                const auto& line = lines[j];
+
+                cv::Point3d dev = line[1] - line[0];
                 double L = sqrt(dev.x * dev.x + dev.y * dev.y + dev.z * dev.z);
                 int k = L / (scale / 10);
 
-                double x = planes[p].lines3d[i][j][0].x;
-                double y = planes[p].lines3d[i][j][0].y;
-                double z = planes[p].lines3d[i][j][0].z;
+                double x = line[0].x;
+                double y = line[0].y;
+                double z = line[0].z;
 
                 double dx = dev.x / k;
                 double dy = dev.y / k;
@@ -377,23 +386,25 @@ void cExtractFeatures::writeLineFile(std::filesystem::path filename,
 {
     std::vector<float3> vertices;
     std::vector<color3> colors;
-    std::vector<int>    indexs;
+    std::vector<int>    indexes;
 
     for (int p = 0; p < lines.size(); ++p)
     {
-        int R = rand() % 255;
-        int G = rand() % 255;
-        int B = rand() % 255;
+        uint8_t R = static_cast<uint8_t>(rand() % 255);
+        uint8_t G = static_cast<uint8_t>(rand() % 255);
+        uint8_t B = static_cast<uint8_t>(rand() % 255);
 
         color3 color = { R, G, B };
 
-        cv::Point3d dev = lines[p][1] - lines[p][0];
-        double L = sqrt(dev.x * dev.x + dev.y * dev.y + dev.z * dev.z);
-        int k = L / (scale / 10);
+        const auto& line = lines[p];
 
-        double x = lines[p][0].x;
-        double y = lines[p][0].y;
-        double z = lines[p][0].z;
+        cv::Point3d dev = line[1] - line[0];
+        double L = sqrt(dev.x * dev.x + dev.y * dev.y + dev.z * dev.z);
+        int k = static_cast<int>(L / (scale / 10.0));
+
+        double x = line[0].x;
+        double y = line[0].y;
+        double z = line[0].z;
 
         double dx = dev.x / k;
         double dy = dev.y / k;
@@ -412,7 +423,7 @@ void cExtractFeatures::writeLineFile(std::filesystem::path filename,
 
             vertices.push_back(xyz);
             colors.push_back(color);
-            indexs.push_back(p);
+            indexes.push_back(p);
         }
     }
 
@@ -443,7 +454,7 @@ void cExtractFeatures::writeLineFile(std::filesystem::path filename,
     if (!mFrameIDs.empty())
     {
         ply_file.add_properties_to_element("vertex", { "plane_id" },
-            Type::INT32, indexs.size(), reinterpret_cast<uint8_t*>(indexs.data()), Type::INVALID, 0);
+            Type::INT32, indexes.size(), reinterpret_cast<uint8_t*>(indexes.data()), Type::INVALID, 0);
     }
 
 #ifdef USE_BINARY

@@ -83,11 +83,15 @@ int main(int argc, char** argv)
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
 
+	bool isFile = false;
 	bool showHelp = false;
 
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
 		("Show usage information.")
+		| lyra::opt(isFile)
+		["-f"]["--file"]
+		("Export individual ply files by frame number.")
 		| lyra::opt(cExtractFeatures::mIndividualPlyFiles)
 		["-i"]["--individual"]
 		("Export individual ply files by frame number.")
@@ -96,10 +100,10 @@ int main(int argc, char** argv)
 		("The number of threads to use for repairing data files.")
 		.optional()
 		| lyra::arg(input_directory, "input directory")
-		("The path to input directory for converting pointcloud data to a ply file(s).")
+		("The path to input directory/file for converting pointcloud data to a ply file(s).")
 		.required()
 		| lyra::arg(output_directory, "output directory")
-		("The path to output directory for the ply file(s).")
+		("The path to output directory/file for the ply file(s).")
 		.required();
 
 	auto result = cli.parse({argc, argv});
@@ -122,20 +126,38 @@ int main(int argc, char** argv)
 	const std::filesystem::path input{ input_directory };
 
 	std::vector<directory_entry> files_to_process;
-	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
+
+	if (isFile)
 	{
+		auto dir_entry = std::filesystem::directory_entry{ input };
+
 		if (!dir_entry.is_regular_file())
-			continue;
+			return 2;
 
 		if (dir_entry.path().extension() == "ceres")
-			continue;
+			return 3;
 
 		if (!isCeresFile(dir_entry.path().string()))
-			continue;
+			return 4;
 
 		files_to_process.push_back(dir_entry);
+	}
+	else
+	{
+		// Scan input directory for all CERES files to operate on
+		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
+		{
+			if (!dir_entry.is_regular_file())
+				continue;
 
-		break;
+			if (dir_entry.path().extension() == "ceres")
+				continue;
+
+			if (!isCeresFile(dir_entry.path().string()))
+				continue;
+
+			files_to_process.push_back(dir_entry);
+		}
 	}
 
 	int max_threads = std::thread::hardware_concurrency();
@@ -151,17 +173,44 @@ int main(int argc, char** argv)
 
 	std::vector<cFileProcessor*> file_processors;
 
+	const std::filesystem::path output{ output_directory };
+
+	std::filesystem::directory_entry output_dir;
+	
+	if (isFile && output.has_extension())
+	{
+		output_dir = std::filesystem::directory_entry{ output.parent_path() };
+	}
+	else
+	{
+		output_dir = std::filesystem::directory_entry{ output };
+	}
+
+	if (!output_dir.exists())
+	{
+		std::filesystem::create_directories(output_dir);
+	}
+
 	for (auto& in_file : files_to_process)
 	{
+		std::filesystem::path out_file;
 		auto fe = removeTimestamp(in_file.path().filename().string());
 
-		std::string out_filename = fe.filename;
-		std::filesystem::path out_file = output_directory;
-		out_file /= add_timestamp(out_filename);
-
-		if (!fe.extension.empty())
+		if (isFile)
 		{
-			out_file.replace_extension(fe.extension);
+			out_file = std::filesystem::path{ output_directory };
+		}
+
+		if (out_file.empty())
+		{
+			std::string out_filename = fe.filename;
+			out_file = output_directory;
+			out_file /= add_timestamp(out_filename);
+
+			if (!fe.extension.empty() && !out_file.has_extension())
+			{
+				out_file.replace_extension(fe.extension);
+			}
 		}
 
 		cFileProcessor* fp = new cFileProcessor();
@@ -169,8 +218,6 @@ int main(int argc, char** argv)
 		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
 
 		file_processors.push_back(fp);
-
-		break;
 	}
 
 	files_to_process.clear();

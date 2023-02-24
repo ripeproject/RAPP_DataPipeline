@@ -1,73 +1,70 @@
-﻿#include "LineDetection3D.h"
+﻿
+#include "LineDetection3D.h"
 #include <omp.h>
 
 #include "CommonFunctions.h"
-//#include "Timer.h"
 
 #include <opencv2/imgproc/types_c.h>
 
 using namespace std;
 using namespace cv;
 
-void LineDetection3D::run(PointCloud<double>& data, int k, std::vector<PLANE>& planes,
-					std::vector<std::vector<cv::Point3d>>& lines, std::vector<double> &ts )
+//#define DEBUG_MSG
+
+void LineDetection3D::run(PointCloud<double>& data, int k, 
+					std::vector<PLANE>& planes,
+					std::vector<std::vector<cv::Point3d>>& lines)
 {
 	mPointData = data;
 	mPointNum = data.pts.size();
 	mK = k;
 
 	// step1: point cloud segmentation
-	double totalTime = 0.0;
-//	CTimer timer;
-	char msg[1024];
+#ifdef DEBUG_MSG
+	cout << endl << endl;
+	cout << "Step1: Point Cloud Segmentation ..." << endl;
+#endif
 
-//	timer.Start();
-	cout<<endl<<endl;
-	cout<<"Step1: Point Cloud Segmentation ..."<<endl;
 	std::vector<std::vector<int> > regions;
 	pointCloudSegmentation( regions );
-//	timer.Stop();
-//	totalTime += timer.GetElapsedSeconds();
-//	timer.PrintElapsedTimeMsg(msg);
-//	printf("  Point Cloud Segmentation Time: %s.\n\n", msg);
-//	ts.push_back(timer.GetElapsedSeconds());
 
 	// step2: plane based 3D line detection
-//	timer.Start();
-	cout<<"Step2: Plane Based 3D LineDetection ..."<<endl;
+#ifdef DEBUG_MSG
+	cout << "Step2: Plane Based 3D LineDetection ..." << endl;
+#endif
+
 	planeBased3DLineDetection( regions, planes );
-//	timer.Stop();
-//	totalTime += timer.GetElapsedSeconds();
-//	timer.PrintElapsedTimeMsg(msg);
-//	printf("  Plane Based 3D LineDetection Time: %s.\n\n", msg);
-//	ts.push_back(timer.GetElapsedSeconds());
 
 	// step3: post processing
-//	timer.Start();
-	cout<<"Step3: Post Processing ..."<<endl;
-	postProcessing( planes, lines );
-//	timer.Stop();
-//	totalTime += timer.GetElapsedSeconds();
-//	timer.PrintElapsedTimeMsg(msg);
-//	printf("  Post Processing Time: %s.\n\n", msg);
-//	ts.push_back(timer.GetElapsedSeconds());
+#ifdef DEBUG_MSG
+	cout << "Step3: Post Processing ..." << endl;
+#endif
 
-//	printf("Total Time: %lf.\n\n", totalTime);
+	postProcessing( planes, lines );
 }
 
 
 void LineDetection3D::pointCloudSegmentation( std::vector<std::vector<int> > &regions )
 {
-	cout<<"----- Normal Calculation ..."<<endl;
+#ifdef DEBUG_MSG
+	cout << "----- Normal Calculation ..." << endl;
+#endif
+
 	PCAFunctions pcaer;
 	pcaer.Ori_PCA(mPointData, mK, mPcaInfos, mScale, mMagnitd );
 	
-	cout<<"----- Region Growing ..."<<endl;
+#ifdef DEBUG_MSG
+	cout << "----- Region Growing ..." << endl;
+#endif
+
 	double thAngle = 15.0/180.0*CV_PI;
 	regionGrow( thAngle, regions );
 
 	// step3: region merging
-	cout<<"----- Region Merging ..."<<endl;
+#ifdef DEBUG_MSG
+	cout << "----- Region Merging ..." << endl;
+#endif
+
 	double thAnglePatch = thAngle;
 	regionMerging( thAnglePatch, regions );
 }
@@ -652,7 +649,7 @@ void LineDetection3D::outliersRemoval( std::vector<PLANE> &planes )
 		std::sort( lineInfos.begin(), lineInfos.end(), [](const std::pair<int, double>& lhs, const std::pair<int, double>& rhs) { return lhs.second > rhs.second; } );
 
 		std::vector<cv::Mat> clusterOrient;
-		std::vector<std::pair<int, double> > clusterInfos;
+		std::vector<std::pair<std::size_t, double> > clusterInfos;
 		for (int j=0; j<lineInfos.size(); ++j)
 		{
 			int id = lineInfos[j].first;
@@ -660,7 +657,7 @@ void LineDetection3D::outliersRemoval( std::vector<PLANE> &planes )
 
 			if (!clusterInfos.size())
 			{
-				clusterInfos.push_back(std::pair<int, double>(clusterInfos.size(), length));
+				clusterInfos.push_back(std::make_pair(clusterInfos.size(), length));
 				clusterOrient.push_back(orientsAll[id]);
 				continue;
 			}
@@ -684,7 +681,7 @@ void LineDetection3D::outliersRemoval( std::vector<PLANE> &planes )
 
 			if (!isIn && cosValueMin < thCosAngleNEW)
 			{
-				clusterInfos.push_back(std::pair<int, double>(clusterInfos.size(), length));
+				clusterInfos.push_back(std::make_pair(clusterInfos.size(), length));
 				clusterOrient.push_back(orientsAll[id]);
 				continue;
 			}
@@ -848,14 +845,17 @@ void LineDetection3D::lineMerging( std::vector<PLANE> &planes, std::vector<std::
 
 		// the length of the line
 		lineParas[i].resize(6);
-		lineParas[i][0] = v.at<double>(0);       lineParas[i][1] = v.at<double>(1);       lineParas[i][2] = v.at<double>(2);
+		lineParas[i][0] = v.at<double>(0);
+		lineParas[i][1] = v.at<double>(1);
+		lineParas[i][2] = v.at<double>(2);
 		lineParas[i][3] = latitude;   
 		lineParas[i][4] = cv::norm(d); 
 		lineParas[i][5] = length; 
 
 		lineInfos[i] = std::pair<int,double>(i, length);
 	}
-	std::sort( lineInfos.begin(), lineInfos.end(), [](const std::pair<int,double>& lhs, const std::pair<int,double>& rhs) { return lhs.second > rhs.second; } );
+	std::sort( lineInfos.begin(), lineInfos.end(),
+		[](const std::pair<int,double>& lhs, const std::pair<int,double>& rhs) { return lhs.second > rhs.second; } );
 
 	// build grid with latitude
 	double precision = 6.0/180.0*CV_PI;
