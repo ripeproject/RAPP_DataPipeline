@@ -91,7 +91,7 @@ int main(int argc, char** argv)
 		("Show usage information.")
 		| lyra::opt(isFile)
 		["-f"]["--file"]
-		("Export individual ply files by frame number.")
+		("Operate on a single file (default is directory).")
 		| lyra::opt(cExtractFeatures::mIndividualPlyFiles)
 		["-i"]["--individual"]
 		("Export individual ply files by frame number.")
@@ -171,8 +171,6 @@ int main(int argc, char** argv)
 
 	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 
-	std::vector<cFileProcessor*> file_processors;
-
 	const std::filesystem::path output{ output_directory };
 
 	std::filesystem::directory_entry output_dir;
@@ -190,6 +188,8 @@ int main(int argc, char** argv)
 	{
 		std::filesystem::create_directories(output_dir);
 	}
+
+	std::vector<cFileProcessor*> file_processors;
 
 	for (auto& in_file : files_to_process)
 	{
