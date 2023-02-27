@@ -26,6 +26,7 @@ target_include_directories(pointcloud2ply PRIVATE ${CMAKE_INSTALL_PREFIX}/includ
 target_include_directories(pointcloud2ply PRIVATE "../support/PointCloud")
 
 target_link_libraries(pointcloud2ply PRIVATE cbdf::cbdf)
+target_link_libraries(pointcloud2ply PRIVATE cbdf::ctrl)
 target_link_libraries(pointcloud2ply PRIVATE pointcloud_io)
 target_link_libraries(pointcloud2ply PRIVATE tinyply)
 

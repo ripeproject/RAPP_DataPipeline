@@ -157,7 +157,8 @@ find_package(tinyply REQUIRED)
 
 
 # Find and include my libraries for data collection
-find_package(CBDF REQUIRED cbdf)
+find_package(CBDF REQUIRED cbdf ctrl)
+find_package(spidercam REQUIRED)
 
 
 #******************************************************************************

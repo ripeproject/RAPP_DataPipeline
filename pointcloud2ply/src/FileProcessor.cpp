@@ -64,7 +64,9 @@ void cFileProcessor::run()
         throw std::logic_error("No file is open for reading.");
 	}
 
-	mFileReader.attach(mConverter.get());
+    cPointCloud2Ply* p = mConverter.get();
+	mFileReader.attach(static_cast<cPointCloudParser*>(p));
+    mFileReader.attach(static_cast<cSpidercamParser*>(p));
 
 	try
     {

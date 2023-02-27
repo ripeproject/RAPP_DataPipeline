@@ -13,7 +13,13 @@ bool cPointCloud2Ply::mIndividualPlyFiles = false;
 
 
 cPointCloud2Ply::cPointCloud2Ply() : cPointCloudParser()
-{}
+{
+    uint8_t R = static_cast<uint8_t>(rand() % 255);
+    uint8_t G = static_cast<uint8_t>(rand() % 255);
+    uint8_t B = static_cast<uint8_t>(rand() % 255);
+
+    mColor = { R, G, B };
+}
 
 cPointCloud2Ply::~cPointCloud2Ply()
 {
@@ -26,7 +32,19 @@ cPointCloud2Ply::~cPointCloud2Ply()
 
         filename.replace_extension(ext);
 
-        writePlyFile(filename);
+        writePointcloud(filename);
+    }
+
+    if (!mPositions.empty())
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".position.ply";
+
+        filename.replace_extension(ext);
+
+        writePosition(filename);
     }
 }
 
@@ -91,7 +109,7 @@ void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t time
 
         filename.replace_extension(ext);
 
-        writePlyFile(filename);
+        writePointcloud(filename);
     }
 
     ++mFrameCount;
@@ -99,6 +117,14 @@ void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t time
 
 void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
 {
+    if (mResyncTimestamp)
+    {
+        mStartTimestamp_ns = timestamp_ns;
+        mResyncTimestamp = false;
+    }
+
+    double time_sec = static_cast<double>(timestamp_ns - mStartTimestamp_ns) / 1'000'000'000.0;
+
     auto cloud_data = pointCloud.data();
 
     std::vector<float3>   vertices;
@@ -144,7 +170,7 @@ void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t times
 
         filename.replace_extension(ext);
 
-        writePlyFile(filename);
+        writePointcloud(filename);
     }
 
     ++mFrameCount;
@@ -192,13 +218,64 @@ void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud)
 
         filename.replace_extension(ext);
 
-        writePlyFile(filename);
+        writePointcloud(filename);
     }
 
     ++mFrameCount;
 }
 
-void cPointCloud2Ply::writePlyFile(std::filesystem::path filename)
+void cPointCloud2Ply::onPosition(spidercam::sPosition_1_t pos)
+{
+    mResyncTimestamp = true;
+
+    float4 xyz;
+    xyz.x = pos.X_mm / 1000.0;
+    xyz.y = pos.Y_mm / 1000.0;
+    xyz.z = pos.Z_mm / 1000.0;
+    xyz.s = pos.speed_mmps / 1000.0;
+
+    mPositions.push_back(xyz);
+    mColors.push_back(mColor);
+}
+
+void cPointCloud2Ply::writePosition(std::filesystem::path filename)
+{
+    using namespace tinyply;
+
+#ifdef USE_BINARY
+    std::filebuf binary_buffer;
+    binary_buffer.open(filename, std::ios::out | std::ios::binary);
+    std::ostream outstream_binary(&binary_buffer);
+    if (outstream_binary.fail())
+        throw std::runtime_error("failed to open " + filename.string());
+#else
+    std::filebuf fb_ascii;
+    fb_ascii.open(filename, std::ios::out);
+    std::ostream outstream_ascii(&fb_ascii);
+    if (outstream_ascii.fail())
+        throw std::runtime_error("failed to open " + filename.string());
+#endif
+
+    PlyFile ply_file;
+
+    ply_file.add_properties_to_element("vertex", { "x", "y", "z", "s" },
+        Type::FLOAT32, mPositions.size(), reinterpret_cast<uint8_t*>(mPositions.data()), Type::INVALID, 0);
+
+    ply_file.add_properties_to_element("vertex", { "red", "green", "blue" },
+        Type::UINT8, mColors.size(), reinterpret_cast<uint8_t*>(mColors.data()), Type::INVALID, 0);
+
+#ifdef USE_BINARY
+    // Write a binary file
+    ply_file.write(outstream_binary, true);
+#else
+    // Write an ASCII file
+    ply_file.write(outstream_ascii, false);
+#endif
+
+    mPositions.clear();
+}
+
+void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
 {
     using namespace tinyply;
 
