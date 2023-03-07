@@ -11,13 +11,11 @@ class cAxisCommunicationsVerificationParser : public cAxisCommunicationsParser
 public:
 	void onActiveCameraId(int id) override;
 	void onFramesPerSecond(int frames_per_sec) override;
-
-/*
-	void onBitmap(const QBitmap& in) override;
-	void onJPEG(const QImage& image) override;
-	void onMpegFrame(const QImage& image) override;
-*/
 	void onImageSize(int width, int height) override;
+
+	void onBitmap(const cBitmapBuffer& buffer) override;
+	void onJPEG(const cJpegBuffer& buffer) override;
+	void onMpegFrame(const cMpegFrameBuffer& buffer) override;
 };
 
 

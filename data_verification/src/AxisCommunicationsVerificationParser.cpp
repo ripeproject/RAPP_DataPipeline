@@ -21,17 +21,6 @@ void cAxisCommunicationsVerificationParser::onFramesPerSecond(int frames_per_sec
     }
 }
 
-/*
-void cAxisCommunicationsVerificationParser::onBitmap(const QBitmap& in)
-{}
-
-void cAxisCommunicationsVerificationParser::onJPEG(const QImage& image)
-{}
-
-void cAxisCommunicationsVerificationParser::onMpegFrame(const QImage& image)
-{}
-*/
-
 void cAxisCommunicationsVerificationParser::onImageSize(int width, int height)
 {
     bool validWidth = (width == 480) || (width == 640) || (width == 800) ||
@@ -47,5 +36,14 @@ void cAxisCommunicationsVerificationParser::onImageSize(int width, int height)
         throw bdf::invalid_data("Invalid image size!");
     }
 }
+
+void cAxisCommunicationsVerificationParser::onBitmap(const cBitmapBuffer& buffer)
+{}
+
+void cAxisCommunicationsVerificationParser::onJPEG(const cJpegBuffer& buffer)
+{}
+
+void cAxisCommunicationsVerificationParser::onMpegFrame(const cMpegFrameBuffer& buffer)
+{}
 
 
