@@ -16,8 +16,8 @@
 // limitations under the License.
 //==============================================================================
 
-#include "LidarSlam/Utilities.h"
-#include "LidarSlam/PoseGraphOptimizer.h"
+#include "Utilities.h"
+#include "PoseGraphOptimizer.h"
 
 #include <g2o/core/block_solver.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>

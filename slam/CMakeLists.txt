@@ -156,8 +156,10 @@ find_package(nlohmann_json REQUIRED)
 find_package(nanoflann REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Ceres REQUIRED)
-find_package(PCL REQUIRED COMPONENTS common io octree geometry)
 
+find_package(PCL REQUIRED COMPONENTS common io octree geometry)
+include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 # Find and include my libraries for data collection
 find_package(CBDF REQUIRED cbdf ctrl)

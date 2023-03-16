@@ -18,9 +18,9 @@
 
 #pragma once
 
-#include "LidarSlam/ExternalSensorManagers.h"
-#include "LidarSlam/Enums.h"
-#include "LidarSlam/State.h"
+#include "ExternalSensorManagers.h"
+#include "Enums.h"
+#include "State.h"
 
 #include <list>
 #include <g2o/core/sparse_optimizer.h>

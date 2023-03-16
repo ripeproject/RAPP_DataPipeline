@@ -25,15 +25,19 @@
 namespace LidarSlam
 {
 
-/** \brief A point structure representing Euclidean xyz coordinates, time, intensity, laser_id, device_id and label.
-  * \ingroup common
-  */
+/** \brief A point structure representing Euclidean xyz coordinates, time,
+ *          intensity, laser_id, device_id and label.
+ * \ingroup common
+ */
 struct LidarPoint
 {
-  inline LidarPoint (const LidarPoint &p) : x(p.x), y(p.y), z(p.z), time(p.time), intensity(p.intensity), laser_id(p.laser_id), device_id(p.device_id), label(p.label)
+  inline LidarPoint (const LidarPoint &p) : x(p.x), y(p.y), z(p.z), time(p.time),
+      intensity(p.intensity), laser_id(p.laser_id), device_id(p.device_id), 
+      label(p.label)
   {
     data[3] = 1.0f;
   }
+
   inline LidarPoint& operator=(const LidarSlam::LidarPoint& p)
   {
     x = p.x;
@@ -46,11 +50,13 @@ struct LidarPoint
     label = p.label;
     return *this;
   }
-  inline LidarPoint () : x(0.0f), y(0.0f), z(0.0f), time(0.0), intensity(0.0f), laser_id(0), device_id(0), label(0)
+
+  inline LidarPoint () : x(0.0f), y(0.0f), z(0.0f), time(0.0), intensity(0.0f),
+      laser_id(0), device_id(0), label(0)
   {
     data[3] = 1.0f;
   }
-  
+
   PCL_ADD_POINT4D // This adds the members x,y,z which can also be accessed using the point (which is float[4])
   double time;
   float intensity;

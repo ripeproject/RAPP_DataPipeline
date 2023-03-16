@@ -9,14 +9,20 @@ endif()
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_library(LidarSlam
+  CeresCostFunctions.h
   ConfidenceEstimators.h
   ConfidenceEstimators.cxx
+  Enums.h
+  KDTreePCLAdaptor.h
   KeypointsMatcher.h
   KeypointsMatcher.cxx
+  LidarPoint.h
   LocalOptimizer.h
   LocalOptimizer.cxx
   MotionModel.h
   MotionModel.cxx
+  PoseGraphOptimizer.h
+  PoseGraphOptimizer.cxx
   RollingGrid.h
   RollingGrid.cxx
   ExternalSensorManagers.h
@@ -45,9 +51,53 @@ target_link_libraries(LidarSlam
 
 target_include_directories(LidarSlam PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+
+
+add_executable(slam)
+
+set_target_properties(slam PROPERTIES LANGUAGE CXX)
+
+target_compile_features(slam PRIVATE cxx_std_20)
+
+target_sources(slam
+PRIVATE
+
+	BS_thread_pool.hpp
+	ParserExceptions.hpp
+
+	pointcloud2slam.hpp
+	pointcloud2slam.cpp
+
+	FileProcessor.hpp
+	FileProcessor.cpp
+	main.cpp
+)
+
+
+target_include_directories(slam PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(slam PRIVATE "../support/PointCloud")
+
+target_link_libraries(slam PRIVATE cbdf::cbdf)
+target_link_libraries(slam PRIVATE cbdf::ctrl)
+target_link_libraries(slam PRIVATE pointcloud_io)
+target_link_libraries(slam PRIVATE LidarSlam)
+
+
+#
+# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
+# Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
+set_property(TARGET slam PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
+
+#******************************************************************************
+# Installer
+#******************************************************************************
+
 install(TARGETS LidarSlam
         RUNTIME DESTINATION ${SLAM_INSTALL_LIBRARY_DIR}
         LIBRARY DESTINATION ${SLAM_INSTALL_LIBRARY_DIR}
         ARCHIVE DESTINATION ${SLAM_INSTALL_LIBRARY_DIR}
         PUBLIC_HEADER DESTINATION ${SLAM_INSTALL_INCLUDE_DIR}/LidarSlam
         COMPONENT Runtime)
+
+
