@@ -102,879 +102,888 @@ namespace LidarSlam
 class Slam
 {
 public:
-  // Needed as Slam has fixed size Eigen vectors as members
-  // http://eigen.tuxfamily.org/dox-devel/group__TopicStructHavingEigenMembers.html
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-  // Usefull types
-  using Point = LidarPoint;
-  using PointCloud = pcl::PointCloud<Point>;
-  using KeypointExtractorPtr = std::shared_ptr<SpinningSensorKeypointExtractor>;
-  using PCStorage = PointCloudStorage<LidarPoint>;
-
-  // Initialization
-  Slam();
-
-  // Reset internal state : maps and trajectory are cleared
-  // and current pose is set back to origin.
-  // This keeps parameters and sensor data unchanged.
-  void Reset(bool resetLog = true);
-
-  // Init map with default values
-  // This function is useful to keep a set of initial map parameters which are not SLAM members
-  // Maps can only be removed when reset is called but they don't depend on UseKeypoint
-  void InitMap(Keypoint k);
-
-  // ---------------------------------------------------------------------------
-  //   Main SLAM use
-  // ---------------------------------------------------------------------------
-
-  // Add a new frame to SLAM process.
-  // This will trigger the following sequential steps:
-  // - keypoints extraction: extract interesting keypoints to lower problem dimensionality
-  // - ego-motion: estimate motion since last pose to init localization step
-  // - localization: estimate global pose of current frame in map
-  // - maps update: update maps using current registered frame
-  void AddFrame(const PointCloud::Ptr& pc) { this->AddFrames({pc}); }
-
-  // Add a set of frames to SLAM process.
-  // This will trigger the following sequential steps:
-  // - keypoints extraction: extract interesting keypoints from each frame to
-  //   lower problem dimensionality, then aggregate them.
-  // - ego-motion: estimate motion since last pose to init localization step
-  // - localization: estimate global pose of current frame in map
-  // - maps update: update maps using current registered frame
-  // This first frame will be considered as 'main': its timestamp will be the
-  // current pose time, its frame id will be used if no other is specified, ...
-  void AddFrames(const std::vector<PointCloud::Ptr>& frames);
-
-  // Get the computed world transform so far, but compensating SLAM computation duration latency.
-  Eigen::Isometry3d GetLatencyCompensatedWorldTransform() const;
-  // Get keypoints maps
-  // If clean is true, the moving objects are removed from map
-  PointCloud::Ptr GetMap(Keypoint k, bool clean = false) const;
-
-  // Get target keypoints for current scan
-  PointCloud::Ptr GetTargetSubMap(Keypoint k) const;
-
-  // Get extracted and optionally undistorted keypoints from current frame.
-  // If worldCoordinates=false, it returns keypoints in BASE coordinates,
-  // If worldCoordinates=true, it returns keypoints in WORLD coordinates.
-  // NOTE: The requested keypoints are lazy-transformed: if the requested WORLD
-  // keypoints are not directly available in case they have not already been
-  // internally transformed, this will be done on first call of this method.
-  PointCloud::Ptr GetKeypoints(Keypoint k, bool worldCoordinates = false);
+    // Needed as Slam has fixed size Eigen vectors as members
+    // http://eigen.tuxfamily.org/dox-devel/group__TopicStructHavingEigenMembers.html
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    // Usefull types
+    using Point = LidarPoint;
+    using PointCloud = pcl::PointCloud<Point>;
+    using KeypointExtractorPtr = std::shared_ptr<SpinningSensorKeypointExtractor>;
+    using PCStorage = PointCloudStorage<LidarPoint>;
+
+    // Initialization
+    Slam();
+
+    // Reset internal state : maps and trajectory are cleared
+    // and current pose is set back to origin.
+    // This keeps parameters and sensor data unchanged.
+    void Reset(bool resetLog = true);
+
+    // Init map with default values
+    // This function is useful to keep a set of initial map parameters which are not SLAM members
+    // Maps can only be removed when reset is called but they don't depend on UseKeypoint
+    void InitMap(Keypoint k);
+
+    // ---------------------------------------------------------------------------
+    //   Main SLAM use
+    // ---------------------------------------------------------------------------
+
+    // Add a new frame to SLAM process.
+    // This will trigger the following sequential steps:
+    // - keypoints extraction: extract interesting keypoints to lower problem dimensionality
+    // - ego-motion: estimate motion since last pose to init localization step
+    // - localization: estimate global pose of current frame in map
+    // - maps update: update maps using current registered frame
+    void AddFrame(const PointCloud::Ptr& pc) { this->AddFrames({pc}); }
+
+    // Add a set of frames to SLAM process.
+    // This will trigger the following sequential steps:
+    // - keypoints extraction: extract interesting keypoints from each frame to
+    //   lower problem dimensionality, then aggregate them.
+    // - ego-motion: estimate motion since last pose to init localization step
+    // - localization: estimate global pose of current frame in map
+    // - maps update: update maps using current registered frame
+    // This first frame will be considered as 'main': its timestamp will be the
+    // current pose time, its frame id will be used if no other is specified, ...
+    void AddFrames(const std::vector<PointCloud::Ptr>& frames);
+
+    // Get the computed world transform so far, but compensating SLAM computation duration latency.
+    Eigen::Isometry3d GetLatencyCompensatedWorldTransform() const;
+    // Get keypoints maps
+    // If clean is true, the moving objects are removed from map
+    PointCloud::Ptr GetMap(Keypoint k, bool clean = false) const;
+
+    // Get target keypoints for current scan
+    PointCloud::Ptr GetTargetSubMap(Keypoint k) const;
+
+    // Get extracted and optionally undistorted keypoints from current frame.
+    // If worldCoordinates=false, it returns keypoints in BASE coordinates,
+    // If worldCoordinates=true, it returns keypoints in WORLD coordinates.
+    // NOTE: The requested keypoints are lazy-transformed: if the requested WORLD
+    // keypoints are not directly available in case they have not already been
+    // internally transformed, this will be done on first call of this method.
+    PointCloud::Ptr GetKeypoints(Keypoint k, bool worldCoordinates = false);
 
-  // Get current registered (and optionally undistorted) input points.
-  // All frames from all devices are aggregated.
-  PointCloud::Ptr GetRegisteredFrame();
+    // Get current registered (and optionally undistorted) input points.
+    // All frames from all devices are aggregated.
+    PointCloud::Ptr GetRegisteredFrame();
 
-  // Get current number of frames already processed
-  Getter(NbrFrameProcessed, unsigned int)
-
-  // Get general information about ICP and optimization
-  std::unordered_map<std::string, double> GetDebugInformation() const;
+    // Get current number of frames already processed
+    Getter(NbrFrameProcessed, unsigned int)
+
+    // Get general information about ICP and optimization
+    std::unordered_map<std::string, double> GetDebugInformation() const;
 
-  // Get information for each keypoint of the current frame (used/rejected keypoints, ...)
-  std::unordered_map<std::string, std::vector<double>> GetDebugArray() const;
-
-  // Update maps from beginning using new trajectory (after PGO)
-  void UpdateMaps();
-
-  // Optimize graph containing lidar states with
-  // landmarks' constraints as a postprocess
-  bool OptimizeGraph();
-
-  // Set world transform with an initial guess (usually from GPS after calibration).
-  void SetWorldTransformFromGuess(const Eigen::Isometry3d& poseGuess);
-
-  // Initialize pose using pose measurements
-  // This allows to represent the maps and the trajectory of Lidar
-  // in an external frame (not first Lidar frame)
-  // the time of the synchronized pose is input so no Lidar frame needs
-  // to have been loaded to use this function
-  bool InitTworldWithPoseMeasurement(double time);
+    // Get information for each keypoint of the current frame (used/rejected keypoints, ...)
+    std::unordered_map<std::string, std::vector<double>> GetDebugArray() const;
+
+    // Update maps from beginning using new trajectory (after PGO)
+    void UpdateMaps();
+
+    // Optimize graph containing lidar states with
+    // landmarks' constraints as a postprocess
+    bool OptimizeGraph();
+
+    // Set world transform with an initial guess (usually from GPS after calibration).
+    void SetWorldTransformFromGuess(const Eigen::Isometry3d& poseGuess);
+
+    // Initialize pose using pose measurements
+    // This allows to represent the maps and the trajectory of Lidar
+    // in an external frame (not first Lidar frame)
+    // the time of the synchronized pose is input so no Lidar frame needs
+    // to have been loaded to use this function
+    bool InitTworldWithPoseMeasurement(double time);
 
-  // Save keypoints maps to disk for later use
-  void SaveMapsToPCD(const std::string& filePrefix, PCDFormat pcdFormat = PCDFormat::BINARY_COMPRESSED, bool submap = true) const;
+    // Save keypoints maps to disk for later use
+    void SaveMapsToPCD(const std::string& filePrefix, PCDFormat pcdFormat = PCDFormat::BINARY_COMPRESSED, bool submap = true) const;
 
-  // Load keypoints maps from disk (and reset SLAM maps)
-  void LoadMapsFromPCD(const std::string& filePrefix, bool resetMaps = true);
+    // Load keypoints maps from disk (and reset SLAM maps)
+    void LoadMapsFromPCD(const std::string& filePrefix, bool resetMaps = true);
 
-  // ---------------------------------------------------------------------------
-  //   General parameters
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    //   General parameters
+    // ---------------------------------------------------------------------------
 
-  Getter(NbThreads, int)
-  void SetNbThreads(int n);
+    Getter(NbThreads, int)
+    void SetNbThreads(int n);
 
-  SetMacro(mVerbosity, int)
-  Getter(Verbosity, int)
+    Setter(Verbosity, int)
+    Getter(Verbosity, int)
 
-  SetMacro(mEgoMotion, EgoMotionMode)
-  Getter(EgoMotion, EgoMotionMode)
+    Setter(EgoMotion, EgoMotionMode)
+    Getter(EgoMotion, EgoMotionMode)
 
-  SetMacro(mUndistortion, UndistortionMode)
-  Getter(Undistortion, UndistortionMode)
+    Setter(Undistortion, UndistortionMode)
+    Getter(Undistortion, UndistortionMode)
 
-  void SetLoggingTimeout(double lMax);
-  Getter(LoggingTimeout, double)
+    void SetLoggingTimeout(double lMax);
+    Getter(LoggingTimeout, double)
 
-  SetMacro(mLoggingStorage, PointCloudStorageType)
-  Getter(LoggingStorage, PointCloudStorageType)
+    Setter(LoggingStorage, PointCloudStorageType)
+    Getter(LoggingStorage, PointCloudStorageType)
 
-  SetMacro(mLogOnlyKeyframes, bool)
-  Getter(LogOnlyKeyframes, bool)
+    Setter(LogOnlyKeyframes, bool)
+    Getter(LogOnlyKeyframes, bool)
 
-  LidarState& GetLastState();
-  Getter(LogStates, std::list<LidarState>)
+    LidarState& GetLastState();
+    Getter(LogStates, std::list<LidarState>)
 
-  Getter(Latency, double)
+    Getter(Latency, double)
 
-  // ---------------------------------------------------------------------------
-  //   Graph parameters
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    //   Graph parameters
+    // ---------------------------------------------------------------------------
 
-  Getter(G2oFileName, std::string)
-  SetMacro(mG2oFileName, std::string)
+    Getter(G2oFileName, std::string)
+    Setter(G2oFileName, std::string)
 
-  Getter(FixFirstVertex, bool)
-  SetMacro(mFixFirstVertex, bool)
+    Getter(FixFirstVertex, bool)
+    Setter(FixFirstVertex, bool)
 
-  Getter(FixLastVertex, bool)
-  SetMacro(mFixLastVertex, bool)
+    Getter(FixLastVertex, bool)
+    Setter(FixLastVertex, bool)
 
-  Getter(CovarianceScale, float)
-  SetMacro(mCovarianceScale, float)
+    Getter(CovarianceScale, float)
+    Setter(CovarianceScale, float)
 
-  Getter(NbGraphIterations, int)
-  SetMacro(mNbGraphIterations, int)
+    Getter(NbGraphIterations, int)
+    Setter(NbGraphIterations, int)
 
-  // ---------------------------------------------------------------------------
-  //   Coordinates systems parameters
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    //   Coordinates systems parameters
+    // ---------------------------------------------------------------------------
 
-  SetMacro(mBaseFrameId, std::string const&)
-  Getter(BaseFrameId, std::string)
+    Setter(BaseFrameId, std::string const&)
+    Getter(BaseFrameId, std::string)
 
-  SetMacro(mWorldFrameId, std::string const&)
-  Getter(WorldFrameId, std::string)
+    Setter(WorldFrameId, std::string const&)
+    Getter(WorldFrameId, std::string)
 
-  // ---------------------------------------------------------------------------
-  //   Keypoints extraction
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    //   Keypoints extraction
+    // ---------------------------------------------------------------------------
 
-  // Get/Set all keypoints extractors
-  std::map<uint8_t, KeypointExtractorPtr> GetKeyPointsExtractors() const;
-  void SetKeyPointsExtractors(const std::map<uint8_t, KeypointExtractorPtr>& extractors);
+    // Get/Set all keypoints extractors
+    std::map<uint8_t, KeypointExtractorPtr> GetKeyPointsExtractors() const;
+    void SetKeyPointsExtractors(const std::map<uint8_t, KeypointExtractorPtr>& extractors);
 
-  // Get/Set a specific keypoints extractor
-  // NOTE: If no keypoint extractor exists for the requested deviceId, the returned pointer is null.
-  KeypointExtractorPtr GetKeyPointsExtractor(uint8_t deviceId = 0) const;
-  void SetKeyPointsExtractor(KeypointExtractorPtr extractor, uint8_t deviceId = 0);
+    // Get/Set a specific keypoints extractor
+    // NOTE: If no keypoint extractor exists for the requested deviceId, the returned pointer is null.
+    KeypointExtractorPtr GetKeyPointsExtractor(uint8_t deviceId = 0) const;
+    void SetKeyPointsExtractor(KeypointExtractorPtr extractor, uint8_t deviceId = 0);
 
-  // Get/Set a specific base to Lidar offset
-  // NOTE: If no base to lidar offset exists for the requested deviceId, the returned transform is identity.
-  Eigen::Isometry3d GetBaseToLidarOffset(uint8_t deviceId = 0) const;
-  void SetBaseToLidarOffset(const Eigen::Isometry3d& transform, uint8_t deviceId = 0);
+    // Get/Set a specific base to Lidar offset
+    // NOTE: If no base to lidar offset exists for the requested deviceId, the returned transform is identity.
+    Eigen::Isometry3d GetBaseToLidarOffset(uint8_t deviceId = 0) const;
+    void SetBaseToLidarOffset(const Eigen::Isometry3d& transform, uint8_t deviceId = 0);
 
-  // Set the keypoint types to use
-  void EnableKeypointType(Keypoint k, bool enabled = true);
-  // Get the keypoint types used
-  bool KeypointTypeEnabled(Keypoint k) const;
+    // Set the keypoint types to use
+    void EnableKeypointType(Keypoint k, bool enabled = true);
+    // Get the keypoint types used
+    bool KeypointTypeEnabled(Keypoint k) const;
 
-  // ---------------------------------------------------------------------------
-  //   Optimization parameters
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    //   Optimization parameters
+    // ---------------------------------------------------------------------------
 
-  Getter(TwoDMode, bool)
-  SetMacro(mTwoDMode, bool)
+    Getter(TwoDMode, bool)
+    Setter(TwoDMode, bool)
 
-  // Get/Set EgoMotion
-  Getter(EgoMotionLMMaxIter, unsigned int)
-  SetMacro(mEgoMotionLMMaxIter, unsigned int)
+    // Get/Set EgoMotion
+    Getter(EgoMotionLMMaxIter, unsigned int)
+    Setter(EgoMotionLMMaxIter, unsigned int)
 
-  Getter(EgoMotionICPMaxIter, unsigned int)
-  SetMacro(mEgoMotionICPMaxIter, unsigned int)
+    Getter(EgoMotionICPMaxIter, unsigned int)
+    Setter(EgoMotionICPMaxIter, unsigned int)
 
-  Getter(EgoMotionMaxNeighborsDistance, double)
-  SetMacro(mEgoMotionMaxNeighborsDistance, double)
+    Getter(EgoMotionMaxNeighborsDistance, double)
+    Setter(EgoMotionMaxNeighborsDistance, double)
 
-  Getter(EgoMotionEdgeNbNeighbors, unsigned int)
-  SetMacro(mEgoMotionEdgeNbNeighbors, unsigned int)
+    Getter(EgoMotionEdgeNbNeighbors, unsigned int)
+    Setter(EgoMotionEdgeNbNeighbors, unsigned int)
 
-  Getter(EgoMotionEdgeMinNbNeighbors, unsigned int)
-  SetMacro(mEgoMotionEdgeMinNbNeighbors, unsigned int)
+    Getter(EgoMotionEdgeMinNbNeighbors, unsigned int)
+    Setter(EgoMotionEdgeMinNbNeighbors, unsigned int)
 
-  Getter(EgoMotionPlaneNbNeighbors, unsigned int)
-  SetMacro(mEgoMotionPlaneNbNeighbors, unsigned int)
+    Getter(EgoMotionPlaneNbNeighbors, unsigned int)
+    Setter(EgoMotionPlaneNbNeighbors, unsigned int)
 
-  Getter(EgoMotionPlanarityThreshold, double)
-  SetMacro(mEgoMotionPlanarityThreshold, double)
+    Getter(EgoMotionPlanarityThreshold, double)
+    Setter(EgoMotionPlanarityThreshold, double)
 
-  Getter(EgoMotionEdgeMaxModelError, double)
-  SetMacro(mEgoMotionEdgeMaxModelError, double)
+    Getter(EgoMotionEdgeMaxModelError, double)
+    Setter(EgoMotionEdgeMaxModelError, double)
 
-  Getter(EgoMotionPlaneMaxModelError, double)
-  SetMacro(mEgoMotionPlaneMaxModelError, double)
+    Getter(EgoMotionPlaneMaxModelError, double)
+    Setter(EgoMotionPlaneMaxModelError, double)
 
-  Getter(EgoMotionInitSaturationDistance, double)
-  SetMacro(mEgoMotionInitSaturationDistance, double)
+    Getter(EgoMotionInitSaturationDistance, double)
+    Setter(EgoMotionInitSaturationDistance, double)
 
-  Getter(EgoMotionFinalSaturationDistance, double)
-  SetMacro(mEgoMotionFinalSaturationDistance, double)
+    Getter(EgoMotionFinalSaturationDistance, double)
+    Setter(EgoMotionFinalSaturationDistance, double)
 
-  // Get/Set Localization
-  Getter(LocalizationLMMaxIter, unsigned int)
-  SetMacro(mLocalizationLMMaxIter, unsigned int)
+    // Get/Set Localization
+    Getter(LocalizationLMMaxIter, unsigned int)
+    Setter(LocalizationLMMaxIter, unsigned int)
 
-  Getter(LocalizationICPMaxIter, unsigned int)
-  SetMacro(mLocalizationICPMaxIter, unsigned int)
+    Getter(LocalizationICPMaxIter, unsigned int)
+    Setter(LocalizationICPMaxIter, unsigned int)
 
-  Getter(LocalizationMaxNeighborsDistance, double)
-  SetMacro(mLocalizationMaxNeighborsDistance, double)
+    Getter(LocalizationMaxNeighborsDistance, double)
+    Setter(LocalizationMaxNeighborsDistance, double)
 
-  Getter(LocalizationEdgeNbNeighbors, unsigned int)
-  SetMacro(mLocalizationEdgeNbNeighbors, unsigned int)
+    Getter(LocalizationEdgeNbNeighbors, unsigned int)
+    Setter(LocalizationEdgeNbNeighbors, unsigned int)
 
-  Getter(LocalizationEdgeMinNbNeighbors, unsigned int)
-  SetMacro(mLocalizationEdgeMinNbNeighbors, unsigned int)
+    Getter(LocalizationEdgeMinNbNeighbors, unsigned int)
+    Setter(LocalizationEdgeMinNbNeighbors, unsigned int)
 
-  Getter(LocalizationPlaneNbNeighbors, unsigned int)
-  SetMacro(mLocalizationPlaneNbNeighbors, unsigned int)
+    Getter(LocalizationPlaneNbNeighbors, unsigned int)
+    Setter(LocalizationPlaneNbNeighbors, unsigned int)
 
-  Getter(LocalizationPlanarityThreshold, double)
-  SetMacro(mLocalizationPlanarityThreshold, double)
+    Getter(LocalizationPlanarityThreshold, double)
+    Setter(LocalizationPlanarityThreshold, double)
 
-  Getter(LocalizationEdgeMaxModelError, double)
-  SetMacro(mLocalizationEdgeMaxModelError, double)
+    Getter(LocalizationEdgeMaxModelError, double)
+    Setter(LocalizationEdgeMaxModelError, double)
 
-  Getter(LocalizationPlaneMaxModelError, double)
-  SetMacro(mLocalizationPlaneMaxModelError, double)
+    Getter(LocalizationPlaneMaxModelError, double)
+    Setter(LocalizationPlaneMaxModelError, double)
 
-  Getter(LocalizationBlobNbNeighbors, unsigned int)
-  SetMacro(mLocalizationBlobNbNeighbors, unsigned int)
+    Getter(LocalizationBlobNbNeighbors, unsigned int)
+    Setter(LocalizationBlobNbNeighbors, unsigned int)
 
-  Getter(LocalizationInitSaturationDistance, double)
-  SetMacro(mLocalizationInitSaturationDistance, double)
+    Getter(LocalizationInitSaturationDistance, double)
+    Setter(LocalizationInitSaturationDistance, double)
 
-  Getter(LocalizationFinalSaturationDistance, double)
-  SetMacro(mLocalizationFinalSaturationDistance, double)
+    Getter(LocalizationFinalSaturationDistance, double)
+    Setter(LocalizationFinalSaturationDistance, double)
 
-  // External Sensor parameters
+    // External Sensor parameters
 
-  // General
-  Getter(SensorTimeOffset, double)
-  void SetSensorTimeOffset(double timeOffset);
+    // General
+    Getter(SensorTimeOffset, double)
+    void SetSensorTimeOffset(double timeOffset);
 
-  Getter(SensorTimeThreshold, double)
-  void SetSensorTimeThreshold(double timeOffset);
+    Getter(SensorTimeThreshold, double)
+    void SetSensorTimeThreshold(double timeOffset);
 
-  Getter(SensorMaxMeasures, unsigned int)
-  void SetSensorMaxMeasures(unsigned int max);
+    Getter(SensorMaxMeasures, unsigned int)
+    void SetSensorMaxMeasures(unsigned int max);
 
-  void ResetSensors(bool emptyMeasurements = false);
+    void ResetSensors(bool emptyMeasurements = false);
 
-  // Odometer
-  double GetWheelOdomWeight() const;
-  void SetWheelOdomWeight(double weight);
+    // Odometer
+    double GetWheelOdomWeight() const;
+    void SetWheelOdomWeight(double weight);
 
-  bool GetWheelOdomRelative() const;
-  void SetWheelOdomRelative(bool relative);
+    bool GetWheelOdomRelative() const;
+    void SetWheelOdomRelative(bool relative);
 
-  void AddWheelOdomMeasurement(const ExternalSensors::WheelOdomMeasurement& om);
+    void AddWheelOdomMeasurement(const ExternalSensors::WheelOdomMeasurement& om);
 
-  bool WheelOdomHasData() {return mWheelOdomManager && mWheelOdomManager->HasData();}
+    bool WheelOdomHasData() {return mWheelOdomManager && mWheelOdomManager->HasData();}
 
-  // Gravity from IMU
-  double GetGravityWeight() const;
-  void SetGravityWeight(double weight);
+    // Gravity from IMU
+    double GetGravityWeight() const;
+    void SetGravityWeight(double weight);
 
-  void AddGravityMeasurement(const ExternalSensors::GravityMeasurement& gm);
+    void AddGravityMeasurement(const ExternalSensors::GravityMeasurement& gm);
 
-  bool GravityHasData() {return mGravityManager && mGravityManager->HasData();}
+    bool GravityHasData() {return mGravityManager && mGravityManager->HasData();}
 
-  // Landmark detector
-  Getter(LandmarkWeight, double)
-  void SetLandmarkWeight(double weight);
+    // Landmark detector
+    Getter(LandmarkWeight, double)
+    void SetLandmarkWeight(double weight);
 
-  Getter(LandmarkSaturationDistance, float)
-  void SetLandmarkSaturationDistance(float dist);
+    Getter(LandmarkSaturationDistance, float)
+    void SetLandmarkSaturationDistance(float dist);
 
-  Getter(LandmarkPositionOnly, bool)
-  void SetLandmarkPositionOnly(bool positionOnly);
+    Getter(LandmarkPositionOnly, bool)
+    void SetLandmarkPositionOnly(bool positionOnly);
 
-  Getter(LandmarkCovarianceRotation, bool)
-  void SetLandmarkCovarianceRotation(bool rotate);
+    Getter(LandmarkCovarianceRotation, bool)
+    void SetLandmarkCovarianceRotation(bool rotate);
 
-  Getter(LandmarkConstraintLocal, bool)
-  Setter(LandmarkConstraintLocal, bool)
+    Getter(LandmarkConstraintLocal, bool)
+    Setter(LandmarkConstraintLocal, bool)
 
-  void SetLmDetectorCalibration(const Eigen::Isometry3d& calib);
+    void SetLmDetectorCalibration(const Eigen::Isometry3d& calib);
 
-  void AddLandmarkManager(int id, const Eigen::Vector6d& absolutePose, const Eigen::Matrix6d& absolutePoseCovariance);
+    void AddLandmarkManager(int id, const Eigen::Vector6d& absolutePose, const Eigen::Matrix6d& absolutePoseCovariance);
 
-  void AddLandmarkMeasurement(const ExternalSensors::LandmarkMeasurement& lm, int id);
+    void AddLandmarkMeasurement(const ExternalSensors::LandmarkMeasurement& lm, int id);
 
-  bool LmCanBeUsedLocally();
-  bool LmHasData();
+    bool LmCanBeUsedLocally();
+    bool LmHasData();
 
-  // GPS
-  void AddGpsMeasurement(const ExternalSensors::GpsMeasurement& gpsMeas);
+    // GPS
+    void AddGpsMeasurement(const ExternalSensors::GpsMeasurement& gpsMeas);
 
-  Eigen::Isometry3d GetGpsCalibration();
-  void SetGpsCalibration(const Eigen::Isometry3d& calib);
+    Eigen::Isometry3d GetGpsCalibration();
+    void SetGpsCalibration(const Eigen::Isometry3d& calib);
 
-  Eigen::Isometry3d GetGpsOffset();
+    Eigen::Isometry3d GetGpsOffset();
 
-  bool GpsHasData() {return mGpsManager && mGpsManager->HasData();}
+    bool GpsHasData() {return mGpsManager && mGpsManager->HasData();}
 
-  // Transform the whole trajectory (including current pose) to GPS reference frame (e.g. UTM)
-  // Warning : in trajectory, the position is remained odometric i.e. only the orientation
-  // is adapted for precision purposes but the offset position is stored in GPS manager
-  bool CalibrateWithGps();
+    // Transform the whole trajectory (including current pose) to GPS reference frame (e.g. UTM)
+    // Warning : in trajectory, the position is remained odometric i.e. only the orientation
+    // is adapted for precision purposes but the offset position is stored in GPS manager
+    bool CalibrateWithGps();
 
-  // Pose
-  double GetPoseWeight() const;
-  void SetPoseWeight(double weight);
+    // Pose
+    double GetPoseWeight() const;
+    void SetPoseWeight(double weight);
 
-  void AddPoseMeasurement(const ExternalSensors::PoseMeasurement& pm);
-  bool PoseHasData() {return mPoseManager && mPoseManager->HasData();}
+    void AddPoseMeasurement(const ExternalSensors::PoseMeasurement& pm);
+    bool PoseHasData() {return mPoseManager && mPoseManager->HasData();}
 
-  void SetPoseCalibration(const Eigen::Isometry3d& calib);
+    void SetPoseCalibration(const Eigen::Isometry3d& calib);
 
-  // ---------------------------------------------------------------------------
-  //   Key frames and Maps parameters
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    //   Key frames and Maps parameters
+    // ---------------------------------------------------------------------------
 
-  Getter(KfDistanceThreshold, double)
-  Setter(KfDistanceThreshold, double)
+    Getter(KfDistanceThreshold, double)
+    Setter(KfDistanceThreshold, double)
 
-  Getter(KfAngleThreshold, double)
-  Setter(KfAngleThreshold, double)
+    Getter(KfAngleThreshold, double)
+    Setter(KfAngleThreshold, double)
 
-  Getter(MapUpdate, MappingMode)
-  Setter(MapUpdate, MappingMode)
+    Getter(MapUpdate, MappingMode)
+    Setter(MapUpdate, MappingMode)
 
-  double GetVoxelGridDecayingThreshold() const;
-  void SetVoxelGridDecayingThreshold(double decay);
+    double GetVoxelGridDecayingThreshold() const;
+    void SetVoxelGridDecayingThreshold(double decay);
 
-  SamplingMode GetVoxelGridSamplingMode(Keypoint k) const;
-  void SetVoxelGridSamplingMode(Keypoint k, SamplingMode sm);
+    SamplingMode GetVoxelGridSamplingMode(Keypoint k) const;
+    void SetVoxelGridSamplingMode(Keypoint k, SamplingMode sm);
 
-  // Set RollingGrid Parameters
-  void ClearMaps();
-  double GetVoxelGridLeafSize(Keypoint k) const;
-  void SetVoxelGridLeafSize(Keypoint k, double size);
-  void SetVoxelGridSize(int size);
-  void SetVoxelGridResolution(double resolution);
-  void SetVoxelGridMinFramesPerVoxel(unsigned int minFrames);
+    // Set RollingGrid Parameters
+    void ClearMaps();
+    double GetVoxelGridLeafSize(Keypoint k) const;
+    void SetVoxelGridLeafSize(Keypoint k, double size);
+    void SetVoxelGridSize(int size);
+    void SetVoxelGridResolution(double resolution);
+    void SetVoxelGridMinFramesPerVoxel(unsigned int minFrames);
 
-  // ---------------------------------------------------------------------------
-  //   Confidence estimation
-  // ---------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    //   Confidence estimation
+    // ---------------------------------------------------------------------------
 
-  // Overlap
-  Getter(OverlapSamplingRatio, float)
-  void SetOverlapSamplingRatio(float _arg);
+    // Overlap
+    Getter(OverlapSamplingRatio, float)
+    void SetOverlapSamplingRatio(float _arg);
 
-  Getter(OverlapEstimation, float)
+    Getter(OverlapEstimation, float)
 
-  // Matches
-  Getter(TotalMatchedKeypoints, int)
+    // Matches
+    Getter(TotalMatchedKeypoints, int)
 
-  // Motion constraints
-  Getter(AccelerationLimits, Eigen::Array2f)
-  Setter(AccelerationLimits, const Eigen::Array2f&)
+    // Motion constraints
+    Getter(AccelerationLimits, Eigen::Array2f)
+    Setter(AccelerationLimits, const Eigen::Array2f&)
 
-  Getter(VelocityLimits, Eigen::Array2f)
-  Setter(VelocityLimits, const Eigen::Array2f&)
+    Getter(VelocityLimits, Eigen::Array2f)
+    Setter(VelocityLimits, const Eigen::Array2f&)
 
-  Getter(TimeWindowDuration, float)
-  Setter(TimeWindowDuration, float)
+    Getter(TimeWindowDuration, float)
+    Setter(TimeWindowDuration, float)
 
-  Getter(ComplyMotionLimits, bool)
+    Getter(ComplyMotionLimits, bool)
 
 private:
 
-  // ---------------------------------------------------------------------------
-  //   General stuff and flags
-  // ---------------------------------------------------------------------------
-
-  // Max number of threads to use for parallel processing
-  int mNbThreads = 1;
-
-  // Booleans to decide whether to extract the keypoints of the relative type or not
-  std::map<Keypoint, bool> mUseKeypoints = {{EDGE, true}, {INTENSITY_EDGE, true}, {PLANE, true}, {BLOB, false}};
-  std::vector<Keypoint> mUsableKeypoints = {EDGE, INTENSITY_EDGE, PLANE};
-
-  // How to estimate Ego-Motion (approximate relative motion since last frame).
-  // The ego-motion step aims to give a fast and approximate initialization of
-  // new frame world pose to ensure faster and more precise convergence in
-  // Localization step.
-  EgoMotionMode mEgoMotion = EgoMotionMode::MOTION_EXTRAPOLATION;
-
-  // How to correct the rolling shutter distortion during frame acquisition.
-  // The undistortion should greatly improve the accuracy for smooth motions,
-  // but might be unstable for high-frequency motions.
-  UndistortionMode mUndistortion = UndistortionMode::REFINED;
-
-  // Indicate verbosity level to display more or less information :
-  // 0: print errors, warnings or one time info
-  // 1: 0 + frame number, total frame processing time
-  // 2: 1 + extracted features, used keypoints, localization variance, ego-motion and localization summary
-  // 3: 2 + sub-problems processing duration
-  // 4: 3 + ceres optimization summary
-  // 5: 4 + logging/maps memory usage
-  int mVerbosity = 0;
-
-  // Maximum duration on which to keep states in memory.
-  // This duration must be increased if a pose graph optimization is planned
-  // The minimum number of logged states is 2, to be able to handle ego-motion and undistortion,
-  // independently of this timeout value
-  double mLoggingTimeout = 0;
-
-  // Wether to use octree compression during keypoints logging.
-  // This reduces about 5 times the memory consumption, but slows down logging (and PGO).
-  PointCloudStorageType mLoggingStorage = PointCloudStorageType::PCL_CLOUD;
-
-  bool mLogOnlyKeyframes = true;
-
-  // Number of frames that have been processed by SLAM (number of poses in trajectory)
-  unsigned int mNbrFrameProcessed = 0;
-
-  // Timestamp of the current input frame
-  double mCurrentTime = 0.;
-  // ---------------------------------------------------------------------------
-  //   Trajectory, transforms and undistortion
-  // ---------------------------------------------------------------------------
-
-  // **** COORDINATES SYSTEMS ****
-
-  // Coordinates systems (CS) names to fill in pointclouds or poses headers
-  std::string mWorldFrameId = "world";  // CS of trajectory and maps
-  std::string mBaseFrameId = "base";    // CS of current keypoints
-
-  // **** LOCALIZATION ****
-
-  // Global transformation to map the current pointcloud to the previous one
-  Eigen::Isometry3d mTrelative = Eigen::Isometry3d::Identity();
-
-  // Transformation to map the current pointcloud in the world coordinates
-  // This pose is the pose of BASE in WORLD coordinates, at the time
-  // corresponding to the timestamp in the header of input Lidar scan.
-  Eigen::Isometry3d mTworld = Eigen::Isometry3d::Identity();
-  // Variable to store initial Tworld value (might be set by SetWorldTransformFromGuess)
-  // It is used to reset the pose in case of failure
-  Eigen::Isometry3d mTworldInit = Eigen::Isometry3d::Identity();
-
-  // Reflect the success of one SLAM iteration computation (used to log or not the state).
-  bool mValid = true;
-
-  // Store the keyframe information
-  bool mIsKeyFrame = true;
-
-  // [s] SLAM computation duration of last processed frame (~Tworld delay)
-  // used to compute latency compensated pose
-  double mLatency;
-
-  // **** UNDISTORTION ****
-
-  // Transform interpolator to estimate the pose of the sensor within a lidar
-  // frame, using the BASE poses at the beginning and end of frame.
-  // This will be used to undistort the pointcloud and express its points
-  // relatively to the same BASE pose at frame header timestamp.
-  // This will use the point-wise 'time' field, representing the time offset
-  // in seconds to add to the frame header timestamp.
-  LinearTransformInterpolator<double> mWithinFrameMotion;
-
-  // **** LOGGING ****
-
-  // Log info on each pose
-  // It contains :
-  //     -The estimated Lidar isometry and its covariance
-  //     -The time associated with the pose
-  //     -The relative index in the pose graph
-  //     -A boolean to store the keyframe info
-  //     -The undistorted keypoints (expressed in BASE)
-  // The oldest states are forgotten (cf. LoggingTimeout parameter)
-  std::list<LidarState> mLogStates;
-
-  // ---------------------------------------------------------------------------
-  //   Keypoints extraction
-  // ---------------------------------------------------------------------------
-
-  // Sequence id of the previous processed frame, used to check frames dropping
-  std::map<int, unsigned int> mPreviousFramesSeq;
-
-  // Keypoints extractors, 1 for each lidar device
-  std::map<uint8_t, KeypointExtractorPtr> mKeyPointsExtractors;
-
-  // Static transform to link BASE and LIDAR coordinates systems for each device.
-  // It corresponds to the pose of each LIDAR device origin in BASE coordinates.
-  // If the transform is not available for a given device, identity will be used.
-  std::map<uint8_t, Eigen::UnalignedIsometry3d> mBaseToLidarOffsets;
-
-  // ---------------------------------------------------------------------------
-  //   Keypoints from current frame
-  // ---------------------------------------------------------------------------
-
-  // Current frames (all raw input frames)
-  std::vector<PointCloud::Ptr> mCurrentFrames;
-
-  // Current aggregated points from all input frames, in WORLD coordinates (with undistortion if enabled)
-  PointCloud::Ptr mRegisteredFrame;
-
-  // Raw extracted keypoints, in BASE coordinates (no undistortion)
-  // /!\ Warning these pointclouds may be modified by CurrentUndistortedKeypoints
-  // As we do not perform a deep copy to save time
-  // When one will want to use these points, a deep copy will be needed
-  std::map<Keypoint, PointCloud::Ptr> mCurrentRawKeypoints;
-  std::map<Keypoint, PointCloud::Ptr> mPreviousRawKeypoints;
-
-  // Extracted keypoints, in BASE coordinates (with undistortion if enabled)
-  std::map<Keypoint, PointCloud::Ptr> mCurrentUndistortedKeypoints;
-
-  // Extracted keypoints, in WORLD coordinates (with undistortion if enabled)
-  std::map<Keypoint, PointCloud::Ptr> mCurrentWorldKeypoints;
-
-  // ---------------------------------------------------------------------------
-  //   Key frames and Maps
-  // ---------------------------------------------------------------------------
-
-  // Last keyframe pose
-  Eigen::Isometry3d mKfLastPose = Eigen::Isometry3d::Identity();
-
-  // Min distance or angle to travel since last keyframe to add a new one
-  double mKfDistanceThreshold = 0.5;  ///< [m] Min distance to travel since last KF to add a new one
-  double mKfAngleThreshold = 5.;      ///< [°] Min angle to rotate since last KF to add a new one
-
-  // Number of keyrames
-  int mKfCounter = 0;
-
-  // How to update the map
-  // The map can be updated more or less with new input keypoints
-  // from current scanned points depending on the initial map reliability.
-  MappingMode mMapUpdate = MappingMode::UPDATE;
-
-  // How to downsample the points in the keypoints' maps
-  // This mode parameter allows to choose how to select the remaining point in each voxel.
-  // It can be taking the first/last acquired point, taking the max intensity point,
-  // considering the closest point to the voxel center or averaging the points.
-  SamplingMode mDownSampling = SamplingMode::MAX_INTENSITY;
-
-  // Keypoints local map
-  std::map<Keypoint, std::shared_ptr<RollingGrid>> mLocalMaps;
-
-  // ---------------------------------------------------------------------------
-  //   Optimization data
-  // ---------------------------------------------------------------------------
-
-  //! Matching results
-  std::map<Keypoint, KeypointsMatcher::MatchingResults> mEgoMotionMatchingResults;
-  std::map<Keypoint, KeypointsMatcher::MatchingResults> mLocalizationMatchingResults;
-
-  // Optimization results
-  // Variance-Covariance matrix that estimates the localization error about the
-  // 6-DoF parameters (DoF order : X, Y, Z, rX, rY, rZ)
-  LocalOptimizer::RegistrationError mLocalizationUncertainty;
-
-  // Odometry manager
-  // It computes the residual with a weight, a measurements list and
-  // taking account of the acquisition time correspondance
-  // The odometry measurements must be filled and cleared from outside this lib
-  // using External Sensors interface
-  std::shared_ptr<ExternalSensors::WheelOdometryManager> mWheelOdomManager;
-
-  // IMU manager
-  // Compute the residual with a weight, a measurements list and
-  // taking account of the acquisition time correspondance
-  // The IMU measurements must be filled and cleared from outside this lib
-  // using External Sensors interface
-  std::shared_ptr<ExternalSensors::ImuGravityManager> mGravityManager;
-
-  // Landmarks manager
-  // Each landmark has its own manager and is identified by its ID.
-  // This map can be initialized from outside the lib if the absolute poses of the tags are known
-  // If not, it will be filled at each new detection.
-  // The managers compute the residuals with a weight, measurements lists and
-  // taking account of the acquisition time correspondance
-  // The tag measurements must be filled and cleared from outside this lib
-  // using External Sensors interface
-  std::map<int, ExternalSensors::LandmarkManager> mLandmarksManagers;
-  // Calibration
-  Eigen::Isometry3d mLmDetectorCalibration = Eigen::Isometry3d::Identity();
-  // Variable to store the landmark weight to init correctly the landmark managers
-  float mLandmarkWeight = 0.f;
-  // Boolean to choose whether to compute the reference pose of
-  // the tag locally from observations when updating the model (true)
-  // or to use the absolute tag pose supplied at init (false)
-  bool mLandmarkConstraintLocal = false;
-  // Saturation distance beyond which the tags are not taken into account in the optimization
-  float mLandmarkSaturationDistance = 5.f;
-  // Boolean to check whether to use the whole tag pose (position + orientation)
-  // or only the position to create a constraint in the optimization
-  bool mLandmarkPositionOnly = true;
-  // Boolean to decide whether to rotate the covariance
-  // during measures interpolation or not. Covariances are only used
-  // in pose graph optimization, not in local optimization
-  bool mLandmarkCovarianceRotation = true;
-
-  // GPS manager
-  // The GPS measurements must be filled and cleared from outside this lib
-  // using External Sensors interface
-  std::shared_ptr<ExternalSensors::GpsManager> mGpsManager;
-  // Calibration
-  Eigen::Isometry3d mGpsCalibration = Eigen::Isometry3d::Identity();
-
-  // Pose Manager
-  // Manager for the acquisition of pose measurements (e.g. from GNNS system, pre-integrated
-  // IMU or any other device able to give absolute pose.)
-  // It computes a residual with a weight taking into account the timing at which it is captured
-  // The Pose measurements must be filled and cleared from outside this lib
-  // using External Sensors interface
-  std::shared_ptr<ExternalSensors::PoseManager> mPoseManager;
-
-  // Time difference between Lidar's measurements and external sensors'
-  // not null if they are not expressed relatively to the same time reference
-  double mSensorTimeOffset = 0.;
-
-  // Maximum time difference (s) between two measurements to
-  // allow the measures interpolation and the integration
-  // of a sensor constraint in the optimization
-  double mSensorTimeThreshold = 0.5;
-
-  // Maximum number of sensor measurements stored
-  // Above this number, the oldest measurements are forgotten
-  unsigned int mSensorMaxMeasures = 1e6;
-
-  // ---------------------------------------------------------------------------
-  //   Optimization parameters
-  // ---------------------------------------------------------------------------
-
-  // Optimize only 2D pose in BASE coordinates.
-  // This will only optimize X, Y (ground coordinates) and yaw (rZ).
-  // This will hold Z (elevation), rX (roll) and rY (pitch) constant.
-  bool mTwoDMode = false;
-
-  // Number of outer ICP-optim loop iterations to perform.
-  // Each iteration will consist of building ICP matches, then optimizing them.
-  unsigned int mEgoMotionICPMaxIter = 4;
-  unsigned int mLocalizationICPMaxIter = 3;
-
-  // Maximum number of iterations of the Levenberg-Marquardt optimizer to solve
-  // the ICP problem composed of the built point-to-neighborhood residuals
-  unsigned int mEgoMotionLMMaxIter = 15;
-  unsigned int mLocalizationLMMaxIter = 15;
-
-  // Point-to-neighborhood matching parameters.
-  // The goal will be to loop over all keypoints, and to build the corresponding
-  // point-to-neighborhood residuals that will be optimized later.
-  // For each source keypoint, the steps will be:
-  // - To extract the N nearest neighbors from the target cloud.
-  //   These neighbors should not be too far from the source keypoint.
-  // - Assess the neighborhood shape by checking its PCA eigenvalues.
-  // - Fit a line/plane/blob model on the neighborhood using PCA.
-  // - Assess the model quality by checking its error relatively to the neighborhood.
-  // - Build the corresponding point-to-model distance operator
-  // If any of this step fails, the matching procedure of the current keypoint aborts.
-  // See KeypointsMatcher::Parameters for more details on each parameter.
-
-  // Max distance allowed between a source keypoint and its neighbors in target map.
-  // If one of the neighbors is farther, the neighborhood will be rejected.
-  double mEgoMotionMaxNeighborsDistance = 5.;
-  double mLocalizationMaxNeighborsDistance = 5.;
-
-  // Edge keypoints matching: point-to-line distance
-  unsigned int mEgoMotionEdgeNbNeighbors = 8;
-  unsigned int mEgoMotionEdgeMinNbNeighbors = 3;
-  double mEgoMotionEdgeMaxModelError = 0.2;
-  unsigned int mLocalizationEdgeNbNeighbors = 10;
-  unsigned int mLocalizationEdgeMinNbNeighbors = 4;
-  double mLocalizationEdgeMaxModelError = 0.2;
-
-  // Plane keypoints matching: point-to-plane distance
-  unsigned int mEgoMotionPlaneNbNeighbors = 5;
-  double mEgoMotionPlanarityThreshold = 0.04;
-  double mEgoMotionPlaneMaxModelError = 0.2;
-  unsigned int mLocalizationPlaneNbNeighbors = 5;
-  double mLocalizationPlanarityThreshold = 0.04;
-  double mLocalizationPlaneMaxModelError = 0.2;
-
-  // Blob keypoints matching: point-to-ellipsoid distance
-  unsigned int mLocalizationBlobNbNeighbors = 10;
-
-  // Maximum distance (in meters) beyond which the residual errors are
-  // saturated to robustify the optimization against outlier constraints.
-  // The residuals will be robustified by Tukey loss at scale sqrt(SatDist),
-  // leading to ~90% of saturation at SatDist/2, fully saturated at SatDist.
-  double mEgoMotionInitSaturationDistance = 5.0;
-  double mEgoMotionFinalSaturationDistance = 1.0;
-  double mLocalizationInitSaturationDistance = 2.0;
-  double mLocalizationFinalSaturationDistance = 0.5;
-
-  // ---------------------------------------------------------------------------
-  //   Graph parameters
-  // ---------------------------------------------------------------------------
-  // Log info from g2o, if empty, log is not stored
-  std::string mG2oFileName;
-
-  // Boolean to decide if we want to some vertices of the graph
-  bool mFixFirstVertex = false;
-  bool mFixLastVertex = false;
-  // Scale to increase or decrease SLAM pose covariances
-  float mCovarianceScale = 1.0f;
-  int mNbGraphIterations = 100;
-
-  // ---------------------------------------------------------------------------
-  //   Confidence estimation
-  // ---------------------------------------------------------------------------
-
-  // Data
-
-  // Overlap estimation of the current registered scan on the keypoints map
-  // A valid value lies in range [0-1].
-  // It is set to -1 if overlap has not been evaluated (disabled or not enough points).
-  float mOverlapEstimation = -1.0f;
-
-  // Number of matches for processed frame
-  unsigned int mTotalMatchedKeypoints = 0;
-
-  // Check motion limitations compliance
-  bool mComplyMotionLimits = true;
-
-  // Previous computed velocity (for acceleration computation)
-  Eigen::Array2f mPreviousVelocity;
-
-  // Parameters
-
-  // Extrapolating a pose farther from this time ratio is forbidden and will abort.
-  // i.e, if using 2 frames with timestamps t1 and t2, extrapolating at t3 is
-  // allowed only if abs((t3 - t2)/(t2 - t1)) < MaxExtrapolationRatio.
-  // Otherwise, extrapolation will return the pose at t2.
-  double mMaxExtrapolationRatio = 3.0;
-
-  // Min number of matches to consider the optimization problem usable.
-  // Below this threshold, we consider that there are not enough matches to
-  // provide good enough optimization results, and registration is aborted.
-  unsigned int mMinNbMatchedKeypoints = 20;
-
-  // [0-1] Ratio of points from the input cloud to compute overlap on.
-  // Downsampling accelerates the overlap computation, but may be less precise.
-  // If 0, overlap won't be computed.
-  float mOverlapSamplingRatio = 0.0f;
-
-  // Motion limitations
-  // Local velocity thresholds in BASE
-  Eigen::Array2f mVelocityLimits     = {FLT_MAX, FLT_MAX};
-  // Local acceleration thresholds in BASE
-  Eigen::Array2f mAccelerationLimits = {FLT_MAX, FLT_MAX};
-
-  // Duration on which to estimate the local velocity
-  // This window is used to smooth values to get a more accurate velocity estimation
-  // If 0, motion limits won't be checked.
-  // WARNING : the logging time out must be greater
-  // in order to comply with this required value.
-  float mTimeWindowDuration = 0.0f;
-
-  // ---------------------------------------------------------------------------
-  //   Main sub-problems and methods
-  // ---------------------------------------------------------------------------
-
-  // Check that input frames are correct
-  // (empty frame, same timestamp, frame dropping, ...)
-  bool CheckFrames(const std::vector<PointCloud::Ptr>& frames);
-
-  // Extract keypoints from input pointclouds,
-  // and transform them from LIDAR to BASE coordinate system.
-  void ExtractKeypoints();
-
-  // Compute constraints provided by external sensors
-  void ComputeSensorConstraints();
-
-  // Estimate the ego motion since last frame.
-  // Extrapolate new pose with a constant velocity model and/or
-  // refine estimation by registering current frame keypoints on previous frame keypoints.
-  void ComputeEgoMotion();
-
-  // Compute the pose of the current frame in world referential by registering
-  // current frame keypoints on keypoints from maps
-  void Localization();
-
-  // Transform current keypoints to WORLD coordinates,
-  // and add points to the maps if we are dealing with a new keyframe.
-  void UpdateMapsUsingTworld();
-
-  // Check if the current frame is a keyframe or not
-  bool CheckKeyFrame();
-
-  // Log current frame processing results : pose, covariance and keypoints.
-  void LogCurrentFrameState();
-
-  // ---------------------------------------------------------------------------
-  //   Undistortion helpers
-  // ---------------------------------------------------------------------------
-
-  // All points of the current frame have been acquired at different timestamps.
-  // The goal is to express them in the same referential, at the timestamp in
-  // input scan header. This can be done using estimated egomotion and assuming
-  // a constant velocity during a sweep.
-
-  // Extra/Interpolate scan pose using previous motion from previous and current poses.
-  // 'time' arg is the time offset in seconds to current frame header.stamp.
-  Eigen::Isometry3d InterpolateScanPose(double time);
-
-  // Init undistortion interpolator time bounds based on point-wise time field.
-  void InitUndistortion();
-
-  // Update the undistortion interpolator poses bounds,
-  // and refine the undistortion of the current keypoints clouds.
-  void RefineUndistortion();
-
-  // Undistort the keypoints using external pose measurement information
-  void UndistortWithPoseMeasurement();
-
-  // ---------------------------------------------------------------------------
-  //   Confidence estimator helpers
-  // ---------------------------------------------------------------------------
-
-  // Estimate the overlap of the current scan onto the keypoints submaps
-  void EstimateOverlap();
-
-  // Test if the pose complies with motion limitations
-  void CheckMotionLimits();
-
-  // ---------------------------------------------------------------------------
-  //   Transformation helpers
-  // ---------------------------------------------------------------------------
-
-  // Rigidly transform a pointcloud in a multi-threaded way.
-  PointCloud::Ptr TransformPointCloud(PointCloud::ConstPtr cloud,
-                                      const Eigen::Isometry3d& tf,
-                                      const std::string& frameId = "") const;
-
-  // Aggregate a set of frames from LIDAR to BASE or WORLD coordinates.
-  // If worldCoordinates=false, it returns points in BASE coordinates (no undistortion).
-  // If worldCoordinates=true, it returns points in WORLD coordinates (optionally undistorted).
-  // The LIDAR to BASE offsets specific to each sensor are properly added.
-  // The output aggregated points timestamps are corrected to be relative to the 1st frame timestamp.
-  // NOTE: If transforming to WORLD coordinates, be sure that Tworld/WithinFrameMotion have been updated
-  //       (updated during the Localization step).
-  PointCloud::Ptr AggregateFrames(const std::vector<PointCloud::Ptr>& frames, bool worldCoordinates) const;
-
-  // ---------------------------------------------------------------------------
-  //   External sensor helpers
-  // ---------------------------------------------------------------------------
-  // All external sensors are shared ptr.
-  // The init function creates the objects with known parameters
-  void InitWheelOdom();
-  void InitGravity();
-  // WARNING : If the calibration has not been set for the landmarks detector (cf SetLmDetectorCalibration),
-  // default identity calibration is set to the current landmark.
-  // This way, data can be stored before receiving the calibration.
-  void InitLandmarkManager(int id);
-  void InitGps();
-  void InitPoseSensor();
+    // ---------------------------------------------------------------------------
+    //   General stuff and flags
+    // ---------------------------------------------------------------------------
+
+    // Max number of threads to use for parallel processing
+    int mNbThreads = 1;
+
+    // Booleans to decide whether to extract the keypoints of the relative type or not
+    std::map<Keypoint, bool> mUseKeypoints = {{EDGE, true}, {INTENSITY_EDGE, true}, {PLANE, true}, {BLOB, false}};
+    std::vector<Keypoint> mUsableKeypoints = {EDGE, INTENSITY_EDGE, PLANE};
+
+    // How to estimate Ego-Motion (approximate relative motion since last frame).
+    // The ego-motion step aims to give a fast and approximate initialization of
+    // new frame world pose to ensure faster and more precise convergence in
+    // Localization step.
+    EgoMotionMode mEgoMotion = EgoMotionMode::MOTION_EXTRAPOLATION;
+
+    // How to correct the rolling shutter distortion during frame acquisition.
+    // The undistortion should greatly improve the accuracy for smooth motions,
+    // but might be unstable for high-frequency motions.
+    UndistortionMode mUndistortion = UndistortionMode::REFINED;
+
+    // Indicate verbosity level to display more or less information :
+    // 0: print errors, warnings or one time info
+    // 1: 0 + frame number, total frame processing time
+    // 2: 1 + extracted features, used keypoints, localization variance, ego-motion and localization summary
+    // 3: 2 + sub-problems processing duration
+    // 4: 3 + ceres optimization summary
+    // 5: 4 + logging/maps memory usage
+    int mVerbosity = 0;
+
+    // Maximum duration on which to keep states in memory.
+    // This duration must be increased if a pose graph optimization is planned
+    // The minimum number of logged states is 2, to be able to handle ego-motion and undistortion,
+    // independently of this timeout value
+    double mLoggingTimeout = 0;
+
+    // Wether to use octree compression during keypoints logging.
+    // This reduces about 5 times the memory consumption, but slows down logging (and PGO).
+    PointCloudStorageType mLoggingStorage = PointCloudStorageType::PCL_CLOUD;
+
+    bool mLogOnlyKeyframes = true;
+
+    // Number of frames that have been processed by SLAM (number of poses in trajectory)
+    unsigned int mNbrFrameProcessed = 0;
+
+    // Timestamp of the current input frame
+    double mCurrentTime_sec = 0.0;
+    // ---------------------------------------------------------------------------
+    //   Trajectory, transforms and undistortion
+    // ---------------------------------------------------------------------------
+
+    // **** COORDINATES SYSTEMS ****
+
+    // Coordinates systems (CS) names to fill in pointclouds or poses headers
+    std::string mWorldFrameId = "world";  // CS of trajectory and maps
+    std::string mBaseFrameId = "base";    // CS of current keypoints
+
+    // **** LOCALIZATION ****
+
+    // Global transformation to map the current pointcloud to the previous one
+    Eigen::Isometry3d mTrelative = Eigen::Isometry3d::Identity();
+
+    // Transformation to map the current pointcloud in the world coordinates
+    // This pose is the pose of BASE in WORLD coordinates, at the time
+    // corresponding to the timestamp in the header of input Lidar scan.
+    Eigen::Isometry3d mTworld = Eigen::Isometry3d::Identity();
+    // Variable to store initial Tworld value (might be set by SetWorldTransformFromGuess)
+    // It is used to reset the pose in case of failure
+    Eigen::Isometry3d mTworldInit = Eigen::Isometry3d::Identity();
+
+    // Reflect the success of one SLAM iteration computation (used to log or not the state).
+    bool mValid = true;
+
+    // Store the keyframe information
+    bool mIsKeyFrame = true;
+
+    // [s] SLAM computation duration of last processed frame (~Tworld delay)
+    // used to compute latency compensated pose
+    double mLatency;
+
+    // **** UNDISTORTION ****
+
+    // Transform interpolator to estimate the pose of the sensor within a lidar
+    // frame, using the BASE poses at the beginning and end of frame.
+    // This will be used to undistort the pointcloud and express its points
+    // relatively to the same BASE pose at frame header timestamp.
+    // This will use the point-wise 'time' field, representing the time offset
+    // in seconds to add to the frame header timestamp.
+    LinearTransformInterpolator<double> mWithinFrameMotion;
+
+    // **** LOGGING ****
+
+    // Log info on each pose
+    // It contains :
+    //     -The estimated Lidar isometry and its covariance
+    //     -The time associated with the pose
+    //     -The relative index in the pose graph
+    //     -A boolean to store the keyframe info
+    //     -The undistorted keypoints (expressed in BASE)
+    // The oldest states are forgotten (cf. LoggingTimeout parameter)
+    std::list<LidarState> mLogStates;
+
+    // ---------------------------------------------------------------------------
+    //   Keypoints extraction
+    // ---------------------------------------------------------------------------
+
+    // Sequence id of the previous processed frame, used to check frames dropping
+    std::map<int, unsigned int> mPreviousFramesSeq;
+
+    // Keypoints extractors, 1 for each lidar device
+    std::map<uint8_t, KeypointExtractorPtr> mKeyPointsExtractors;
+
+    // Static transform to link BASE and LIDAR coordinates systems for each device.
+    // It corresponds to the pose of each LIDAR device origin in BASE coordinates.
+    // If the transform is not available for a given device, identity will be used.
+    std::map<uint8_t, Eigen::UnalignedIsometry3d> mBaseToLidarOffsets;
+
+    // ---------------------------------------------------------------------------
+    //   Keypoints from current frame
+    // ---------------------------------------------------------------------------
+
+    // Current frames (all raw input frames)
+    std::vector<PointCloud::Ptr> mCurrentFrames;
+
+    // Current aggregated points from all input frames, in WORLD coordinates (with undistortion if enabled)
+    PointCloud::Ptr mRegisteredFrame;
+
+    // Raw extracted keypoints, in BASE coordinates (no undistortion)
+    // /!\ Warning these pointclouds may be modified by CurrentUndistortedKeypoints
+    // As we do not perform a deep copy to save time
+    // When one will want to use these points, a deep copy will be needed
+    std::map<Keypoint, PointCloud::Ptr> mCurrentRawKeypoints;
+    std::map<Keypoint, PointCloud::Ptr> mPreviousRawKeypoints;
+
+    // Extracted keypoints, in BASE coordinates (with undistortion if enabled)
+    std::map<Keypoint, PointCloud::Ptr> mCurrentUndistortedKeypoints;
+
+    // Extracted keypoints, in WORLD coordinates (with undistortion if enabled)
+    std::map<Keypoint, PointCloud::Ptr> mCurrentWorldKeypoints;
+
+    // ---------------------------------------------------------------------------
+    //   Key frames and Maps
+    // ---------------------------------------------------------------------------
+
+    // Last keyframe pose
+    Eigen::Isometry3d mKfLastPose = Eigen::Isometry3d::Identity();
+
+    // Min distance or angle to travel since last keyframe to add a new one
+    double mKfDistanceThreshold = 0.5;  ///< [m] Min distance to travel since last KF to add a new one
+    double mKfAngleThreshold = 5.;      ///< [°] Min angle to rotate since last KF to add a new one
+
+    // Number of keyrames
+    int mKfCounter = 0;
+
+    // How to update the map
+    // The map can be updated more or less with new input keypoints
+    // from current scanned points depending on the initial map reliability.
+    MappingMode mMapUpdate = MappingMode::UPDATE;
+
+    // How to downsample the points in the keypoints' maps
+    // This mode parameter allows to choose how to select the remaining point in each voxel.
+    // It can be taking the first/last acquired point, taking the max intensity point,
+    // considering the closest point to the voxel center or averaging the points.
+    SamplingMode mDownSampling = SamplingMode::MAX_INTENSITY;
+
+    // Keypoints local map
+    std::map<Keypoint, std::shared_ptr<RollingGrid>> mLocalMaps;
+
+    // ---------------------------------------------------------------------------
+    //   Optimization data
+    // ---------------------------------------------------------------------------
+
+    //! Matching results
+    std::map<Keypoint, KeypointsMatcher::MatchingResults> mEgoMotionMatchingResults;
+    std::map<Keypoint, KeypointsMatcher::MatchingResults> mLocalizationMatchingResults;
+
+    // Optimization results
+    // Variance-Covariance matrix that estimates the localization error about the
+    // 6-DoF parameters (DoF order : X, Y, Z, rX, rY, rZ)
+    LocalOptimizer::RegistrationError mLocalizationUncertainty;
+
+    // Odometry manager
+    // It computes the residual with a weight, a measurements list and
+    // taking account of the acquisition time correspondance
+    // The odometry measurements must be filled and cleared from outside this lib
+    // using External Sensors interface
+    std::shared_ptr<ExternalSensors::WheelOdometryManager> mWheelOdomManager;
+
+    // IMU manager
+    // Compute the residual with a weight, a measurements list and
+    // taking account of the acquisition time correspondance
+    // The IMU measurements must be filled and cleared from outside this lib
+    // using External Sensors interface
+    std::shared_ptr<ExternalSensors::ImuGravityManager> mGravityManager;
+
+    // Landmarks manager
+    // Each landmark has its own manager and is identified by its ID.
+    // This map can be initialized from outside the lib if the absolute poses of the tags are known
+    // If not, it will be filled at each new detection.
+    // The managers compute the residuals with a weight, measurements lists and
+    // taking account of the acquisition time correspondance
+    // The tag measurements must be filled and cleared from outside this lib
+    // using External Sensors interface
+    std::map<int, ExternalSensors::LandmarkManager> mLandmarksManagers;
+
+    // Calibration
+    Eigen::Isometry3d mLmDetectorCalibration = Eigen::Isometry3d::Identity();
+
+    // Variable to store the landmark weight to init correctly the landmark managers
+    float mLandmarkWeight = 0.f;
+
+    // Boolean to choose whether to compute the reference pose of
+    // the tag locally from observations when updating the model (true)
+    // or to use the absolute tag pose supplied at init (false)
+    bool mLandmarkConstraintLocal = false;
+
+    // Saturation distance beyond which the tags are not taken into account in the optimization
+    float mLandmarkSaturationDistance = 5.f;
+
+    // Boolean to check whether to use the whole tag pose (position + orientation)
+    // or only the position to create a constraint in the optimization
+    bool mLandmarkPositionOnly = true;
+
+    // Boolean to decide whether to rotate the covariance
+    // during measures interpolation or not. Covariances are only used
+    // in pose graph optimization, not in local optimization
+    bool mLandmarkCovarianceRotation = true;
+
+    // GPS manager
+    // The GPS measurements must be filled and cleared from outside this lib
+    // using External Sensors interface
+    std::shared_ptr<ExternalSensors::GpsManager> mGpsManager;
+
+    // Calibration
+    Eigen::Isometry3d mGpsCalibration = Eigen::Isometry3d::Identity();
+
+    // Pose Manager
+    // Manager for the acquisition of pose measurements (e.g. from GNNS system, pre-integrated
+    // IMU or any other device able to give absolute pose.)
+    // It computes a residual with a weight taking into account the timing at which it is captured
+    // The Pose measurements must be filled and cleared from outside this lib
+    // using External Sensors interface
+    std::shared_ptr<ExternalSensors::PoseManager> mPoseManager;
+
+    // Time difference between Lidar's measurements and external sensors'
+    // not null if they are not expressed relatively to the same time reference
+    double mSensorTimeOffset = 0.;
+
+    // Maximum time difference (s) between two measurements to
+    // allow the measures interpolation and the integration
+    // of a sensor constraint in the optimization
+    double mSensorTimeThreshold = 0.5;
+
+    // Maximum number of sensor measurements stored
+    // Above this number, the oldest measurements are forgotten
+    unsigned int mSensorMaxMeasures = 1e6;
+
+    // ---------------------------------------------------------------------------
+    //   Optimization parameters
+    // ---------------------------------------------------------------------------
+
+    // Optimize only 2D pose in BASE coordinates.
+    // This will only optimize X, Y (ground coordinates) and yaw (rZ).
+    // This will hold Z (elevation), rX (roll) and rY (pitch) constant.
+    bool mTwoDMode = false;
+
+    // Number of outer ICP-optim loop iterations to perform.
+    // Each iteration will consist of building ICP matches, then optimizing them.
+    unsigned int mEgoMotionICPMaxIter = 4;
+    unsigned int mLocalizationICPMaxIter = 3;
+
+    // Maximum number of iterations of the Levenberg-Marquardt optimizer to solve
+    // the ICP problem composed of the built point-to-neighborhood residuals
+    unsigned int mEgoMotionLMMaxIter = 15;
+    unsigned int mLocalizationLMMaxIter = 15;
+
+    // Point-to-neighborhood matching parameters.
+    // The goal will be to loop over all keypoints, and to build the corresponding
+    // point-to-neighborhood residuals that will be optimized later.
+    // For each source keypoint, the steps will be:
+    // - To extract the N nearest neighbors from the target cloud.
+    //   These neighbors should not be too far from the source keypoint.
+    // - Assess the neighborhood shape by checking its PCA eigenvalues.
+    // - Fit a line/plane/blob model on the neighborhood using PCA.
+    // - Assess the model quality by checking its error relatively to the neighborhood.
+    // - Build the corresponding point-to-model distance operator
+    // If any of this step fails, the matching procedure of the current keypoint aborts.
+    // See KeypointsMatcher::Parameters for more details on each parameter.
+
+    // Max distance allowed between a source keypoint and its neighbors in target map.
+    // If one of the neighbors is farther, the neighborhood will be rejected.
+    double mEgoMotionMaxNeighborsDistance = 5.;
+    double mLocalizationMaxNeighborsDistance = 5.;
+
+    // Edge keypoints matching: point-to-line distance
+    unsigned int mEgoMotionEdgeNbNeighbors = 8;
+    unsigned int mEgoMotionEdgeMinNbNeighbors = 3;
+    double mEgoMotionEdgeMaxModelError = 0.2;
+    unsigned int mLocalizationEdgeNbNeighbors = 10;
+    unsigned int mLocalizationEdgeMinNbNeighbors = 4;
+    double mLocalizationEdgeMaxModelError = 0.2;
+
+    // Plane keypoints matching: point-to-plane distance
+    unsigned int mEgoMotionPlaneNbNeighbors = 5;
+    double mEgoMotionPlanarityThreshold = 0.04;
+    double mEgoMotionPlaneMaxModelError = 0.2;
+    unsigned int mLocalizationPlaneNbNeighbors = 5;
+    double mLocalizationPlanarityThreshold = 0.04;
+    double mLocalizationPlaneMaxModelError = 0.2;
+
+    // Blob keypoints matching: point-to-ellipsoid distance
+    unsigned int mLocalizationBlobNbNeighbors = 10;
+
+    // Maximum distance (in meters) beyond which the residual errors are
+    // saturated to robustify the optimization against outlier constraints.
+    // The residuals will be robustified by Tukey loss at scale sqrt(SatDist),
+    // leading to ~90% of saturation at SatDist/2, fully saturated at SatDist.
+    double mEgoMotionInitSaturationDistance = 5.0;
+    double mEgoMotionFinalSaturationDistance = 1.0;
+    double mLocalizationInitSaturationDistance = 2.0;
+    double mLocalizationFinalSaturationDistance = 0.5;
+
+    // ---------------------------------------------------------------------------
+    //   Graph parameters
+    // ---------------------------------------------------------------------------
+    // Log info from g2o, if empty, log is not stored
+    std::string mG2oFileName;
+
+    // Boolean to decide if we want to some vertices of the graph
+    bool mFixFirstVertex = false;
+    bool mFixLastVertex = false;
+
+    // Scale to increase or decrease SLAM pose covariances
+    float mCovarianceScale = 1.0f;
+    int mNbGraphIterations = 100;
+
+    // ---------------------------------------------------------------------------
+    //   Confidence estimation
+    // ---------------------------------------------------------------------------
+
+    // Data
+
+    // Overlap estimation of the current registered scan on the keypoints map
+    // A valid value lies in range [0-1].
+    // It is set to -1 if overlap has not been evaluated (disabled or not enough points).
+    float mOverlapEstimation = -1.0f;
+
+    // Number of matches for processed frame
+    unsigned int mTotalMatchedKeypoints = 0;
+
+    // Check motion limitations compliance
+    bool mComplyMotionLimits = true;
+
+    // Previous computed velocity (for acceleration computation)
+    Eigen::Array2f mPreviousVelocity;
+
+    // Parameters
+
+    // Extrapolating a pose farther from this time ratio is forbidden and will abort.
+    // i.e, if using 2 frames with timestamps t1 and t2, extrapolating at t3 is
+    // allowed only if abs((t3 - t2)/(t2 - t1)) < MaxExtrapolationRatio.
+    // Otherwise, extrapolation will return the pose at t2.
+    double mMaxExtrapolationRatio = 3.0;
+
+    // Min number of matches to consider the optimization problem usable.
+    // Below this threshold, we consider that there are not enough matches to
+    // provide good enough optimization results, and registration is aborted.
+    unsigned int mMinNbMatchedKeypoints = 20;
+
+    // [0-1] Ratio of points from the input cloud to compute overlap on.
+    // Downsampling accelerates the overlap computation, but may be less precise.
+    // If 0, overlap won't be computed.
+    float mOverlapSamplingRatio = 0.0f;
+
+    // Motion limitations
+    // Local velocity thresholds in BASE
+    Eigen::Array2f mVelocityLimits     = {FLT_MAX, FLT_MAX};
+
+    // Local acceleration thresholds in BASE
+    Eigen::Array2f mAccelerationLimits = {FLT_MAX, FLT_MAX};
+
+    // Duration on which to estimate the local velocity
+    // This window is used to smooth values to get a more accurate velocity estimation
+    // If 0, motion limits won't be checked.
+    // WARNING : the logging time out must be greater
+    // in order to comply with this required value.
+    float mTimeWindowDuration = 0.0f;
+
+    // ---------------------------------------------------------------------------
+    //   Main sub-problems and methods
+    // ---------------------------------------------------------------------------
+
+    // Check that input frames are correct
+    // (empty frame, same timestamp, frame dropping, ...)
+    bool CheckFrames(const std::vector<PointCloud::Ptr>& frames);
+
+    // Extract keypoints from input pointclouds,
+    // and transform them from LIDAR to BASE coordinate system.
+    void ExtractKeypoints();
+
+    // Compute constraints provided by external sensors
+    void ComputeSensorConstraints();
+
+    // Estimate the ego motion since last frame.
+    // Extrapolate new pose with a constant velocity model and/or
+    // refine estimation by registering current frame keypoints on previous frame keypoints.
+    void ComputeEgoMotion();
+
+    // Compute the pose of the current frame in world referential by registering
+    // current frame keypoints on keypoints from maps
+    void Localization();
+
+    // Transform current keypoints to WORLD coordinates,
+    // and add points to the maps if we are dealing with a new keyframe.
+    void UpdateMapsUsingTworld();
+
+    // Check if the current frame is a keyframe or not
+    bool CheckKeyFrame();
+
+    // Log current frame processing results : pose, covariance and keypoints.
+    void LogCurrentFrameState();
+
+    // ---------------------------------------------------------------------------
+    //   Undistortion helpers
+    // ---------------------------------------------------------------------------
+
+    // All points of the current frame have been acquired at different timestamps.
+    // The goal is to express them in the same referential, at the timestamp in
+    // input scan header. This can be done using estimated egomotion and assuming
+    // a constant velocity during a sweep.
+
+    // Extra/Interpolate scan pose using previous motion from previous and current poses.
+    // 'time' arg is the time offset in seconds to current frame header.stamp.
+    Eigen::Isometry3d InterpolateScanPose(double time);
+
+    // Init undistortion interpolator time bounds based on point-wise time field.
+    void InitUndistortion();
+
+    // Update the undistortion interpolator poses bounds,
+    // and refine the undistortion of the current keypoints clouds.
+    void RefineUndistortion();
+
+    // Undistort the keypoints using external pose measurement information
+    void UndistortWithPoseMeasurement();
+
+    // ---------------------------------------------------------------------------
+    //   Confidence estimator helpers
+    // ---------------------------------------------------------------------------
+
+    // Estimate the overlap of the current scan onto the keypoints submaps
+    void EstimateOverlap();
+
+    // Test if the pose complies with motion limitations
+    void CheckMotionLimits();
+
+    // ---------------------------------------------------------------------------
+    //   Transformation helpers
+    // ---------------------------------------------------------------------------
+
+    // Rigidly transform a pointcloud in a multi-threaded way.
+    PointCloud::Ptr TransformPointCloud(PointCloud::ConstPtr cloud,
+                                        const Eigen::Isometry3d& tf,
+                                        const std::string& frameId = "") const;
+
+    // Aggregate a set of frames from LIDAR to BASE or WORLD coordinates.
+    // If worldCoordinates=false, it returns points in BASE coordinates (no undistortion).
+    // If worldCoordinates=true, it returns points in WORLD coordinates (optionally undistorted).
+    // The LIDAR to BASE offsets specific to each sensor are properly added.
+    // The output aggregated points timestamps are corrected to be relative to the 1st frame timestamp.
+    // NOTE: If transforming to WORLD coordinates, be sure that Tworld/WithinFrameMotion have been updated
+    //       (updated during the Localization step).
+    PointCloud::Ptr AggregateFrames(const std::vector<PointCloud::Ptr>& frames, bool worldCoordinates) const;
+
+    // ---------------------------------------------------------------------------
+    //   External sensor helpers
+    // ---------------------------------------------------------------------------
+    // All external sensors are shared ptr.
+    // The init function creates the objects with known parameters
+    void InitWheelOdom();
+    void InitGravity();
+    // WARNING : If the calibration has not been set for the landmarks detector (cf SetLmDetectorCalibration),
+    // default identity calibration is set to the current landmark.
+    // This way, data can be stored before receiving the calibration.
+    void InitLandmarkManager(int id);
+    void InitGps();
+    void InitPoseSensor();
 };
 
 } // end of LidarSlam namespace

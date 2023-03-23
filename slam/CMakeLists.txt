@@ -156,6 +156,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(nanoflann REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Ceres REQUIRED)
+find_package(g2o REQUIRED)
 
 find_package(PCL REQUIRED COMPONENTS common io octree geometry)
 include_directories(SYSTEM ${PCL_INCLUDE_DIRS})

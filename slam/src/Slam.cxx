@@ -234,38 +234,44 @@ void Slam::Reset(bool resetLog)
 //-----------------------------------------------------------------------------
 void Slam::SetNbThreads(int n)
 {
-  // Set number of threads for main processes
-  mNbThreads = n;
-  // Set number of threads for keypoints extraction
-  for (const auto& kv : mKeyPointsExtractors)
-    kv.second->SetNbThreads(n);
+    // Set number of threads for main processes
+    mNbThreads = n;
+
+    // Set number of threads for keypoints extraction
+    for (const auto& kv : mKeyPointsExtractors)
+        kv.second->SetNbThreads(n);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::EnableKeypointType(Keypoint k, bool enabled)
 {
-  mUseKeypoints[k] = enabled;
-  if (enabled)
-  {
-    if (!mLocalMaps.count(k))
-      this->InitMap(k);
-    if (!mCurrentRawKeypoints.count(k))
-      mCurrentRawKeypoints[k].reset(new PointCloud);
-    if (!mCurrentUndistortedKeypoints.count(k))
-      mCurrentUndistortedKeypoints[k].reset(new PointCloud);
-    if (!mCurrentWorldKeypoints.count(k))
-      mCurrentWorldKeypoints[k].reset(new PointCloud);
-    mEgoMotionMatchingResults[k] = KeypointsMatcher::MatchingResults();
-    mLocalizationMatchingResults[k] = KeypointsMatcher::MatchingResults();
-  }
+    mUseKeypoints[k] = enabled;
+    if (enabled)
+    {
+        if (!mLocalMaps.count(k))
+            this->InitMap(k);
+
+        if (!mCurrentRawKeypoints.count(k))
+            mCurrentRawKeypoints[k].reset(new PointCloud);
+
+        if (!mCurrentUndistortedKeypoints.count(k))
+            mCurrentUndistortedKeypoints[k].reset(new PointCloud);
+
+        if (!mCurrentWorldKeypoints.count(k))
+            mCurrentWorldKeypoints[k].reset(new PointCloud);
+
+        mEgoMotionMatchingResults[k] = KeypointsMatcher::MatchingResults();
+        mLocalizationMatchingResults[k] = KeypointsMatcher::MatchingResults();
+    }
 }
 
 //-----------------------------------------------------------------------------
 bool Slam::KeypointTypeEnabled(Keypoint k) const
 {
-  if (!mUseKeypoints.count(k))
-    return false;
-  return mUseKeypoints.at(k);
+    if (!mUseKeypoints.count(k))
+        return false;
+
+    return mUseKeypoints.at(k);
 }
 
 //-----------------------------------------------------------------------------
@@ -277,7 +283,7 @@ void Slam::AddFrames(const std::vector<PointCloud::Ptr>& frames)
   if (!this->CheckFrames(frames))
     return;
   mCurrentFrames = frames;
-  mCurrentTime = Utils::PclStampToSec(mCurrentFrames[0]->header.stamp);
+  mCurrentTime_sec = Utils::PclStampToSec(mCurrentFrames[0]->header.stamp);
 
   // Set init pose (can have been modified by global optimization / reset)
   // 1) To ensure a smooth local SLAM, the global optimization must refine
@@ -302,7 +308,7 @@ void Slam::AddFrames(const std::vector<PointCloud::Ptr>& frames)
 
   PRINT_VERBOSE(2, "\n#########################################################");
   PRINT_VERBOSE(1, "Processing frame " << mNbrFrameProcessed << std::fixed << std::setprecision(9) <<
-                   " (at time " << mCurrentTime << ")" << std::scientific);
+                   " (at time " << mCurrentTime_sec << ")" << std::scientific);
   PRINT_VERBOSE(2, "#########################################################\n");
 
   // Compute the edge and planar keypoints
@@ -361,7 +367,7 @@ void Slam::AddFrames(const std::vector<PointCloud::Ptr>& frames)
     {
       for (auto& idLm : mLandmarksManagers)
       {
-        if (idLm.second.UpdateAbsolutePose(mTworld, mCurrentTime))
+        if (idLm.second.UpdateAbsolutePose(mTworld, mCurrentTime_sec))
           PRINT_VERBOSE(3, "Updating reference pose of tag #" << idLm.first << " to "<<idLm.second.GetAbsolutePose().transpose());
       }
     }
@@ -450,17 +456,17 @@ void Slam::AddFrames(const std::vector<PointCloud::Ptr>& frames)
 void Slam::ComputeSensorConstraints()
 {
   if (mWheelOdomManager && mWheelOdomManager->CanBeUsedLocally() &&
-      mWheelOdomManager->ComputeConstraint(mCurrentTime))
+      mWheelOdomManager->ComputeConstraint(mCurrentTime_sec))
     PRINT_VERBOSE(3, "Wheel odometry constraint added")
   if (mGravityManager && mGravityManager->CanBeUsedLocally() &&
-      mGravityManager->ComputeConstraint(mCurrentTime))
+      mGravityManager->ComputeConstraint(mCurrentTime_sec))
     PRINT_VERBOSE(3, "IMU gravity constraint added")
   if (this->LmCanBeUsedLocally())
   {
     for (auto& idLm : mLandmarksManagers)
     {
       PRINT_VERBOSE(3, "Checking state of tag #" << idLm.first)
-      if (idLm.second.ComputeConstraint(mCurrentTime))
+      if (idLm.second.ComputeConstraint(mCurrentTime_sec))
         PRINT_VERBOSE(3, "\t Adding constraint for tag #" << idLm.first)
     }
   }
@@ -472,7 +478,7 @@ void Slam::ComputeSensorConstraints()
       // The last pose logged corresponds to last lidar frame
       mPoseManager->SetPrevLidarTime(mLogStates.back().Time);
       mPoseManager->SetPrevPoseTransform(mLogStates.back().Isometry);
-      if (mPoseManager->ComputeConstraint(mCurrentTime))
+      if (mPoseManager->ComputeConstraint(mCurrentTime_sec))
         PRINT_VERBOSE(3, "External pose constraint added")
     }
   }
@@ -514,150 +520,156 @@ void Slam::UpdateMaps()
 //-----------------------------------------------------------------------------
 bool Slam::OptimizeGraph()
 {
-  #ifdef USE_G2O
-  // Check if graph can be optimized
-  if (!this->LmHasData() && !this->GpsHasData())
-  {
-    PRINT_WARNING("No external constraint found, graph cannot be optimized");
-    return false;
-  }
-
-  PoseGraphOptimizer graphManager;
-  graphManager.SetFixFirst(this->FixFirstVertex);
-  graphManager.SetFixLast(this->FixLastVertex);
-  // Clear the graph
-  graphManager.ResetGraph();
-  // Init pose graph optimizer
-  graphManager.SetNbIteration(this->NbGraphIterations);
-  graphManager.SetVerbose(mVerbosity >= 2);
-  graphManager.SetSaveG2OFile(!this->G2oFileName.empty());
-  graphManager.SetG2OFileName(this->G2oFileName);
-  // Add new SLAM states to graph
-  graphManager.AddLidarStates(mLogStates);
-
-  IF_VERBOSE(1, Utils::Timer::Init("Pose graph optimization"));
-  IF_VERBOSE(3, Utils::Timer::Init("PGO : optimization"));
-
-  // Boolean to store the info "there is at least one external constraint in the graph"
-  bool externalConstraint = false;
-
-  // Look for landmark constraints
-  if (this->LmHasData())
-  {
-    // Allow the rotation of the covariances when interpolating the measurements
-    this->SetLandmarkCovarianceRotation(true);
-    // Set the landmark detector calibration
-    graphManager.AddExternalSensor(mLmDetectorCalibration, int(ExternalSensor::LANDMARK_DETECTOR));
-
-    for (auto& idLm : mLandmarksManagers)
+    #ifdef USE_G2O
+    // Check if graph can be optimized
+    if (!this->LmHasData() && !this->GpsHasData())
     {
-      // Shortcut to current manager
-      auto& lm = idLm.second;
-
-      // Add landmark to the graph
-      Eigen::Vector6d lmPose = lm.GetAbsolutePose();
-      Eigen::Isometry3d lmTransfo = Utils::XYZRPYtoIsometry(lmPose.data());
-      graphManager.AddLandmark(lmTransfo, idLm.first, lm.GetPositionOnly());
-
-      // Add landmarks constraint to the graph
-      lm.SetVerbose(false);
-      for (auto& s : mLogStates)
-      {
-        ExternalSensors::LandmarkMeasurement lmSynchMeasure; // Virtual landmark measure with synchronized timestamp and no calibration applied
-        if (!lm.ComputeSynchronizedMeasure(s.Time, lmSynchMeasure))
-          continue;
-        // Add synchronized landmark observations to the graph
-        graphManager.AddLandmarkConstraint(s.Index, idLm.first, lmSynchMeasure, lm.GetPositionOnly());
-        externalConstraint = true;
-      }
-      lm.SetVerbose(mVerbosity >= 3);
+        PRINT_WARNING("No external constraint found, graph cannot be optimized");
+        return false;
     }
-    // Reset the rotate covariance member to not rotate covariances
-    // in future local constraints building
-    this->SetLandmarkCovarianceRotation(false);
-  }
 
-  // Look for GPS constraints
-  if (this->GpsHasData())
-  {
-    graphManager.AddExternalSensor(mGpsManager->GetCalibration(), int(ExternalSensor::GPS));
-    for (auto& s : mLogStates)
+    PoseGraphOptimizer graphManager;
+    graphManager.SetFixFirst(mFixFirstVertex);
+    graphManager.SetFixLast(mFixLastVertex);
+
+    // Clear the graph
+    graphManager.ResetGraph();
+
+    // Init pose graph optimizer
+    graphManager.SetNbIteration(mNbGraphIterations);
+    graphManager.SetVerbose(mVerbosity >= 2);
+    graphManager.SetSaveG2OFile(!mG2oFileName.empty());
+    graphManager.SetG2OFileName(mG2oFileName);
+
+    // Add new SLAM states to graph
+    graphManager.AddLidarStates(mLogStates);
+
+    IF_VERBOSE(1, Utils::Timer::Init("Pose graph optimization"));
+    IF_VERBOSE(3, Utils::Timer::Init("PGO : optimization"));
+
+    // Boolean to store the info "there is at least one external constraint in the graph"
+    bool externalConstraint = false;
+
+    // Look for landmark constraints
+    if (this->LmHasData())
     {
-      ExternalSensors::GpsMeasurement gpsSynchMeasure; // Virtual GPS measure in SLAM reference frame with synchronized timestamp
-      if (!mGpsManager->ComputeSynchronizedMeasureOffset(s.Time, gpsSynchMeasure))
-        continue;
+        // Allow the rotation of the covariances when interpolating the measurements
+        this->SetLandmarkCovarianceRotation(true);
+        // Set the landmark detector calibration
+        graphManager.AddExternalSensor(mLmDetectorCalibration, int(ExternalSensor::LANDMARK_DETECTOR));
 
-      // Add synchronized gps measurement to the graph
-      graphManager.AddGpsConstraint(s.Index, gpsSynchMeasure);
-      externalConstraint = true;
+        for (auto& idLm : mLandmarksManagers)
+        {
+            // Shortcut to current manager
+            auto& lm = idLm.second;
+
+            // Add landmark to the graph
+            Eigen::Vector6d lmPose = lm.GetAbsolutePose();
+            Eigen::Isometry3d lmTransfo = Utils::XYZRPYtoIsometry(lmPose.data());
+            graphManager.AddLandmark(lmTransfo, idLm.first, lm.GetPositionOnly());
+
+            // Add landmarks constraint to the graph
+            lm.SetVerbose(false);
+            for (auto& s : mLogStates)
+            {
+                ExternalSensors::LandmarkMeasurement lmSynchMeasure; // Virtual landmark measure with synchronized timestamp and no calibration applied
+                if (!lm.ComputeSynchronizedMeasure(s.Time, lmSynchMeasure))
+                    continue;
+                // Add synchronized landmark observations to the graph
+                graphManager.AddLandmarkConstraint(s.Index, idLm.first, lmSynchMeasure, lm.GetPositionOnly());
+                externalConstraint = true;
+            }
+            lm.SetVerbose(mVerbosity >= 3);
+        }
+
+        // Reset the rotate covariance member to not rotate covariances
+        // in future local constraints building
+        this->SetLandmarkCovarianceRotation(false);
     }
-  }
 
-  if (!externalConstraint)
-  {
-    PRINT_ERROR("No external constraints exist. Pose graph can not be optimized");
+    // Look for GPS constraints
+    if (this->GpsHasData())
+    {
+        graphManager.AddExternalSensor(mGpsManager->GetCalibration(), int(ExternalSensor::GPS));
+        for (auto& s : mLogStates)
+        {
+            ExternalSensors::GpsMeasurement gpsSynchMeasure; // Virtual GPS measure in SLAM reference frame with synchronized timestamp
+            if (!mGpsManager->ComputeSynchronizedMeasureOffset(s.Time, gpsSynchMeasure))
+                continue;
+
+            // Add synchronized gps measurement to the graph
+            graphManager.AddGpsConstraint(s.Index, gpsSynchMeasure);
+            externalConstraint = true;
+        }
+    }
+
+    if (!externalConstraint)
+    {
+        PRINT_ERROR("No external constraints exist. Pose graph can not be optimized");
+        return false;
+    }
+
+    auto statesInit = mLogStates;
+
+    // Run pose graph optimization
+    if (!graphManager.Process(mLogStates))
+    {
+        PRINT_ERROR("Pose graph optimization failed.");
+        return false;
+    }
+
+    // WARNING : covariances are not updated at each graph optimization
+    // because g2o does not allow to reach them.
+    // Covariances rotation is mandatory if covariances are to be used again afterwards
+    auto itStates = mLogStates.begin();
+    auto itInit = statesInit.begin();
+    while (itInit != statesInit.end())
+    {
+        // Compute relative transform
+        Eigen::Isometry3d Trel = itInit->Isometry.inverse() * itStates->Isometry;
+        Eigen::Vector6d pose = Utils::IsometryToXYZRPY(itInit->Isometry);
+        CeresTools::RotateCovariance(pose, itStates->Covariance, Trel); // new = init * Trel
+        ++itStates;
+        ++itInit;
+    }
+
+    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("PGO : optimization"));
+
+    // Update the maps
+    IF_VERBOSE(3, Utils::Timer::Init("PGO : maps update"));
+    this->UpdateMaps();
+    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("PGO : maps update"));
+
+    // The last pose has to be updated with new optimized pose
+    this->SetWorldTransformFromGuess(mLogStates.back().Isometry);
+
+    IF_VERBOSE(1, Utils::Timer::StopAndDisplay("Pose graph optimization"));
+
+    return true;
+
+#else
+    PRINT_ERROR("SLAM graph optimization requires G2O, but it was not found.");
     return false;
-  }
-
-  auto statesInit = mLogStates;
-
-  // Run pose graph optimization
-  if (!graphManager.Process(mLogStates))
-  {
-    PRINT_ERROR("Pose graph optimization failed.");
-    return false;
-  }
-
-  // WARNING : covariances are not updated at each graph optimization
-  // because g2o does not allow to reach them.
-  // Covariances rotation is mandatory if covariances are to be used again afterwards
-  auto itStates = mLogStates.begin();
-  auto itInit = statesInit.begin();
-  while (itInit != statesInit.end())
-  {
-    // Compute relative transform
-    Eigen::Isometry3d Trel = itInit->Isometry.inverse() * itStates->Isometry;
-    Eigen::Vector6d pose = Utils::IsometryToXYZRPY(itInit->Isometry);
-    CeresTools::RotateCovariance(pose, itStates->Covariance, Trel); // new = init * Trel
-    ++itStates;
-    ++itInit;
-  }
-
-  IF_VERBOSE(3, Utils::Timer::StopAndDisplay("PGO : optimization"));
-
-  // Update the maps
-  IF_VERBOSE(3, Utils::Timer::Init("PGO : maps update"));
-  this->UpdateMaps();
-  IF_VERBOSE(3, Utils::Timer::StopAndDisplay("PGO : maps update"));
-
-  // The last pose has to be updated with new optimized pose
-  this->SetWorldTransformFromGuess(mLogStates.back().Isometry);
-
-  IF_VERBOSE(1, Utils::Timer::StopAndDisplay("Pose graph optimization"));
-
-  return true;
-
-  #else
-  PRINT_ERROR("SLAM graph optimization requires G2O, but it was not found.");
-  return false;
-  #endif  // USE_G2O
+#endif  // USE_G2O
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetWorldTransformFromGuess(const Eigen::Isometry3d& poseGuess)
 {
-  // Store pose in case of reinitialization need
-  mTworldInit = poseGuess;
-  // Set current pose
-  mTworld = poseGuess;
+    // Store pose in case of reinitialization need
+    mTworldInit = poseGuess;
 
-  // Ego-Motion estimation is not valid anymore since we imposed a discontinuity.
-  // We reset previous pose so that previous ego-motion extrapolation results in Identity matrix.
-  // We reset current frame keypoints so that ego-motion registration will be skipped for next frame.
-  if (!mLogStates.empty())
-    mLogStates.back().Isometry = mTworld;
-  for (auto k : mUsableKeypoints)
-    mCurrentRawKeypoints[k].reset(new PointCloud);
+    // Set current pose
+    mTworld = poseGuess;
+
+    // Ego-Motion estimation is not valid anymore since we imposed a discontinuity.
+    // We reset previous pose so that previous ego-motion extrapolation results in Identity matrix.
+    // We reset current frame keypoints so that ego-motion registration will be skipped for next frame.
+    if (!mLogStates.empty())
+        mLogStates.back().Isometry = mTworld;
+
+    for (auto k : mUsableKeypoints)
+        mCurrentRawKeypoints[k].reset(new PointCloud);
 }
 
 //-----------------------------------------------------------------------------
@@ -988,7 +1000,7 @@ void Slam::ComputeEgoMotion()
       if (mPoseManager->ComputeSynchronizedMeasureBase(mLogStates.back().Time, synchPreviousPoseMeas))
       {
         ExternalSensors::PoseMeasurement synchPoseMeas; // Virtual measure with synchronized timestamp and calibration applied
-        if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime, synchPoseMeas))
+        if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec, synchPoseMeas))
         {
           mTrelative = synchPreviousPoseMeas.Pose.inverse() * synchPoseMeas.Pose;
           externalAvailable = true;
@@ -1014,11 +1026,11 @@ void Slam::ComputeEgoMotion()
     const Eigen::Isometry3d& T1 = itSt->Isometry;
     const double t0 = (--itSt)->Time;
     const Eigen::Isometry3d& T0 = itSt->Isometry;
-    if (std::abs((mCurrentTime - t1) / (t1 - t0)) > mMaxExtrapolationRatio)
+    if (std::abs((mCurrentTime_sec - t1) / (t1 - t0)) > mMaxExtrapolationRatio)
       PRINT_WARNING("Unable to extrapolate scan pose from previous motion : extrapolation time is too far.")
     else
     {
-      Eigen::Isometry3d nextTworldEstimation = LinearInterpolation(T0, T1, mCurrentTime, t0, t1);
+      Eigen::Isometry3d nextTworldEstimation = LinearInterpolation(T0, T1, mCurrentTime_sec, t0, t1);
       mTrelative = mTworld.inverse() * nextTworldEstimation;
     }
   }
@@ -1219,7 +1231,7 @@ void Slam::Localization()
         if (mLocalMaps[k]->IsTimeThreshold())
         {
           IF_VERBOSE(3, Utils::Timer::Init("Localization : clearing old points"));
-          mLocalMaps[k]->ClearOldPoints(mCurrentTime);
+          mLocalMaps[k]->ClearOldPoints(mCurrentTime_sec);
           IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : clearing old points"));
         }
         // Estimate current keypoints bounding box
@@ -1416,7 +1428,7 @@ bool Slam::CheckKeyFrame()
   bool tagRequirement = false;
   for (auto& idLm : mLandmarksManagers)
   {
-    if (idLm.second.NeedsReferencePoseRefresh(mCurrentTime))
+    if (idLm.second.NeedsReferencePoseRefresh(mCurrentTime_sec))
     {
       tagRequirement = true;
       break;
@@ -1483,7 +1495,7 @@ void Slam::LogCurrentFrameState()
     state.Covariance(3, 3) = std::pow(defaultAngleError,    2);
     state.Covariance(4, 4) = std::pow(defaultAngleError,    2);
   }
-  state.Time = mCurrentTime;
+  state.Time = mCurrentTime_sec;
   state.Index = mNbrFrameProcessed;
   state.IsKeyFrame = mIsKeyFrame;
   for (auto k : mUsableKeypoints)
@@ -1492,7 +1504,7 @@ void Slam::LogCurrentFrameState()
   mLogStates.emplace_back(state);
   // Remove the oldest logged states
   auto itSt = mLogStates.begin();
-  while (mCurrentTime - itSt->Time > mLoggingTimeout && mLogStates.size() > 2)
+  while (mCurrentTime_sec - itSt->Time > mLoggingTimeout && mLogStates.size() > 2)
   {
     ++itSt;
     mLogStates.pop_front();
@@ -1516,13 +1528,13 @@ Eigen::Isometry3d Slam::InterpolateScanPose(double time)
     return mTworld;
 
   const double prevPoseTime = mLogStates.back().Time;
-  if (std::abs(time / (mCurrentTime - prevPoseTime)) > mMaxExtrapolationRatio)
+  if (std::abs(time / (mCurrentTime_sec - prevPoseTime)) > mMaxExtrapolationRatio)
   {
     PRINT_WARNING("Unable to interpolate scan pose from motion : extrapolation time is too far.");
     return mTworld;
   }
 
-  return LinearInterpolation(mLogStates.back().Isometry, mTworld, mCurrentTime + time, prevPoseTime, mCurrentTime);
+  return LinearInterpolation(mLogStates.back().Isometry, mTworld, mCurrentTime_sec + time, prevPoseTime, mCurrentTime_sec);
 }
 
 //-----------------------------------------------------------------------------
@@ -1566,7 +1578,7 @@ void Slam::UndistortWithPoseMeasurement()
   {
     // Get synchronized point pose relatively to frame
     ExternalSensors::PoseMeasurement synchPoseMeasCurrent; // Virtual measure with synchronized timestamp and calibration applied
-    if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime, synchPoseMeasCurrent))
+    if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec, synchPoseMeasCurrent))
     {
       Eigen::Isometry3d invSynchPoseMeasCurrent = synchPoseMeasCurrent.Pose.inverse();
       // Undistort keypoints
@@ -1580,7 +1592,7 @@ void Slam::UndistortWithPoseMeasurement()
         int idxPt = 0;
         for (auto& point : *mCurrentUndistortedKeypoints[k])
         {
-          mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime + point.time, synchMeas[idxPt]);
+          mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec + point.time, synchMeas[idxPt]);
           ++idxPt;
         }
 
@@ -1670,99 +1682,108 @@ void Slam::EstimateOverlap()
 //-----------------------------------------------------------------------------
 void Slam::CheckMotionLimits()
 {
-  int nPoses = mLogStates.size();
-  if (nPoses == 0)
-    return;
+    int nPoses = mLogStates.size();
+    if (nPoses == 0)
+        return;
 
-  // Extract number of poses to comply with the required window time, and relative time duration.
-  double deltaTime = mCurrentTime - mLogStates.back().Time;
-  double nextDeltaTime = FLT_MAX;
-  // Index of the last pose that defines the window starting bound
-  // The window ends on current pose
-  auto startIt = mLogStates.end();
-  auto beforeBegin = mLogStates.begin();
-  --beforeBegin;
-  --startIt;
-  // If the time between current pose and the last pose is l.t. TimeWindowDuration, look for the window's starting bound pose
-  if (deltaTime < mTimeWindowDuration)
-  {
-    // Search an interval containing TimeWindowDuration : [deltaTime, nextDeltaTime]
-    while (startIt != beforeBegin)
+    // Extract number of poses to comply with the required window time, and relative time duration.
+    double deltaTime_sec = mCurrentTime_sec - mLogStates.back().Time;
+    double nextDeltaTime = FLT_MAX;
+
+    // Index of the last pose that defines the window starting bound
+    // The window ends on current pose
+    auto startIt = mLogStates.end();
+    auto beforeBegin = mLogStates.begin();
+    --beforeBegin;
+    --startIt;
+
+    // If the time between current pose and the last pose is l.t. TimeWindowDuration, look for the window's starting bound pose
+    if (deltaTime_sec < mTimeWindowDuration)
     {
-      deltaTime = nextDeltaTime;
-      nextDeltaTime = mCurrentTime - startIt->Time;
-      if (nextDeltaTime >= mTimeWindowDuration)
-        break;
-      --startIt;
+        // Search an interval containing TimeWindowDuration : [deltaTime, nextDeltaTime]
+        while (startIt != beforeBegin)
+        {
+            deltaTime_sec = nextDeltaTime;
+            nextDeltaTime = mCurrentTime_sec - startIt->Time;
+            if (nextDeltaTime >= mTimeWindowDuration)
+                break;
+            --startIt;
+        }
+
+        // If startIt lays before first element, no interval containing TimeWindowDuration was found, the oldest logged pose is taken
+        if (startIt == beforeBegin)
+        {
+            PRINT_WARNING("Not enough logged trajectory poses to get the required time window to estimate velocity, using a smaller time window of "
+                        << nextDeltaTime << "s")
+            startIt = mLogStates.begin();
+        }
+
+        // Choose which bound of the interval is the best window's starting bound
+        else if (std::abs(deltaTime_sec - mTimeWindowDuration) < std::abs(nextDeltaTime - mTimeWindowDuration))
+            ++startIt;
+
+        // Actualize deltaTime with the best startIndex
+        deltaTime_sec = mCurrentTime_sec - startIt->Time;
     }
 
-    // If startIt lays before first element, no interval containing TimeWindowDuration was found, the oldest logged pose is taken
-    if (startIt == beforeBegin)
-    {
-      PRINT_WARNING("Not enough logged trajectory poses to get the required time window to estimate velocity, using a smaller time window of "
-                    << nextDeltaTime << "s")
-      startIt = mLogStates.begin();
-    }
+    // If the time between current pose and the last pose is g.t. TimeWindowDuration, take the last pose as window's starting bound
+    else
+        PRINT_WARNING("The required time window is too short to estimate velocity, using motion since last pose")
 
-    // Choose which bound of the interval is the best window's starting bound
-    else if (std::abs(deltaTime - mTimeWindowDuration) < std::abs(nextDeltaTime - mTimeWindowDuration))
-      ++startIt;
+    mComplyMotionLimits = true;
 
-    // Actualize deltaTime with the best startIndex
-    deltaTime = mCurrentTime - startIt->Time;
-  }
-  // If the time between current pose and the last pose is g.t. TimeWindowDuration, take the last pose as window's starting bound
-  else
-    PRINT_WARNING("The required time window is too short to estimate velocity, using motion since last pose")
+    // Compute transform between the two pose bounds of the window
+    Eigen::Isometry3d TWindow = startIt->Isometry.inverse() * mTworld;
 
-  mComplyMotionLimits = true;
+    // Compute angular part
+    // NOTE : It is not possible to detect an angle greater than PI,
+    // the detectable velocity and acceleration are limited on deltaTime
+    // Rotation angle in [0, 2pi]
+    float angle = Eigen::AngleAxisd(TWindow.linear()).angle();
 
-  // Compute transform between the two pose bounds of the window
-  Eigen::Isometry3d TWindow = startIt->Isometry.inverse() * mTworld;
+    // Rotation angle in [0, pi]
+    if (angle > M_PI)
+        angle = 2 * M_PI - angle;
 
-  // Compute angular part
-  // NOTE : It is not possible to detect an angle greater than PI,
-  // the detectable velocity and acceleration are limited on deltaTime
-  // Rotation angle in [0, 2pi]
-  float angle = Eigen::AngleAxisd(TWindow.linear()).angle();
-  // Rotation angle in [0, pi]
-  if (angle > M_PI)
-    angle = 2 * M_PI - angle;
-  angle = Utils::Rad2Deg(angle);
-  // Compute linear part
-  float distance = TWindow.translation().norm();
+    angle = Utils::Rad2Deg(angle);
 
-  // Compute velocity
-  Eigen::Array2f velocity = {distance / deltaTime, angle / deltaTime};
-  SET_COUT_FIXED_PRECISION(3);
-  // Print local velocity
-  PRINT_VERBOSE(3, "Velocity     = " << std::setw(6) << velocity[0] << " m/s,  "
-                                     << std::setw(6) << velocity[1] << " °/s")
-  RESET_COUT_FIXED_PRECISION;
+    // Compute linear part
+    float distance = TWindow.translation().norm();
 
-  if (mNbrFrameProcessed >= 2)
-  {
-    // Compute local acceleration in BASE
-    Eigen::Array2f acceleration = (velocity - mPreviousVelocity) / deltaTime;
-    // Print local acceleration
+    // Compute velocity
+    Eigen::Array2f velocity = {distance / deltaTime_sec, angle / deltaTime_sec};
     SET_COUT_FIXED_PRECISION(3);
-    PRINT_VERBOSE(3, "Acceleration = " << std::setw(6) << acceleration[0] << " m/s2, "
-                                       << std::setw(6) << acceleration[1] << " °/s2")
+
+    // Print local velocity
+    PRINT_VERBOSE(3, "Velocity     = " << std::setw(6) << velocity[0] << " m/s,  "
+                                        << std::setw(6) << velocity[1] << " °/s")
     RESET_COUT_FIXED_PRECISION;
 
-    // Check velocity compliance
-    bool complyVelocityLimits = (velocity < mVelocityLimits).all();
-    // Check acceleration compliance
-    bool complyAccelerationLimits = (acceleration.abs() < mAccelerationLimits).all();
+    if (mNbrFrameProcessed >= 2)
+    {
+        // Compute local acceleration in BASE
+        Eigen::Array2f acceleration = (velocity - mPreviousVelocity) / deltaTime_sec;
 
-    // Set ComplyMotionLimits
-    mComplyMotionLimits = complyVelocityLimits && complyAccelerationLimits;
-  }
+        // Print local acceleration
+        SET_COUT_FIXED_PRECISION(3);
+        PRINT_VERBOSE(3, "Acceleration = " << std::setw(6) << acceleration[0] << " m/s2, "
+                                            << std::setw(6) << acceleration[1] << " °/s2")
+        RESET_COUT_FIXED_PRECISION;
 
-  mPreviousVelocity = velocity;
+        // Check velocity compliance
+        bool complyVelocityLimits = (velocity < mVelocityLimits).all();
 
-  if (!mComplyMotionLimits)
-    PRINT_WARNING("The pose does not comply with the motion limitations. Lidar SLAM may have failed.")
+        // Check acceleration compliance
+        bool complyAccelerationLimits = (acceleration.abs() < mAccelerationLimits).all();
+
+        // Set ComplyMotionLimits
+        mComplyMotionLimits = complyVelocityLimits && complyAccelerationLimits;
+    }
+
+    mPreviousVelocity = velocity;
+
+    if (!mComplyMotionLimits)
+        PRINT_WARNING("The pose does not comply with the motion limitations. Lidar SLAM may have failed.")
 }
 
 //==============================================================================
@@ -2363,6 +2384,9 @@ void Slam::SetVoxelGridMinFramesPerVoxel(unsigned int minFrames)
 void Slam::SetLoggingTimeout(double lMax)
 {
   mLoggingTimeout = lMax;
+  if (mLogStates.empty())
+      return;
+
   double currentTime = mLogStates.back().Time;
   auto itSt = mLogStates.begin();
   while (currentTime - itSt->Time > lMax && mLogStates.size() > 2)

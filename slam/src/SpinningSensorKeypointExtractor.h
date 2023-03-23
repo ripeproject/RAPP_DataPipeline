@@ -34,234 +34,238 @@
 #define SetMacro(name,type) void Set##name (type _arg) { name = _arg; }
 #define GetMacro(name,type) type Get##name () const { return name; }
 
+#define Setter(name,type) void Set##name (type _arg) { m##name = _arg; }
+#define Getter(name,type) type Get##name () const { return m##name; }
+
+
 namespace LidarSlam
 {
 
 namespace
 {
-//-----------------------------------------------------------------------------
-struct LineFitting
-{
-  using Point = LidarPoint;
-  using PointCloud = pcl::PointCloud<Point>;
+    //-----------------------------------------------------------------------------
+    struct LineFitting
+    {
+        using Point = LidarPoint;
+        using PointCloud = pcl::PointCloud<Point>;
 
-  //! Fitting using very local line and check if this local line is consistent
-  //! in a more global neighborhood
-  bool FitLineAndCheckConsistency(const PointCloud& cloud,
-                                 const std::vector<int>& indices);
+        //! Fitting using very local line and check if this local line is consistent
+        //! in a more global neighborhood
+        bool FitLineAndCheckConsistency(const PointCloud& cloud,
+                                        const std::vector<int>& indices);
 
-  //! Compute the squared distance of a point to the fitted line
-  inline float DistanceToPoint(Eigen::Vector3f const& point) const;
+        //! Compute the squared distance of a point to the fitted line
+        inline float DistanceToPoint(Eigen::Vector3f const& point) const;
 
-  // Direction and position
-  Eigen::Vector3f Direction;
-  Eigen::Vector3f Position;
+        // Direction and position
+        Eigen::Vector3f mDirection;
+        Eigen::Vector3f mPosition;
 
-  //! Max line width to be trustworthy for lines < 20cm
-  float MaxLineWidth = 0.02;  // [m]
+        //! Max line width to be trustworthy for lines < 20cm
+        float mMaxLineWidth = 0.02;  // [m]
 
-  // Ratio between length and width to be trustworthy
-  float LengthWidthRatio = 10.; // [.]
-};
+        // Ratio between length and width to be trustworthy
+        float mLengthWidthRatio = 10.0; // [.]
+    };
 } // End of anonymous namespace
+
 
 class SpinningSensorKeypointExtractor
 {
 public:
-  using Point = LidarPoint;
-  using PointCloud = pcl::PointCloud<Point>;
+    using Point = LidarPoint;
+    using PointCloud = pcl::PointCloud<Point>;
 
-  GetMacro(NbThreads, int)
-  SetMacro(NbThreads, int)
+    Getter(NbThreads, int)
+    Setter(NbThreads, int)
 
-  GetMacro(MaxPoints, int)
-  SetMacro(MaxPoints, int)
+    Getter(MaxPoints, int)
+    Setter(MaxPoints, int)
 
-  GetMacro(InputSamplingRatio, float)
-  SetMacro(InputSamplingRatio, float)
+    Getter(InputSamplingRatio, float)
+    Setter(InputSamplingRatio, float)
 
-  GetMacro(MinNeighNb, int)
-  SetMacro(MinNeighNb, int)
+    Getter(MinNeighNb, int)
+    Setter(MinNeighNb, int)
 
-  GetMacro(MinNeighRadius, float)
-  SetMacro(MinNeighRadius, float)
+    Getter(MinNeighRadius, float)
+    Setter(MinNeighRadius, float)
 
-  GetMacro(MinDistanceToSensor, float)
-  SetMacro(MinDistanceToSensor, float)
+    Getter(MinDistanceToSensor_m, float)
+    Setter(MinDistanceToSensor_m, float)
 
-  GetMacro(AzimuthMin, float)
-  SetMacro(AzimuthMin, float)
+    Getter(MinAzimuth_deg, float)
+    Setter(MinAzimuth_deg, float)
 
-  GetMacro(AzimuthMax, float)
-  SetMacro(AzimuthMax, float)
+    Getter(MaxAzimuth_deg, float)
+    Setter(MaxAzimuth_deg, float)
 
-  GetMacro(MinBeamSurfaceAngle, float)
-  SetMacro(MinBeamSurfaceAngle, float)
+    Getter(MinBeamSurfaceAngle_deg, float)
+    Setter(MinBeamSurfaceAngle_deg, float)
 
-  GetMacro(PlaneSinAngleThreshold, float)
-  SetMacro(PlaneSinAngleThreshold, float)
+    Getter(PlaneSinAngleThreshold, float)
+    Setter(PlaneSinAngleThreshold, float)
 
-  GetMacro(EdgeSinAngleThreshold, float)
-  SetMacro(EdgeSinAngleThreshold, float)
+    Getter(EdgeSinAngleThreshold, float)
+    Setter(EdgeSinAngleThreshold, float)
 
-  GetMacro(EdgeDepthGapThreshold, float)
-  SetMacro(EdgeDepthGapThreshold, float)
+    Getter(EdgeDepthGapThreshold_m, float)
+    Setter(EdgeDepthGapThreshold_m, float)
 
-  GetMacro(EdgeIntensityGapThreshold, float)
-  SetMacro(EdgeIntensityGapThreshold, float)
+    Getter(EdgeIntensityGapThreshold, float)
+    Setter(EdgeIntensityGapThreshold, float)
 
-  GetMacro(AzimuthalResolution, float)
-  SetMacro(AzimuthalResolution, float)
+    Getter(AzimuthalResolution_rad, float)
+    Setter(AzimuthalResolution_rad, float)
 
-  GetMacro(EdgeNbGapPoints, int)
-  SetMacro(EdgeNbGapPoints, int)
+    Getter(EdgeNbGapPoints, int)
+    Setter(EdgeNbGapPoints, int)
 
-  GetMacro(VoxelResolution, float)
-  SetMacro(VoxelResolution, float)
+    Getter(VoxelResolution_m, float)
+    Setter(VoxelResolution_m, float)
 
-  GetMacro(NbLaserRings, int)
+    Getter(NbLaserRings, int)
 
-  // Select the keypoint types to extract
-  // This function resets the member map "Enabled"
-  void Enable(const std::vector<Keypoint>& kptTypes);
+    // Select the keypoint types to extract
+    // This function resets the member map "Enabled"
+    void Enable(const std::vector<Keypoint>& kptTypes);
 
-  PointCloud::Ptr GetKeypoints(Keypoint k);
+    PointCloud::Ptr GetKeypoints(Keypoint k);
 
-  // Extract keypoints from the pointcloud. The key points
-  // will be separated in two classes : Edges keypoints which
-  // correspond to area with high curvature scan lines and
-  // planar keypoints which have small curvature.
-  // NOTE: This expects that the lowest/bottom laser_id is 0, and is increasing upward.
-  void ComputeKeyPoints(const PointCloud::Ptr& pc);
+    // Extract keypoints from the pointcloud. The key points
+    // will be separated in two classes : Edges keypoints which
+    // correspond to area with high curvature scan lines and
+    // planar keypoints which have small curvature.
+    // NOTE: This expects that the lowest/bottom laser_id is 0, and is increasing upward.
+    void ComputeKeyPoints(const PointCloud::Ptr& pc);
 
-  // Function to enable to have some inside on why a given point was detected as a keypoint
-  std::unordered_map<std::string, std::vector<float>> GetDebugArray() const;
+    // Function to enable to have some inside on why a given point was detected as a keypoint
+    std::unordered_map<std::string, std::vector<float>> GetDebugArray() const;
 
 private:
+    // Split the whole pointcloud into separate laser ring clouds,
+    // sorted by their vertical angles.
+    // This expects that the lowest/bottom laser ring is 0, and is increasing upward.
+    void ConvertAndSortScanLines();
 
-  // Split the whole pointcloud into separate laser ring clouds,
-  // sorted by their vertical angles.
-  // This expects that the lowest/bottom laser ring is 0, and is increasing upward.
-  void ConvertAndSortScanLines();
+    // Reset all the features vectors and keypoints clouds
+    void PrepareDataForNextFrame();
 
-  // Reset all the features vectors and keypoints clouds
-  void PrepareDataForNextFrame();
+    // Invalid the points with bad criteria from the list of possible future keypoints.
+    // These points correspond to planar surfaces roughly parallel to laser beam
+    // and points close to a gap created by occlusion.
+    void InvalidateNotUsablePoints();
 
-  // Invalid the points with bad criteria from the list of possible future keypoints.
-  // These points correspond to planar surfaces roughly parallel to laser beam
-  // and points close to a gap created by occlusion.
-  void InvalidateNotUsablePoints();
+    // Compute the curvature and other features within each the scan line.
+    // The curvature is not the one of the surface that intersects the lines but
+    // the 1D curvature within each isolated scan line.
+    void ComputeCurvature();
 
-  // Compute the curvature and other features within each the scan line.
-  // The curvature is not the one of the surface that intersects the lines but
-  // the 1D curvature within each isolated scan line.
-  void ComputeCurvature();
+    // Labelize points (unvalid, edge, plane, blob)
+    // and extract them in correspondant pointcloud
+    void ComputePlanes();
+    void ComputeEdges();
+    void ComputeIntensityEdges();
+    void ComputeBlobs();
 
-  // Labelize points (unvalid, edge, plane, blob)
-  // and extract them in correspondant pointcloud
-  void ComputePlanes();
-  void ComputeEdges();
-  void ComputeIntensityEdges();
-  void ComputeBlobs();
+    // Auto estimate azimuth angle resolution based on current ScanLines
+    // WARNING: to be correct, the points need to be in the LIDAR sensor
+    // coordinates system, where the sensor is spinning around Z axis.
+    void EstimateAzimuthalResolution();
 
-  // Auto estimate azimuth angle resolution based on current ScanLines
-  // WARNING: to be correct, the points need to be in the LIDAR sensor
-  // coordinates system, where the sensor is spinning around Z axis.
-  void EstimateAzimuthalResolution();
+    // Check if scanLine is almost empty
+    inline bool IsScanLineAlmostEmpty(int nScanLinePts) const { return nScanLinePts < 2 * mMinNeighNb + 1; }
 
-  // Check if scanLine is almost empty
-  inline bool IsScanLineAlmostEmpty(int nScanLinePts) const { return nScanLinePts < 2 * this->MinNeighNb + 1; }
+    // Add all keypoints of the type k that comply with the threshold criteria for these values
+    // The threshold can be a minimum or maximum value (threshIsMax)
+    // The weight basis allow to weight the keypoint depending on its certainty
+    void AddKptsUsingCriterion (Keypoint k,
+                                const std::vector<std::vector<float>>& values,
+                                float threshold,
+                                bool threshIsMax = true,
+                                double weightBasis = 1.);
 
-  // Add all keypoints of the type k that comply with the threshold criteria for these values
-  // The threshold can be a minimum or maximum value (threshIsMax)
-  // The weight basis allow to weight the keypoint depending on its certainty
-  void AddKptsUsingCriterion (Keypoint k,
-                              const std::vector<std::vector<float>>& values,
-                              float threshold,
-                              bool threshIsMax = true,
-                              double weightBasis = 1.);
+    // ---------------------------------------------------------------------------
+    //   Parameters
+    // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
-  //   Parameters
-  // ---------------------------------------------------------------------------
+    // Keypoints activated
+    std::map<Keypoint, bool> mEnabled = {{EDGE, true}, {INTENSITY_EDGE, true}, {PLANE, true}, {BLOB, false}};
 
-  // Keypoints activated
-  std::map<Keypoint, bool> Enabled = {{EDGE, true}, {INTENSITY_EDGE, true}, {PLANE, true}, {BLOB, false}};
+    // Max number of threads to use to process points in parallel
+    int mNbThreads = 1;
 
-  // Max number of threads to use to process points in parallel
-  int NbThreads = 1;
+    // Maximum number of keypoints to extract
+    int mMaxPoints = INT_MAX;
 
-  // Maximum number of keypoints to extract
-  int MaxPoints = INT_MAX;
+    // Sampling ratio to perform for real time issues
+    float mInputSamplingRatio = 1.0f;
 
-  // Sampling ratio to perform for real time issues
-  float InputSamplingRatio = 1.;
+    // Minimum number of points used on each side of the studied point to compute its curvature
+    int mMinNeighNb = 4;
 
-  // Minimum number of points used on each side of the studied point to compute its curvature
-  int MinNeighNb = 4;
+    // Minimum radius to define the neighborhood to compute curvature of a studied point
+    int mMinNeighRadius = 0.05f;
 
-  // Minimum radius to define the neighborhood to compute curvature of a studied point
-  int MinNeighRadius = 0.05f;
+    // Minimal point/sensor sensor to consider a point as valid
+    float mMinDistanceToSensor_m = 1.5f;  // [m]
 
-  // Minimal point/sensor sensor to consider a point as valid
-  float MinDistanceToSensor = 1.5;  // [m]
+    // Minimum angle between laser beam and surface to consider a point as valid
+    float mMinBeamSurfaceAngle_deg = 10; // [°]
 
-  // Minimum angle between laser beam and surface to consider a point as valid
-  float MinBeamSurfaceAngle = 10; // [°]
+    float mMinAzimuth_deg = 0.0f; // [°]
+    float mMaxAzimuth_deg = 360.0f; // [°]
 
-  float AzimuthMin = 0; // [°]
-  float AzimuthMax = 360; // [°]
+    // Sharpness threshold to select a planar keypoint
+    float mPlaneSinAngleThreshold = 0.5;  // sin(30°) (selected if sin angle is less than threshold)
 
-  // Sharpness threshold to select a planar keypoint
-  float PlaneSinAngleThreshold = 0.5;  // sin(30°) (selected if sin angle is less than threshold)
+    // Sharpness threshold to select an edge keypoint
+    float mEdgeSinAngleThreshold = 0.86;  // ~sin(60°) (selected, if sin angle is more than threshold)
+    float mMaxDistance_m = 0.20;  // [m]
 
-  // Sharpness threshold to select an edge keypoint
-  float EdgeSinAngleThreshold = 0.86;  // ~sin(60°) (selected, if sin angle is more than threshold)
-  float MaxDistance = 0.20;  // [m]
+    // Threshold upon depth gap in neighborhood to select an edge keypoint
+    float mEdgeDepthGapThreshold_m = 0.5;  // [m]
 
-  // Threshold upon depth gap in neighborhood to select an edge keypoint
-  float EdgeDepthGapThreshold = 0.5;  // [m]
+    // Threshold upon intensity gap to select an edge keypoint
+    float mEdgeIntensityGapThreshold = 50.0f;
 
-  // Threshold upon intensity gap to select an edge keypoint
-  float EdgeIntensityGapThreshold = 50.;
+    // Nb of points missed to define a space gap
+    int mEdgeNbGapPoints = 5; // [nb]
 
-  // Nb of points missed to define a space gap
-  int EdgeNbGapPoints = 5; // [nb]
+    // Size of a voxel used to downsample the keypoints
+    // It corresponds approx to the mean distance between closest neighbors in the output keypoints cloud.
+    float mVoxelResolution_m = 0.1; // [m]
 
-  // Size of a voxel used to downsample the keypoints
-  // It corresponds approx to the mean distance between closest neighbors in the output keypoints cloud.
-  float VoxelResolution = 0.1; // [m]
+    // ---------------------------------------------------------------------------
+    //   Internal variables
+    // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
-  //   Internal variables
-  // ---------------------------------------------------------------------------
+    // Azimuthal (= horizontal angle) resolution of the spinning lidar sensor
+    // If it is less or equal to 0, it will be auto-estimated from next frame.
+    // This angular resolution is used to compute an expected distance between two
+    // consecutives firings.
+    float mAzimuthalResolution_rad = 0.0f;  // [rad]
 
-  // Azimuthal (= horizontal angle) resolution of the spinning lidar sensor
-  // If it is less or equal to 0, it will be auto-estimated from next frame.
-  // This angular resolution is used to compute an expected distance between two
-  // consecutives firings.
-  float AzimuthalResolution = 0.;  // [rad]
+    // Number of lasers scan lines composing the pointcloud
+    unsigned int mNbLaserRings = 0;
 
-  // Number of lasers scan lines composing the pointcloud
-  unsigned int NbLaserRings = 0;
+    //! Label of a point as a keypoint
+    //! We use binary flags as each point can have different keypoint labels.
+    using KeypointFlags = std::bitset<Keypoint::nKeypointTypes>;
 
-  //! Label of a point as a keypoint
-  //! We use binary flags as each point can have different keypoint labels.
-  using KeypointFlags = std::bitset<Keypoint::nKeypointTypes>;
+    // Curvature and other differential operations (scan by scan, point by point)
+    std::vector<std::vector<float>> mAngles;
+    std::vector<std::vector<float>> mDepthGap;
+    std::vector<std::vector<float>> mSpaceGap;
+    std::vector<std::vector<float>> mIntensityGap;
+    std::vector<std::vector<KeypointFlags>> mLabel;
 
-  // Curvature and other differential operations (scan by scan, point by point)
-  std::vector<std::vector<float>> Angles;
-  std::vector<std::vector<float>> DepthGap;
-  std::vector<std::vector<float>> SpaceGap;
-  std::vector<std::vector<float>> IntensityGap;
-  std::vector<std::vector<KeypointFlags>> Label;
+    // Extracted keypoints of current frame
+    std::map<Keypoint, VoxelGrid> mKeypoints;
 
-  // Extracted keypoints of current frame
-  std::map<Keypoint, VoxelGrid> Keypoints;
-
-  // Current point cloud stored in two differents formats
-  PointCloud::Ptr Scan;
-  std::vector<PointCloud::Ptr> ScanLines;
+    // Current point cloud stored in two differents formats
+    PointCloud::Ptr mpScan;
+    std::vector<PointCloud::Ptr> mScanLines;
 };
 
 } // end of LidarSlam namespace

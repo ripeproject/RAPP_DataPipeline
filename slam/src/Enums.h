@@ -25,103 +25,104 @@
 namespace LidarSlam
 {
 
+    //------------------------------------------------------------------------------
+    //! Type of a keypoint
+    enum Keypoint
+    {
+      EDGE  = 0,   ///< edge keypoint (sharp local structure)
+      INTENSITY_EDGE  = 1,   ///< intensity edge keypoint (sharp local intensity)
+      PLANE = 2,   ///< plane keypoint (flat local structure)
+      BLOB  = 3,   ///< blob keypoint (spherical local structure)
+      nKeypointTypes
+    };
+
+    static const std::vector<Keypoint> KeypointTypes = { EDGE, INTENSITY_EDGE, PLANE, BLOB };
+    static const std::map<Keypoint, std::string> KeypointTypeNames = 
+        { {EDGE, "edge"}, {INTENSITY_EDGE, "intensity_edge"}, {PLANE, "plane"}, {BLOB, "blob"} };
+
+    //------------------------------------------------------------------------------
+    //! How to deal with undistortion
+    enum UndistortionMode
+    {
+        //! No undistortion is performed:
+        //!  - End scan pose is optimized using rigid registration of raw scan and map.
+        //!  - Raw input scan is added to map.
+        NONE = 0,
+
+        //! Undistortion is performed only once using estimated ego-motion:
+        //!  - Begin and end scan poses are linearly interpolated using estimated ego-motion.
+        //!  - Scan is linearly undistorted between begin and end scan poses.
+        //!  - Scan pose is iteratively optimized using rigid registration of undistorted scan and map.
+        //!  - Undistorted scan is added to map.
+        ONCE = 1,
+
+        //! Undistortion is iteratively refined using optimized ego-motion:
+        //!  - Begin and end scan poses are linearly interpolated using ego-motion.
+        //!  - Scan is linearly undistorted between begin and end scan poses.
+        //!  - Scan pose is optimized using rigid registration of undistorted scan and map.
+        //!  - Iterate the three previous steps with updated ego-motion and poses.
+        //!  - Undistorted scan is added to map.
+        REFINED = 2,
+
+        //! Undistort once with external pose information
+        EXTERNAL = 3
+    };
+
+    //------------------------------------------------------------------------------
+    //! How to estimate Ego-Motion (approximate relative motion since last frame)
+    enum class EgoMotionMode
+    {
+        //! No ego-motion step is performed : relative motion is Identity, new
+        //! estimated Tworld is equal to previous Tworld.
+        //! Fast, but may lead to unstable and imprecise Localization step if motion
+        //! is important.
+        NONE = 0,
+
+        //! Previous motion is linearly extrapolated to estimate new Tworld pose
+        //! from the 2 previous poses.
+        //! Fast and precise if motion is roughly constant and continuous.
+        MOTION_EXTRAPOLATION = 1,
+
+        //! Estimate Trelative (and therefore Tworld) by globally registering new
+        //! frame on previous frame.
+        //! Slower and need textured enough environment, but do not rely on
+        //! constant motion hypothesis.
+        REGISTRATION = 2,
+
+        //! Previous motion is linearly extrapolated to estimate new Tworld pose
+        //! from the 2 previous poses. Then this estimation is refined by globally
+        //! registering new frame on previous frame.
+        //! Slower and need textured enough environment, but should be more precise
+        //! and rely less on constant motion hypothesis.
+        MOTION_EXTRAPOLATION_AND_REGISTRATION = 3,
+
+        //! Use external pose as prior and none if external not available
+        EXTERNAL = 4,
+
+        //! Use external pose as prior and motion extrapolation if external not available
+        EXTERNAL_OR_MOTION_EXTRAPOLATION = 5
+    };
+
 //------------------------------------------------------------------------------
-//! Type of a keypoint
-enum Keypoint
-{
-  EDGE  = 0,   ///< edge keypoint (sharp local structure)
-  INTENSITY_EDGE  = 1,   ///< intensity edge keypoint (sharp local intensity)
-  PLANE = 2,   ///< plane keypoint (flat local structure)
-  BLOB  = 3,   ///< blob keypoint (spherical local structure)
-  nKeypointTypes
-};
+    //! How to update the map
+    enum class MappingMode
+    {
+        //! Do not update map, use initial map
+        //! Performant in static environment and
+        //! more robust to moving objects
+        // Forbiding maps update can be useful for example in case
+        // of post-SLAM optimization with GPS and then run localization only in fixed
+        // optimized map or when performing two SLAM steps (mapping + localization)
+        NONE = 0,
 
-static const std::vector<Keypoint> KeypointTypes = { EDGE, INTENSITY_EDGE, PLANE, BLOB };
-static const std::map<Keypoint, std::string> KeypointTypeNames = { {EDGE, "edge"}, {INTENSITY_EDGE, "intensity_edge"}, {PLANE, "plane"}, {BLOB, "blob"} };
+        //! Expand the map with new keypoints
+        //! The points of the initial maps (if some were loaded) will not be modified
+        ADD_KPTS_TO_FIXED_MAP = 1,
 
-//------------------------------------------------------------------------------
-//! How to deal with undistortion
-enum UndistortionMode
-{
-  //! No undistortion is performed:
-  //!  - End scan pose is optimized using rigid registration of raw scan and map.
-  //!  - Raw input scan is added to map.
-  NONE = 0,
-
-  //! Undistortion is performed only once using estimated ego-motion:
-  //!  - Begin and end scan poses are linearly interpolated using estimated ego-motion.
-  //!  - Scan is linearly undistorted between begin and end scan poses.
-  //!  - Scan pose is iteratively optimized using rigid registration of undistorted scan and map.
-  //!  - Undistorted scan is added to map.
-  ONCE = 1,
-
-  //! Undistortion is iteratively refined using optimized ego-motion:
-  //!  - Begin and end scan poses are linearly interpolated using ego-motion.
-  //!  - Scan is linearly undistorted between begin and end scan poses.
-  //!  - Scan pose is optimized using rigid registration of undistorted scan and map.
-  //!  - Iterate the three previous steps with updated ego-motion and poses.
-  //!  - Undistorted scan is added to map.
-  REFINED = 2,
-
-  //! Undistort once with external pose information
-  EXTERNAL = 3
-};
-
-//------------------------------------------------------------------------------
-//! How to estimate Ego-Motion (approximate relative motion since last frame)
-enum class EgoMotionMode
-{
-  //! No ego-motion step is performed : relative motion is Identity, new
-  //! estimated Tworld is equal to previous Tworld.
-  //! Fast, but may lead to unstable and imprecise Localization step if motion
-  //! is important.
-  NONE = 0,
-
-  //! Previous motion is linearly extrapolated to estimate new Tworld pose
-  //! from the 2 previous poses.
-  //! Fast and precise if motion is roughly constant and continuous.
-  MOTION_EXTRAPOLATION = 1,
-
-  //! Estimate Trelative (and therefore Tworld) by globally registering new
-  //! frame on previous frame.
-  //! Slower and need textured enough environment, but do not rely on
-  //! constant motion hypothesis.
-  REGISTRATION = 2,
-
-  //! Previous motion is linearly extrapolated to estimate new Tworld pose
-  //! from the 2 previous poses. Then this estimation is refined by globally
-  //! registering new frame on previous frame.
-  //! Slower and need textured enough environment, but should be more precise
-  //! and rely less on constant motion hypothesis.
-  MOTION_EXTRAPOLATION_AND_REGISTRATION = 3,
-
-  //! Use external pose as prior and none if external not available
-  EXTERNAL = 4,
-
-  //! Use external pose as prior and motion extrapolation if external not available
-  EXTERNAL_OR_MOTION_EXTRAPOLATION = 5
-};
-
-//------------------------------------------------------------------------------
-//! How to update the map
-enum class MappingMode
-{
-  //! Do not update map, use initial map
-  //! Performant in static environment and
-  //! more robust to moving objects
-  // Forbiding maps update can be useful for example in case
-  // of post-SLAM optimization with GPS and then run localization only in fixed
-  // optimized map or when performing two SLAM steps (mapping + localization)
-  NONE = 0,
-
-  //! Expand the map with new keypoints
-  //! The points of the initial maps (if some were loaded) will not be modified
-  ADD_KPTS_TO_FIXED_MAP = 1,
-
-  //! Update map with new keypoints
-  //! The points of the initial maps can disappear
-  UPDATE = 2,
-};
+        //! Update map with new keypoints
+        //! The points of the initial maps can disappear
+        UPDATE = 2,
+    };
 
 //------------------------------------------------------------------------------
 //! How to downsample the map
