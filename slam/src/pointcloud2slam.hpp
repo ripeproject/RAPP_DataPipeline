@@ -26,6 +26,8 @@ public:
 
     void setOutputPath(std::filesystem::path out);
 
+    uint32_t mLidarFrameId = 0;
+
 private:
     //----------------------------------------------------------------------------
     /*!
@@ -63,7 +65,7 @@ private:
 
     ///< LiDAR device identifier to set for each point.
     int mDeviceId = 0;
-    uint32_t mLidarFrameId = 0;
+    //uint32_t mLidarFrameId = 0;
     uint32_t mTrackingFrameId = 0;
 
     // Useful variables for approximate point-wise timestamps computation

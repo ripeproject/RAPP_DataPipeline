@@ -31,81 +31,83 @@ class LocalOptimizer
 {
 public:
 
-  //! Estimation of registration error
-  struct RegistrationError
-  {
-    // Estimation of the maximum position error
-    double PositionError = 0.0;
+	//! Estimation of registration error
+	struct RegistrationError
+	{
+		// Estimation of the maximum position error
+		double PositionError = 0.0;
 
-    // Direction of the maximum position error
-    Eigen::Vector3d PositionErrorDirection = Eigen::Vector3d::Zero();
+		// Direction of the maximum position error
+		Eigen::Vector3d PositionErrorDirection = Eigen::Vector3d::Zero();
 
-    // Estimation of the maximum orientation error (in radians)
-    double OrientationError = 0.0;
+		// Estimation of the maximum orientation error (in radians)
+		double OrientationError = 0.0;
 
-    // Direction of the maximum orientation error
-    Eigen::Vector3d OrientationErrorDirection = Eigen::Vector3d::Zero();
+		// Direction of the maximum orientation error
+		Eigen::Vector3d OrientationErrorDirection = Eigen::Vector3d::Zero();
 
-    // Covariance matrix encoding the estimation of the pose's errors about the 6-DoF parameters
-    // (DoF order : X, Y, Z, rX, rY, rZ)
-    Eigen::Matrix6d Covariance = Eigen::Matrix6d::Zero();
-  };
+		// Covariance matrix encoding the estimation of the pose's errors about the 6-DoF parameters
+		// (DoF order : X, Y, Z, rX, rY, rZ)
+		Eigen::Matrix6d Covariance = Eigen::Matrix6d::Zero();
 
-  //----------------------------------------------------------------------------
-  // Optimize 2D state (X, Y, rZ) only
-  void SetTwoDMode(bool twoDMode);
+		RegistrationError() = default;
+	};
 
-  // Set Levenberg Marquardt maximum number of iterations
-  void SetLMMaxIter(unsigned int maxIt);
+	//----------------------------------------------------------------------------
+	// Optimize 2D state (X, Y, rZ) only
+	void SetTwoDMode(bool twoDMode);
 
-  // Set number of threads
-  void SetNbThreads(unsigned int nbThreads);
+	// Set Levenberg Marquardt maximum number of iterations
+	void SetLMMaxIter(unsigned int maxIt);
 
-  // Set prior pose
-  void SetPosePrior(const Eigen::Isometry3d& posePrior);
+	// Set number of threads
+	void SetNbThreads(unsigned int nbThreads);
 
-  //----------------------------------------------------------------------------
+	// Set prior pose
+	void SetPosePrior(const Eigen::Isometry3d& posePrior);
 
-  // Add sensor residuals (from Lidar or other
-  // external sensor) to residuals vector
-  void AddResidual(const CeresTools::Residual& res);
-  void AddResiduals(const std::vector<CeresTools::Residual>& residuals);
+	//----------------------------------------------------------------------------
 
-  // Clear all residuals
-  void Clear();
+	// Add sensor residuals (from Lidar or other
+	// external sensor) to residuals vector
+	void AddResidual(const CeresTools::Residual& res);
+	void AddResiduals(const std::vector<CeresTools::Residual>& residuals);
 
-  // Build and optimize the Ceres problem
-  ceres::Solver::Summary Solve();
+	// Clear all residuals
+	void Clear();
 
-  // Get optimization results
-  Eigen::Isometry3d GetOptimizedPose() const;
+	// Build and optimize the Ceres problem
+	ceres::Solver::Summary Solve();
 
-  // Estimate registration error
-  RegistrationError EstimateRegistrationError();
+	// Get optimization results
+	Eigen::Isometry3d GetOptimizedPose() const;
 
-  //----------------------------------------------------------------------------
+	// Estimate registration error
+	RegistrationError EstimateRegistrationError();
+
+	//----------------------------------------------------------------------------
 private:
 
-  // Optimize 2D pose only.
-  // This will only optimize X, Y (ground coordinates) and yaw (rZ).
-  // This will hold Z (elevation), rX (roll) and rY (pitch) constant.
-  bool mTwoDMode = false;
+	// Optimize 2D pose only.
+	// This will only optimize X, Y (ground coordinates) and yaw (rZ).
+	// This will hold Z (elevation), rX (roll) and rY (pitch) constant.
+	bool mTwoDMode = false;
 
-  // Max number of threads to use to parallelize computations
-  unsigned int mNbThreads = 1;
+	// Max number of threads to use to parallelize computations
+	unsigned int mNbThreads = 1;
 
-  // Maximum number of iteration
-  unsigned int mLMMaxIter = 15;
+	// Maximum number of iteration
+	unsigned int mLMMaxIter = 15;
 
-  // DoF to optimize (= output)
-  Eigen::Vector6d mPoseArray;  ///< Pose parameters to optimize (XYZRPY)
+	// DoF to optimize (= output)
+	Eigen::Vector6d mPoseArray;  ///< Pose parameters to optimize (XYZRPY)
 
-  // Residuals vector
-  // These residuals must involve the full 6D pose array (X, Y, Z, rX, rY, rZ)
-  std::vector<CeresTools::Residual> mResiduals;
+	// Residuals vector
+	// These residuals must involve the full 6D pose array (X, Y, Z, rX, rY, rZ)
+	std::vector<CeresTools::Residual> mResiduals;
 
-  // The Ceres problem to optimize
-  std::unique_ptr<ceres::Problem> mProblem;
+	// The Ceres problem to optimize
+	std::unique_ptr<ceres::Problem> mProblem;
 };
 
 } // end of LidarSlam namespace

@@ -28,28 +28,32 @@ namespace LidarSlam
 // with all local information
 struct LidarState
 {
-  using Point = LidarPoint;
-  using PCStoragePtr = std::shared_ptr<PointCloudStorage<Point>>;
+    using Point = LidarPoint;
+    using PCStoragePtr = std::shared_ptr<PointCloudStorage<Point>>;
 
-  // Transform to go from Sensor frame to tracking frame
-  Eigen::UnalignedIsometry3d BaseToSensor = Eigen::UnalignedIsometry3d::Identity();
-  // Pose transform in world coordinates
-  Eigen::UnalignedIsometry3d Isometry = Eigen::UnalignedIsometry3d::Identity();
-  // Covariance of current pose
-  Eigen::Matrix6d Covariance;
-  // [s] Timestamp of data
-  double Time = 0.;
-  // Index to link the pose graph (G2O)
-  unsigned int Index = 0;
+    // Transform to go from Sensor frame to tracking frame
+    Eigen::UnalignedIsometry3d BaseToSensor = Eigen::UnalignedIsometry3d::Identity();
 
-  LidarState() = default;
-  LidarState(const Eigen::UnalignedIsometry3d& isometry, const Eigen::Matrix6d& covariance = {}, double time = 0.)
-    : Isometry(isometry),
-      Covariance(covariance),
-      Time(time) {};
-  // Keypoints extracted at current pose, undistorted and expressed in BASE coordinates
-  std::map<Keypoint, PCStoragePtr> Keypoints;
-  bool IsKeyFrame = true;
+    // Pose transform in world coordinates
+    Eigen::UnalignedIsometry3d Isometry = Eigen::UnalignedIsometry3d::Identity();
+
+    // Covariance of current pose
+    Eigen::Matrix6d Covariance;
+
+    // [s] Timestamp of data
+    double Time_sec = 0.0;
+
+    // Index to link the pose graph (G2O)
+    unsigned int Index = 0;
+
+    LidarState() = default;
+
+    LidarState(const Eigen::UnalignedIsometry3d& isometry, const Eigen::Matrix6d& covariance = {}, double time_sec = 0.0)
+        : Isometry(isometry), Covariance(covariance), Time_sec(time_sec) {};
+
+    // Keypoints extracted at current pose, undistorted and expressed in BASE coordinates
+    std::map<Keypoint, PCStoragePtr> Keypoints;
+    bool IsKeyFrame = true;
 };
 
 } // end of LidarSlam namespace

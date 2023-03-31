@@ -31,6 +31,7 @@ cPointCloud2Slam::cPointCloud2Slam() : cPointCloudParser()
 
 cPointCloud2Slam::~cPointCloud2Slam()
 {
+//    mLidarSlam.SaveMapsToPCD("McGrath_Soy1_");
 }
 
 void cPointCloud2Slam::setOutputPath(std::filesystem::path out)
@@ -44,7 +45,7 @@ void cPointCloud2Slam::setSlamParameters()
 #define SetSlamParam(type, rosParam, slamParam) { type val; if (this->PrivNh.getParam(rosParam, val)) this->LidarSlam.Set##slamParam(val); }
     // General
     mLidarSlam.SetTwoDMode(false);
-    mLidarSlam.SetVerbosity(4);
+    mLidarSlam.SetVerbosity(2);
     mLidarSlam.SetNbThreads(4);
     mLidarSlam.SetLoggingTimeout(4);
     mLidarSlam.SetLogOnlyKeyframes(true);
@@ -131,26 +132,26 @@ void cPointCloud2Slam::setSlamParameters()
     mLidarSlam.SetFixLastVertex();
     mLidarSlam.SetCovarianceScale();
     mLidarSlam.SetNbGraphIterations();
+*/
 
     // Confidence estimators
     // Overlap
-    mLidarSlam.SetOverlapSamplingRatio();
+//    mLidarSlam.SetOverlapSamplingRatio();
 
     // Motion limitations (hard constraints to detect failure();
-    std::vector<float> acc;
-    if (acc.size() == 2)
-        mLidarSlam.SetAccelerationLimits(Eigen::Map<const Eigen::Array2f>(acc.data()));
+    mLidarSlam.SetAccelerationLimit_mps2(2.0);
+    mLidarSlam.SetRotationAccelLimit_dps2(10.0);
 
-    std::vector<float> vel;
-    if (vel.size() == 2)
-        mLidarSlam.SetVelocityLimits(Eigen::Map<const Eigen::Array2f>(vel.data()));
+    mLidarSlam.SetVelocityLimit_mps(2.0);
+    mLidarSlam.SetRotationRateLimit_dps(10.0);
 
-    mLidarSlam.SetTimeWindowDuration();
+    mLidarSlam.SetTimeWindowDuration_sec(1.0);
 
     // Keyframes
-    mLidarSlam.SetKfDistanceThreshold();
-    mLidarSlam.SetKfAngleThreshold();
+//    mLidarSlam.SetKfDistanceThreshold();
+//    mLidarSlam.SetKfAngleThreshold();
 
+/*
     // Maps
     int mapUpdateMode;
     if (this->PrivNh.getParam("slam/voxel_grid/update_maps", mapUpdateMode))

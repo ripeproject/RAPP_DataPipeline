@@ -150,6 +150,7 @@ public:
 
     // Get the computed world transform so far, but compensating SLAM computation duration latency.
     Eigen::Isometry3d GetLatencyCompensatedWorldTransform() const;
+
     // Get keypoints maps
     // If clean is true, the moving objects are removed from map
     PointCloud::Ptr GetMap(Keypoint k, bool clean = false) const;
@@ -229,7 +230,7 @@ public:
     LidarState& GetLastState();
     Getter(LogStates, std::list<LidarState>)
 
-    Getter(Latency, double)
+    Getter(Latency_sec, double)
 
     // ---------------------------------------------------------------------------
     //   Graph parameters
@@ -280,6 +281,7 @@ public:
 
     // Set the keypoint types to use
     void EnableKeypointType(Keypoint k, bool enabled = true);
+
     // Get the keypoint types used
     bool KeypointTypeEnabled(Keypoint k) const;
 
@@ -483,15 +485,30 @@ public:
     // Matches
     Getter(TotalMatchedKeypoints, int)
 
-    // Motion constraints
+    // ---------------------------------------------------------------------------
+    //   Motion constraints
+    // ---------------------------------------------------------------------------
+
+    float GetVelocityLimit_mps() const;
+    void SetVelocityLimit_mps(float limit_mps);
+
+    float GetRotationRateLimit_dps() const;
+    void SetRotationRateLimit_dps(float limit_dps);
+
+    float GetAccelerationLimit_mps2() const;
+    void SetAccelerationLimit_mps2(float limit_mps2);
+
+    float GetRotationAccelLimit_dps2() const;
+    void SetRotationAccelLimit_dps2(float limit_dps2);
+
     Getter(AccelerationLimits, Eigen::Array2f)
     Setter(AccelerationLimits, const Eigen::Array2f&)
 
     Getter(VelocityLimits, Eigen::Array2f)
     Setter(VelocityLimits, const Eigen::Array2f&)
 
-    Getter(TimeWindowDuration, float)
-    Setter(TimeWindowDuration, float)
+    Getter(TimeWindowDuration_sec, float)
+    Setter(TimeWindowDuration_sec, float)
 
     Getter(ComplyMotionLimits, bool)
 
@@ -545,6 +562,7 @@ private:
 
     // Timestamp of the current input frame
     double mCurrentTime_sec = 0.0;
+
     // ---------------------------------------------------------------------------
     //   Trajectory, transforms and undistortion
     // ---------------------------------------------------------------------------
@@ -564,6 +582,7 @@ private:
     // This pose is the pose of BASE in WORLD coordinates, at the time
     // corresponding to the timestamp in the header of input Lidar scan.
     Eigen::Isometry3d mTworld = Eigen::Isometry3d::Identity();
+
     // Variable to store initial Tworld value (might be set by SetWorldTransformFromGuess)
     // It is used to reset the pose in case of failure
     Eigen::Isometry3d mTworldInit = Eigen::Isometry3d::Identity();
@@ -576,7 +595,7 @@ private:
 
     // [s] SLAM computation duration of last processed frame (~Tworld delay)
     // used to compute latency compensated pose
-    double mLatency;
+    double mLatency_sec;
 
     // **** UNDISTORTION ****
 
@@ -884,7 +903,7 @@ private:
     // If 0, motion limits won't be checked.
     // WARNING : the logging time out must be greater
     // in order to comply with this required value.
-    float mTimeWindowDuration = 0.0f;
+    float mTimeWindowDuration_sec = 0.0f;
 
     // ---------------------------------------------------------------------------
     //   Main sub-problems and methods
@@ -931,7 +950,7 @@ private:
 
     // Extra/Interpolate scan pose using previous motion from previous and current poses.
     // 'time' arg is the time offset in seconds to current frame header.stamp.
-    Eigen::Isometry3d InterpolateScanPose(double time);
+    Eigen::Isometry3d InterpolateScanPose(double time_sec);
 
     // Init undistortion interpolator time bounds based on point-wise time field.
     void InitUndistortion();

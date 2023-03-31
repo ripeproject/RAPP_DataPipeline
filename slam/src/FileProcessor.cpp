@@ -79,6 +79,12 @@ void cFileProcessor::run()
             }
 
             mFileReader.processBlock();
+
+            //if (p->mLidarFrameId > 5)
+            //{
+            //    mFileReader.close();
+            //    return;
+            //}
         }
     }
     catch (const bdf::stream_error& e)

@@ -277,244 +277,251 @@ bool Slam::KeypointTypeEnabled(Keypoint k) const
 //-----------------------------------------------------------------------------
 void Slam::AddFrames(const std::vector<PointCloud::Ptr>& frames)
 {
-  Utils::Timer::Init("SLAM frame processing");
+    Utils::Timer::Init("SLAM frame processing");
 
-  // Check that input frames are correct and can be processed
-  if (!this->CheckFrames(frames))
-    return;
-  mCurrentFrames = frames;
-  mCurrentTime_sec = Utils::PclStampToSec(mCurrentFrames[0]->header.stamp);
+    // Check that input frames are correct and can be processed
+    if (!this->CheckFrames(frames))
+        return;
 
-  // Set init pose (can have been modified by global optimization / reset)
-  // 1) To ensure a smooth local SLAM, the global optimization must refine
-  // poses relatively to last pose, i.e, last pose must be fixed.
-  // 2) To ensure a fix reference point, the global optimization must refine
-  // poses relatively to starting point, i.e, last pose can have changed.
-  // If LogStates empty, do not modify Tworld (must be identity after Reset)
-  if (!mLogStates.empty())
-    mTworld = mLogStates.back().Isometry;
-  else
-    mTworld = mTworldInit;
+    mCurrentFrames = frames;
+    mCurrentTime_sec = Utils::PclStampToSec(mCurrentFrames[0]->header.stamp);
 
-  // Create UsableKeypointTypes for new frame
-  // The keypoints cannot be chosen while processing a frame
-  // because it impacts all the maps structure along the process
-  mUsableKeypoints.clear();
-  for (auto k : KeypointTypes)
-  {
-    if (mUseKeypoints[k])
-      mUsableKeypoints.push_back(k);
-  }
+    // Set init pose (can have been modified by global optimization / reset)
+    // 1) To ensure a smooth local SLAM, the global optimization must refine
+    // poses relatively to last pose, i.e, last pose must be fixed.
+    // 2) To ensure a fix reference point, the global optimization must refine
+    // poses relatively to starting point, i.e, last pose can have changed.
+    // If LogStates empty, do not modify Tworld (must be identity after Reset)
+    if (!mLogStates.empty())
+        mTworld = mLogStates.back().Isometry;
+    else
+        mTworld = mTworldInit;
 
-  PRINT_VERBOSE(2, "\n#########################################################");
-  PRINT_VERBOSE(1, "Processing frame " << mNbrFrameProcessed << std::fixed << std::setprecision(9) <<
-                   " (at time " << mCurrentTime_sec << ")" << std::scientific);
-  PRINT_VERBOSE(2, "#########################################################\n");
-
-  // Compute the edge and planar keypoints
-  IF_VERBOSE(3, Utils::Timer::Init("Keypoints extraction"));
-  this->ExtractKeypoints();
-  IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Keypoints extraction"));
-
-  // Estimate Trelative by extrapolating new pose with a constant velocity model
-  // and/or registering current frame on previous one
-  IF_VERBOSE(3, Utils::Timer::Init("Ego-Motion"));
-  this->ComputeEgoMotion();
-  IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Ego-Motion"));
-
-  if ((mWheelOdomManager && mWheelOdomManager->CanBeUsedLocally()) ||
-      (mGravityManager && mGravityManager->CanBeUsedLocally()) ||
-       this->LmCanBeUsedLocally() ||
-      (mPoseManager && mPoseManager->CanBeUsedLocally()))
-  {
-    IF_VERBOSE(3, Utils::Timer::Init("External sensor constraints computation"));
-    this->ComputeSensorConstraints();
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("External sensor constraints computation"));
-  }
-
-  // Perform Localization : update Tworld from map and current frame keypoints
-  // and optionally undistort keypoints clouds based on ego-motion
-  IF_VERBOSE(3, Utils::Timer::Init("Localization"));
-  this->Localization();
-  IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization"));
-
-  // Compute and check pose confidence estimators
-  // Must be set before maps update because the overlap computation
-  // requires the current KdTree. This KdTree is reset in the maps update.
-  if (mOverlapSamplingRatio > 0 || mTimeWindowDuration > 0)
-  {
-    IF_VERBOSE(3, Utils::Timer::Init("Confidence estimators computation"));
-    if (mOverlapSamplingRatio > 0)
-      this->EstimateOverlap();
-    if (mTimeWindowDuration > 0)
-      this->CheckMotionLimits();
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Confidence estimators computation"));
-  }
-
-  // Check if the frame is a keyframe
-  mIsKeyFrame = this->CheckKeyFrame();
-  if (mIsKeyFrame)
-  {
-    // Notify current frame to be a new keyframe
-    mKfCounter++;
-    mKfLastPose = mTworld;
-  }
-
-  if (mValid || mIsKeyFrame)
-  {
-    // Update the tags if requested
-    if (mLandmarkConstraintLocal)
+    // Create UsableKeypointTypes for new frame
+    // The keypoints cannot be chosen while processing a frame
+    // because it impacts all the maps structure along the process
+    mUsableKeypoints.clear();
+    for (auto k : KeypointTypes)
     {
-      for (auto& idLm : mLandmarksManagers)
-      {
-        if (idLm.second.UpdateAbsolutePose(mTworld, mCurrentTime_sec))
-          PRINT_VERBOSE(3, "Updating reference pose of tag #" << idLm.first << " to "<<idLm.second.GetAbsolutePose().transpose());
-      }
+        if (mUseKeypoints[k])
+            mUsableKeypoints.push_back(k);
     }
 
-    // Update keypoints maps if required: add current keypoints to map using Tworld
-    // If mapping mode is ADD_KPTS_TO_FIXED_MAP the initial map points will remain untouched
-    // If mapping mode is UPDATE, the initial map points can disappear.
-    if ((mMapUpdate == MappingMode::ADD_KPTS_TO_FIXED_MAP
-        || mMapUpdate == MappingMode::UPDATE)
-        && mIsKeyFrame)
+    PRINT_VERBOSE(2, "\n#########################################################");
+    PRINT_VERBOSE(1, "Processing frame " << mNbrFrameProcessed << std::fixed << std::setprecision(9) <<
+                    " (at time " << mCurrentTime_sec << ")" << std::scientific);
+    PRINT_VERBOSE(2, "#########################################################\n");
+
+    // Compute the edge and planar keypoints
+    IF_VERBOSE(3, Utils::Timer::Init("Keypoints extraction"));
+    this->ExtractKeypoints();
+    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Keypoints extraction"));
+
+    // Estimate Trelative by extrapolating new pose with a constant velocity model
+    // and/or registering current frame on previous one
+    IF_VERBOSE(3, Utils::Timer::Init("Ego-Motion"));
+    this->ComputeEgoMotion();
+    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Ego-Motion"));
+
+    if ((mWheelOdomManager && mWheelOdomManager->CanBeUsedLocally()) ||
+        (mGravityManager && mGravityManager->CanBeUsedLocally()) ||
+        this->LmCanBeUsedLocally() ||
+        (mPoseManager && mPoseManager->CanBeUsedLocally()))
     {
-      IF_VERBOSE(3, Utils::Timer::Init("Maps update"));
-      this->UpdateMapsUsingTworld();
-      IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Maps update"));
+        IF_VERBOSE(3, Utils::Timer::Init("External sensor constraints computation"));
+        this->ComputeSensorConstraints();
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("External sensor constraints computation"));
     }
 
-    // Log current frame processing results : pose, covariance and keypoints.
-    IF_VERBOSE(3, Utils::Timer::Init("Logging"));
-    this->LogCurrentFrameState();
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Logging"));
-  }
+    // Perform Localization : update Tworld from map and current frame keypoints
+    // and optionally undistort keypoints clouds based on ego-motion
+    IF_VERBOSE(3, Utils::Timer::Init("Localization"));
+    this->Localization();
+    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization"));
 
-  // Motion and localization parameters estimation information display
-  if (mVerbosity >= 2)
-  {
-    SET_COUT_FIXED_PRECISION(3);
-    std::cout << "========== SLAM results ==========\n";
-    if (mUndistortion)
+    // Compute and check pose confidence estimators
+    // Must be set before maps update because the overlap computation
+    // requires the current KdTree. This KdTree is reset in the maps update.
+    if (mOverlapSamplingRatio > 0 || mTimeWindowDuration_sec > 0)
     {
-      Eigen::Isometry3d motion = mWithinFrameMotion.GetTransformRange();
-      std::cout << "Within frame motion:\n"
-                   " translation = [" << motion.translation().transpose()                                        << "] m\n"
-                   " rotation    = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(motion.linear())).transpose() << "] °\n";
-    }
-    std::cout << "Ego-Motion:\n"
-                 " translation = [" << mTrelative.translation().transpose()                                        << "] m\n"
-                 " rotation    = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(mTrelative.linear())).transpose() << "] °\n"
-                 "Localization:\n"
-                 " position    = [" << mTworld.translation().transpose()                                        << "] m\n"
-                 " orientation = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(mTworld.linear())).transpose() << "] °" << std::endl;
-    RESET_COUT_FIXED_PRECISION;
-  }
-
-  if (mVerbosity >= 5)
-  {
-    SET_COUT_FIXED_PRECISION(3);
-    std::cout << "========== Memory usage ==========\n";
-    std::map<Keypoint, unsigned int> points;
-    std::map<Keypoint, unsigned int> memory;
-
-    // Initialize number of points and memory per keypoint type
-    for (auto k : mUsableKeypoints)
-    {
-      points[k] = 0;
-      memory[k] = 0;
-    }
-    // Sum points and memory allocated of each keypoints cloud
-    for (auto const& st: mLogStates)
-    {
-      for (auto k : mUsableKeypoints)
-      {
-        points[k] += st.Keypoints.at(k)->PointsSize();
-        memory[k] += st.Keypoints.at(k)->MemorySize();
-      }
+        IF_VERBOSE(3, Utils::Timer::Init("Confidence estimators computation"));
+        if (mOverlapSamplingRatio > 0)
+            this->EstimateOverlap();
+        if (mTimeWindowDuration_sec > 0)
+            this->CheckMotionLimits();
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Confidence estimators computation"));
     }
 
-    // Print keypoints memory usage
-    for (auto k : mUsableKeypoints)
+    // Check if the frame is a keyframe
+    mIsKeyFrame = this->CheckKeyFrame();
+    if (mIsKeyFrame)
     {
-      std::cout << Utils::Capitalize(Utils::Plural(KeypointTypeNames.at(k)))<< " log  : "
-                << mLogStates.size() << " frames, "
-                << points[k] * 1e-6 << " points, "
-                << memory[k] << " MB\n";
-
+        // Notify current frame to be a new keyframe
+        mKfCounter++;
+        mKfLastPose = mTworld;
     }
-    RESET_COUT_FIXED_PRECISION;
-  }
 
-  // Frame processing duration
-  mLatency = Utils::Timer::Stop("SLAM frame processing");
-  mNbrFrameProcessed++;
-  IF_VERBOSE(1, Utils::Timer::StopAndDisplay("SLAM frame processing"));
+    if (mValid || mIsKeyFrame)
+    {
+        // Update the tags if requested
+        if (mLandmarkConstraintLocal)
+        {
+            for (auto& idLm : mLandmarksManagers)
+            {
+                if (idLm.second.UpdateAbsolutePose(mTworld, mCurrentTime_sec))
+                    PRINT_VERBOSE(3, "Updating reference pose of tag #" << idLm.first << " to "<<idLm.second.GetAbsolutePose().transpose());
+            }
+        }
+
+        // Update keypoints maps if required: add current keypoints to map using Tworld
+        // If mapping mode is ADD_KPTS_TO_FIXED_MAP the initial map points will remain untouched
+        // If mapping mode is UPDATE, the initial map points can disappear.
+        if ((mMapUpdate == MappingMode::ADD_KPTS_TO_FIXED_MAP
+            || mMapUpdate == MappingMode::UPDATE)
+            && mIsKeyFrame)
+        {
+            IF_VERBOSE(3, Utils::Timer::Init("Maps update"));
+            this->UpdateMapsUsingTworld();
+            IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Maps update"));
+        }
+
+        // Log current frame processing results : pose, covariance and keypoints.
+        IF_VERBOSE(3, Utils::Timer::Init("Logging"));
+        this->LogCurrentFrameState();
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Logging"));
+    }
+
+    // Motion and localization parameters estimation information display
+    if (mVerbosity >= 2)
+    {
+        SET_COUT_FIXED_PRECISION(3);
+        std::cout << "========== SLAM results ==========\n";
+        if (mUndistortion)
+        {
+            Eigen::Isometry3d motion = mWithinFrameMotion.GetTransformRange();
+            std::cout << "Within frame motion:\n"
+                        " translation = [" << motion.translation().transpose()                                        << "] m\n"
+                        " rotation    = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(motion.linear())).transpose() << "] °\n";
+        }
+
+        std::cout << "Ego-Motion:\n"
+                        " translation = [" << mTrelative.translation().transpose()                                        << "] m\n"
+                        " rotation    = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(mTrelative.linear())).transpose() << "] °\n"
+                        "Localization:\n"
+                        " position    = [" << mTworld.translation().transpose()                                        << "] m\n"
+                        " orientation = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(mTworld.linear())).transpose() << "] °" << std::endl;
+        RESET_COUT_FIXED_PRECISION;
+    }
+
+    if (mVerbosity >= 5)
+    {
+        SET_COUT_FIXED_PRECISION(3);
+        std::cout << "========== Memory usage ==========\n";
+        std::map<Keypoint, unsigned int> points;
+        std::map<Keypoint, unsigned int> memory;
+
+        // Initialize number of points and memory per keypoint type
+        for (auto k : mUsableKeypoints)
+        {
+            points[k] = 0;
+            memory[k] = 0;
+        }
+
+        // Sum points and memory allocated of each keypoints cloud
+        for (auto const& st: mLogStates)
+        {
+            for (auto k : mUsableKeypoints)
+            {
+                points[k] += st.Keypoints.at(k)->PointsSize();
+                memory[k] += st.Keypoints.at(k)->MemorySize();
+            }
+        }
+
+        // Print keypoints memory usage
+        for (auto k : mUsableKeypoints)
+        {
+            std::cout << Utils::Capitalize(Utils::Plural(KeypointTypeNames.at(k)))<< " log  : "
+                    << mLogStates.size() << " frames, "
+                    << points[k] * 1e-6 << " points, "
+                    << memory[k] << " MB\n";
+
+        }
+        RESET_COUT_FIXED_PRECISION;
+    }
+
+    // Frame processing duration
+    mLatency_sec = Utils::Timer::Stop("SLAM frame processing");
+    mNbrFrameProcessed++;
+    IF_VERBOSE(1, Utils::Timer::StopAndDisplay("SLAM frame processing"));
 }
 
 //-----------------------------------------------------------------------------
 void Slam::ComputeSensorConstraints()
 {
-  if (mWheelOdomManager && mWheelOdomManager->CanBeUsedLocally() &&
-      mWheelOdomManager->ComputeConstraint(mCurrentTime_sec))
+    if (mWheelOdomManager && mWheelOdomManager->CanBeUsedLocally() &&
+        mWheelOdomManager->ComputeConstraint(mCurrentTime_sec))
     PRINT_VERBOSE(3, "Wheel odometry constraint added")
-  if (mGravityManager && mGravityManager->CanBeUsedLocally() &&
-      mGravityManager->ComputeConstraint(mCurrentTime_sec))
+
+    if (mGravityManager && mGravityManager->CanBeUsedLocally() &&
+        mGravityManager->ComputeConstraint(mCurrentTime_sec))
     PRINT_VERBOSE(3, "IMU gravity constraint added")
-  if (this->LmCanBeUsedLocally())
-  {
-    for (auto& idLm : mLandmarksManagers)
+
+    if (this->LmCanBeUsedLocally())
     {
-      PRINT_VERBOSE(3, "Checking state of tag #" << idLm.first)
-      if (idLm.second.ComputeConstraint(mCurrentTime_sec))
-        PRINT_VERBOSE(3, "\t Adding constraint for tag #" << idLm.first)
+        for (auto& idLm : mLandmarksManagers)
+        {
+            PRINT_VERBOSE(3, "Checking state of tag #" << idLm.first)
+            if (idLm.second.ComputeConstraint(mCurrentTime_sec))
+                PRINT_VERBOSE(3, "\t Adding constraint for tag #" << idLm.first)
+        }
     }
-  }
-  if (mPoseManager && mPoseManager->CanBeUsedLocally())
-  {
-    if (!mLogStates.empty())
+
+    if (mPoseManager && mPoseManager->CanBeUsedLocally())
     {
-      // Update last pose information because the external pose constraint is relative
-      // The last pose logged corresponds to last lidar frame
-      mPoseManager->SetPrevLidarTime(mLogStates.back().Time);
-      mPoseManager->SetPrevPoseTransform(mLogStates.back().Isometry);
-      if (mPoseManager->ComputeConstraint(mCurrentTime_sec))
-        PRINT_VERBOSE(3, "External pose constraint added")
+        if (!mLogStates.empty())
+        {
+            // Update last pose information because the external pose constraint is relative
+            // The last pose logged corresponds to last lidar frame
+            mPoseManager->SetPrevLidarTime(mLogStates.back().Time_sec);
+            mPoseManager->SetPrevPoseTransform(mLogStates.back().Isometry);
+            if (mPoseManager->ComputeConstraint(mCurrentTime_sec))
+                PRINT_VERBOSE(3, "External pose constraint added")
+        }
     }
-  }
 }
 
 //-----------------------------------------------------------------------------
 void Slam::UpdateMaps()
 {
-  // The iteration is not directly on Keypoint types
-  // because of openMP behaviour which needs int iteration on MSVC
-  int nbKeypointTypes = static_cast<int>(mUsableKeypoints.size());
-  #pragma omp parallel for num_threads(std::min(mNbThreads, nbKeypointTypes))
-  for (int i = 0; i < nbKeypointTypes; ++i)
-  {
-    Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
-    mLocalMaps[k]->Clear();
-    PointCloud::Ptr keypoints(new PointCloud);
-    for (auto& state : mLogStates)
+    // The iteration is not directly on Keypoint types
+    // because of openMP behaviour which needs int iteration on MSVC
+    int nbKeypointTypes = static_cast<int>(mUsableKeypoints.size());
+    #pragma omp parallel for num_threads(std::min(mNbThreads, nbKeypointTypes))
+    for (int i = 0; i < nbKeypointTypes; ++i)
     {
-      if (!state.IsKeyFrame)
-        continue;
+        Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
+        mLocalMaps[k]->Clear();
+        PointCloud::Ptr keypoints(new PointCloud);
+        for (auto& state : mLogStates)
+        {
+            if (!state.IsKeyFrame)
+                continue;
 
-      // Keypoints are stored undistorted : because of the keyframes mechanism,
-      // undistortion cannot be refined during pose graph
-      // We rely on a good first estimation of the in-frame motion
-      keypoints.reset(new PointCloud);
-      PointCloud::Ptr undistortedKeypoints = state.Keypoints[k]->GetCloud();
-      pcl::transformPointCloud(*undistortedKeypoints, *keypoints, state.Isometry.matrix().cast<float>());
+            // Keypoints are stored undistorted : because of the keyframes mechanism,
+            // undistortion cannot be refined during pose graph
+            // We rely on a good first estimation of the in-frame motion
+            keypoints.reset(new PointCloud);
+            PointCloud::Ptr undistortedKeypoints = state.Keypoints[k]->GetCloud();
+            pcl::transformPointCloud(*undistortedKeypoints, *keypoints, state.Isometry.matrix().cast<float>());
 
-      mLocalMaps[k]->Add(keypoints, false);
+            mLocalMaps[k]->Add(keypoints, false);
+        }
+
+        // Roll to center onto last pose
+        Eigen::Vector4f minPoint, maxPoint;
+        pcl::getMinMax3D(*keypoints, minPoint, maxPoint);
+        mLocalMaps[k]->Roll(minPoint.head<3>().array(), maxPoint.head<3>().array());
     }
-    // Roll to center onto last pose
-    Eigen::Vector4f minPoint, maxPoint;
-    pcl::getMinMax3D(*keypoints, minPoint, maxPoint);
-    mLocalMaps[k]->Roll(minPoint.head<3>().array(), maxPoint.head<3>().array());
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -573,8 +580,9 @@ bool Slam::OptimizeGraph()
             for (auto& s : mLogStates)
             {
                 ExternalSensors::LandmarkMeasurement lmSynchMeasure; // Virtual landmark measure with synchronized timestamp and no calibration applied
-                if (!lm.ComputeSynchronizedMeasure(s.Time, lmSynchMeasure))
+                if (!lm.ComputeSynchronizedMeasure(s.Time_sec, lmSynchMeasure))
                     continue;
+
                 // Add synchronized landmark observations to the graph
                 graphManager.AddLandmarkConstraint(s.Index, idLm.first, lmSynchMeasure, lm.GetPositionOnly());
                 externalConstraint = true;
@@ -594,7 +602,7 @@ bool Slam::OptimizeGraph()
         for (auto& s : mLogStates)
         {
             ExternalSensors::GpsMeasurement gpsSynchMeasure; // Virtual GPS measure in SLAM reference frame with synchronized timestamp
-            if (!mGpsManager->ComputeSynchronizedMeasureOffset(s.Time, gpsSynchMeasure))
+            if (!mGpsManager->ComputeSynchronizedMeasureOffset(s.Time_sec, gpsSynchMeasure))
                 continue;
 
             // Add synchronized gps measurement to the graph
@@ -718,128 +726,137 @@ void Slam::LoadMapsFromPCD(const std::string& filePrefix, bool resetMaps)
 //-----------------------------------------------------------------------------
 Eigen::Isometry3d Slam::GetLatencyCompensatedWorldTransform() const
 {
-  // Get 2 last transforms
-  unsigned int trajectorySize = mLogStates.size();
-  if (trajectorySize == 0)
-    return Eigen::Isometry3d::Identity();
-  else if (trajectorySize == 1)
-    return mLogStates.back().Isometry;
-  auto itSt = mLogStates.end();
-  const LidarState& current = *(--itSt);
-  const LidarState& previous = *(--itSt);
+    // Get 2 last transforms
+    unsigned int trajectorySize = mLogStates.size();
 
-  // Linearly compute normalized timestamp of Hpred.
-  // We expect H0 and H1 to match with time 0 and 1.
-  // If timestamps are not defined or too close, extrapolation is impossible.
-  if (std::abs(current.Time - previous.Time) < 1e-6)
-  {
-    PRINT_WARNING("Unable to compute latency-compensated transform : timestamps undefined or too close.");
-    return current.Isometry;
-  }
-  // If requested extrapolation timestamp is too far from previous frames timestamps, extrapolation is impossible.
-  if (std::abs(mLatency / (current.Time - previous.Time)) > mMaxExtrapolationRatio)
-  {
-    PRINT_WARNING("Unable to compute latency-compensated transform : extrapolation time is too far.");
-    return current.Isometry;
-  }
+    if (trajectorySize == 0)
+        return Eigen::Isometry3d::Identity();
+    else if (trajectorySize == 1)
+        return mLogStates.back().Isometry;
 
-  // Extrapolate H0 and H1 to get expected Hpred at current time
-  Eigen::Isometry3d Hpred = LinearInterpolation(previous.Isometry, current.Isometry, current.Time + mLatency, previous.Time, current.Time);
-  return Hpred;
+    auto itSt = mLogStates.end();
+    const LidarState& current = *(--itSt);
+    const LidarState& previous = *(--itSt);
+
+    // Linearly compute normalized timestamp of Hpred.
+    // We expect H0 and H1 to match with time 0 and 1.
+    // If timestamps are not defined or too close, extrapolation is impossible.
+    if (std::abs(current.Time_sec - previous.Time_sec) < 1e-6)
+    {
+        PRINT_WARNING("Unable to compute latency-compensated transform : timestamps undefined or too close.");
+        return current.Isometry;
+    }
+
+    // If requested extrapolation timestamp is too far from previous frames timestamps, extrapolation is impossible.
+    if (std::abs(mLatency_sec / (current.Time_sec - previous.Time_sec)) > mMaxExtrapolationRatio)
+    {
+        PRINT_WARNING("Unable to compute latency-compensated transform : extrapolation time is too far.");
+        return current.Isometry;
+    }
+
+    // Extrapolate H0 and H1 to get expected Hpred at current time
+    Eigen::Isometry3d Hpred = LinearInterpolation(previous.Isometry, current.Isometry,
+        current.Time_sec + mLatency_sec, previous.Time_sec, current.Time_sec);
+
+    return Hpred;
 }
 
 //-----------------------------------------------------------------------------
 std::unordered_map<std::string, double> Slam::GetDebugInformation() const
 {
-  std::unordered_map<std::string, double> map;
-  for (Keypoint k : mUsableKeypoints)
-  {
-    std::string name = "EgoMotion: " + Utils::Plural(KeypointTypeNames.at(k)) + " used";
-    map[name] = mEgoMotionMatchingResults.at(k).NbMatches();
-  }
+    std::unordered_map<std::string, double> map;
+    for (Keypoint k : mUsableKeypoints)
+    {
+        std::string name = "EgoMotion: " + Utils::Plural(KeypointTypeNames.at(k)) + " used";
+        map[name] = mEgoMotionMatchingResults.at(k).NbMatches();
+    }
 
-  for (auto k : mUsableKeypoints)
-  {
-    std::string name = "Localization: " + Utils::Plural(KeypointTypeNames.at(k)) + " used";
-    map[name] = mLocalizationMatchingResults.at(k).NbMatches();
-  }
+    for (auto k : mUsableKeypoints)
+    {
+        std::string name = "Localization: " + Utils::Plural(KeypointTypeNames.at(k)) + " used";
+        map[name] = mLocalizationMatchingResults.at(k).NbMatches();
+    }
 
-  map["Localization: position error"]      = mLocalizationUncertainty.PositionError;
-  map["Localization: orientation error"]   = mLocalizationUncertainty.OrientationError;
-  map["Confidence: overlap"]               = mOverlapEstimation;
-  map["Confidence: comply motion limits"]  = mComplyMotionLimits;
+    map["Localization: position error"]      = mLocalizationUncertainty.PositionError;
+    map["Localization: orientation error"]   = mLocalizationUncertainty.OrientationError;
+    map["Confidence: overlap"]               = mOverlapEstimation;
+    map["Confidence: comply motion limits"]  = mComplyMotionLimits;
 
-  return map;
+    return map;
 }
 
 //-----------------------------------------------------------------------------
 std::unordered_map<std::string, std::vector<double>> Slam::GetDebugArray() const
 {
-  auto toDoubleVector = [](auto const& scalars) { return std::vector<double>(scalars.begin(), scalars.end()); };
+    auto toDoubleVector = [](auto const& scalars) { return std::vector<double>(scalars.begin(), scalars.end()); };
 
-  std::unordered_map<std::string, std::vector<double>> map;
-  for (auto k : mUsableKeypoints)
-  {
-    std::string name = "EgoMotion: " + KeypointTypeNames.at(k) + " matches";
-    map[name]  = toDoubleVector(mEgoMotionMatchingResults.at(k).Rejections);
-    name = "EgoMotion: " + KeypointTypeNames.at(k) + " weights";
-    map[name]  = mEgoMotionMatchingResults.at(k).Weights;
-  }
+    std::unordered_map<std::string, std::vector<double>> map;
+    for (auto k : mUsableKeypoints)
+    {
+        std::string name = "EgoMotion: " + KeypointTypeNames.at(k) + " matches";
+        map[name]  = toDoubleVector(mEgoMotionMatchingResults.at(k).Rejections);
+        name = "EgoMotion: " + KeypointTypeNames.at(k) + " weights";
+        map[name]  = mEgoMotionMatchingResults.at(k).Weights;
+    }
 
-  for (auto k : mUsableKeypoints)
-  {
-    std::string name = "Localization: " + KeypointTypeNames.at(k) + " matches";
-    map[name]  = toDoubleVector(mLocalizationMatchingResults.at(k).Rejections);
-    name = "Localization: " + KeypointTypeNames.at(k) + " weights";
-    map[name]  = mLocalizationMatchingResults.at(k).Weights;
-  }
+    for (auto k : mUsableKeypoints)
+    {
+        std::string name = "Localization: " + KeypointTypeNames.at(k) + " matches";
+        map[name]  = toDoubleVector(mLocalizationMatchingResults.at(k).Rejections);
+        name = "Localization: " + KeypointTypeNames.at(k) + " weights";
+        map[name]  = mLocalizationMatchingResults.at(k).Weights;
+    }
 
-  return map;
+    return map;
 }
 
 //-----------------------------------------------------------------------------
 Slam::PointCloud::Ptr Slam::GetRegisteredFrame()
 {
-  // If the input points have not been aggregated to WORLD coordinates yet,
-  // transform and aggregate them
-  if (mRegisteredFrame->header.stamp != mCurrentFrames[0]->header.stamp)
-    mRegisteredFrame = this->AggregateFrames(mCurrentFrames, true);
-  return mRegisteredFrame;
+    // If the input points have not been aggregated to WORLD coordinates yet,
+    // transform and aggregate them
+    if (mRegisteredFrame->header.stamp != mCurrentFrames[0]->header.stamp)
+        mRegisteredFrame = this->AggregateFrames(mCurrentFrames, true);
+
+    return mRegisteredFrame;
 }
 
 //-----------------------------------------------------------------------------
 Slam::PointCloud::Ptr Slam::GetMap(Keypoint k, bool clean) const
 {
-  PointCloud::Ptr map = mLocalMaps.at(k)->Get(clean);
-  map->header = Utils::BuildPclHeader(mCurrentFrames[0]->header.stamp,
+    PointCloud::Ptr map = mLocalMaps.at(k)->Get(clean);
+    map->header = Utils::BuildPclHeader(mCurrentFrames[0]->header.stamp,
                                       mWorldFrameId,
                                       mNbrFrameProcessed);
-  return map;
+    return map;
 }
 
 //-----------------------------------------------------------------------------
 Slam::PointCloud::Ptr Slam::GetTargetSubMap(Keypoint k) const
 {
-  PointCloud::Ptr subMap = mLocalMaps.at(k)->GetSubMap();
-  subMap->header = Utils::BuildPclHeader(mCurrentFrames[0]->header.stamp,
-                                         mWorldFrameId,
-                                         mNbrFrameProcessed);
-  return subMap;
+    PointCloud::Ptr subMap = mLocalMaps.at(k)->GetSubMap();
+    subMap->header = Utils::BuildPclHeader(mCurrentFrames[0]->header.stamp,
+                                            mWorldFrameId,
+                                            mNbrFrameProcessed);
+    return subMap;
 }
 
 //-----------------------------------------------------------------------------
 Slam::PointCloud::Ptr Slam::GetKeypoints(Keypoint k, bool worldCoordinates)
 {
-  // Return keypoints in BASE coordinates
-  if (!worldCoordinates)
-    return mCurrentUndistortedKeypoints.at(k);
+    // Return keypoints in BASE coordinates
+    if (!worldCoordinates)
+        return mCurrentUndistortedKeypoints.at(k);
 
-  // Return keypoints in WORLD coordinates
-  // If the keypoints have not been transformed yet to WORLD coordinates, perform transformation
-  if (mCurrentWorldKeypoints.at(k)->header.stamp != mCurrentUndistortedKeypoints.at(k)->header.stamp)
-    mCurrentWorldKeypoints[k] = this->TransformPointCloud(mCurrentUndistortedKeypoints[k],
-                                                               mTworld, mWorldFrameId);
-  return mCurrentWorldKeypoints.at(k);
+    // Return keypoints in WORLD coordinates
+    // If the keypoints have not been transformed yet to WORLD coordinates, perform transformation
+    if (mCurrentWorldKeypoints.at(k)->header.stamp != mCurrentUndistortedKeypoints.at(k)->header.stamp)
+    {
+        mCurrentWorldKeypoints[k] = this->TransformPointCloud(mCurrentUndistortedKeypoints[k],
+            mTworld, mWorldFrameId);
+    }
+
+    return mCurrentWorldKeypoints.at(k);
 }
 
 //==============================================================================
@@ -983,70 +1000,230 @@ bool Slam::InitTworldWithPoseMeasurement(double time)
 //-----------------------------------------------------------------------------
 void Slam::ComputeEgoMotion()
 {
-  PRINT_VERBOSE(2, "========== Ego-Motion ==========");
+    PRINT_VERBOSE(2, "========== Ego-Motion ==========");
 
-  // Reset ego-motion
-  mTrelative = Eigen::Isometry3d::Identity();
+    // Reset ego-motion
+    mTrelative = Eigen::Isometry3d::Identity();
 
-  bool externalAvailable = false;
-  // Linearly extrapolate previous motion to estimate new pose
-  if (!mLogStates.empty() &&
-      (mEgoMotion == EgoMotionMode::EXTERNAL ||
-       mEgoMotion == EgoMotionMode::EXTERNAL_OR_MOTION_EXTRAPOLATION))
-  {
-    if (this->PoseHasData())
+    bool externalAvailable = false;
+    // Linearly extrapolate previous motion to estimate new pose
+    if (!mLogStates.empty() &&
+        (mEgoMotion == EgoMotionMode::EXTERNAL ||
+        mEgoMotion == EgoMotionMode::EXTERNAL_OR_MOTION_EXTRAPOLATION))
     {
-      ExternalSensors::PoseMeasurement synchPreviousPoseMeas; // Virtual measure with synchronized timestamp and calibration applied
-      if (mPoseManager->ComputeSynchronizedMeasureBase(mLogStates.back().Time, synchPreviousPoseMeas))
-      {
-        ExternalSensors::PoseMeasurement synchPoseMeas; // Virtual measure with synchronized timestamp and calibration applied
-        if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec, synchPoseMeas))
+        if (this->PoseHasData())
         {
-          mTrelative = synchPreviousPoseMeas.Pose.inverse() * synchPoseMeas.Pose;
-          externalAvailable = true;
-          PRINT_VERBOSE(3, "Prior pose computed using external poses supplied");
+            ExternalSensors::PoseMeasurement synchPreviousPoseMeas; // Virtual measure with synchronized timestamp and calibration applied
+            if (mPoseManager->ComputeSynchronizedMeasureBase(mLogStates.back().Time_sec, synchPreviousPoseMeas))
+            {
+                ExternalSensors::PoseMeasurement synchPoseMeas; // Virtual measure with synchronized timestamp and calibration applied
+                if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec, synchPoseMeas))
+                {
+                    mTrelative = synchPreviousPoseMeas.Pose.inverse() * synchPoseMeas.Pose;
+                    externalAvailable = true;
+                    PRINT_VERBOSE(3, "Prior pose computed using external poses supplied");
+                }
+            }
         }
-      }
+        else
+            PRINT_WARNING("External poses are empty : cannot use them to compute ego motion")
     }
-    else
-      PRINT_WARNING("External poses are empty : cannot use them to compute ego motion")
-  }
 
-  // Linearly extrapolate previous motion to estimate new pose
-  if (mLogStates.size() >= 2 && (
-      (mEgoMotion == EgoMotionMode::MOTION_EXTRAPOLATION ||
-       mEgoMotion == EgoMotionMode::MOTION_EXTRAPOLATION_AND_REGISTRATION) ||
-      (mEgoMotion == EgoMotionMode::EXTERNAL_OR_MOTION_EXTRAPOLATION &&
-       !externalAvailable)))
-  {
-    // Estimate new Tworld with a constant velocity model
-    auto itSt = mLogStates.end();
-
-    const double t1 = (--itSt)->Time;
-    const Eigen::Isometry3d& T1 = itSt->Isometry;
-    const double t0 = (--itSt)->Time;
-    const Eigen::Isometry3d& T0 = itSt->Isometry;
-    if (std::abs((mCurrentTime_sec - t1) / (t1 - t0)) > mMaxExtrapolationRatio)
-      PRINT_WARNING("Unable to extrapolate scan pose from previous motion : extrapolation time is too far.")
-    else
+    // Linearly extrapolate previous motion to estimate new pose
+    if (mLogStates.size() >= 2 && (
+        (mEgoMotion == EgoMotionMode::MOTION_EXTRAPOLATION ||
+        mEgoMotion == EgoMotionMode::MOTION_EXTRAPOLATION_AND_REGISTRATION) ||
+        (mEgoMotion == EgoMotionMode::EXTERNAL_OR_MOTION_EXTRAPOLATION &&
+        !externalAvailable)))
     {
-      Eigen::Isometry3d nextTworldEstimation = LinearInterpolation(T0, T1, mCurrentTime_sec, t0, t1);
-      mTrelative = mTworld.inverse() * nextTworldEstimation;
-    }
-  }
+        // Estimate new Tworld with a constant velocity model
+        auto itSt = mLogStates.end();
 
-  // Refine Trelative estimation by registering current frame on previous one
-  if (mEgoMotion == EgoMotionMode::REGISTRATION ||
-      mEgoMotion == EgoMotionMode::MOTION_EXTRAPOLATION_AND_REGISTRATION)
-  {
-    // kd-tree to process fast nearest neighbor
-    // among the keypoints of the previous pointcloud
-    IF_VERBOSE(3, Utils::Timer::Init("EgoMotion : build KD tree"));
-    std::map<Keypoint, KDTree> kdtreePrevious;
-    // Kdtrees map initialization to parallelize their
-    // construction using OMP and avoid concurrency issues
-    for (auto k : mUsableKeypoints)
-      kdtreePrevious[k] = KDTree();
+        const double t1 = (--itSt)->Time_sec;
+        const Eigen::Isometry3d& T1 = itSt->Isometry;
+        const double t0 = (--itSt)->Time_sec;
+        const Eigen::Isometry3d& T0 = itSt->Isometry;
+
+        if (std::abs((mCurrentTime_sec - t1) / (t1 - t0)) > mMaxExtrapolationRatio)
+            PRINT_WARNING("Unable to extrapolate scan pose from previous motion : extrapolation time is too far.")
+        else
+        {
+            Eigen::Isometry3d nextTworldEstimation = LinearInterpolation(T0, T1, mCurrentTime_sec, t0, t1);
+            mTrelative = mTworld.inverse() * nextTworldEstimation;
+        }
+    }
+
+    // Refine Trelative estimation by registering current frame on previous one
+    if (mEgoMotion == EgoMotionMode::REGISTRATION ||
+        mEgoMotion == EgoMotionMode::MOTION_EXTRAPOLATION_AND_REGISTRATION)
+    {
+        // kd-tree to process fast nearest neighbor
+        // among the keypoints of the previous pointcloud
+        IF_VERBOSE(3, Utils::Timer::Init("EgoMotion : build KD tree"));
+        std::map<Keypoint, KDTree> kdtreePrevious;
+        // Kdtrees map initialization to parallelize their
+        // construction using OMP and avoid concurrency issues
+        for (auto k : mUsableKeypoints)
+            kdtreePrevious[k] = KDTree();
+
+        // The iteration is not directly on Keypoint types
+        // because of openMP behaviour which needs int iteration on MSVC
+        int nbKeypointTypes = static_cast<int>(mUsableKeypoints.size());
+        #pragma omp parallel for num_threads(std::min(mNbThreads, nbKeypointTypes))
+        for (int i = 0; i < nbKeypointTypes; ++i)
+        {
+            Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
+            if (kdtreePrevious.count(k))
+            kdtreePrevious[k].Reset(mPreviousRawKeypoints[k]);
+        }
+
+        if (mVerbosity >= 2)
+        {
+            std::cout << "Keypoints extracted from previous frame : ";
+            for (auto k : mUsableKeypoints)
+            std::cout << mPreviousRawKeypoints[k]->size() << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
+            std::cout << std::endl;
+        }
+
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("EgoMotion : build KD tree"));
+        IF_VERBOSE(3, Utils::Timer::Init("Ego-Motion : whole ICP-LM loop"));
+
+        // Reset ICP results
+        mTotalMatchedKeypoints = 0;
+
+        // Init matching parameters
+        KeypointsMatcher::Parameters matchingParams;
+        matchingParams.NbThreads = mNbThreads;
+        matchingParams.SingleEdgePerRing = true;
+        matchingParams.MaxNeighborsDistance = mEgoMotionMaxNeighborsDistance;
+        matchingParams.EdgeNbNeighbors = mEgoMotionEdgeNbNeighbors;
+        matchingParams.EdgeMinNbNeighbors = mEgoMotionEdgeMinNbNeighbors;
+        matchingParams.EdgeMaxModelError = mEgoMotionEdgeMaxModelError;
+        matchingParams.PlaneNbNeighbors = mEgoMotionPlaneNbNeighbors;
+        matchingParams.PlanarityThreshold = mEgoMotionPlanarityThreshold;
+        matchingParams.PlaneMaxModelError = mEgoMotionPlaneMaxModelError;
+
+        // ICP - Levenberg-Marquardt loop
+        // At each step of this loop an ICP matching is performed. Once the keypoints
+        // are matched, we estimate the the 6-DOF parameters by minimizing the
+        // non-linear least square cost function using Levenberg-Marquardt algorithm.
+        for (unsigned int icpIter = 0; icpIter < mEgoMotionICPMaxIter; ++icpIter)
+        {
+            IF_VERBOSE(3, Utils::Timer::Init("  Ego-Motion : ICP"));
+
+            // We want to estimate our 6-DOF parameters using a non linear least square
+            // minimization. The non linear part comes from the parametrization of the
+            // rotation endomorphism SO(3).
+            // First, we need to build the point-to-line, point-to-plane and
+            // point-to-blob ICP matches that will be optimized.
+            // Then, we use CERES Levenberg-Marquardt optimization to minimize the problem.
+
+            // Create a keypoints matcher
+            // At each ICP iteration, the outliers removal is refined to be stricter
+            double iterRatio = icpIter / static_cast<double>(mEgoMotionICPMaxIter - 1);
+            matchingParams.SaturationDistance = (1 - iterRatio) * mEgoMotionInitSaturationDistance + iterRatio * mEgoMotionFinalSaturationDistance;
+            KeypointsMatcher matcher(matchingParams, mTrelative);
+
+            // Loop over keypoints to build the residuals
+            for (auto k : mUsableKeypoints)
+                mEgoMotionMatchingResults[k] = matcher.BuildMatchResiduals(mCurrentRawKeypoints[k], kdtreePrevious[k], k);
+
+            // Count matches and skip this frame
+            // if there are too few geometric keypoints matched
+            mTotalMatchedKeypoints = 0;
+            for (auto k : mUsableKeypoints)
+                mTotalMatchedKeypoints += mEgoMotionMatchingResults[k].NbMatches();
+
+            if (mTotalMatchedKeypoints < mMinNbMatchedKeypoints)
+            {
+                PRINT_WARNING("Not enough keypoints, EgoMotion skipped for this frame.");
+                break;
+            }
+
+            IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Ego-Motion : ICP"));
+            IF_VERBOSE(3, Utils::Timer::Init("  Ego-Motion : LM optim"));
+
+            // Init the optimizer with initial pose and parameters
+            LocalOptimizer optimizer;
+            optimizer.SetTwoDMode(mTwoDMode);
+            optimizer.SetPosePrior(mTrelative);
+            optimizer.SetLMMaxIter(mEgoMotionLMMaxIter);
+            optimizer.SetNbThreads(mNbThreads);
+
+            // Add LiDAR ICP matches
+            for (auto k : mUsableKeypoints)
+                optimizer.AddResiduals(mEgoMotionMatchingResults[k].Residuals);
+
+            // Run LM optimization
+            ceres::Solver::Summary summary = optimizer.Solve();
+            PRINT_VERBOSE(4, summary.BriefReport());
+
+            // Get back optimized Trelative
+            mTrelative = optimizer.GetOptimizedPose();
+
+            IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Ego-Motion : LM optim"));
+
+            // If no L-M iteration has been made since the last ICP matching, it means
+            // that we reached a local minimum for the ICP-LM algorithm.
+            if (summary.num_successful_steps == 1)
+            {
+                break;
+            }
+        }
+
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Ego-Motion : whole ICP-LM loop"));
+        if (mVerbosity >= 2)
+        {
+            std::cout << "Matched keypoints: " << mTotalMatchedKeypoints << " (";
+            for (auto k : mUsableKeypoints)
+            std::cout << mEgoMotionMatchingResults[k].NbMatches() << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
+            std::cout << ")" << std::endl;
+        }
+    }
+
+    // Print EgoMotion results
+    SET_COUT_FIXED_PRECISION(3);
+    PRINT_VERBOSE(2, "Estimated Ego-Motion (motion since last frame):\n"
+                    " translation = [" << mTrelative.translation().transpose() << "] m\n"
+                    " rotation    = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(mTrelative.linear())).transpose() << "] °");
+    RESET_COUT_FIXED_PRECISION;
+}
+
+//-----------------------------------------------------------------------------
+void Slam::Localization()
+{
+    mLocalizationUncertainty = LocalOptimizer::RegistrationError();
+    mValid = true;
+    PRINT_VERBOSE(2, "========== Localization ==========");
+
+    // Integrate the relative motion to the world transformation
+    // Store previous tworld for next iteration
+    mTworld = mTworld * mTrelative;
+
+    // Init undistorted keypoints clouds from raw points
+    // Warning : pointer copy = points modification :
+    // do not use CurrentRawKeypoints after this step
+    mCurrentUndistortedKeypoints = mCurrentRawKeypoints;
+
+    // Init and run undistortion if required
+    if (mUndistortion)
+    {
+        IF_VERBOSE(3, Utils::Timer::Init("Localization : initial undistortion"));
+        if (mUndistortion != UndistortionMode::EXTERNAL)
+        {
+            // Init the within frame motion interpolator time bounds
+            this->InitUndistortion();
+            // Undistort keypoints clouds
+            this->RefineUndistortion();
+        }
+        else
+            this->UndistortWithPoseMeasurement();
+
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : initial undistortion"));
+    }
+
+    // Get keypoints from maps and build kd-trees for fast nearest neighbors search
+    IF_VERBOSE(3, Utils::Timer::Init("Localization : map keypoints extraction"));
 
     // The iteration is not directly on Keypoint types
     // because of openMP behaviour which needs int iteration on MSVC
@@ -1054,21 +1231,58 @@ void Slam::ComputeEgoMotion()
     #pragma omp parallel for num_threads(std::min(mNbThreads, nbKeypointTypes))
     for (int i = 0; i < nbKeypointTypes; ++i)
     {
-      Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
-      if (kdtreePrevious.count(k))
-        kdtreePrevious[k].Reset(mPreviousRawKeypoints[k]);
+        Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
+
+        // Check the current frame contains not null number of k type keypoints
+        if (mCurrentUndistortedKeypoints[k] && mCurrentUndistortedKeypoints[k]->empty())
+            continue;
+
+        // If the map has been updated, the KD-tree needs to be updated
+        if (!mLocalMaps[k]->IsSubMapKdTreeValid())
+        {
+            // If maps are fixed, we can build a single KD-tree
+            // of the entire map to avoid rebuilding it again
+            if (mMapUpdate == MappingMode::NONE)
+                mLocalMaps[k]->BuildSubMapKdTree();
+
+            // Otherwise, we only extract the local sub maps
+            // to build a local and smaller KD-tree
+            else
+            {
+                if (mLocalMaps[k]->IsTimeThreshold())
+                {
+                    IF_VERBOSE(3, Utils::Timer::Init("Localization : clearing old points"));
+                    mLocalMaps[k]->ClearOldPoints(mCurrentTime_sec);
+                    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : clearing old points"));
+                }
+
+                // Estimate current keypoints bounding box
+                PointCloud currWorldKeypoints;
+                pcl::transformPointCloud(*mCurrentUndistortedKeypoints[k], currWorldKeypoints, mTworld.matrix());
+                Eigen::Vector4f minPoint, maxPoint;
+                pcl::getMinMax3D(currWorldKeypoints, minPoint, maxPoint);
+
+                // Build submap of all points lying in this bounding box
+                // Moving objects are rejected but the constraint is removed
+                // if less than half the number of current keypoints are extracted from the map
+                mLocalMaps[k]->BuildSubMapKdTree(minPoint.head<3>().array(), maxPoint.head<3>().array(), currWorldKeypoints.size() / 2);
+            }
+        }
     }
 
     if (mVerbosity >= 2)
     {
-      std::cout << "Keypoints extracted from previous frame : ";
-      for (auto k : mUsableKeypoints)
-        std::cout << mPreviousRawKeypoints[k]->size() << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
-      std::cout << std::endl;
+        std::cout << "Keypoints extracted from map : ";
+        for (auto k : mUsableKeypoints)
+        {
+            std::cout << mLocalMaps[k]->GetSubMapKdTree().GetInputCloud()->size()
+                    << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
+        }
+        std::cout << std::endl;
     }
 
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("EgoMotion : build KD tree"));
-    IF_VERBOSE(3, Utils::Timer::Init("Ego-Motion : whole ICP-LM loop"));
+    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : map keypoints extraction"));
+    IF_VERBOSE(3, Utils::Timer::Init("Localization : whole ICP-LM loop"));
 
     // Reset ICP results
     mTotalMatchedKeypoints = 0;
@@ -1076,445 +1290,261 @@ void Slam::ComputeEgoMotion()
     // Init matching parameters
     KeypointsMatcher::Parameters matchingParams;
     matchingParams.NbThreads = mNbThreads;
-    matchingParams.SingleEdgePerRing = true;
-    matchingParams.MaxNeighborsDistance = mEgoMotionMaxNeighborsDistance;
-    matchingParams.EdgeNbNeighbors = mEgoMotionEdgeNbNeighbors;
-    matchingParams.EdgeMinNbNeighbors = mEgoMotionEdgeMinNbNeighbors;
-    matchingParams.EdgeMaxModelError = mEgoMotionEdgeMaxModelError;
-    matchingParams.PlaneNbNeighbors = mEgoMotionPlaneNbNeighbors;
-    matchingParams.PlanarityThreshold = mEgoMotionPlanarityThreshold;
-    matchingParams.PlaneMaxModelError = mEgoMotionPlaneMaxModelError;
+    matchingParams.SingleEdgePerRing = false;
+    matchingParams.MaxNeighborsDistance = mLocalizationMaxNeighborsDistance;
+    matchingParams.EdgeNbNeighbors = mLocalizationEdgeNbNeighbors;
+    matchingParams.EdgeMinNbNeighbors = mLocalizationEdgeMinNbNeighbors;
+    matchingParams.EdgeMaxModelError = mLocalizationEdgeMaxModelError;
+    matchingParams.PlaneNbNeighbors = mLocalizationPlaneNbNeighbors;
+    matchingParams.PlanarityThreshold = mLocalizationPlanarityThreshold;
+    matchingParams.PlaneMaxModelError = mLocalizationPlaneMaxModelError;
+    matchingParams.BlobNbNeighbors = mLocalizationBlobNbNeighbors;
 
     // ICP - Levenberg-Marquardt loop
     // At each step of this loop an ICP matching is performed. Once the keypoints
     // are matched, we estimate the the 6-DOF parameters by minimizing the
     // non-linear least square cost function using Levenberg-Marquardt algorithm.
-    for (unsigned int icpIter = 0; icpIter < mEgoMotionICPMaxIter; ++icpIter)
+    for (unsigned int icpIter = 0; icpIter < mLocalizationICPMaxIter; ++icpIter)
     {
-      IF_VERBOSE(3, Utils::Timer::Init("  Ego-Motion : ICP"));
+        IF_VERBOSE(3, Utils::Timer::Init("  Localization : ICP"));
 
-      // We want to estimate our 6-DOF parameters using a non linear least square
-      // minimization. The non linear part comes from the parametrization of the
-      // rotation endomorphism SO(3).
-      // First, we need to build the point-to-line, point-to-plane and
-      // point-to-blob ICP matches that will be optimized.
-      // Then, we use CERES Levenberg-Marquardt optimization to minimize the problem.
+        // We want to estimate our 6-DOF parameters using a non linear least square
+        // minimization. The non linear part comes from the parametrization of the
+        // rotation endomorphism SO(3).
+        // First, we need to build the point-to-line, point-to-plane and
+        // point-to-blob ICP matches that will be optimized.
+        // Then, we use CERES Levenberg-Marquardt optimization to minimize problem.
 
-      // Create a keypoints matcher
-      // At each ICP iteration, the outliers removal is refined to be stricter
-      double iterRatio = icpIter / static_cast<double>(mEgoMotionICPMaxIter - 1);
-      matchingParams.SaturationDistance = (1 - iterRatio) * mEgoMotionInitSaturationDistance + iterRatio * mEgoMotionFinalSaturationDistance;
-      KeypointsMatcher matcher(matchingParams, mTrelative);
+        // Create a keypoints matcher
+        // At each ICP iteration, the outliers removal is refined to be stricter
+        double iterRatio = icpIter / static_cast<double>(mLocalizationICPMaxIter - 1);
+        matchingParams.SaturationDistance = (1 - iterRatio) * mLocalizationInitSaturationDistance
+            + iterRatio * mLocalizationFinalSaturationDistance;
 
-      // Loop over keypoints to build the residuals
-      for (auto k : mUsableKeypoints)
-        mEgoMotionMatchingResults[k] = matcher.BuildMatchResiduals(mCurrentRawKeypoints[k], kdtreePrevious[k], k);
+        KeypointsMatcher matcher(matchingParams, mTworld);
 
-      // Count matches and skip this frame
-      // if there are too few geometric keypoints matched
-      mTotalMatchedKeypoints = 0;
-      for (auto k : mUsableKeypoints)
-        mTotalMatchedKeypoints += mEgoMotionMatchingResults[k].NbMatches();
+        // Loop over keypoints to build the point to line residuals
+        mTotalMatchedKeypoints = 0;
+        for (auto k : mUsableKeypoints)
+        {
+            mLocalizationMatchingResults[k] = matcher.BuildMatchResiduals(mCurrentUndistortedKeypoints[k],
+                mLocalMaps[k]->GetSubMapKdTree(), k);
+            mTotalMatchedKeypoints += mLocalizationMatchingResults[k].NbMatches();
+        }
 
-      if (mTotalMatchedKeypoints < mMinNbMatchedKeypoints)
-      {
-        PRINT_WARNING("Not enough keypoints, EgoMotion skipped for this frame.");
-        break;
-      }
+        // Skip frame if not enough keypoints are extracted
+        if (mTotalMatchedKeypoints < mMinNbMatchedKeypoints)
+        {
+            // Reset state to previous one to avoid instability
+            if (mLogStates.empty())
+                mTworld = mTworldInit;
+            else
+                mTworld = mLogStates.back().Isometry;
 
-      IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Ego-Motion : ICP"));
-      IF_VERBOSE(3, Utils::Timer::Init("  Ego-Motion : LM optim"));
+            if (mUndistortion)
+                mWithinFrameMotion.SetTransforms(Eigen::Isometry3d::Identity(), Eigen::Isometry3d::Identity());
 
-      // Init the optimizer with initial pose and parameters
-      LocalOptimizer optimizer;
-      optimizer.SetTwoDMode(mTwoDMode);
-      optimizer.SetPosePrior(mTrelative);
-      optimizer.SetLMMaxIter(mEgoMotionLMMaxIter);
-      optimizer.SetNbThreads(mNbThreads);
+            PRINT_ERROR("Not enough keypoints matched, Localization skipped for this frame.");
+            mValid = false;
+            break;
+        }
 
-      // Add LiDAR ICP matches
-      for (auto k : mUsableKeypoints)
-        optimizer.AddResiduals(mEgoMotionMatchingResults[k].Residuals);
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Localization : ICP"));
+        IF_VERBOSE(3, Utils::Timer::Init("  Localization : LM optim"));
 
-      // Run LM optimization
-      ceres::Solver::Summary summary = optimizer.Solve();
-      PRINT_VERBOSE(4, summary.BriefReport());
+        // Init the optimizer with initial pose and parameters
+        LocalOptimizer optimizer;
+        optimizer.SetTwoDMode(mTwoDMode);
+        optimizer.SetPosePrior(mTworld);
+        optimizer.SetLMMaxIter(mLocalizationLMMaxIter);
+        optimizer.SetNbThreads(mNbThreads);
 
-      // Get back optimized Trelative
-      mTrelative = optimizer.GetOptimizedPose();
+        // Add LiDAR ICP matches
+        for (auto k : mUsableKeypoints)
+            optimizer.AddResiduals(mLocalizationMatchingResults[k].Residuals);
 
-      IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Ego-Motion : LM optim"));
+        // Add odometry constraint
+        // if constraint has been successfully created
+        if (mWheelOdomManager && mWheelOdomManager->GetResidual().Cost)
+            optimizer.AddResidual(mWheelOdomManager->GetResidual());
 
-      // If no L-M iteration has been made since the last ICP matching, it means
-      // that we reached a local minimum for the ICP-LM algorithm.
-      if (summary.num_successful_steps == 1)
-      {
-        break;
-      }
+        // Add gravity alignment constraint
+        // if constraint has been successfully created
+        if (mGravityManager && mGravityManager->GetResidual().Cost)
+            optimizer.AddResidual(mGravityManager->GetResidual());
+
+        // Add Pose constraint
+        // if constraint has been successfully created
+        if (mPoseManager && mPoseManager->GetResidual().Cost)
+            optimizer.AddResidual(mPoseManager->GetResidual());
+
+        // Add available landmark constraints
+        for (auto& idLm : mLandmarksManagers)
+        {
+            // Add landmark constraint
+            // if constraint has been successfully created
+            if (idLm.second.GetResidual().Cost)
+            optimizer.AddResidual(idLm.second.GetResidual());
+        }
+
+        // Run LM optimization
+        ceres::Solver::Summary summary = optimizer.Solve();
+        PRINT_VERBOSE(4, summary.BriefReport());
+
+        // Update Tworld from optimization results
+        mTworld = optimizer.GetOptimizedPose();
+
+        // Optionally refine undistortion
+        if (mUndistortion == UndistortionMode::REFINED)
+            this->RefineUndistortion();
+
+        IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Localization : LM optim"));
+
+        // If no L-M iteration has been made since the last ICP matching, it means
+        // that we reached a local minimum for the ICP-LM algorithm.
+        // We evaluate the quality of the Tworld optimization using an approximate
+        // computation of the variance covariance matrix.
+        if ((summary.num_successful_steps == 1) || (icpIter == mLocalizationICPMaxIter - 1))
+        {
+            mLocalizationUncertainty = optimizer.EstimateRegistrationError();
+            break;
+        }
     }
 
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Ego-Motion : whole ICP-LM loop"));
+    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : whole ICP-LM loop"));
+
+    // Optionally print localization optimization summary
     if (mVerbosity >= 2)
     {
-      std::cout << "Matched keypoints: " << mTotalMatchedKeypoints << " (";
-      for (auto k : mUsableKeypoints)
-        std::cout << mEgoMotionMatchingResults[k].NbMatches() << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
-      std::cout << ")" << std::endl;
+        SET_COUT_FIXED_PRECISION(3);
+        std::cout << "Matched keypoints: " << mTotalMatchedKeypoints << " (";
+        for (auto k : mUsableKeypoints)
+            std::cout << mLocalizationMatchingResults[k].NbMatches() << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
+
+        std::cout << ")"
+                << "\nPosition uncertainty    = " << mLocalizationUncertainty.PositionError    << " m"
+                << " (along [" << mLocalizationUncertainty.PositionErrorDirection.transpose()    << "])"
+                << "\nOrientation uncertainty = " << mLocalizationUncertainty.OrientationError << " °"
+                << " (along [" << mLocalizationUncertainty.OrientationErrorDirection.transpose() << "])"
+                << std::endl;
+        RESET_COUT_FIXED_PRECISION;
     }
-  }
-
-  // Print EgoMotion results
-  SET_COUT_FIXED_PRECISION(3);
-  PRINT_VERBOSE(2, "Estimated Ego-Motion (motion since last frame):\n"
-                   " translation = [" << mTrelative.translation().transpose() << "] m\n"
-                   " rotation    = [" << Utils::Rad2Deg(Utils::RotationMatrixToRPY(mTrelative.linear())).transpose() << "] °");
-  RESET_COUT_FIXED_PRECISION;
-}
-
-//-----------------------------------------------------------------------------
-void Slam::Localization()
-{
-  mLocalizationUncertainty = LocalOptimizer::RegistrationError();
-  mValid = true;
-  PRINT_VERBOSE(2, "========== Localization ==========");
-
-  // Integrate the relative motion to the world transformation
-  // Store previous tworld for next iteration
-  mTworld = mTworld * mTrelative;
-
-  // Init undistorted keypoints clouds from raw points
-  // Warning : pointer copy = points modification :
-  // do not use CurrentRawKeypoints after this step
-  mCurrentUndistortedKeypoints = mCurrentRawKeypoints;
-  // Init and run undistortion if required
-  if (mUndistortion)
-  {
-    IF_VERBOSE(3, Utils::Timer::Init("Localization : initial undistortion"));
-    if (mUndistortion != UndistortionMode::EXTERNAL)
-    {
-      // Init the within frame motion interpolator time bounds
-      this->InitUndistortion();
-      // Undistort keypoints clouds
-      this->RefineUndistortion();
-    }
-    else
-      this->UndistortWithPoseMeasurement();
-
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : initial undistortion"));
-  }
-
-  // Get keypoints from maps and build kd-trees for fast nearest neighbors search
-  IF_VERBOSE(3, Utils::Timer::Init("Localization : map keypoints extraction"));
-
-  // The iteration is not directly on Keypoint types
-  // because of openMP behaviour which needs int iteration on MSVC
-  int nbKeypointTypes = static_cast<int>(mUsableKeypoints.size());
-  #pragma omp parallel for num_threads(std::min(mNbThreads, nbKeypointTypes))
-  for (int i = 0; i < nbKeypointTypes; ++i)
-  {
-    Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
-    // Check the current frame contains not null number of k type keypoints
-    if (mCurrentUndistortedKeypoints[k] && mCurrentUndistortedKeypoints[k]->empty())
-      continue;
-    // If the map has been updated, the KD-tree needs to be updated
-    if (!mLocalMaps[k]->IsSubMapKdTreeValid())
-    {
-      // If maps are fixed, we can build a single KD-tree
-      // of the entire map to avoid rebuilding it again
-      if (mMapUpdate == MappingMode::NONE)
-        mLocalMaps[k]->BuildSubMapKdTree();
-
-      // Otherwise, we only extract the local sub maps
-      // to build a local and smaller KD-tree
-      else
-      {
-        if (mLocalMaps[k]->IsTimeThreshold())
-        {
-          IF_VERBOSE(3, Utils::Timer::Init("Localization : clearing old points"));
-          mLocalMaps[k]->ClearOldPoints(mCurrentTime_sec);
-          IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : clearing old points"));
-        }
-        // Estimate current keypoints bounding box
-        PointCloud currWorldKeypoints;
-        pcl::transformPointCloud(*mCurrentUndistortedKeypoints[k], currWorldKeypoints, mTworld.matrix());
-        Eigen::Vector4f minPoint, maxPoint;
-        pcl::getMinMax3D(currWorldKeypoints, minPoint, maxPoint);
-
-        // Build submap of all points lying in this bounding box
-        // Moving objects are rejected but the constraint is removed
-        // if less than half the number of current keypoints are extracted from the map
-        mLocalMaps[k]->BuildSubMapKdTree(minPoint.head<3>().array(), maxPoint.head<3>().array(), currWorldKeypoints.size() / 2);
-      }
-    }
-  }
-
-  if (mVerbosity >= 2)
-  {
-    std::cout << "Keypoints extracted from map : ";
-    for (auto k : mUsableKeypoints)
-    {
-      std::cout << mLocalMaps[k]->GetSubMapKdTree().GetInputCloud()->size()
-                << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
-    }
-    std::cout << std::endl;
-  }
-
-  IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : map keypoints extraction"));
-  IF_VERBOSE(3, Utils::Timer::Init("Localization : whole ICP-LM loop"));
-
-  // Reset ICP results
-  mTotalMatchedKeypoints = 0;
-
-  // Init matching parameters
-  KeypointsMatcher::Parameters matchingParams;
-  matchingParams.NbThreads = mNbThreads;
-  matchingParams.SingleEdgePerRing = false;
-  matchingParams.MaxNeighborsDistance = mLocalizationMaxNeighborsDistance;
-  matchingParams.EdgeNbNeighbors = mLocalizationEdgeNbNeighbors;
-  matchingParams.EdgeMinNbNeighbors = mLocalizationEdgeMinNbNeighbors;
-  matchingParams.EdgeMaxModelError = mLocalizationEdgeMaxModelError;
-  matchingParams.PlaneNbNeighbors = mLocalizationPlaneNbNeighbors;
-  matchingParams.PlanarityThreshold = mLocalizationPlanarityThreshold;
-  matchingParams.PlaneMaxModelError = mLocalizationPlaneMaxModelError;
-  matchingParams.BlobNbNeighbors = mLocalizationBlobNbNeighbors;
-
-  // ICP - Levenberg-Marquardt loop
-  // At each step of this loop an ICP matching is performed. Once the keypoints
-  // are matched, we estimate the the 6-DOF parameters by minimizing the
-  // non-linear least square cost function using Levenberg-Marquardt algorithm.
-  for (unsigned int icpIter = 0; icpIter < mLocalizationICPMaxIter; ++icpIter)
-  {
-    IF_VERBOSE(3, Utils::Timer::Init("  Localization : ICP"));
-
-    // We want to estimate our 6-DOF parameters using a non linear least square
-    // minimization. The non linear part comes from the parametrization of the
-    // rotation endomorphism SO(3).
-    // First, we need to build the point-to-line, point-to-plane and
-    // point-to-blob ICP matches that will be optimized.
-    // Then, we use CERES Levenberg-Marquardt optimization to minimize problem.
-
-    // Create a keypoints matcher
-    // At each ICP iteration, the outliers removal is refined to be stricter
-    double iterRatio = icpIter / static_cast<double>(mLocalizationICPMaxIter - 1);
-    matchingParams.SaturationDistance = (1 - iterRatio) * mLocalizationInitSaturationDistance + iterRatio * mLocalizationFinalSaturationDistance;
-    KeypointsMatcher matcher(matchingParams, mTworld);
-
-    // Loop over keypoints to build the point to line residuals
-    mTotalMatchedKeypoints = 0;
-    for (auto k : mUsableKeypoints)
-    {
-      mLocalizationMatchingResults[k] = matcher.BuildMatchResiduals(mCurrentUndistortedKeypoints[k], mLocalMaps[k]->GetSubMapKdTree(), k);
-      mTotalMatchedKeypoints += mLocalizationMatchingResults[k].NbMatches();
-    }
-
-    // Skip frame if not enough keypoints are extracted
-    if (mTotalMatchedKeypoints < mMinNbMatchedKeypoints)
-    {
-      // Reset state to previous one to avoid instability
-      if (mLogStates.empty())
-        mTworld = mTworldInit;
-      else
-        mTworld = mLogStates.back().Isometry;
-      if (mUndistortion)
-        mWithinFrameMotion.SetTransforms(Eigen::Isometry3d::Identity(), Eigen::Isometry3d::Identity());
-      PRINT_ERROR("Not enough keypoints matched, Localization skipped for this frame.");
-      mValid = false;
-      break;
-    }
-
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Localization : ICP"));
-    IF_VERBOSE(3, Utils::Timer::Init("  Localization : LM optim"));
-
-    // Init the optimizer with initial pose and parameters
-    LocalOptimizer optimizer;
-    optimizer.SetTwoDMode(mTwoDMode);
-    optimizer.SetPosePrior(mTworld);
-    optimizer.SetLMMaxIter(mLocalizationLMMaxIter);
-    optimizer.SetNbThreads(mNbThreads);
-
-    // Add LiDAR ICP matches
-    for (auto k : mUsableKeypoints)
-      optimizer.AddResiduals(mLocalizationMatchingResults[k].Residuals);
-
-    // Add odometry constraint
-    // if constraint has been successfully created
-    if (mWheelOdomManager && mWheelOdomManager->GetResidual().Cost)
-      optimizer.AddResidual(mWheelOdomManager->GetResidual());
-
-    // Add gravity alignment constraint
-    // if constraint has been successfully created
-    if (mGravityManager && mGravityManager->GetResidual().Cost)
-      optimizer.AddResidual(mGravityManager->GetResidual());
-
-    // Add Pose constraint
-    // if constraint has been successfully created
-    if (mPoseManager && mPoseManager->GetResidual().Cost)
-      optimizer.AddResidual(mPoseManager->GetResidual());
-
-    // Add available landmark constraints
-    for (auto& idLm : mLandmarksManagers)
-    {
-      // Add landmark constraint
-      // if constraint has been successfully created
-      if (idLm.second.GetResidual().Cost)
-        optimizer.AddResidual(idLm.second.GetResidual());
-    }
-
-    // Run LM optimization
-    ceres::Solver::Summary summary = optimizer.Solve();
-    PRINT_VERBOSE(4, summary.BriefReport());
-
-    // Update Tworld from optimization results
-    mTworld = optimizer.GetOptimizedPose();
-
-    // Optionally refine undistortion
-    if (mUndistortion == UndistortionMode::REFINED)
-      this->RefineUndistortion();
-
-    IF_VERBOSE(3, Utils::Timer::StopAndDisplay("  Localization : LM optim"));
-
-    // If no L-M iteration has been made since the last ICP matching, it means
-    // that we reached a local minimum for the ICP-LM algorithm.
-    // We evaluate the quality of the Tworld optimization using an approximate
-    // computation of the variance covariance matrix.
-    if ((summary.num_successful_steps == 1) || (icpIter == mLocalizationICPMaxIter - 1))
-    {
-      mLocalizationUncertainty = optimizer.EstimateRegistrationError();
-      break;
-    }
-  }
-
-  IF_VERBOSE(3, Utils::Timer::StopAndDisplay("Localization : whole ICP-LM loop"));
-
-  // Optionally print localization optimization summary
-  if (mVerbosity >= 2)
-  {
-    SET_COUT_FIXED_PRECISION(3);
-    std::cout << "Matched keypoints: " << mTotalMatchedKeypoints << " (";
-    for (auto k : mUsableKeypoints)
-      std::cout << mLocalizationMatchingResults[k].NbMatches() << " " << Utils::Plural(KeypointTypeNames.at(k)) << " ";
-
-    std::cout << ")"
-              << "\nPosition uncertainty    = " << mLocalizationUncertainty.PositionError    << " m"
-              << " (along [" << mLocalizationUncertainty.PositionErrorDirection.transpose()    << "])"
-              << "\nOrientation uncertainty = " << mLocalizationUncertainty.OrientationError << " °"
-              << " (along [" << mLocalizationUncertainty.OrientationErrorDirection.transpose() << "])"
-              << std::endl;
-    RESET_COUT_FIXED_PRECISION;
-  }
 }
 
 //-----------------------------------------------------------------------------
 bool Slam::CheckKeyFrame()
 {
-  // Compute motion since last keyframe
-  Eigen::Isometry3d motionSinceLastKf = mKfLastPose.inverse() * mTworld;
-  double transSinceLastKf = motionSinceLastKf.translation().norm();
-  double rotSinceLastKf = Eigen::AngleAxisd(motionSinceLastKf.linear()).angle();
-  PRINT_VERBOSE(3, "Motion since last keyframe #" << mKfCounter << ": "
-                                                  << transSinceLastKf << " m, "
-                                                  << Utils::Rad2Deg(rotSinceLastKf) << " °");
-  // Check if current frame is a new keyframe
-  // If we don't have enough keyframes yet, the threshold is linearly lowered
-  constexpr double MIN_KF_NB = 10.;
-  double thresholdCoef = std::min(mKfCounter / MIN_KF_NB, 1.);
-  unsigned int nbMapKpts = 0;
-  for (const auto& mapKptsCloud : mLocalMaps)
-    nbMapKpts += mapKptsCloud.second->Size();
+    // Compute motion since last keyframe
+    Eigen::Isometry3d motionSinceLastKf = mKfLastPose.inverse() * mTworld;
+    double transSinceLastKf = motionSinceLastKf.translation().norm();
+    double rotSinceLastKf = Eigen::AngleAxisd(motionSinceLastKf.linear()).angle();
+    PRINT_VERBOSE(3, "Motion since last keyframe #" << mKfCounter << ": "
+                                                    << transSinceLastKf << " m, "
+                                                    << Utils::Rad2Deg(rotSinceLastKf) << " °");
 
-  // Mark as keyframe if a new tag was seen after some time
-  // This allows to force some keyframes and therefore a constraint in the pose graph optimization
-  // if the tag detections are quite sparse
-  bool tagRequirement = false;
-  for (auto& idLm : mLandmarksManagers)
-  {
-    if (idLm.second.NeedsReferencePoseRefresh(mCurrentTime_sec))
+    // Check if current frame is a new keyframe
+    // If we don't have enough keyframes yet, the threshold is linearly lowered
+    constexpr double MIN_KF_NB = 10.;
+    double thresholdCoef = std::min(mKfCounter / MIN_KF_NB, 1.);
+    unsigned int nbMapKpts = 0;
+    for (const auto& mapKptsCloud : mLocalMaps)
+        nbMapKpts += mapKptsCloud.second->Size();
+
+    // Mark as keyframe if a new tag was seen after some time
+    // This allows to force some keyframes and therefore a constraint in the pose graph optimization
+    // if the tag detections are quite sparse
+    bool tagRequirement = false;
+    for (auto& idLm : mLandmarksManagers)
     {
-      tagRequirement = true;
-      break;
+        if (idLm.second.NeedsReferencePoseRefresh(mCurrentTime_sec))
+        {
+            tagRequirement = true;
+            break;
+        }
     }
-  }
 
-  return nbMapKpts < mMinNbMatchedKeypoints * 10 ||
-         transSinceLastKf >= thresholdCoef * mKfDistanceThreshold ||
-         rotSinceLastKf >= Utils::Deg2Rad(thresholdCoef * mKfAngleThreshold) ||
-         tagRequirement;
+    return nbMapKpts < mMinNbMatchedKeypoints * 10 ||
+            transSinceLastKf >= thresholdCoef * mKfDistanceThreshold ||
+            rotSinceLastKf >= Utils::Deg2Rad(thresholdCoef * mKfAngleThreshold) ||
+            tagRequirement;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::UpdateMapsUsingTworld()
 {
-  PRINT_VERBOSE(3, "Adding new keyframe #" << mKfCounter);
+    PRINT_VERBOSE(3, "Adding new keyframe #" << mKfCounter);
 
-  // Transform keypoints to WORLD coordinates
-  for (auto k : mUsableKeypoints)
-    mCurrentWorldKeypoints[k] = this->GetKeypoints(k, true);
+    // Transform keypoints to WORLD coordinates
+    for (auto k : mUsableKeypoints)
+        mCurrentWorldKeypoints[k] = this->GetKeypoints(k, true);
 
-  // Add registered points to map
-  // The iteration is not directly on Keypoint types
-  // because of openMP behaviour which needs int iteration on MSVC
-  int nbKeypointTypes = static_cast<int>(mUsableKeypoints.size());
-  #pragma omp parallel for num_threads(std::min(mNbThreads, nbKeypointTypes))
-  for (int i = 0; i < nbKeypointTypes; ++i)
-  {
-    Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
-    // Add not fixed points
-    mLocalMaps[k]->Add(mCurrentWorldKeypoints[k], false);
-  }
+    // Add registered points to map
+    // The iteration is not directly on Keypoint types
+    // because of openMP behaviour which needs int iteration on MSVC
+    int nbKeypointTypes = static_cast<int>(mUsableKeypoints.size());
+    #pragma omp parallel for num_threads(std::min(mNbThreads, nbKeypointTypes))
+    for (int i = 0; i < nbKeypointTypes; ++i)
+    {
+        Keypoint k = static_cast<Keypoint>(mUsableKeypoints[i]);
+        // Add not fixed points
+        mLocalMaps[k]->Add(mCurrentWorldKeypoints[k], false);
+    }
 }
 
 //-----------------------------------------------------------------------------
 void Slam::LogCurrentFrameState()
 {
-  // The two last poses are logged in any case for motion extrapolation and undistortion
-  // So, if LogOnlyKeyframes is required, remove the second last pose at each iteration if it was not a keyframe
-  if (mLogStates.size() > 1)
-  {
-    auto itSt = mLogStates.end();
-    --itSt; --itSt;
-    if (mLogOnlyKeyframes && !itSt->IsKeyFrame)
-      mLogStates.erase(itSt);
-  }
-  // Save current state to log buffer.
-  // This buffer will be processed in the pose graph optimization
-  // and is used locally to compute prior ego-motion estimation
-  // and to undistort the input points
-  LidarState state;
-  state.Isometry = mTworld;
-  // Increase covariance area by scale
-  state.Covariance = std::pow(mCovarianceScale, 2) * mLocalizationUncertainty.Covariance;
-  float defaultPositionError = 1e-2; // 1cm
-  float defaultAngleError = Utils::Deg2Rad(1.f); // 1°
-  if (!Utils::isCovarianceValid(state.Covariance))
-    state.Covariance = Utils::CreateDefaultCovariance(defaultPositionError, defaultAngleError); //1mm, 0.5°
+    // The two last poses are logged in any case for motion extrapolation and undistortion
+    // So, if LogOnlyKeyframes is required, remove the second last pose at each iteration if it was not a keyframe
+    if (mLogStates.size() > 1)
+    {
+        auto itSt = mLogStates.end();
+        --itSt; --itSt;
+        if (mLogOnlyKeyframes && !itSt->IsKeyFrame)
+            mLogStates.erase(itSt);
+    }
 
-  // If 2D mode enabled, supply constant covariance for unevaluated variables
-  if (mTwoDMode)
-  {
-    state.Covariance(2, 2) = std::pow(defaultPositionError, 2);
-    state.Covariance(3, 3) = std::pow(defaultAngleError,    2);
-    state.Covariance(4, 4) = std::pow(defaultAngleError,    2);
-  }
-  state.Time = mCurrentTime_sec;
-  state.Index = mNbrFrameProcessed;
-  state.IsKeyFrame = mIsKeyFrame;
-  for (auto k : mUsableKeypoints)
-    state.Keypoints[k] = std::make_shared<PCStorage>(mCurrentUndistortedKeypoints[k], mLoggingStorage);
+    // Save current state to log buffer.
+    // This buffer will be processed in the pose graph optimization
+    // and is used locally to compute prior ego-motion estimation
+    // and to undistort the input points
+    LidarState state;
+    state.Isometry = mTworld;
 
-  mLogStates.emplace_back(state);
-  // Remove the oldest logged states
-  auto itSt = mLogStates.begin();
-  while (mCurrentTime_sec - itSt->Time > mLoggingTimeout && mLogStates.size() > 2)
-  {
-    ++itSt;
-    mLogStates.pop_front();
-  }
+    // Increase covariance area by scale
+    state.Covariance = std::pow(mCovarianceScale, 2) * mLocalizationUncertainty.Covariance;
+    float defaultPositionError = 1e-2; // 1cm
+    float defaultAngleError = Utils::Deg2Rad(1.f); // 1°
+    if (!Utils::isCovarianceValid(state.Covariance))
+        state.Covariance = Utils::CreateDefaultCovariance(defaultPositionError, defaultAngleError); //1mm, 0.5°
+
+    // If 2D mode enabled, supply constant covariance for unevaluated variables
+    if (mTwoDMode)
+    {
+        state.Covariance(2, 2) = std::pow(defaultPositionError, 2);
+        state.Covariance(3, 3) = std::pow(defaultAngleError,    2);
+        state.Covariance(4, 4) = std::pow(defaultAngleError,    2);
+    }
+    state.Time_sec = mCurrentTime_sec;
+    state.Index = mNbrFrameProcessed;
+    state.IsKeyFrame = mIsKeyFrame;
+    for (auto k : mUsableKeypoints)
+        state.Keypoints[k] = std::make_shared<PCStorage>(mCurrentUndistortedKeypoints[k], mLoggingStorage);
+
+    mLogStates.emplace_back(state);
+    // Remove the oldest logged states
+    auto itSt = mLogStates.begin();
+    while (mCurrentTime_sec - itSt->Time_sec > mLoggingTimeout && mLogStates.size() > 2)
+    {
+        ++itSt;
+        mLogStates.pop_front();
+    }
 }
 
 //-----------------------------------------------------------------------------
 LidarState& Slam::GetLastState()
 {
-  return mLogStates.back();
+    return mLogStates.back();
 }
 
 //==============================================================================
@@ -1522,125 +1552,128 @@ LidarState& Slam::GetLastState()
 //==============================================================================
 
 //-----------------------------------------------------------------------------
-Eigen::Isometry3d Slam::InterpolateScanPose(double time)
+Eigen::Isometry3d Slam::InterpolateScanPose(double time_sec)
 {
-  if (mLogStates.empty())
-    return mTworld;
+    if (mLogStates.empty())
+        return mTworld;
 
-  const double prevPoseTime = mLogStates.back().Time;
-  if (std::abs(time / (mCurrentTime_sec - prevPoseTime)) > mMaxExtrapolationRatio)
-  {
-    PRINT_WARNING("Unable to interpolate scan pose from motion : extrapolation time is too far.");
-    return mTworld;
-  }
+    const double prevPoseTime = mLogStates.back().Time_sec;
+    if (std::abs(time_sec / (mCurrentTime_sec - prevPoseTime)) > mMaxExtrapolationRatio)
+    {
+        PRINT_WARNING("Unable to interpolate scan pose from motion : extrapolation time is too far.");
+        return mTworld;
+    }
 
-  return LinearInterpolation(mLogStates.back().Isometry, mTworld, mCurrentTime_sec + time, prevPoseTime, mCurrentTime_sec);
+    return LinearInterpolation(mLogStates.back().Isometry, mTworld, mCurrentTime_sec + time_sec, prevPoseTime, mCurrentTime_sec);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::InitUndistortion()
 {
-  // Get 'time' field range
-  double frameFirstTime = std::numeric_limits<double>::max();
-  double frameLastTime  = std::numeric_limits<double>::lowest();
-  for (auto k : mUsableKeypoints)
-  {
-    for (const auto& point : *mCurrentUndistortedKeypoints[k])
+    // Get 'time' field range
+    double frameFirstTime = std::numeric_limits<double>::max();
+    double frameLastTime  = std::numeric_limits<double>::lowest();
+    for (auto k : mUsableKeypoints)
     {
-      frameFirstTime = std::min(frameFirstTime, point.time);
-      frameLastTime  = std::max(frameLastTime, point.time);
+        for (const auto& point : *mCurrentUndistortedKeypoints[k])
+        {
+            frameFirstTime = std::min(frameFirstTime, point.time);
+            frameLastTime  = std::max(frameLastTime, point.time);
+        }
     }
-  }
 
-  // Update interpolator timestamps and reset transforms
-  mWithinFrameMotion.SetTimes(frameFirstTime, frameLastTime);
-  mWithinFrameMotion.SetTransforms(Eigen::Isometry3d::Identity(), Eigen::Isometry3d::Identity());
+    // Update interpolator timestamps and reset transforms
+    mWithinFrameMotion.SetTimes(frameFirstTime, frameLastTime);
+    mWithinFrameMotion.SetTransforms(Eigen::Isometry3d::Identity(), Eigen::Isometry3d::Identity());
 
-  // Check time values
-  if (mWithinFrameMotion.GetTimeRange() < 1e-6)
-  {
-    // If frame duration is 0, it means that the time field is constant and cannot be used.
-    // We reset timestamps to 0, to ensure no time offset will be used.
-    PRINT_WARNING("'time' field is not properly set (constant value) and cannot be used for undistortion.");
-    mWithinFrameMotion.SetTimes(0., 0.);
-  }
-  else if (mWithinFrameMotion.GetTimeRange() > 10.)
-  {
-    // If frame duration is bigger than 10 seconds, it is probably wrongly set
-    PRINT_WARNING("'time' field looks not properly set (frame duration > 10 s) and can lead to faulty undistortion.");
-  }
+    // Check time values
+    if (mWithinFrameMotion.GetTimeRange() < 1e-6)
+    {
+        // If frame duration is 0, it means that the time field is constant and cannot be used.
+        // We reset timestamps to 0, to ensure no time offset will be used.
+        PRINT_WARNING("'time' field is not properly set (constant value) and cannot be used for undistortion.");
+        mWithinFrameMotion.SetTimes(0., 0.);
+    }
+    else if (mWithinFrameMotion.GetTimeRange() > 10.)
+    {
+        // If frame duration is bigger than 10 seconds, it is probably wrongly set
+        PRINT_WARNING("'time' field looks not properly set (frame duration > 10 s) and can lead to faulty undistortion.");
+    }
 }
 
 //-----------------------------------------------------------------------------
 void Slam::UndistortWithPoseMeasurement()
 {
-  if (this->PoseHasData())
-  {
-    // Get synchronized point pose relatively to frame
-    ExternalSensors::PoseMeasurement synchPoseMeasCurrent; // Virtual measure with synchronized timestamp and calibration applied
-    if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec, synchPoseMeasCurrent))
+    if (this->PoseHasData())
     {
-      Eigen::Isometry3d invSynchPoseMeasCurrent = synchPoseMeasCurrent.Pose.inverse();
-      // Undistort keypoints
-      for (auto k : mUsableKeypoints)
-      {
-        // Compute synchronized measures (not parallelizable)
-        int nbPoints = mCurrentUndistortedKeypoints[k]->size();
-        std::vector<ExternalSensors::PoseMeasurement> synchMeas (nbPoints); // Virtual measures with synchronized timestamp and calibration applied
-        // Sort points by time to speed up synchronization search
-        std::sort(mCurrentUndistortedKeypoints[k]->points.begin(), mCurrentUndistortedKeypoints[k]->points.end(), [](const LidarPoint& pt1, const LidarPoint& pt2){return pt1.time < pt2.time;});
-        int idxPt = 0;
-        for (auto& point : *mCurrentUndistortedKeypoints[k])
+        // Get synchronized point pose relatively to frame
+        ExternalSensors::PoseMeasurement synchPoseMeasCurrent; // Virtual measure with synchronized timestamp and calibration applied
+        if (mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec, synchPoseMeasCurrent))
         {
-          mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec + point.time, synchMeas[idxPt]);
-          ++idxPt;
-        }
+            Eigen::Isometry3d invSynchPoseMeasCurrent = synchPoseMeasCurrent.Pose.inverse();
+            // Undistort keypoints
+            for (auto k : mUsableKeypoints)
+            {
+                // Compute synchronized measures (not parallelizable)
+                int nbPoints = mCurrentUndistortedKeypoints[k]->size();
+                std::vector<ExternalSensors::PoseMeasurement> synchMeas (nbPoints); // Virtual measures with synchronized timestamp and calibration applied
+        
+                // Sort points by time to speed up synchronization search
+                std::sort(mCurrentUndistortedKeypoints[k]->points.begin(), mCurrentUndistortedKeypoints[k]->points.end(),
+                    [](const LidarPoint& pt1, const LidarPoint& pt2){return pt1.time < pt2.time;});
+        
+                int idxPt = 0;
+                for (auto& point : *mCurrentUndistortedKeypoints[k])
+                {
+                    mPoseManager->ComputeSynchronizedMeasureBase(mCurrentTime_sec + point.time, synchMeas[idxPt]);
+                    ++idxPt;
+                }
 
-        // Transform with computed measures (parallelized)
-        #pragma omp parallel for num_threads(mNbThreads)
-        for (int i = 0; i < nbPoints; ++i)
-        {
-          auto& point = mCurrentUndistortedKeypoints[k]->at(i);
-          Utils::TransformPoint(point, invSynchPoseMeasCurrent * synchMeas[i].Pose);
+                // Transform with computed measures (parallelized)
+                #pragma omp parallel for num_threads(mNbThreads)
+                for (int i = 0; i < nbPoints; ++i)
+                {
+                    auto& point = mCurrentUndistortedKeypoints[k]->at(i);
+                    Utils::TransformPoint(point, invSynchPoseMeasCurrent * synchMeas[i].Pose);
+                }
+            }
         }
-      }
     }
-  }
-  else
-    PRINT_WARNING("External poses are empty : cannot use them to undistort input pointcloud")
+    else
+        PRINT_WARNING("External poses are empty : cannot use them to undistort input pointcloud")
 }
 
 //-----------------------------------------------------------------------------
 void Slam::RefineUndistortion()
 {
-  // Get previously applied undistortion
-  Eigen::Isometry3d previousBaseBegin = mWithinFrameMotion.GetH0();
-  Eigen::Isometry3d previousBaseEnd = mWithinFrameMotion.GetH1();
+    // Get previously applied undistortion
+    Eigen::Isometry3d previousBaseBegin = mWithinFrameMotion.GetH0();
+    Eigen::Isometry3d previousBaseEnd = mWithinFrameMotion.GetH1();
 
-  // Extrapolate first and last poses to update within frame motion interpolator
-  Eigen::Isometry3d worldToBaseBegin = this->InterpolateScanPose(mWithinFrameMotion.GetTime0());
-  Eigen::Isometry3d worldToBaseEnd = this->InterpolateScanPose(mWithinFrameMotion.GetTime1());
-  Eigen::Isometry3d baseToWorld = mTworld.inverse();
-  Eigen::Isometry3d newBaseBegin = baseToWorld * worldToBaseBegin;
-  Eigen::Isometry3d newBaseEnd = baseToWorld * worldToBaseEnd;
-  mWithinFrameMotion.SetTransforms(newBaseBegin, newBaseEnd);
+    // Extrapolate first and last poses to update within frame motion interpolator
+    Eigen::Isometry3d worldToBaseBegin = this->InterpolateScanPose(mWithinFrameMotion.GetTime0());
+    Eigen::Isometry3d worldToBaseEnd = this->InterpolateScanPose(mWithinFrameMotion.GetTime1());
+    Eigen::Isometry3d baseToWorld = mTworld.inverse();
+    Eigen::Isometry3d newBaseBegin = baseToWorld * worldToBaseBegin;
+    Eigen::Isometry3d newBaseEnd = baseToWorld * worldToBaseEnd;
+    mWithinFrameMotion.SetTransforms(newBaseBegin, newBaseEnd);
 
-  // Init the interpolator to use to remove previous undistortion and apply updated one
-  auto transformInterpolator = mWithinFrameMotion;
-  transformInterpolator.SetTransforms(newBaseBegin * previousBaseBegin.inverse(),
-                                      newBaseEnd   * previousBaseEnd.inverse());
+    // Init the interpolator to use to remove previous undistortion and apply updated one
+    auto transformInterpolator = mWithinFrameMotion;
+    transformInterpolator.SetTransforms(newBaseBegin * previousBaseBegin.inverse(),
+                                        newBaseEnd   * previousBaseEnd.inverse());
 
-  // Refine undistortion of keypoints clouds
-  for (auto k : mUsableKeypoints)
-  {
-    int nbPoints = mCurrentUndistortedKeypoints[k]->size();
-    #pragma omp parallel for num_threads(mNbThreads)
-    for (int i = 0; i < nbPoints; ++i)
+    // Refine undistortion of keypoints clouds
+    for (auto k : mUsableKeypoints)
     {
-      auto& point = mCurrentUndistortedKeypoints[k]->at(i);
-      Utils::TransformPoint(point, transformInterpolator(point.time));
+        int nbPoints = mCurrentUndistortedKeypoints[k]->size();
+        #pragma omp parallel for num_threads(mNbThreads)
+        for (int i = 0; i < nbPoints; ++i)
+        {
+            auto& point = mCurrentUndistortedKeypoints[k]->at(i);
+            Utils::TransformPoint(point, transformInterpolator(point.time));
+        }
     }
-  }
 }
 
 //==============================================================================
@@ -1650,13 +1683,54 @@ void Slam::RefineUndistortion()
 //-----------------------------------------------------------------------------
 void Slam::SetOverlapSamplingRatio (float _arg)
 {
-  // Clamp ratio beteen 0 and 1
-  mOverlapSamplingRatio = Utils::Clamp(_arg, 0.f, 1.f);
+    // Clamp ratio beteen 0 and 1
+    mOverlapSamplingRatio = Utils::Clamp(_arg, 0.0f, 1.0f);
 
-  // Reset overlap value if overlap computation is disabled
-  if (mOverlapSamplingRatio == 0.)
-    mOverlapEstimation = -1.f;
+    // Reset overlap value if overlap computation is disabled
+    if (mOverlapSamplingRatio == 0.0)
+        mOverlapEstimation = -1.0f;
 }
+
+float Slam::GetVelocityLimit_mps() const
+{
+    return mVelocityLimits[0];
+}
+
+void Slam::SetVelocityLimit_mps(float limit_mps)
+{
+    mVelocityLimits[0] = limit_mps;
+}
+
+float Slam::GetRotationRateLimit_dps() const
+{
+    return mVelocityLimits[1];
+}
+
+void Slam::SetRotationRateLimit_dps(float limit_dps)
+{
+    mVelocityLimits[1] = limit_dps;
+}
+
+float Slam::GetAccelerationLimit_mps2() const
+{
+    return mAccelerationLimits[0];
+}
+
+void Slam::SetAccelerationLimit_mps2(float limit_mps2)
+{
+    mAccelerationLimits[0] = limit_mps2;
+}
+
+float Slam::GetRotationAccelLimit_dps2() const
+{
+    return mAccelerationLimits[1];
+}
+
+void Slam::SetRotationAccelLimit_dps2(float limit_dps2)
+{
+    mAccelerationLimits[1] = limit_dps2;
+}
+
 
 //-----------------------------------------------------------------------------
 void Slam::EstimateOverlap()
@@ -1687,25 +1761,26 @@ void Slam::CheckMotionLimits()
         return;
 
     // Extract number of poses to comply with the required window time, and relative time duration.
-    double deltaTime_sec = mCurrentTime_sec - mLogStates.back().Time;
+    double deltaTime_sec = mCurrentTime_sec - mLogStates.back().Time_sec;
     double nextDeltaTime = FLT_MAX;
 
     // Index of the last pose that defines the window starting bound
     // The window ends on current pose
     auto startIt = mLogStates.end();
     auto beforeBegin = mLogStates.begin();
-    --beforeBegin;
+    //BAF --beforeBegin;
     --startIt;
 
-    // If the time between current pose and the last pose is l.t. TimeWindowDuration, look for the window's starting bound pose
-    if (deltaTime_sec < mTimeWindowDuration)
+    // If the time between current pose and the last pose is l.t. mTimeWindowDuration_sec,
+    // look for the window's starting bound pose
+    if (deltaTime_sec < mTimeWindowDuration_sec)
     {
         // Search an interval containing TimeWindowDuration : [deltaTime, nextDeltaTime]
         while (startIt != beforeBegin)
         {
             deltaTime_sec = nextDeltaTime;
-            nextDeltaTime = mCurrentTime_sec - startIt->Time;
-            if (nextDeltaTime >= mTimeWindowDuration)
+            nextDeltaTime = mCurrentTime_sec - startIt->Time_sec;
+            if (nextDeltaTime >= mTimeWindowDuration_sec)
                 break;
             --startIt;
         }
@@ -1719,11 +1794,11 @@ void Slam::CheckMotionLimits()
         }
 
         // Choose which bound of the interval is the best window's starting bound
-        else if (std::abs(deltaTime_sec - mTimeWindowDuration) < std::abs(nextDeltaTime - mTimeWindowDuration))
+        else if (std::abs(deltaTime_sec - mTimeWindowDuration_sec) < std::abs(nextDeltaTime - mTimeWindowDuration_sec))
             ++startIt;
 
         // Actualize deltaTime with the best startIndex
-        deltaTime_sec = mCurrentTime_sec - startIt->Time;
+        deltaTime_sec = mCurrentTime_sec - startIt->Time_sec;
     }
 
     // If the time between current pose and the last pose is g.t. TimeWindowDuration, take the last pose as window's starting bound
@@ -1795,20 +1870,21 @@ Slam::PointCloud::Ptr Slam::TransformPointCloud(PointCloud::ConstPtr cloud,
                                                 const Eigen::Isometry3d& tf,
                                                 const std::string& frameId) const
 {
-  // Copy all fields and set frame ID
-  PointCloud::Ptr transformedCloud(new PointCloud);
-  pcl::copyPointCloud(*cloud, *transformedCloud);
-  transformedCloud->header.frame_id = frameId;
+    // Copy all fields and set frame ID
+    PointCloud::Ptr transformedCloud(new PointCloud);
+    pcl::copyPointCloud(*cloud, *transformedCloud);
+    transformedCloud->header.frame_id = frameId;
 
-  // Transform each point inplace in parallel
-  int nbPoints = transformedCloud->size();
-  #pragma omp parallel for num_threads(mNbThreads)
-  for (int i = 0; i < nbPoints; ++i)
-  {
-    auto& point = transformedCloud->at(i);
-    Utils::TransformPoint(point, tf);
-  }
-  return transformedCloud;
+    // Transform each point inplace in parallel
+    int nbPoints = transformedCloud->size();
+    #pragma omp parallel for num_threads(mNbThreads)
+    for (int i = 0; i < nbPoints; ++i)
+    {
+        auto& point = transformedCloud->at(i);
+        Utils::TransformPoint(point, tf);
+    }
+
+    return transformedCloud;
 }
 
 //-----------------------------------------------------------------------------
@@ -1887,7 +1963,7 @@ Slam::PointCloud::Ptr Slam::AggregateFrames(const std::vector<PointCloud::Ptr>& 
 //-----------------------------------------------------------------------------
 void Slam::InitWheelOdom()
 {
-  mWheelOdomManager = std::make_shared<ExternalSensors::WheelOdometryManager>(0.,
+    mWheelOdomManager = std::make_shared<ExternalSensors::WheelOdometryManager>(0.0,
                                                                                    mSensorTimeOffset,
                                                                                    mSensorTimeThreshold,
                                                                                    mSensorMaxMeasures,
@@ -1897,7 +1973,7 @@ void Slam::InitWheelOdom()
 //-----------------------------------------------------------------------------
 void Slam::InitGravity()
 {
-  mGravityManager = std::make_shared<ExternalSensors::ImuGravityManager>(0.,
+    mGravityManager = std::make_shared<ExternalSensors::ImuGravityManager>(0.0,
                                                                               mSensorTimeOffset,
                                                                               mSensorTimeThreshold,
                                                                               mSensorMaxMeasures,
@@ -1907,15 +1983,15 @@ void Slam::InitGravity()
 //-----------------------------------------------------------------------------
 void Slam::InitLandmarkManager(int id)
 {
-  mLandmarksManagers[id] = ExternalSensors::LandmarkManager(mSensorTimeOffset,
-                                                                 mSensorTimeThreshold,
-                                                                 mSensorMaxMeasures,
-                                                                 mLandmarkPositionOnly,
-                                                                 mVerbosity >= 3);
-  mLandmarksManagers[id].SetWeight(mLandmarkWeight);
-  mLandmarksManagers[id].SetSaturationDistance(mLandmarkSaturationDistance);
-  // The calibration can be modified afterwards
-  mLandmarksManagers[id].SetCalibration(mLmDetectorCalibration);
+    mLandmarksManagers[id] = ExternalSensors::LandmarkManager(mSensorTimeOffset,
+                                                                    mSensorTimeThreshold,
+                                                                    mSensorMaxMeasures,
+                                                                    mLandmarkPositionOnly,
+                                                                    mVerbosity >= 3);
+    mLandmarksManagers[id].SetWeight(mLandmarkWeight);
+    mLandmarksManagers[id].SetSaturationDistance(mLandmarkSaturationDistance);
+    // The calibration can be modified afterwards
+    mLandmarksManagers[id].SetCalibration(mLmDetectorCalibration);
 }
 
 //-----------------------------------------------------------------------------
@@ -1944,43 +2020,43 @@ void Slam::InitPoseSensor()
 //-----------------------------------------------------------------------------
 void Slam::AddWheelOdomMeasurement(const ExternalSensors::WheelOdomMeasurement& om)
 {
-  if (!mWheelOdomManager)
-    this->InitWheelOdom();
-  mWheelOdomManager->AddMeasurement(om);
+    if (!mWheelOdomManager)
+        this->InitWheelOdom();
+    mWheelOdomManager->AddMeasurement(om);
 }
 
 // IMU gravity
 //-----------------------------------------------------------------------------
 void Slam::AddGravityMeasurement(const ExternalSensors::GravityMeasurement& gm)
 {
-  if (!mGravityManager)
-    this->InitGravity();
-  mGravityManager->AddMeasurement(gm);
+    if (!mGravityManager)
+        this->InitGravity();
+    mGravityManager->AddMeasurement(gm);
 }
 
 // Landmark detector
 //-----------------------------------------------------------------------------
 void Slam::AddLandmarkMeasurement(const ExternalSensors::LandmarkMeasurement& lm, int id)
 {
-  if (!mLandmarksManagers.count(id))
-    this->InitLandmarkManager(id);
-  mLandmarksManagers[id].AddMeasurement(lm);
+    if (!mLandmarksManagers.count(id))
+        this->InitLandmarkManager(id);
+    mLandmarksManagers[id].AddMeasurement(lm);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::AddLandmarkManager(int id, const Eigen::Vector6d& absolutePose, const Eigen::Matrix6d& absolutePoseCovariance)
 {
-  if (!mLandmarksManagers.count(id))
-    this->InitLandmarkManager(id);
-  mLandmarksManagers[id].SetAbsolutePose(absolutePose, absolutePoseCovariance);
+    if (!mLandmarksManagers.count(id))
+        this->InitLandmarkManager(id);
+    mLandmarksManagers[id].SetAbsolutePose(absolutePose, absolutePoseCovariance);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetLmDetectorCalibration(const Eigen::Isometry3d& calib)
 {
-  mLmDetectorCalibration = calib;
-  for (auto& idLm : mLandmarksManagers)
-    idLm.second.SetCalibration(calib);
+    mLmDetectorCalibration = calib;
+    for (auto& idLm : mLandmarksManagers)
+        idLm.second.SetCalibration(calib);
 }
 
 //-----------------------------------------------------------------------------
@@ -2001,125 +2077,125 @@ bool Slam::LmCanBeUsedLocally()
 //-----------------------------------------------------------------------------
 bool Slam::LmHasData()
 {
-  bool lmHasData = false;
-  for (auto& idLm : mLandmarksManagers)
-  {
-    if (idLm.second.HasData())
+    bool lmHasData = false;
+    for (auto& idLm : mLandmarksManagers)
     {
-      lmHasData = true;
-      break;
+        if (idLm.second.HasData())
+        {
+            lmHasData = true;
+            break;
+        }
     }
-  }
-  return lmHasData;
+    return lmHasData;
 }
 
 // GPS
 //-----------------------------------------------------------------------------
 void Slam::AddGpsMeasurement(const ExternalSensors::GpsMeasurement& gpsMeas)
 {
-  if (!mGpsManager)
-    this->InitGps();
-  mGpsManager->AddMeasurement(gpsMeas);
+    if (!mGpsManager)
+        this->InitGps();
+    mGpsManager->AddMeasurement(gpsMeas);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetGpsCalibration(const Eigen::Isometry3d& calib)
 {
-  if (!mGpsManager)
-    this->InitGps();
-  mGpsManager->SetCalibration(calib);
+    if (!mGpsManager)
+        this->InitGps();
+    mGpsManager->SetCalibration(calib);
 }
 
 //-----------------------------------------------------------------------------
 Eigen::Isometry3d Slam::GetGpsCalibration()
 {
-  if (!mGpsManager)
-  {
-    PRINT_ERROR("Cannot get GPS calibration : GPS not enabled")
-    return Eigen::Isometry3d::Identity();
-  }
-  return mGpsManager->GetCalibration();
+    if (!mGpsManager)
+    {
+        PRINT_ERROR("Cannot get GPS calibration : GPS not enabled")
+        return Eigen::Isometry3d::Identity();
+    }
+    return mGpsManager->GetCalibration();
 }
 
 //-----------------------------------------------------------------------------
 Eigen::Isometry3d Slam::GetGpsOffset()
 {
-  if (!mGpsManager)
-  {
-    PRINT_ERROR("Cannot get GPS offset : GPS not enabled")
-    return Eigen::Isometry3d::Identity();
-  }
-  return mGpsManager->GetOffset();
+    if (!mGpsManager)
+    {
+        PRINT_ERROR("Cannot get GPS offset : GPS not enabled")
+        return Eigen::Isometry3d::Identity();
+    }
+    return mGpsManager->GetOffset();
 }
 
 //-----------------------------------------------------------------------------
 bool Slam::CalibrateWithGps()
 {
-  if (!this->GpsHasData())
-  {
-    PRINT_ERROR("Cannot get GPS offset : GPS not enabled or GPS data not available")
-    return false;
-  }
-
-  // The search for a synchronized data is one-time so we
-  // don't want to keep track of time for next searches (see ComputeSynchronizedMeasure)
-  bool trackTime = false;
-
-  // Initialize GPS offset with first synchronized measurements
-  // The first graph optimizations will mainly correct the orientations
-  Eigen::Isometry3d offset = Eigen::Isometry3d::Identity();
-  for (auto& s : mLogStates)
-  {
-    ExternalSensors::GpsMeasurement gpsSynchMeasure; // Virtual measure with synchronized timestamp and no offset applied
-    if (mGpsManager->ComputeSynchronizedMeasure(s.Time, gpsSynchMeasure, trackTime))
+    if (!this->GpsHasData())
     {
-      offset.translation() = (s.Isometry * mGpsManager->GetCalibration()).translation() - gpsSynchMeasure.Position;
-      break;
+        PRINT_ERROR("Cannot get GPS offset : GPS not enabled or GPS data not available")
+        return false;
     }
-  }
-  mGpsManager->SetOffset(offset);
 
-  // Optimize the graph : add lidar states and link with fixed gps states
-  if (!this->OptimizeGraph())
-    return false;
+    // The search for a synchronized data is one-time so we
+    // don't want to keep track of time for next searches (see ComputeSynchronizedMeasure)
+    bool trackTime = false;
 
-  // Reset poses in odom frame (first Lidar pose)
-  Eigen::Isometry3d firstInverse = mLogStates.front().Isometry.inverse();
-  for (auto& s : mLogStates)
-  {
-    // Rotate covariance
-    Eigen::Vector6d initPose = Utils::IsometryToXYZRPY(s.Isometry);
-    CeresTools::RotateCovariance(initPose, s.Covariance, firstInverse, true); // new = first^-1 * init
-    // Transform pose
-    s.Isometry = firstInverse * s.Isometry;
-  }
+    // Initialize GPS offset with first synchronized measurements
+    // The first graph optimizations will mainly correct the orientations
+    Eigen::Isometry3d offset = Eigen::Isometry3d::Identity();
+    for (auto& s : mLogStates)
+    {
+        ExternalSensors::GpsMeasurement gpsSynchMeasure; // Virtual measure with synchronized timestamp and no offset applied
+        if (mGpsManager->ComputeSynchronizedMeasure(s.Time_sec, gpsSynchMeasure, trackTime))
+        {
+            offset.translation() = (s.Isometry * mGpsManager->GetCalibration()).translation() - gpsSynchMeasure.Position;
+            break;
+        }
+    }
+    mGpsManager->SetOffset(offset);
 
-  // Update the maps and the pose with new trajectory
-  this->UpdateMaps();
-  this->SetWorldTransformFromGuess(mLogStates.back().Isometry);
+    // Optimize the graph : add lidar states and link with fixed gps states
+    if (!this->OptimizeGraph())
+        return false;
 
-  // Set refined offset : first Lidar pose + initial offset
-  firstInverse.translation() += offset.translation();
-  mGpsManager->SetOffset(firstInverse);
+    // Reset poses in odom frame (first Lidar pose)
+    Eigen::Isometry3d firstInverse = mLogStates.front().Isometry.inverse();
+    for (auto& s : mLogStates)
+    {
+        // Rotate covariance
+        Eigen::Vector6d initPose = Utils::IsometryToXYZRPY(s.Isometry);
+        CeresTools::RotateCovariance(initPose, s.Covariance, firstInverse, true); // new = first^-1 * init
+        // Transform pose
+        s.Isometry = firstInverse * s.Isometry;
+    }
 
-  return true;
+    // Update the maps and the pose with new trajectory
+    this->UpdateMaps();
+    this->SetWorldTransformFromGuess(mLogStates.back().Isometry);
+
+    // Set refined offset : first Lidar pose + initial offset
+    firstInverse.translation() += offset.translation();
+    mGpsManager->SetOffset(firstInverse);
+
+    return true;
 }
 
 // Pose
 //-----------------------------------------------------------------------------
 void Slam::AddPoseMeasurement(const ExternalSensors::PoseMeasurement& pm)
 {
-  if (!mPoseManager)
-    this->InitPoseSensor();
-  mPoseManager->AddMeasurement(pm);
+    if (!mPoseManager)
+        this->InitPoseSensor();
+    mPoseManager->AddMeasurement(pm);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetPoseCalibration(const Eigen::Isometry3d& calib)
 {
-  if (!mPoseManager)
-    this->InitPoseSensor();
-  mPoseManager->SetCalibration(calib);
+    if (!mPoseManager)
+        this->InitPoseSensor();
+    mPoseManager->SetCalibration(calib);
 }
 
 // Sensors' parameters
@@ -2142,132 +2218,144 @@ void Slam::SetPoseCalibration(const Eigen::Isometry3d& calib)
 //-----------------------------------------------------------------------------
 void Slam::ResetSensors(bool emptyMeasurements)
 {
-  ExtSensorMacro(Reset(emptyMeasurements))
+    ExtSensorMacro(Reset(emptyMeasurements))
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetSensorTimeOffset(double timeOffset)
 {
-  ExtSensorMacro(SetTimeOffset(timeOffset))
-  mSensorTimeOffset = timeOffset;
+    ExtSensorMacro(SetTimeOffset(timeOffset))
+    mSensorTimeOffset = timeOffset;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetSensorTimeThreshold(double thresh)
 {
-  ExtSensorMacro(SetTimeThreshold(thresh))
-  mSensorTimeThreshold = thresh;
+    ExtSensorMacro(SetTimeThreshold(thresh))
+    mSensorTimeThreshold = thresh;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetSensorMaxMeasures(unsigned int max)
 {
-  ExtSensorMacro(SetMaxMeasures(max))
-  mSensorMaxMeasures = max;
+    ExtSensorMacro(SetMaxMeasures(max))
+    mSensorMaxMeasures = max;
 }
 
 // Wheel odometer
 //-----------------------------------------------------------------------------
 double Slam::GetWheelOdomWeight() const
 {
-  if(mWheelOdomManager)
-    return mWheelOdomManager->GetWeight();
-  PRINT_ERROR("Wheel odometer has not been set : can't get wheel odom weight")
-  return 0.;
+    if(mWheelOdomManager)
+        return mWheelOdomManager->GetWeight();
+
+    PRINT_ERROR("Wheel odometer has not been set : can't get wheel odom weight")
+    return 0.0;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetWheelOdomWeight(double weight)
 {
-  if(!mWheelOdomManager)
-    this->InitWheelOdom();
-  mWheelOdomManager->SetWeight(weight);
+    if(!mWheelOdomManager)
+        this->InitWheelOdom();
+
+    mWheelOdomManager->SetWeight(weight);
 }
 
 //-----------------------------------------------------------------------------
 bool Slam::GetWheelOdomRelative() const
 {
-  if(mWheelOdomManager)
-    return mWheelOdomManager->GetRelative();
-  PRINT_ERROR("Wheel odometer has not been set : can't get wheel odom relative boolean")
-  return false;
+    if(mWheelOdomManager)
+        return mWheelOdomManager->GetRelative();
+
+    PRINT_ERROR("Wheel odometer has not been set : can't get wheel odom relative boolean")
+    return false;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetWheelOdomRelative(bool isRelative)
 {
-  if(!mWheelOdomManager)
-    this->InitWheelOdom();
-  mWheelOdomManager->SetRelative(isRelative);
+    if(!mWheelOdomManager)
+        this->InitWheelOdom();
+
+    mWheelOdomManager->SetRelative(isRelative);
 }
 
 // IMU gravity
 //-----------------------------------------------------------------------------
 double Slam::GetGravityWeight() const
 {
-  if(mGravityManager)
-    return mGravityManager->GetWeight();
-  PRINT_ERROR("IMU has not been set : can't get IMU weight")
-  return 0.;
+    if(mGravityManager)
+        return mGravityManager->GetWeight();
+
+    PRINT_ERROR("IMU has not been set : can't get IMU weight")
+    return 0.0;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetGravityWeight(double weight)
 {
-  if(!mGravityManager)
-    this->InitGravity();
-  mGravityManager->SetWeight(weight);
+    if(!mGravityManager)
+        this->InitGravity();
+
+    mGravityManager->SetWeight(weight);
 }
 
 // Landmark detector
 //-----------------------------------------------------------------------------
 void Slam::SetLandmarkWeight(double weight)
 {
-  for (auto& idLm : mLandmarksManagers)
-    idLm.second.SetWeight(weight);
-  mLandmarkWeight = weight;
+    for (auto& idLm : mLandmarksManagers)
+        idLm.second.SetWeight(weight);
+
+    mLandmarkWeight = weight;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetLandmarkSaturationDistance(float dist)
 {
-  for (auto& idLm : mLandmarksManagers)
-    idLm.second.SetSaturationDistance(dist);
-  mLandmarkSaturationDistance = dist;
+    for (auto& idLm : mLandmarksManagers)
+        idLm.second.SetSaturationDistance(dist);
+
+    mLandmarkSaturationDistance = dist;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetLandmarkPositionOnly(bool positionOnly)
 {
-  for (auto& idLm : mLandmarksManagers)
-    idLm.second.SetPositionOnly(positionOnly);
-  mLandmarkPositionOnly = positionOnly;
+    for (auto& idLm : mLandmarksManagers)
+        idLm.second.SetPositionOnly(positionOnly);
+
+    mLandmarkPositionOnly = positionOnly;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetLandmarkCovarianceRotation(bool rotate)
 {
-  for (auto& idLm : mLandmarksManagers)
-    idLm.second.SetCovarianceRotation(rotate);
-  mLandmarkCovarianceRotation = rotate;
+    for (auto& idLm : mLandmarksManagers)
+        idLm.second.SetCovarianceRotation(rotate);
+
+    mLandmarkCovarianceRotation = rotate;
 }
 
 // Pose
 //-----------------------------------------------------------------------------
 double Slam::GetPoseWeight() const
 {
-  if (mPoseManager)
-    return mPoseManager->GetWeight();
-  PRINT_ERROR("Pose sensor has not been set : can't get pose weight")
-  return 0.;
+    if (mPoseManager)
+        return mPoseManager->GetWeight();
+
+    PRINT_ERROR("Pose sensor has not been set : can't get pose weight")
+    return 0.0;
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetPoseWeight(double weight)
 {
-  if (!mPoseManager)
-    this->InitPoseSensor();
-  mPoseManager->SetWeight(weight);
+    if (!mPoseManager)
+        this->InitPoseSensor();
+
+    mPoseManager->SetWeight(weight);
 }
 
 //==============================================================================
@@ -2277,34 +2365,34 @@ void Slam::SetPoseWeight(double weight)
 //-----------------------------------------------------------------------------
 std::map<uint8_t, Slam::KeypointExtractorPtr> Slam::GetKeyPointsExtractors() const
 {
-  return mKeyPointsExtractors;
+    return mKeyPointsExtractors;
 }
 
 void Slam::SetKeyPointsExtractors(const std::map<uint8_t, KeypointExtractorPtr>& extractors)
 {
-  mKeyPointsExtractors = extractors;
+    mKeyPointsExtractors = extractors;
 }
 
 //-----------------------------------------------------------------------------
 Slam::KeypointExtractorPtr Slam::GetKeyPointsExtractor(uint8_t deviceId) const
 {
-  return mKeyPointsExtractors.count(deviceId) ? mKeyPointsExtractors.at(deviceId) : KeypointExtractorPtr();
+    return mKeyPointsExtractors.count(deviceId) ? mKeyPointsExtractors.at(deviceId) : KeypointExtractorPtr();
 }
 
 void Slam::SetKeyPointsExtractor(KeypointExtractorPtr extractor, uint8_t deviceId)
 {
-  mKeyPointsExtractors[deviceId] = extractor;
+    mKeyPointsExtractors[deviceId] = extractor;
 }
 
 //-----------------------------------------------------------------------------
 Eigen::Isometry3d Slam::GetBaseToLidarOffset(uint8_t deviceId) const
 {
-  return mBaseToLidarOffsets.count(deviceId) ? mBaseToLidarOffsets.at(deviceId) : Eigen::UnalignedIsometry3d::Identity();
+    return mBaseToLidarOffsets.count(deviceId) ? mBaseToLidarOffsets.at(deviceId) : Eigen::UnalignedIsometry3d::Identity();
 }
 
 void Slam::SetBaseToLidarOffset(const Eigen::Isometry3d& transform, uint8_t deviceId)
 {
-  mBaseToLidarOffsets[deviceId] = transform;
+    mBaseToLidarOffsets[deviceId] = transform;
 }
 
 //==============================================================================
@@ -2314,66 +2402,66 @@ void Slam::SetBaseToLidarOffset(const Eigen::Isometry3d& transform, uint8_t devi
 //-----------------------------------------------------------------------------
 void Slam::ClearMaps()
 {
-  for (auto kmap: mLocalMaps)
-    kmap.second->Reset();
+    for (auto kmap: mLocalMaps)
+        kmap.second->Reset();
 }
 
 //-----------------------------------------------------------------------------
 double Slam::GetVoxelGridDecayingThreshold() const
 {
-  return mLocalMaps.begin()->second->GetDecayingThreshold();
+    return mLocalMaps.begin()->second->GetDecayingThreshold();
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetVoxelGridDecayingThreshold(double decay)
 {
-  for (auto k : mUsableKeypoints)
-    mLocalMaps[k]->SetDecayingThreshold(decay);
+    for (auto k : mUsableKeypoints)
+        mLocalMaps[k]->SetDecayingThreshold(decay);
 }
 
 //-----------------------------------------------------------------------------
 SamplingMode Slam::GetVoxelGridSamplingMode(Keypoint k) const
 {
-  return mLocalMaps.at(k)->GetSampling();
+    return mLocalMaps.at(k)->GetSampling();
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetVoxelGridSamplingMode(Keypoint k, SamplingMode sm)
 {
-  mLocalMaps[k]->SetSampling(sm);
+    mLocalMaps[k]->SetSampling(sm);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetVoxelGridLeafSize(Keypoint k, double size)
 {
-  mLocalMaps[k]->SetLeafSize(size);
+    mLocalMaps[k]->SetLeafSize(size);
 }
 
 //-----------------------------------------------------------------------------
 double Slam::GetVoxelGridLeafSize(Keypoint k) const
 {
-  return mLocalMaps.at(k)->GetLeafSize();
+    return mLocalMaps.at(k)->GetLeafSize();
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetVoxelGridSize(int size)
 {
-  for (auto k : mUsableKeypoints)
-    mLocalMaps[k]->SetGridSize(size);
+    for (auto k : mUsableKeypoints)
+        mLocalMaps[k]->SetGridSize(size);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetVoxelGridResolution(double resolution)
 {
-  for (auto k : mUsableKeypoints)
-    mLocalMaps[k]->SetVoxelResolution(resolution);
+    for (auto k : mUsableKeypoints)
+        mLocalMaps[k]->SetVoxelResolution(resolution);
 }
 
 //-----------------------------------------------------------------------------
 void Slam::SetVoxelGridMinFramesPerVoxel(unsigned int minFrames)
 {
-  for (auto k : mUsableKeypoints)
-    mLocalMaps[k]->SetMinFramesPerVoxel(minFrames);
+    for (auto k : mUsableKeypoints)
+        mLocalMaps[k]->SetMinFramesPerVoxel(minFrames);
 }
 
 //==============================================================================
@@ -2383,17 +2471,17 @@ void Slam::SetVoxelGridMinFramesPerVoxel(unsigned int minFrames)
 //-----------------------------------------------------------------------------
 void Slam::SetLoggingTimeout(double lMax)
 {
-  mLoggingTimeout = lMax;
-  if (mLogStates.empty())
-      return;
+    mLoggingTimeout = lMax;
+    if (mLogStates.empty())
+        return;
 
-  double currentTime = mLogStates.back().Time;
-  auto itSt = mLogStates.begin();
-  while (currentTime - itSt->Time > lMax && mLogStates.size() > 2)
-  {
-    ++itSt;
-    mLogStates.pop_front();
-  }
+    double currentTime_sec = mLogStates.back().Time_sec;
+    auto itSt = mLogStates.begin();
+    while ((currentTime_sec - itSt->Time_sec > lMax) && (mLogStates.size() > 2))
+    {
+        ++itSt;
+        mLogStates.pop_front();
+    }
 }
 
 } // end of LidarSlam namespace

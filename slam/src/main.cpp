@@ -76,6 +76,8 @@ void console_message(const std::string& msg)
 
 int main(int argc, char** argv)
 {
+	system("chcp 65001");
+
 	using namespace std::filesystem;
 
 	int num_of_threads = 0;
