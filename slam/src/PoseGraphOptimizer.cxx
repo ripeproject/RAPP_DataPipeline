@@ -27,6 +27,9 @@
 #include "g2o/core/robust_kernel.h"
 #include "g2o/core/robust_kernel_impl.h"
 
+#include <memory>
+
+
 namespace LidarSlam
 {
 //------------------------------------------------------------------------------
@@ -34,7 +37,7 @@ PoseGraphOptimizer::PoseGraphOptimizer()
 {
   // Create optimizer
   auto linearSolver = std::make_unique<g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>>();
-  auto* solver = new g2o::OptimizationAlgorithmLevenberg(g2o::make_unique<g2o::BlockSolver_6_3>(std::move(linearSolver)));
+  auto* solver = new g2o::OptimizationAlgorithmLevenberg(std::make_unique<g2o::BlockSolver_6_3>(std::move(linearSolver)));
   this->Optimizer.setAlgorithm(solver);
   this->Optimizer.setVerbose(this->Verbose);
 }
