@@ -88,6 +88,7 @@ int main(int argc, char** argv)
 	double min_dist_m = 0;
 	double max_dist_m = 1000;
 
+	bool aggregatePointCloud = false;
 	bool saveReducedPointCloud = false;
 	std::string kinematics;
 	bool isFile = false;
@@ -103,9 +104,12 @@ int main(int argc, char** argv)
 		| lyra::opt(isFile)
 		["-f"]["--file"]
 		("Operate on a single file instead of directory.")
+		| lyra::opt(aggregatePointCloud)
+		["-a"]["--aggregate"]
+		("Aggregate lidar data into a single pointcloud.")
 		| lyra::opt(kinematics, "kinematics type")
 		["-k"]["--kinematic"]
-		("Specify the type of kinematics to use in creating a single pointcloud.")
+		("Specify the type of kinematics to apply to the pointcloud data.")
 		| lyra::opt(pitch_deg, "pitch (deg)")
 		["-p"]["--pitch_deg"]
 		("The pitch angle of the sensor with respect to the horizontal.  Range is +90 to -90 degrees.")

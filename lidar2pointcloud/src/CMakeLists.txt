@@ -13,6 +13,16 @@ PRIVATE
 	BS_thread_pool.hpp
 	ParserExceptions.hpp
 
+	Kinematics.hpp
+	Kinematics_Constant.hpp
+	Kinematics_Constant.cpp
+	Kinematics_Dolly.hpp
+	Kinematics_Dolly.cpp
+	Kinematics_GPS.hpp
+	Kinematics_GPS.cpp
+	Kinematics_SLAM.hpp
+	Kinematics_SLAM.cpp
+
 	lidar2pointcloud.hpp
 	lidar2pointcloud.cpp
 	
