@@ -163,8 +163,11 @@ include_directories(SYSTEM ${PCL_INCLUDE_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 # Find and include my libraries for data collection
-find_package(CBDF REQUIRED cbdf ctrl)
+find_package(CBDF REQUIRED cbdf ctrl sensors)
 find_package(spidercam REQUIRED)
+find_package(ssnx REQUIRED)
+find_package(ouster REQUIRED)
+
 
 
 #******************************************************************************

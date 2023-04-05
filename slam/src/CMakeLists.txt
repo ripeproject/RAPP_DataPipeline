@@ -77,6 +77,7 @@ target_include_directories(slam PRIVATE "../support/PointCloud")
 
 target_link_libraries(slam PRIVATE cbdf::cbdf)
 target_link_libraries(slam PRIVATE cbdf::ctrl)
+target_link_libraries(slam PRIVATE cbdf::sensors)
 target_link_libraries(slam PRIVATE pointcloud_io)
 target_link_libraries(slam PRIVATE LidarSlam)
 

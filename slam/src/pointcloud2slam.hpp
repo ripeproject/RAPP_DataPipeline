@@ -6,6 +6,7 @@
 #include "Slam.h"
 
 #include <cbdf/SpidercamParser.hpp>
+#include <cbdf/SsnxParser.hpp>
 
 #include <pcl/PCLHeader.h>
 
@@ -15,7 +16,10 @@
 #include <vector>
 
 
-class cPointCloud2Slam : public cPointCloudParser, public cSpidercamParser
+class cPointCloud2Slam : 
+    public cPointCloudParser,   // <-- Read pointcloud data from ceres file
+    public cSpidercamParser,    // <-- Read SpiderCam control/status data from ceres file
+    public cSsnxParser          // <-- Read SSNX (gps) data from ceres file
 {
     using PointS = LidarSlam::Slam::Point;
     using CloudS = pcl::PointCloud<PointS>;  ///< Pointcloud needed by SLAM
@@ -52,13 +56,35 @@ private:
     bool updateBaseToLidarOffset(uint32_t lidarFrameId, uint8_t lidarDeviceId);
 
 private:
+    /*----------------------------------------------------------------------------
+     *  Called by cPointCloudParser
+     */
     void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;
     void onImuData(pointcloud::imu_data_t data) override;
     void onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
     void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
     void onPointCloudData(cPointCloud pointCloud) override;
 
+    /*----------------------------------------------------------------------------
+     *  Called by cSpidercamParser
+     */
     void onPosition(spidercam::sPosition_1_t pos) override;
+
+    /*----------------------------------------------------------------------------
+     *  Called by cSsnxParser
+     */
+    void onPVT_Cartesian(ssnx::gps::PVT_Cartesian_1_t pos) override;
+    void onPVT_Cartesian(ssnx::gps::PVT_Cartesian_2_t pos) override;
+    void onPVT_Geodetic(ssnx::gps::PVT_Geodetic_1_t pos) override;
+    void onPVT_Geodetic(ssnx::gps::PVT_Geodetic_2_t pos) override;
+    void onPosCovGeodetic(ssnx::gps::PosCovGeodetic_1_t cov) override;
+    void onVelCovGeodetic(ssnx::gps::VelCovGeodetic_1_t cov) override;
+    void onDOP(ssnx::gps::DOP_1_t dop) override;
+    void onPVT_Residuals(ssnx::gps::PVT_Residuals_1_t residuals) override;
+    void onRAIMStatistics(ssnx::gps::RAIMStatistics_1_t raim) override;
+    void onPOS_Projected(ssnx::gps::POS_Projected_1_t pos) override;
+    void onReceiverTime(ssnx::gps::ReceiverTime_1_t time) override;
+    void onRtcmDatum(ssnx::gps::RtcmDatum_1_t datum) override;
 
 private:
     std::filesystem::path mOutputPath;

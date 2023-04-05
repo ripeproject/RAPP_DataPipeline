@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 	double max_dist_m = 1000;
 
 	bool saveReducedPointCloud = false;
-	bool useSLAM = false;
+	std::string kinematics;
 	bool isFile = false;
 	bool showHelp = false;
 
@@ -103,9 +103,9 @@ int main(int argc, char** argv)
 		| lyra::opt(isFile)
 		["-f"]["--file"]
 		("Operate on a single file instead of directory.")
-		| lyra::opt(useSLAM)
-		["-s"]["--slam"]
-		("Use SLAM to create a single pointcloud.")
+		| lyra::opt(kinematics, "kinematics type")
+		["-k"]["--kinematic"]
+		("Specify the type of kinematics to use in creating a single pointcloud.")
 		| lyra::opt(pitch_deg, "pitch (deg)")
 		["-p"]["--pitch_deg"]
 		("The pitch angle of the sensor with respect to the horizontal.  Range is +90 to -90 degrees.")

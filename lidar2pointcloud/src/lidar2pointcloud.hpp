@@ -15,6 +15,8 @@
 #include <fstream>
 
 
+enum class Kinematics {NONE, CONSTANT, DOLLY, GPS, SLAM};
+
 struct sPoint_t
 {
     double x;
@@ -55,6 +57,8 @@ public:
 
 	static void saveReducedPointCloud();
 
+	static void setKinematicType(Kinematics kinematic);
+
 public:
 	cLidar2PointCloud();
 	~cLidar2PointCloud();
@@ -89,6 +93,8 @@ private:
 	static ouster::cRotationMatrix<double> mSensorToENU;
 
 	static bool mSaveReducedPointCloud;
+
+	static Kinematics mKinematicType;
 
 private:
 	std::optional<ouster::beam_intrinsics_2_t>   mBeamIntrinsics;

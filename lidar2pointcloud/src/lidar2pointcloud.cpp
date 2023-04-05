@@ -194,6 +194,8 @@ double cLidar2PointCloud::mMinDistance_m = 0.001;
 double cLidar2PointCloud::mMaxDistance_m = 1000.0;
 ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToENU;
 bool cLidar2PointCloud::mSaveReducedPointCloud = false;
+Kinematics cLidar2PointCloud::mKinematicType = Kinematics::NONE;
+
 
 void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
 {

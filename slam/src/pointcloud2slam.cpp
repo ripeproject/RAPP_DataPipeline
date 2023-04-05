@@ -253,7 +253,9 @@ bool cPointCloud2Slam::updateBaseToLidarOffset(uint32_t lidarFrameId, uint8_t li
     return true;
 }
 
-
+/*----------------------------------------------------------------------------
+ *  Called by cPointCloudParser
+ *---------------------------------------------------------------------------*/
 void cPointCloud2Slam::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) {}
 void cPointCloud2Slam::onImuData(pointcloud::imu_data_t data) {}
 
@@ -328,6 +330,9 @@ void cPointCloud2Slam::onPointCloudData(cPointCloud pointCloud)
 {
 }
 
+/*----------------------------------------------------------------------------
+ *  Called by cSpidercamParser
+ *---------------------------------------------------------------------------*/
 void cPointCloud2Slam::onPosition(spidercam::sPosition_1_t pos)
 {
 //    mResyncTimestamp = true;
@@ -340,4 +345,44 @@ void cPointCloud2Slam::onPosition(spidercam::sPosition_1_t pos)
 
     mPositions.push_back(xyz);
 }
+
+/*----------------------------------------------------------------------------
+ *  Called by cSsnxParser
+ *---------------------------------------------------------------------------*/
+void cPointCloud2Slam::onPVT_Cartesian(ssnx::gps::PVT_Cartesian_1_t pos) {}
+void cPointCloud2Slam::onPVT_Cartesian(ssnx::gps::PVT_Cartesian_2_t pos) {}
+void cPointCloud2Slam::onPVT_Geodetic(ssnx::gps::PVT_Geodetic_1_t pos) {}
+
+void cPointCloud2Slam::onPVT_Geodetic(ssnx::gps::PVT_Geodetic_2_t pos) 
+{
+    if (!pos.dataValid) return;
+
+    auto n = pos.Ve_mps;
+}
+
+void cPointCloud2Slam::onPosCovGeodetic(ssnx::gps::PosCovGeodetic_1_t cov)
+{
+    if (!cov.dataValid) return;
+
+    auto n = cov.Cov_latlat_m;
+}
+
+void cPointCloud2Slam::onVelCovGeodetic(ssnx::gps::VelCovGeodetic_1_t cov)
+{
+    if (!cov.dataValid) return;
+
+    auto n = cov.Cov_VnVn_mps;
+}
+
+void cPointCloud2Slam::onDOP(ssnx::gps::DOP_1_t dop) {}
+
+void cPointCloud2Slam::onPVT_Residuals(ssnx::gps::PVT_Residuals_1_t residuals) 
+{
+    if (!residuals.dataValid) return;
+}
+
+void cPointCloud2Slam::onRAIMStatistics(ssnx::gps::RAIMStatistics_1_t raim) {}
+void cPointCloud2Slam::onPOS_Projected(ssnx::gps::POS_Projected_1_t pos) {}
+void cPointCloud2Slam::onReceiverTime(ssnx::gps::ReceiverTime_1_t time) {}
+void cPointCloud2Slam::onRtcmDatum(ssnx::gps::RtcmDatum_1_t datum) {}
 

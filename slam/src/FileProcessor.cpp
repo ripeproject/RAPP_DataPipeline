@@ -67,6 +67,7 @@ void cFileProcessor::run()
     cPointCloud2Slam* p = mConverter.get();
 	mFileReader.attach(static_cast<cPointCloudParser*>(p));
     mFileReader.attach(static_cast<cSpidercamParser*>(p));
+    mFileReader.attach(static_cast<cSsnxParser*>(p));
 
 	try
     {
