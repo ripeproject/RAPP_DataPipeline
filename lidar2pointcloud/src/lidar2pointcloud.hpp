@@ -3,6 +3,7 @@
 
 #include "PointCloudSerializer.hpp"
 #include "PointCloudTypes.hpp"
+#include "PointCloud.hpp"
 
 #include "Kinematics.hpp"
 
@@ -17,8 +18,6 @@
 #include <fstream>
 #include <memory>
 
-
-enum class Kinematics {NONE, CONSTANT, DOLLY, GPS, SLAM};
 
 struct sPoint_t
 {
@@ -58,6 +57,7 @@ public:
 	 */
 	static void setSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg);
 
+	static void saveAggregatePointCloud();
 	static void saveReducedPointCloud();
 
 
@@ -68,7 +68,7 @@ public:
 	/**
 	 * Set the kinematic type to apply to the pointcloud data.
 	 */
-	void setKinematicModel(Kinematics type);
+	void setKinematicModel(std::unique_ptr<cKinematics> model);
 
 	/*
 	 * Does the kinematics model require a pass through the
@@ -81,6 +81,11 @@ public:
 	 */
 	void attachKinematicParsers(cBlockDataFileReader& file);
 	void detachKinematicParsers(cBlockDataFileReader& file);
+
+	/*
+	 * Write and close any pointcloud data
+	 */
+	void writeAndCloseData();
 
 private:
 	void onConfigParam(ouster::config_param_2_t config_param) override;
@@ -111,6 +116,7 @@ private:
 
 	static ouster::cRotationMatrix<double> mSensorToENU;
 
+	static bool mAggregatePointCloud;
 	static bool mSaveReducedPointCloud;
 
 private:
@@ -126,6 +132,9 @@ private:
 	std::unique_ptr<cKinematics>	mKinematic;
 
     ouster::matrix_col_major<pointcloud::sCloudPoint_t> mCloud;
+
+	cPointCloud mPointCloud;
+
 
     std::vector<sPoint_t> mUnitVectors;
     std::vector<sPoint_t> mOffsets;

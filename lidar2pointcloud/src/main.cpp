@@ -4,6 +4,11 @@
 #include "lidar2pointcloud.hpp"
 #include "FileProcessor.hpp"
 
+#include "Kinematics_Constant.hpp"
+#include "Kinematics_Dolly.hpp"
+#include "Kinematics_GPS.hpp"
+#include "Kinematics_SLAM.hpp"
+
 #include <lyra/lyra.hpp>
 
 #include <eigen3/Eigen/Eigen>
@@ -14,6 +19,72 @@
 #include <iostream>
 #include <mutex>
 #include <numbers>
+
+
+bool icontains(const std::string& lhs, const char* const rhs)
+{
+	auto n = std::min(lhs.size(), strlen(rhs));
+	for (size_t i = 0; i < n; ++i)
+	{
+		if (std::tolower(lhs[i]) != std::tolower(rhs[i]))
+			return false;
+	}
+
+	return true;
+}
+
+std::vector<std::string> get_parameters(const std::string& str)
+{
+	auto first = str.find_first_of('{');
+
+	if (first == std::string::npos)
+		return std::vector<std::string>();
+
+	auto last = str.find_last_of('}');
+
+	if (last == std::string::npos)
+		return std::vector<std::string>();
+
+	++first;
+	std::string args = str.substr(first, last - first);
+
+	std::vector<std::string> results;
+
+	first = 0;
+
+	for (size_t i = 0; i < args.size(); ++i)
+	{
+		if (args[i] == ',')
+		{
+			std::string parameter = args.substr(first, i - first);
+			first = i + 1;
+
+			results.push_back(parameter);
+		}
+	}
+
+	std::string parameter = args.substr(first);
+	results.push_back(parameter);
+
+	return results;
+}
+
+bool icompare(const std::string& lhs, const char* const rhs)
+{
+	if (lhs.size() == strlen(rhs))
+	{
+		auto n = lhs.size();
+		for (size_t i = 0; i < n; ++i)
+		{
+			if (std::tolower(lhs[i]) != std::tolower(rhs[i]))
+				return false;
+		}
+
+		return true;
+	}
+
+	return false;
+}
 
 struct sFilenameAndExtension
 {
@@ -158,75 +229,14 @@ int main(int argc, char** argv)
 	cLidar2PointCloud::setValidRange_m(min_dist_m, max_dist_m);
 	cLidar2PointCloud::setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
 
-	if (saveReducedPointCloud)
+	if (aggregatePointCloud)
+	{
+		cLidar2PointCloud::saveAggregatePointCloud();
+	}
+	else if (saveReducedPointCloud)
 	{
 		cLidar2PointCloud::saveReducedPointCloud();
 	}
-
-/*
-	pitch_deg = -90.0;
-	roll_deg = 10.0;
-	yaw_deg = 60.0;
-
-	auto pitch = pitch_deg * std::numbers::pi / 180.0;
-	auto roll = roll_deg * std::numbers::pi / 180.0;
-	auto yaw = yaw_deg * std::numbers::pi / 180.0;
-
-	Eigen::Vector3d imu(0,0,-1);
-
-	Eigen::AngleAxisd rollAngle1(roll, Eigen::Vector3d::UnitX());
-	Eigen::AngleAxisd rollAngle2(-roll, Eigen::Vector3d::UnitX());
-	Eigen::AngleAxisd yawAngle1(yaw, Eigen::Vector3d::UnitZ());
-	Eigen::AngleAxisd yawAngle2(-yaw, Eigen::Vector3d::UnitZ());
-	Eigen::AngleAxisd pitchAngle1(pitch, Eigen::Vector3d::UnitY());
-	Eigen::AngleAxisd pitchAngle2(-pitch, Eigen::Vector3d::UnitY());
-
-	Eigen::Quaternion<double> q1 = yawAngle1 * pitchAngle1 * rollAngle1;
-	Eigen::Matrix3d rotationMatrix1 = q1.matrix();
-
-	std::cout << "IMU" << std::endl;
-	std::cout << imu[0] << ", " << imu[1] << ", " << imu[2] << std::endl;
-
-	std::cout << std::endl;
-	std::cout << "Yaw, Pitch, Roll" << std::endl;
-	auto r1_0 = rotationMatrix1.row(0);
-	std::cout << r1_0[0] << ", " << r1_0[1] << ", " << r1_0[2] << std::endl;
-
-	auto r1_1 = rotationMatrix1.row(1);
-	std::cout << r1_1[0] << ", " << r1_1[1] << ", " << r1_1[2] << std::endl;
-
-	auto r1_2 = rotationMatrix1.row(2);
-	std::cout << r1_2[0] << ", " << r1_2[1] << ", " << r1_2[2] << std::endl;
-
-	imu = rotationMatrix1 * imu;
-
-	std::cout << std::endl;
-	std::cout << "IMU" << std::endl;
-	std::cout << imu[0] << ", " << imu[1] << ", " << imu[2] << std::endl;
-
-	Eigen::Quaternion<double> q2 = rollAngle2 * pitchAngle2 * yawAngle2;
-	Eigen::Matrix3d rotationMatrix2 = q2.matrix();
-
-	std::cout << std::endl;
-	std::cout << "Roll, Pitch, Yaw" << std::endl;
-
-	auto r2_0 = rotationMatrix2.row(0);
-	std::cout << r2_0[0] << ", " << r2_0[1] << ", " << r2_0[2] << std::endl;
-
-	auto r2_1 = rotationMatrix2.row(1);
-	std::cout << r2_1[0] << ", " << r2_1[1] << ", " << r2_1[2] << std::endl;
-
-	auto r2_2 = rotationMatrix2.row(2);
-	std::cout << r2_2[0] << ", " << r2_2[1] << ", " << r2_2[2] << std::endl;
-
-	imu = rotationMatrix2 * imu;
-
-	std::cout << std::endl;
-	std::cout << "IMU" << std::endl;
-	std::cout << imu[0] << ", " << imu[1] << ", " << imu[2] << std::endl;
-
-	return 0;
-*/
 
 	const std::filesystem::path input{ input_directory };
 
@@ -302,6 +312,42 @@ int main(int argc, char** argv)
 		std::filesystem::create_directories(output_dir);
 	}
 
+
+	enum class Kinematics { NONE, CONSTANT, DOLLY, GPS, SLAM } model;
+	model = Kinematics::NONE;
+
+	double Vx_mmps = 0;
+	double Vy_mmps = 0;
+	double Vz_mmps = 0;
+
+	if (icontains(kinematics, "constant"))
+	{
+		model = Kinematics::CONSTANT;
+
+		auto parameters = get_parameters(kinematics);
+		if (parameters.size() != 3)
+		{
+			std::cout << cli << std::endl;
+			return 0;
+		}
+
+		Vx_mmps = std::stod(parameters[0]);
+		Vy_mmps = std::stod(parameters[1]);
+		Vz_mmps = std::stod(parameters[2]);
+	}
+	else if (icompare(kinematics, "slam"))
+	{
+		model = Kinematics::DOLLY;
+	}
+	else if (icompare(kinematics, "dolly"))
+	{
+		model = Kinematics::DOLLY;
+	}
+	else if (icompare(kinematics, "gps"))
+	{
+		model = Kinematics::GPS;
+	}
+
 	/*
 	 * Add all of the files to process to the thread pool
 	 */
@@ -328,6 +374,22 @@ int main(int argc, char** argv)
 		}
 
 		cFileProcessor* fp = new cFileProcessor();
+
+		switch (model)
+		{
+		case Kinematics::CONSTANT:
+			fp->setKinematicModel(std::make_unique<cKinematics_Constant>(Vx_mmps, Vy_mmps, Vz_mmps));
+			break;
+		case Kinematics::DOLLY:
+			fp->setKinematicModel(std::make_unique<cKinematics_Dolly>());
+			break;
+		case Kinematics::GPS:
+			fp->setKinematicModel(std::make_unique<cKinematics_GPS>());
+			break;
+		case Kinematics::SLAM:
+			fp->setKinematicModel(std::make_unique<cKinematics_SLAM>());
+			break;
+		}
 
 		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
 

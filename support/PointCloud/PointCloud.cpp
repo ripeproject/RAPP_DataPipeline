@@ -215,6 +215,9 @@ void cPointCloud::set(std::size_t point, const pointcloud::sCloudPoint_t& cloudP
 
 void cPointCloud::addPoint(const pointcloud::sCloudPoint_t& cloudPoint)
 {
-    mCloud.push_back(cloudPoint);
+	if ((cloudPoint.X_m == 0.0) && (cloudPoint.Y_m == 0.0) && (cloudPoint.Z_m == 0.0))
+		return;
+
+	mCloud.push_back(cloudPoint);
 }
 

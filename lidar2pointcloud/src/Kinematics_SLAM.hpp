@@ -20,6 +20,9 @@ public:
 	void attachParsers(cBlockDataFileReader& file) override;
 	void detachParsers(cBlockDataFileReader& file) override;
 
+	void transform(double time_us,
+		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) override;
+
 protected:
 
 private:

@@ -1,12 +1,6 @@
 
 #include "lidar2pointcloud.hpp"
 #include "PointCloudTypes.hpp"
-#include "PointCloud.hpp"
-
-#include "Kinematics_Constant.hpp"
-#include "Kinematics_Dolly.hpp"
-#include "Kinematics_GPS.hpp"
-#include "Kinematics_SLAM.hpp"
 
 #include <ouster/simple_blas.h>
 
@@ -199,6 +193,7 @@ namespace
 double cLidar2PointCloud::mMinDistance_m = 0.001;
 double cLidar2PointCloud::mMaxDistance_m = 1000.0;
 ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToENU;
+bool cLidar2PointCloud::mAggregatePointCloud = false;
 bool cLidar2PointCloud::mSaveReducedPointCloud = false;
 
 
@@ -262,6 +257,11 @@ void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, d
 */
 }
 
+void cLidar2PointCloud::saveAggregatePointCloud()
+{
+	mAggregatePointCloud = true;
+}
+
 void cLidar2PointCloud::saveReducedPointCloud()
 {
 	mSaveReducedPointCloud = true;
@@ -278,29 +278,12 @@ cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(1024)
 }
 
 cLidar2PointCloud::~cLidar2PointCloud()
-{}
-
-void cLidar2PointCloud::setKinematicModel(Kinematics type)
 {
-	switch (type)
-	{
-	default:
-	case Kinematics::NONE:
-		mKinematic = std::make_unique<cKinematics_None>();
-		break;
-	case Kinematics::CONSTANT:
-		mKinematic = std::make_unique<cKinematics_Constant>();
-		break;
-	case Kinematics::DOLLY:
-		mKinematic = std::make_unique<cKinematics_Dolly>();
-		break;
-	case Kinematics::GPS:
-		mKinematic = std::make_unique<cKinematics_GPS>();
-		break;
-	case Kinematics::SLAM:
-		mKinematic = std::make_unique<cKinematics_SLAM>();
-		break;
-	}
+}
+
+void cLidar2PointCloud::setKinematicModel(std::unique_ptr<cKinematics> model)
+{
+	mKinematic.reset(model.release());
 }
 
 bool cLidar2PointCloud::requiresTelemetryPass()
@@ -318,6 +301,14 @@ void cLidar2PointCloud::attachKinematicParsers(cBlockDataFileReader& file)
 void cLidar2PointCloud::detachKinematicParsers(cBlockDataFileReader& file)
 {
 	mKinematic->detachParsers(file);
+}
+
+void cLidar2PointCloud::writeAndCloseData()
+{
+	if (mPointCloud.empty()) return;
+
+	write(mPointCloud);
+	mPointCloud.clear();
 }
 
 void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
@@ -407,7 +398,22 @@ void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
         }
     }
 
-	if (mSaveReducedPointCloud)
+	mKinematic->transform(time_us, mCloud);
+
+	if (mAggregatePointCloud)
+	{
+		for (int c = 0; c < columns_per_frame; ++c)
+		{
+			auto column = mCloud.column(c);
+			for (int p = 0; p < pixels_per_column; ++p)
+			{
+				auto point = column[p];
+
+				mPointCloud.addPoint(point);
+			}
+		}
+	}
+	else if (mSaveReducedPointCloud)
 	{
 		cReducedPointCloudByFrame pc;
 		pc.frameID(frameID);

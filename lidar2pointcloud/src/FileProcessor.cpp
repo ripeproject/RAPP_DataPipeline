@@ -24,6 +24,14 @@ cFileProcessor::~cFileProcessor()
     mFileReader.close();
 }
 
+/**
+ * Set the kinematic type to apply to the pointcloud data.
+ */
+void cFileProcessor::setKinematicModel(std::unique_ptr<cKinematics> model)
+{
+    mConverter->setKinematicModel(std::move(model));
+}
+
 bool cFileProcessor::open(std::filesystem::directory_entry in,
 							std::filesystem::path out)
 {
@@ -64,8 +72,6 @@ void cFileProcessor::run()
 
     try
     {
-        mConverter->setKinematicModel(mKinematicType);
-
         if (mConverter->requiresTelemetryPass())
         {
             mConverter->attachKinematicParsers(mFileReader);
@@ -97,12 +103,17 @@ void cFileProcessor::run()
             if (mFileReader.fail())
             {
                 mFileReader.close();
+
+                mConverter->writeAndCloseData();
+
                 mFileWriter.close();
                 return;
             }
 
             mFileReader.processBlock();
         }
+
+        mConverter->writeAndCloseData();
     }
     catch (const bdf::stream_error& e)
     {

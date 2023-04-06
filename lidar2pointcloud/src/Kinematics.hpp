@@ -1,6 +1,10 @@
 
 #pragma once
 
+#include "PointCloudTypes.hpp"
+
+#include <ouster/simple_blas.h>
+
 
 // Forward Declarations
 class cBlockDataFileReader;
@@ -23,10 +27,8 @@ public:
 	virtual void attachParsers(cBlockDataFileReader& file) = 0;
 	virtual void detachParsers(cBlockDataFileReader& file) = 0;
 
-protected:
-
-private:
-
+	virtual void transform(double time_us, 
+		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) = 0;
 };
 
 
@@ -39,4 +41,6 @@ public:
 	bool requiresTelemetryPass() override { return false; };
 	void attachParsers(cBlockDataFileReader& file) override {};
 	void detachParsers(cBlockDataFileReader& file) override {};
+	void transform(double time_us,
+		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) override {};
 };

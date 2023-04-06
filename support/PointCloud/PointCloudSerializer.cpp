@@ -158,6 +158,11 @@ void cPointCloudSerializer::write(const cPointCloud& in)
 
     uint32_t num_points = data.size();
 
+    auto old_size = mDataBuffer.capacity();
+    cDataBuffer::size_type needed_size = 128 + num_points*sizeof(pointcloud::sCloudPoint_t);
+
+    mDataBuffer.capacity(needed_size);
+
     mDataBuffer << num_points;
 
     for (uint32_t n = 0; n < num_points; ++n)
@@ -178,6 +183,8 @@ void cPointCloudSerializer::write(const cPointCloud& in)
         throw std::runtime_error("ERROR, Buffer Overrun in writing point_cloud_t data.");
 
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
+
+    mDataBuffer.capacity(old_size);
 }
 
 

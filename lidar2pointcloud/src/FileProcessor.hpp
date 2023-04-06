@@ -13,12 +13,16 @@
 #include <memory>
 
 
-
 class cFileProcessor
 {
 public:
 	cFileProcessor();
 	~cFileProcessor();
+
+	/**
+	 * Set the kinematic type to apply to the pointcloud data.
+	 */
+	void setKinematicModel(std::unique_ptr<cKinematics> model);
 
 	bool open(std::filesystem::directory_entry in, 
 				std::filesystem::path out);
@@ -37,9 +41,6 @@ private:
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
-
-	Kinematics mKinematicType = Kinematics::NONE;
-
 
 	std::unique_ptr<cLidar2PointCloud> mConverter;
 };
