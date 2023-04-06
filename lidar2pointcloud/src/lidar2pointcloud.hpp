@@ -4,6 +4,8 @@
 #include "PointCloudSerializer.hpp"
 #include "PointCloudTypes.hpp"
 
+#include "Kinematics.hpp"
+
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/OusterParser.hpp>
 #include <ouster/simple_blas.h>
@@ -13,6 +15,7 @@
 #include <numbers>
 #include <optional>
 #include <fstream>
+#include <memory>
 
 
 enum class Kinematics {NONE, CONSTANT, DOLLY, GPS, SLAM};
@@ -57,11 +60,27 @@ public:
 
 	static void saveReducedPointCloud();
 
-	static void setKinematicType(Kinematics kinematic);
 
 public:
 	cLidar2PointCloud();
 	~cLidar2PointCloud();
+
+	/**
+	 * Set the kinematic type to apply to the pointcloud data.
+	 */
+	void setKinematicModel(Kinematics type);
+
+	/*
+	 * Does the kinematics model require a pass through the
+	 * data file to precompute telemetry data.
+	 */
+	bool requiresTelemetryPass();
+
+	/*
+	 * Attach/Detach parser to for the kinematics model.
+	 */
+	void attachKinematicParsers(cBlockDataFileReader& file);
+	void detachKinematicParsers(cBlockDataFileReader& file);
 
 private:
 	void onConfigParam(ouster::config_param_2_t config_param) override;
@@ -94,8 +113,6 @@ private:
 
 	static bool mSaveReducedPointCloud;
 
-	static Kinematics mKinematicType;
-
 private:
 	std::optional<ouster::beam_intrinsics_2_t>   mBeamIntrinsics;
 	std::optional<ouster::lidar_intrinsics_2_t>  mLidarIntrinsics;
@@ -106,6 +123,8 @@ private:
 	ouster::cRotationMatrix<double>		mImuToSensor;
 
 private:
+	std::unique_ptr<cKinematics>	mKinematic;
+
     ouster::matrix_col_major<pointcloud::sCloudPoint_t> mCloud;
 
     std::vector<sPoint_t> mUnitVectors;

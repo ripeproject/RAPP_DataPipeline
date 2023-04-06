@@ -2,6 +2,7 @@
 #pragma once
 
 #include "PointCloudSerializer.hpp"
+#include "lidar2pointcloud.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/OusterParser.hpp>
@@ -11,8 +12,6 @@
 #include <string>
 #include <memory>
 
-// Forward Declarations
-class cLidar2PointCloud;
 
 
 class cFileProcessor
@@ -38,6 +37,9 @@ private:
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
+
+	Kinematics mKinematicType = Kinematics::NONE;
+
 
 	std::unique_ptr<cLidar2PointCloud> mConverter;
 };

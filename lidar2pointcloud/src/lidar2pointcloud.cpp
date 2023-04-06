@@ -3,10 +3,16 @@
 #include "PointCloudTypes.hpp"
 #include "PointCloud.hpp"
 
+#include "Kinematics_Constant.hpp"
+#include "Kinematics_Dolly.hpp"
+#include "Kinematics_GPS.hpp"
+#include "Kinematics_SLAM.hpp"
+
 #include <ouster/simple_blas.h>
 
 #include <eigen3/Eigen/Eigen>
 
+#include <cassert>
 #include <algorithm>
 #include <numbers>
 #include <cmath>
@@ -194,7 +200,6 @@ double cLidar2PointCloud::mMinDistance_m = 0.001;
 double cLidar2PointCloud::mMaxDistance_m = 1000.0;
 ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToENU;
 bool cLidar2PointCloud::mSaveReducedPointCloud = false;
-Kinematics cLidar2PointCloud::mKinematicType = Kinematics::NONE;
 
 
 void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
@@ -268,10 +273,52 @@ void cLidar2PointCloud::saveReducedPointCloud()
 ///////////////////////////////////////////////////////////////////////////////
 
 cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(1024)
-{}
+{
+	mKinematic = std::make_unique<cKinematics_None>();
+}
 
 cLidar2PointCloud::~cLidar2PointCloud()
 {}
+
+void cLidar2PointCloud::setKinematicModel(Kinematics type)
+{
+	switch (type)
+	{
+	default:
+	case Kinematics::NONE:
+		mKinematic = std::make_unique<cKinematics_None>();
+		break;
+	case Kinematics::CONSTANT:
+		mKinematic = std::make_unique<cKinematics_Constant>();
+		break;
+	case Kinematics::DOLLY:
+		mKinematic = std::make_unique<cKinematics_Dolly>();
+		break;
+	case Kinematics::GPS:
+		mKinematic = std::make_unique<cKinematics_GPS>();
+		break;
+	case Kinematics::SLAM:
+		mKinematic = std::make_unique<cKinematics_SLAM>();
+		break;
+	}
+}
+
+bool cLidar2PointCloud::requiresTelemetryPass()
+{
+	assert(mKinematic);
+
+	return mKinematic->requiresTelemetryPass();
+}
+
+void cLidar2PointCloud::attachKinematicParsers(cBlockDataFileReader& file)
+{
+	mKinematic->attachParsers(file);
+}
+
+void cLidar2PointCloud::detachKinematicParsers(cBlockDataFileReader& file)
+{
+	mKinematic->detachParsers(file);
+}
 
 void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
     const lidar_intrinsics_2_t& lidar, const lidar_data_format_2_t& format)
@@ -286,7 +333,6 @@ void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
 
 	write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_ENU);
 }
-
 
 void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
 {

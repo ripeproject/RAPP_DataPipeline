@@ -62,13 +62,36 @@ void cFileProcessor::run()
         throw std::logic_error("No file is open for reading.");
 	}
 
-	mFileReader.registerCallback([this](const cBlockID& id){ this->processBlock(id); });
-	mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });
-	mFileReader.attach(mConverter.get());
-    mConverter.get()->attach(&mFileWriter);
-
-	try
+    try
     {
+        mConverter->setKinematicModel(mKinematicType);
+
+        if (mConverter->requiresTelemetryPass())
+        {
+            mConverter->attachKinematicParsers(mFileReader);
+
+            while (!mFileReader.eof())
+            {
+                if (mFileReader.fail())
+                {
+                    break;
+                }
+
+                mFileReader.processBlock();
+            }
+
+            mFileReader.gotoBeginning();
+
+            mConverter->detachKinematicParsers(mFileReader);
+        }
+        else
+            mConverter->attachKinematicParsers(mFileReader);
+
+	    mFileReader.registerCallback([this](const cBlockID& id){ this->processBlock(id); });
+	    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });
+	    mFileReader.attach(mConverter.get());
+        mConverter.get()->attach(&mFileWriter);
+
         while (!mFileReader.eof())
         {
             if (mFileReader.fail())
