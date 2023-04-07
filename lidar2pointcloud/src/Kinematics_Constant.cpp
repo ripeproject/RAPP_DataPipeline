@@ -14,9 +14,10 @@ cKinematics_Constant::cKinematics_Constant(double Vx_mmps, double Vy_mmps, doubl
 void cKinematics_Constant::transform(double time_us,
     ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud)
 {
-    double x_m = mVx_mps * time_us;
-    double y_m = mVy_mps * time_us;
-    double z_m = mVz_mps * time_us;
+    double time_sec = time_us / 1000000.0;
+    double x_m = mVx_mps * time_sec;
+    double y_m = mVy_mps * time_sec;
+    double z_m = mVz_mps * time_sec;
 
     auto cols = cloud.num_columns();
     auto rows = cloud.num_rows();

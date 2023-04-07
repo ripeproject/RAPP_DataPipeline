@@ -24,10 +24,12 @@ PRIVATE
 
 target_include_directories(pointcloud2ply PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(pointcloud2ply PRIVATE "../support/PointCloud")
+target_include_directories(pointcloud2ply PRIVATE "../support/StringUtils")
 
 target_link_libraries(pointcloud2ply PRIVATE cbdf::cbdf)
 target_link_libraries(pointcloud2ply PRIVATE cbdf::ctrl)
 target_link_libraries(pointcloud2ply PRIVATE pointcloud_io)
+target_link_libraries(pointcloud2ply PRIVATE string_utils)
 target_link_libraries(pointcloud2ply PRIVATE tinyply)
 
 

@@ -3,6 +3,7 @@
 
 #include "lidar2pointcloud.hpp"
 #include "FileProcessor.hpp"
+#include "StringUtils.hpp"
 
 #include "Kinematics_Constant.hpp"
 #include "Kinematics_Dolly.hpp"
@@ -21,123 +22,6 @@
 #include <numbers>
 
 
-bool icontains(const std::string& lhs, const char* const rhs)
-{
-	auto n = std::min(lhs.size(), strlen(rhs));
-	for (size_t i = 0; i < n; ++i)
-	{
-		if (std::tolower(lhs[i]) != std::tolower(rhs[i]))
-			return false;
-	}
-
-	return true;
-}
-
-std::vector<std::string> get_parameters(const std::string& str)
-{
-	auto first = str.find_first_of('{');
-
-	if (first == std::string::npos)
-		return std::vector<std::string>();
-
-	auto last = str.find_last_of('}');
-
-	if (last == std::string::npos)
-		return std::vector<std::string>();
-
-	++first;
-	std::string args = str.substr(first, last - first);
-
-	std::vector<std::string> results;
-
-	first = 0;
-
-	for (size_t i = 0; i < args.size(); ++i)
-	{
-		if (args[i] == ',')
-		{
-			std::string parameter = args.substr(first, i - first);
-			first = i + 1;
-
-			results.push_back(parameter);
-		}
-	}
-
-	std::string parameter = args.substr(first);
-	results.push_back(parameter);
-
-	return results;
-}
-
-bool icompare(const std::string& lhs, const char* const rhs)
-{
-	if (lhs.size() == strlen(rhs))
-	{
-		auto n = lhs.size();
-		for (size_t i = 0; i < n; ++i)
-		{
-			if (std::tolower(lhs[i]) != std::tolower(rhs[i]))
-				return false;
-		}
-
-		return true;
-	}
-
-	return false;
-}
-
-struct sFilenameAndExtension
-{
-	std::string filename;
-	std::string extension;
-};
-
-sFilenameAndExtension removeTimestamp(const std::string& filename)
-{
-	std::string base;
-	std::string extension;
-
-	auto dash = filename.find_last_of('_');
-	if (dash != std::string::npos)
-	{
-		base = filename.substr(0, dash);
-	}
-	else
-	{
-		auto ext = filename.find_last_of('.');
-		if (ext != std::string::npos)
-		{
-			base = filename.substr(0, ext);
-			extension = filename.substr(ext + 1);
-			return { base, extension };
-		}
-
-		base = filename;
-		return { base, extension };
-	}
-
-	auto ext = filename.find_last_of('.');
-	if (ext != std::string::npos)
-	{
-		 extension = filename.substr(ext + 1);
-	}
-
-	return {base, extension};
-}
-
-std::string add_timestamp(std::string filename)
-{
-	char timestamp[100] = { '\0' };
-
-	std::time_t t = std::time(nullptr);
-	std::strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M%S", std::localtime(&t));
-
-	filename += "_";
-	filename += timestamp;
-
-	return filename;
-}
-
 std::mutex g_console_mutex;
 
 
@@ -151,6 +35,8 @@ void console_message(const std::string& msg)
 int main(int argc, char** argv)
 {
 	using namespace std::filesystem;
+	using namespace nStringUtils;
+
 
 	double pitch_deg = 0.0;
 	double roll_deg = 0.0;
@@ -252,7 +138,7 @@ int main(int argc, char** argv)
 		if (!dir_entry.is_regular_file())
 			return 2;
 
-		if (dir_entry.path().extension() == "ceres")
+		if (dir_entry.path().extension() != ".ceres")
 			return 3;
 
 		if (!isCeresFile(dir_entry.path().string()))
@@ -268,7 +154,7 @@ int main(int argc, char** argv)
 			if (!dir_entry.is_regular_file())
 				continue;
 
-			if (dir_entry.path().extension() == "ceres")
+			if (dir_entry.path().extension() != ".ceres")
 				continue;
 
 			if (!isCeresFile(dir_entry.path().string()))
@@ -335,15 +221,15 @@ int main(int argc, char** argv)
 		Vy_mmps = std::stod(parameters[1]);
 		Vz_mmps = std::stod(parameters[2]);
 	}
-	else if (icompare(kinematics, "slam"))
+	else if (iequal(kinematics, "slam"))
 	{
 		model = Kinematics::DOLLY;
 	}
-	else if (icompare(kinematics, "dolly"))
+	else if (iequal(kinematics, "dolly"))
 	{
 		model = Kinematics::DOLLY;
 	}
-	else if (icompare(kinematics, "gps"))
+	else if (iequal(kinematics, "gps"))
 	{
 		model = Kinematics::GPS;
 	}
@@ -354,7 +240,7 @@ int main(int argc, char** argv)
 	for (auto& in_file : files_to_process)
 	{
 		std::filesystem::path out_file;
-		auto fe = removeTimestamp(in_file.path().filename().string());
+		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
 		if (isFile)
 		{
@@ -365,11 +251,13 @@ int main(int argc, char** argv)
 		{
 			std::string out_filename = fe.filename;
 			out_file = output_directory;
-			out_file /= add_timestamp(out_filename);
+			out_file /= addProcessedTimestamp(out_filename);
 
 			if (!fe.extension.empty())
 			{
-				out_file.replace_extension(fe.extension);
+				out_file += ".";
+				out_file += fe.extension;
+				//				out_file.replace_extension(fe.extension);
 			}
 		}
 

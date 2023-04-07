@@ -27,14 +27,20 @@ cPointCloud2Ply::~cPointCloud2Ply()
     {
         std::filesystem::path filename = mOutputPath;
 
-        std::string ext = std::to_string(mFrameCount);
+        std::string ext;
+
+        if (mIndividualPlyFiles)
+            ext += std::to_string(mFrameCount);
+
         ext += ".ply";
 
-        filename.replace_extension(ext);
+        filename += ext;
+//        filename.replace_extension(ext);
 
         writePointcloud(filename);
     }
 
+/*BAF
     if (!mPositions.empty())
     {
         std::filesystem::path filename = mOutputPath;
@@ -46,6 +52,7 @@ cPointCloud2Ply::~cPointCloud2Ply()
 
         writePosition(filename);
     }
+*/
 }
 
 void cPointCloud2Ply::setOutputPath(std::filesystem::path out)

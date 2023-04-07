@@ -19,9 +19,13 @@ PRIVATE
 	AxisCommunicationsVerificationParser.cpp
 	ParserExceptions.hpp
 
-	DataVerifier.hpp
-	DataVerifier.cpp
-	CeresDataVerification.cpp
+	LidarDataVerifier.hpp
+	LidarDataVerifier.cpp
+
+	CeresDataVerifier.hpp
+	CeresDataVerifier.cpp
+	
+	DataVerification.cpp
 )
 
 
@@ -35,9 +39,5 @@ target_link_libraries(DataVerificator PRIVATE cbdf::sensors)
 # Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
 set_property(TARGET DataVerificator PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
-
-#******************************************************************************
-# Installer
-#******************************************************************************
-
+add_subdirectory(bdf_v1)
 

@@ -34,10 +34,12 @@ PRIVATE
 
 target_include_directories(lidar2pointcloud PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(lidar2pointcloud PRIVATE "../support/PointCloud")
+target_include_directories(lidar2pointcloud PRIVATE "../support/StringUtils")
 
 target_link_libraries(lidar2pointcloud PRIVATE cbdf::cbdf)
 target_link_libraries(lidar2pointcloud PRIVATE cbdf::sensors)
 target_link_libraries(lidar2pointcloud PRIVATE pointcloud_io)
+target_link_libraries(lidar2pointcloud PRIVATE string_utils)
 
 
 #
