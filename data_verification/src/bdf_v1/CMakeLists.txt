@@ -31,6 +31,9 @@ PUBLIC
     OusterDataIdentifiers.hpp
     OusterSerializer.hpp
     OusterParser.hpp
+	OusterVerificationParser.hpp
+	
+	ParserExceptions.hpp
 
 PRIVATE
 
@@ -47,12 +50,15 @@ PRIVATE
     OusterBlockId.cpp
 	OusterSerializer.cpp
 	OusterParser.cpp
+	OusterVerificationParser.cpp
 
 	Crc.hpp
 	Crc.cpp
 )
 
-target_link_libraries(BlockDataFile_v1 PUBLIC ouster_static)
+target_include_directories(BlockDataFile_v1 PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+
+target_link_libraries(BlockDataFile_v1 PUBLIC ouster::ouster_static)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

@@ -24,7 +24,14 @@ namespace
 
 		// Check to make sure we have enough buffer space to put this variable into
 		// our internal storage.
-		if ((start >= end) || (len < sizeof(T)))
+		if (start >= end)
+		{
+			underrun = true;
+			return 0;
+		}
+
+		auto s = sizeof(T);
+		if (len < s)
 		{
 			underrun = true;
 			return 0;

@@ -1,74 +1,74 @@
 
 #include "OusterParser.hpp"
 #include "OusterDataIdentifiers.hpp"
-#include "../lib/BlockDataFile.hpp"
+#include "BlockDataFile.hpp"
 
-#include "ouster_utils.h"
-#include "OusterLidarData.h"
+#include <ouster/ouster_utils.h>
+#include <ouster/OusterLidarData.h>
 
 #include <stdexcept>
 
-using namespace ouster;
+using namespace v1::ouster;
 
 namespace
 {
-    ouster::version_t to_version(cDataBuffer& buffer)
+    ::ouster::version_t to_version(v1::cDataBuffer& buffer)
     {
         std::string s;
         buffer >> s;
         return ::to_version(s);
     }
 
-    ouster::eOPERATING_MODE to_operating_mode(cDataBuffer& buffer)
+    ::ouster::eOPERATING_MODE to_operating_mode(v1::cDataBuffer& buffer)
     {
         uint8_t mode = 0;
         buffer >> mode;
         return static_cast<ouster::eOPERATING_MODE>(mode); 
     };
 
-    ouster::eSENSOR_STATUS to_sensor_status(cDataBuffer& buffer)
+    ::ouster::eSENSOR_STATUS to_sensor_status(v1::cDataBuffer& buffer)
     {
         uint8_t status = 0;
         buffer >> status;
         return static_cast<ouster::eSENSOR_STATUS>(status);
     };
 
-    ouster::eLIDAR_MODE to_lidar_mode(cDataBuffer& buffer)
+    ::ouster::eLIDAR_MODE to_lidar_mode(v1::cDataBuffer& buffer)
     {
         uint8_t mode = 0;
         buffer >> mode;
         return static_cast<ouster::eLIDAR_MODE>(mode);
     };
 
-    ouster::eTIMESTAMP_MODE to_timestamp_mode(cDataBuffer& buffer)
+    ::ouster::eTIMESTAMP_MODE to_timestamp_mode(v1::cDataBuffer& buffer)
     {
         uint8_t mode = 0;
         buffer >> mode;
         return static_cast<ouster::eTIMESTAMP_MODE>(mode);
     };
 
-    ouster::eNMEA_BAUD_RATE to_nmea_baud_rate(cDataBuffer& buffer)
+    ::ouster::eNMEA_BAUD_RATE to_nmea_baud_rate(v1::cDataBuffer& buffer)
     {
         uint8_t rate = 0;
         buffer >> rate;
         return static_cast<ouster::eNMEA_BAUD_RATE>(rate);
     };
 
-    ouster::ePOLARITY to_polarity(cDataBuffer& buffer)
+    ::ouster::ePOLARITY to_polarity(v1::cDataBuffer& buffer)
     {
         uint8_t mode = 0;
         buffer >> mode;
         return static_cast<ouster::ePOLARITY>(mode);
     };
 
-    ouster::eIO_PIN_MODE to_pin_mode(cDataBuffer& buffer)
+    ::ouster::eIO_PIN_MODE to_pin_mode(v1::cDataBuffer& buffer)
     {
         uint8_t mode = 0;
         buffer >> mode;
         return static_cast<ouster::eIO_PIN_MODE>(mode);
     };
 
-    ouster::azimuth_status to_azimuth_status(cDataBuffer& buffer)
+    ::ouster::azimuth_status to_azimuth_status(v1::cDataBuffer& buffer)
     {
         int32_t status = 0;
         buffer >> status;
@@ -76,18 +76,18 @@ namespace
     };
 }
 
-cOusterParser::cOusterParser()
+v1::cOusterParser::cOusterParser()
 :
     cBlockParser()
 {}
 
-cBlockID& cOusterParser::blockID()
+v1::cBlockID& v1::cOusterParser::blockID()
 {
     return mBlockID;
 }
 
 
-void cOusterParser::processData(BLOCK_MAJOR_VERSION_t major_version,
+void v1::cOusterParser::processData(BLOCK_MAJOR_VERSION_t major_version,
                                 BLOCK_MINOR_VERSION_t minor_version,
                                 BLOCK_DATA_ID_t data_id,
                                 cDataBuffer& buffer)
@@ -148,7 +148,7 @@ void cOusterParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     }
 }
 
-void cOusterParser::processConfigParam_2(cDataBuffer& buffer)
+void v1::cOusterParser::processConfigParam_2(v1::cDataBuffer& buffer)
 {
     buffer >> mConfigParams.udp_ip;
     buffer >> mConfigParams.udp_dest;
@@ -185,7 +185,7 @@ void cOusterParser::processConfigParam_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processConfigParam_2.");
 }
 
-void cOusterParser::processSensorInfo_2(cDataBuffer& buffer)
+void v1::cOusterParser::processSensorInfo_2(v1::cDataBuffer& buffer)
 {
     buffer >> mSensorInfo.product_line;
     buffer >> mSensorInfo.product_part_number;
@@ -205,7 +205,7 @@ void cOusterParser::processSensorInfo_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processSensorInfo_2.");
 }
 
-void cOusterParser::processTimestamp_2(cDataBuffer& buffer)
+void v1::cOusterParser::processTimestamp_2(v1::cDataBuffer& buffer)
 {
     buffer >> mTimestamp.time;
 
@@ -219,7 +219,7 @@ void cOusterParser::processTimestamp_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processTimestamp_2.");
 }
 
-void cOusterParser::processSyncPulseIn_2(cDataBuffer& buffer)
+void v1::cOusterParser::processSyncPulseIn_2(v1::cDataBuffer& buffer)
 {
     buffer >> mSyncPulseIn.locked;
     buffer >> mSyncPulseIn.last_period_nsec;
@@ -232,7 +232,7 @@ void cOusterParser::processSyncPulseIn_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processSyncPulseIn_2.");
 }
 
-void cOusterParser::processSyncPulseOut_2(cDataBuffer& buffer)
+void v1::cOusterParser::processSyncPulseOut_2(v1::cDataBuffer& buffer)
 {
     buffer >> mSyncPulseOut.pulse_width_ms;
     buffer >> mSyncPulseOut.angle_deg;
@@ -244,7 +244,7 @@ void cOusterParser::processSyncPulseOut_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processSyncPulseOut_2.");
 }
 
-void cOusterParser::processMultipurposeIO_2(cDataBuffer& buffer)
+void v1::cOusterParser::processMultipurposeIO_2(v1::cDataBuffer& buffer)
 {
     mMultipurposeIo.mode = to_pin_mode(buffer);
 
@@ -258,7 +258,7 @@ void cOusterParser::processMultipurposeIO_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processMultipurposeIO_2.");
 }
 
-void cOusterParser::processNmea_2(cDataBuffer& buffer)
+void v1::cOusterParser::processNmea_2(v1::cDataBuffer& buffer)
 {
     buffer >> mNmea.locked;
     mNmea.baud_rate = to_nmea_baud_rate(buffer);
@@ -278,7 +278,7 @@ void cOusterParser::processNmea_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processNmea_2.");
 }
 
-void cOusterParser::processTimeInfo_2(cDataBuffer& buffer)
+void v1::cOusterParser::processTimeInfo_2(v1::cDataBuffer& buffer)
 {
     /* Timestamp Info */
     buffer >> mTimeInfo.timestamp_info.time;
@@ -320,7 +320,7 @@ void cOusterParser::processTimeInfo_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processTimeInfo_2.");
 }
 
-void cOusterParser::processBeamIntrinsics_2(cDataBuffer& buffer)
+void v1::cOusterParser::processBeamIntrinsics_2(v1::cDataBuffer& buffer)
 {
     buffer >> mBeamIntrinsics.lidar_to_beam_origins_mm;
 
@@ -341,7 +341,7 @@ void cOusterParser::processBeamIntrinsics_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processBeamIntrinsics_2.");
 }
 
-void cOusterParser::processImuIntrinsics_2(cDataBuffer& buffer)
+void v1::cOusterParser::processImuIntrinsics_2(v1::cDataBuffer& buffer)
 {
     uint32_t n = 0;
     buffer >> n;
@@ -353,7 +353,7 @@ void cOusterParser::processImuIntrinsics_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processImuIntrinsics_2.");
 }
 
-void cOusterParser::processLidarIntrinsics_2(cDataBuffer& buffer)
+void v1::cOusterParser::processLidarIntrinsics_2(cDataBuffer& buffer)
 {
     uint32_t n = 0;
     buffer >> n;
@@ -365,7 +365,7 @@ void cOusterParser::processLidarIntrinsics_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processLidarIntrinsics_2.");
 }
 
-void cOusterParser::processLidarDataFormat_2(cDataBuffer& buffer)
+void v1::cOusterParser::processLidarDataFormat_2(v1::cDataBuffer& buffer)
 {
     buffer >> mLidarDataFormat.columns_per_frame;
     buffer >> mLidarDataFormat.columns_per_packet;
@@ -390,7 +390,7 @@ void cOusterParser::processLidarDataFormat_2(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processLidarDataFormat_2.");
 }
 
-void cOusterParser::processImuData(cDataBuffer& buffer)
+void v1::cOusterParser::processImuData(v1::cDataBuffer& buffer)
 {
     buffer >> mImuData.diagnostic_time_ns;
     buffer >> mImuData.accelerometer_read_time_ns;
@@ -408,7 +408,7 @@ void cOusterParser::processImuData(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processImuData.");
 }
 
-void cOusterParser::processLidarData(cDataBuffer& buffer)
+void v1::cOusterParser::processLidarData(v1::cDataBuffer& buffer)
 {
     uint16_t pixels_per_column = 0;
     uint16_t columns_per_frame = 0;
@@ -418,7 +418,7 @@ void cOusterParser::processLidarData(cDataBuffer& buffer)
 
     mLidarData.resize(pixels_per_column, columns_per_frame);
 
-    lidar_data_block_t pixel;
+    ::ouster::lidar_data_block_t pixel;
 
     for (uint16_t col = 0; col < columns_per_frame; ++col)
     {
@@ -436,7 +436,7 @@ void cOusterParser::processLidarData(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processLidarData.");
 }
 
-void cOusterParser::processLidarDataFrameTimestamp(cDataBuffer& buffer)
+void v1::cOusterParser::processLidarDataFrameTimestamp(v1::cDataBuffer& buffer)
 {
     uint16_t frame_id = 0;
     uint64_t timestamp_ns = 0;

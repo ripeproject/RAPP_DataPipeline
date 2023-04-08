@@ -167,6 +167,7 @@ v1::cBlockDataFileReader::cBlockDataFileReader(const std::string& filename)
     : cBlockDataFileReader()
 {
     open(filename);
+    mBuffer.capacity(4096);
 }
 
 v1::cBlockDataFileReader::~cBlockDataFileReader()

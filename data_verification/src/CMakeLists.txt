@@ -31,6 +31,7 @@ PRIVATE
 
 target_include_directories(DataVerificator PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
+target_link_libraries(DataVerificator PRIVATE BlockDataFile_v1)
 target_link_libraries(DataVerificator PRIVATE cbdf::cbdf)
 target_link_libraries(DataVerificator PRIVATE cbdf::sensors)
 

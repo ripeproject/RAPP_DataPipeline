@@ -103,6 +103,8 @@ int main(int argc, char** argv)
 		pool.push_task(&cLidarDataVerifier::process_file, dv, file);
 
 		lidar_data_verifiers.push_back(dv);
+
+		break;
 	}
 
 	pool.wait_for_tasks();

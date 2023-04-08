@@ -1,7 +1,7 @@
 
 #include "LidarDataVerifier.hpp"
-#include "ParserExceptions.hpp"
-#include "OusterVerificationParser.hpp"
+#include "bdf_v1/ParserExceptions.hpp"
+#include "bdf_v1/OusterVerificationParser.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -80,7 +80,7 @@ void cLidarDataVerifier::run()
         throw std::logic_error("No file is open for verification.");
     }
 
-    auto ouster = std::make_unique<cOusterVerificationParser>();
+    auto ouster = std::make_unique<v1::cOusterVerificationParser>();
 
     mFileReader.attach(ouster.get());
 
@@ -97,7 +97,7 @@ void cLidarDataVerifier::run()
             mFileReader.processBlock();
         }
     }
-    catch (const bdf::stream_error& e)
+    catch (const v1::bdf::invalid_data& e)
     {
         mFileReader.close();
         std::string msg = e.what();
