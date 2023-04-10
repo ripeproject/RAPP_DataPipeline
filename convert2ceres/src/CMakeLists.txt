@@ -1,5 +1,8 @@
 
 
+add_subdirectory(bdf_v1)
+
+
 add_executable(convert2ceres)
 
 set_target_properties(convert2ceres PROPERTIES LANGUAGE CXX)
@@ -12,25 +15,6 @@ PRIVATE
 	BS_thread_pool.hpp
 	ParserExceptions.hpp
 
-	ldBlockDataFileExceptions.hpp
-	ldBlockDataFile.hpp
-	ldClassIdentifiers.hpp
-	ldBlockId.hpp
-	ldBlockParser.hpp
-
-    ldOusterBlockId.hpp
-    ldOusterDataIdentifiers.hpp
-    ldOusterParser.hpp
-
-	ldBlockDataFile.cpp
-	ldBlockParser.cpp
-
-    ldOusterBlockId.cpp
-	ldOusterParser.cpp
-
-	ldCrc.hpp
-	ldCrc.cpp
-	
 	LidarData2CeresConverter.hpp
 	LidarData2CeresConverter.cpp
 
@@ -41,7 +25,9 @@ PRIVATE
 
 target_include_directories(convert2ceres PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
+target_link_libraries(convert2ceres PRIVATE BlockDataFile_v1)
 target_link_libraries(convert2ceres PRIVATE cbdf::cbdf)
+target_link_libraries(convert2ceres PRIVATE cbdf::info)
 target_link_libraries(convert2ceres PRIVATE cbdf::sensors)
 
 #

@@ -1,51 +1,77 @@
 
 #pragma once
 
-#include "PointCloudParser.hpp"
-#include "PointCloud.hpp"
-#include "LineDetection3D.h"
+#include "FileProcessor.hpp"
+
+#include "bdf_v1/BlockDataFile.hpp"
+#include "bdf_v1/OusterVerificationParser.hpp"
+#include "bdf_v1/PvtVerificationParser.hpp"
+
+#include <cbdf/BlockDataFile.hpp>
+#include <cbdf/OusterSerializer.hpp>
+#include <cbdf/ExperimentSerializer.hpp>
 
 #include <filesystem>
 #include <string>
 #include <fstream>
 
 
-
-class cExtractFeatures : public cPointCloudParser
+class cLidarData2CeresConverter : public cFileProcessor, 
+									private v1::cOusterVerificationParser,
+									private v1::cPvtVerificationParser
 {
 public:
-    static bool mIndividualPlyFiles;
+	cLidarData2CeresConverter();
+	~cLidarData2CeresConverter();
 
-public:
-    cExtractFeatures();
-	~cExtractFeatures();
+	bool open(std::filesystem::directory_entry in,
+		std::filesystem::path out);
 
-    void setOutputPath(std::filesystem::path out);
+	void process_file(std::filesystem::directory_entry in,
+		std::filesystem::path out) override;
+
+	void run();
+
+protected:
+	void onConfigParam(::ouster::config_param_2_t config_param) override;
+	void onSensorInfo(::ouster::sensor_info_2_t sensor_info) override;
+	void onTimestamp(::ouster::timestamp_2_t timestamp) override;
+	void onSyncPulseIn(::ouster::sync_pulse_in_2_t pulse_info) override;
+	void onSyncPulseOut(::ouster::sync_pulse_out_2_t pulse_info) override;
+	void onMultipurposeIo(::ouster::multipurpose_io_2_t io) override;
+	void onNmea(::ouster::nmea_2_t nmea) override;
+	void onTimeInfo(::ouster::time_info_2_t time_info) override;
+	void onBeamIntrinsics(::ouster::beam_intrinsics_2_t intrinsics) override;
+	void onImuIntrinsics(::ouster::imu_intrinsics_2_t intrinsics) override;
+	void onLidarIntrinsics(::ouster::lidar_intrinsics_2_t intrinsics) override;
+	void onLidarDataFormat(::ouster::lidar_data_format_2_t format) override;
+	void onImuData(::ouster::imu_data_t data) override;
+	void onLidarData(cOusterLidarData data) override;
+
+protected:
+	void onPositionUnits(v1::pvt::ePOSTION_UNITS  positionUnit) override;
+	void onVelocityUnits(v1::pvt::eVELOCITY_UNITS velocityUnit) override;
+	void onTimeUnits(v1::pvt::eTIME_UNITS timeUnit) override;
+	void onPosition1D(double x) override;
+	void onPosition2D(double x, double y) override;
+	void onPosition3D(double x, double y, double z) override;
+	void onVelocity1D(double Vx) override;
+	void onVelocity2D(double Vx, double Vy) override;
+	void onVelocity3D(double Vx, double Vy, double Vz) override;
+	void onTimestamp(std::uint64_t timeStamp) override;
 
 private:
-    void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;
-    void onImuData(pointcloud::imu_data_t data) override;
-    void onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
-    void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
-    void onPointCloudData(cPointCloud pointCloud) override;
-
-    void writePlyFile(std::filesystem::path filename);
-    void writePlaneFile(std::filesystem::path filename, const std::vector<PLANE>& planes, double scale);
-    void writeLineFile(std::filesystem::path filename, const std::vector<std::vector<cv::Point3d>>& lines, double scale);
+	void processBlock(const v1::cBlockID& id);
+	void processBlock(const v1::cBlockID& id, const std::byte* buf, std::size_t len);
 
 private:
-    std::filesystem::path mOutputPath;
+	v1::cBlockDataFileReader mFileReader;
+	cBlockDataFileWriter	 mFileWriter;
 
-    uint32_t    mFrameCount = 0;
+	cOusterSerializer		mOusterSerializer;
+	cExperimentSerializer	mExperimentSerializer;
 
-    struct float3 { float x, y, z; };
-    struct uint3  { uint16_t s, r, a; };
-    struct color3 { uint8_t r, g, b; };
-
-    std::vector<float3>   mVertices;
-    std::vector<uint32_t> mRanges;
-    std::vector<uint3>    mReturns;
-    std::vector<uint16_t> mFrameIDs;
-
-	uint64_t mStartTimestamp_ns = 0;
+	double mTimeScaler = 0.0;
 };
+
+

@@ -1,8 +1,7 @@
 
 #include "BS_thread_pool.hpp"
 
-#include "ExtractFeatures.hpp"
-#include "FileProcessor.hpp"
+#include "LidarData2CeresConverter.hpp"
 
 #include <lyra/lyra.hpp>
 
@@ -92,6 +91,8 @@ int main(int argc, char** argv)
 				continue;
 
 			lidar_data_files_to_process.push_back(dir_entry);
+
+			break;
 		}
 
 	}
@@ -126,7 +127,7 @@ int main(int argc, char** argv)
 		std::filesystem::path out_file = in_file.path();
 		out_file.replace_extension("ceres");
 
-		cFileProcessor* fp = new cFileProcessor();
+		cFileProcessor* fp = new cLidarData2CeresConverter();
 
 		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
 
