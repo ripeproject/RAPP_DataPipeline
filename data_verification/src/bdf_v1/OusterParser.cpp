@@ -12,10 +12,23 @@ using namespace v1::ouster;
 
 namespace
 {
+    std::string to_string(v1::cDataBuffer& buffer)
+    {
+        std::string str;
+        auto p = buffer.data();
+        for (int i = 0; i < buffer.read_size(); ++i)
+        {
+            str += static_cast<char>(*p);
+            ++p;
+        }
+
+        return str;
+    }
+
     ::ouster::version_t to_version(v1::cDataBuffer& buffer)
     {
         std::string s;
-        buffer >> s;
+        buffer.read(s, 6);
         return ::to_version(s);
     }
 
@@ -150,8 +163,24 @@ void v1::cOusterParser::processData(BLOCK_MAJOR_VERSION_t major_version,
 
 void v1::cOusterParser::processConfigParam_2(v1::cDataBuffer& buffer)
 {
-    buffer >> mConfigParams.udp_ip;
-    buffer >> mConfigParams.udp_dest;
+    std::string s = to_string(buffer);
+
+    // Early versions did not record the length of a string
+    // 67 is the minimum size of the packet
+    auto buf_len = buffer.read_size();
+    if (buf_len > 67)
+    {
+        if (buf_len == 91)
+        {
+            buffer.read(mConfigParams.udp_ip, 12);
+            buffer.read(mConfigParams.udp_dest, 12);
+        }
+        else
+        {
+            buffer >> mConfigParams.udp_ip;
+            buffer >> mConfigParams.udp_dest;
+        }
+    }
     buffer >> mConfigParams.lidar_port;
     buffer >> mConfigParams.imu_port;
 
@@ -187,17 +216,47 @@ void v1::cOusterParser::processConfigParam_2(v1::cDataBuffer& buffer)
 
 void v1::cOusterParser::processSensorInfo_2(v1::cDataBuffer& buffer)
 {
-    buffer >> mSensorInfo.product_line;
-    buffer >> mSensorInfo.product_part_number;
-    buffer >> mSensorInfo.product_serial_number;
-    buffer >> mSensorInfo.base_part_number;
-    buffer >> mSensorInfo.base_serial_number;
-    buffer >> mSensorInfo.image_rev;
+    std::string s = to_string(buffer);
+
+    // Early versions did not record the length of a string
+    // 5 is the minimum size of the packet
+    auto buf_len = buffer.read_size();
+    if (buf_len > 13)
+    {
+        if (buf_len == 112)
+        {
+            buffer.read(mSensorInfo.product_line, 8);
+            buffer.read(mSensorInfo.product_part_number, 12);
+            buffer.read(mSensorInfo.product_serial_number, 12);
+//            buffer.read(mSensorInfo.base_part_number);
+//            buffer.read(mSensorInfo.base_serial_number);
+            buffer.read(mSensorInfo.image_rev, 47);
+        }
+        else
+        {
+            buffer >> mSensorInfo.product_line;
+            buffer >> mSensorInfo.product_part_number;
+            buffer >> mSensorInfo.product_serial_number;
+            buffer >> mSensorInfo.base_part_number;
+            buffer >> mSensorInfo.base_serial_number;
+            buffer >> mSensorInfo.image_rev;
+        }
+    }
 
     mSensorInfo.build_revision = to_version(buffer);
     mSensorInfo.proto_revision = to_version(buffer);
 
-    buffer >> mSensorInfo.build_date;
+    if (buf_len > 13)
+    {
+        if (buf_len == 112)
+        {
+            buffer.read(mSensorInfo.build_date, 20);
+        }
+        else
+        {
+            buffer >> mSensorInfo.build_date;
+        }
+    }
 
     mSensorInfo.status = to_sensor_status(buffer);
 

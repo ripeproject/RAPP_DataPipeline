@@ -287,6 +287,16 @@ v1::cBlockParser* v1::cBlockDataFileReader::detach(cBlockID id)
     return nullptr;
 }
 
+void v1::cBlockDataFileReader::registerCallback(emptyBlock_t callback)
+{
+    mEmptyBlockCallback = callback;
+}
+
+void v1::cBlockDataFileReader::registerCallback(dataBlock_t callback)
+{
+    mDataBlockCallback = callback;
+}
+
 bool v1::cBlockDataFileReader::processBlock()
 {
     if (mFile.eof())
@@ -433,7 +443,16 @@ bool v1::cBlockDataFileReader::processBlock()
     }
     else
     {
-        unknownClassID(classID);
+        if (len == 0)
+        {
+            if (mEmptyBlockCallback)
+                mEmptyBlockCallback(blockId);
+        }
+        else
+        {
+            if (mDataBlockCallback)
+                mDataBlockCallback(blockId, mBuffer.data(), len);
+        }
     }
 
     return !mFile.eof();

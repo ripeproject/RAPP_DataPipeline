@@ -11,6 +11,7 @@
 #include <fstream>
 #include <map>
 #include <mutex>
+#include <functional>
 
 // Forward Declares
 
@@ -100,6 +101,10 @@ namespace v1
 	class cBlockDataFileReader
 	{
 	public:
+		typedef std::function<void(const cBlockID& id)> emptyBlock_t;
+		typedef std::function<void(const cBlockID& id, const std::byte* buf, std::size_t len)> dataBlock_t;
+
+	public:
 		cBlockDataFileReader();
 		explicit cBlockDataFileReader(const std::string& filename);
 
@@ -126,9 +131,10 @@ namespace v1
 		void attach(cBlockParser* pParser);
 		cBlockParser* detach(cBlockID id);
 
-		bool processBlock();
+		void registerCallback(emptyBlock_t callback);
+		void registerCallback(dataBlock_t callback);
 
-		virtual void unknownClassID(BLOCK_CLASS_ID_t classID) {};
+		bool processBlock();
 
 	private:
 		//    FILE* mpFile;
@@ -138,6 +144,9 @@ namespace v1
 
 		cDataBuffer mBuffer;
 		std::map<BLOCK_CLASS_ID_t, cBlockParser*> mParsers;
+
+		emptyBlock_t mEmptyBlockCallback;
+		dataBlock_t  mDataBlockCallback;
 	};
 
 }

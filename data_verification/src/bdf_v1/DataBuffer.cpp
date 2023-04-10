@@ -477,7 +477,8 @@ void v1::cDataBuffer::read(std::string& out)
 
 	// Check to make sure we have enough data in the read size of the buffer
 	// to fulfill the read request.
-	if ((mReadIndex > mWriteIndex) || (read_size() < len))
+	auto s = read_size();
+	if ((mReadIndex > mWriteIndex) || (s < len))
 	{
 		mUnderrun = true;
 		return;
