@@ -2,7 +2,7 @@
 #include "LidarDataVerifier.hpp"
 #include "bdf_v1/ParserExceptions.hpp"
 #include "bdf_v1/OusterParser.hpp"
-//#include "bdf_v1/OusterVerificationParser.hpp"
+#include "bdf_v1/PvtParser.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -82,9 +82,10 @@ void cLidarDataVerifier::run()
     }
 
     auto ouster = std::make_unique<v1::cOusterParser>();
-//    auto ouster = std::make_unique<v1::cOusterVerificationParser>();
+    auto pvt = std::make_unique<v1::cPvtParser>();
 
     mFileReader.attach(ouster.get());
+    mFileReader.attach(pvt.get());
 
     try
     {
