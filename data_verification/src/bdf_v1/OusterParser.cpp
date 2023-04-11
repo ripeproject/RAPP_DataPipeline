@@ -175,6 +175,11 @@ void v1::cOusterParser::processConfigParam_2(v1::cDataBuffer& buffer)
             buffer.read(mConfigParams.udp_ip, 12);
             buffer.read(mConfigParams.udp_dest, 12);
         }
+        else if (buf_len == 117)
+        {
+            buffer.read(mConfigParams.udp_ip, 25);
+            buffer.read(mConfigParams.udp_dest, 25);
+        }
         else
         {
             buffer >> mConfigParams.udp_ip;
