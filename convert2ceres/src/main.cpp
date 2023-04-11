@@ -91,8 +91,6 @@ int main(int argc, char** argv)
 				continue;
 
 			lidar_data_files_to_process.push_back(dir_entry);
-
-			break;
 		}
 
 	}
