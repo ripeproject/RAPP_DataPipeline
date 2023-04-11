@@ -67,6 +67,14 @@ int main(int argc, char** argv)
 		output_directory = input_directory;
 
 	const std::filesystem::path input{ input_directory };
+	const std::filesystem::path output{ output_directory };
+
+	std::filesystem::directory_entry output_dir = std::filesystem::directory_entry{ output };
+
+	if (!output_dir.exists())
+	{
+		std::filesystem::create_directories(output_dir);
+	}
 
 	std::vector<directory_entry> lidar_data_files_to_process;
 
@@ -83,9 +91,11 @@ int main(int argc, char** argv)
 		// Test for the lidar_data extension...
 		if (dir_entry.path().extension() == ".lidar_data")
 		{
-			// If there is already a file by the same name with a ceres
-			// extension, skip the file!
-			auto test = dir_entry.path();
+			// If there is already a file by the same name in
+			// the output directory with a ceres extension,
+			// skip the file!
+			auto test = output;
+			test /= dir_entry.path().filename();
 			test.replace_extension("ceres");
 			if (std::filesystem::exists(test))
 				continue;
@@ -106,15 +116,6 @@ int main(int argc, char** argv)
 
 	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 
-	const std::filesystem::path output{ output_directory };
-
-	std::filesystem::directory_entry output_dir = std::filesystem::directory_entry{ output };
-
-	if (!output_dir.exists())
-	{
-		std::filesystem::create_directories(output_dir);
-	}
-
 	std::vector<cFileProcessor*> file_processors;
 
 	//=====================================================
@@ -122,7 +123,8 @@ int main(int argc, char** argv)
 	//=====================================================
 	for (auto& in_file : lidar_data_files_to_process)
 	{
-		std::filesystem::path out_file = in_file.path();
+		std::filesystem::path out_file = output;
+		out_file /= in_file.path().filename();
 		out_file.replace_extension("ceres");
 
 		cFileProcessor* fp = new cLidarData2CeresConverter();
