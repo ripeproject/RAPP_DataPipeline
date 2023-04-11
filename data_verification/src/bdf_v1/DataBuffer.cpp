@@ -1,6 +1,8 @@
 
 #include "DataBuffer.hpp"
 
+#include <cstring>
+
 namespace
 {
 	template <typename T>

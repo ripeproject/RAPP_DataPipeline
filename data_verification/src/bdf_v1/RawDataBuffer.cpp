@@ -1,6 +1,9 @@
 
 #include "RawDataBuffer.hpp"
 
+#include <cstring>
+
+
 namespace
 {
 	/**
