@@ -7,7 +7,7 @@
 #include <cbdf/OusterParser.hpp>
 
 
-class cOusterVerificationParser : public cOusterParser
+class cOusterRepairParser : public cOusterParser
 {
 public:
 	void onConfigParam(ouster::config_param_2_t config_param) override;
@@ -24,5 +24,22 @@ public:
 	void onLidarDataFormat(ouster::lidar_data_format_2_t format) override;
 	void onImuData(ouster::imu_data_t data) override;
 	void onLidarData(cOusterLidarData data) override;
+
+protected:
+	void processConfigParam_2(cDataBuffer& buffer) override;
+	void processSensorInfo_2(cDataBuffer& buffer) override;
+	void processTimestamp_2(cDataBuffer& buffer) override;
+	void processSyncPulseIn_2(cDataBuffer& buffer) override;
+	void processSyncPulseOut_2(cDataBuffer& buffer) override;
+	void processMultipurposeIO_2(cDataBuffer& buffer) override;
+	void processNmea_2(cDataBuffer& buffer) override;
+	void processTimeInfo_2(cDataBuffer& buffer) override;
+	void processBeamIntrinsics_2(cDataBuffer& buffer) override;
+	void processImuIntrinsics_2(cDataBuffer& buffer) override;
+	void processLidarIntrinsics_2(cDataBuffer& buffer) override;
+	void processLidarDataFormat_2(cDataBuffer& buffer) override;
+	void processImuData(cDataBuffer& buffer) override;
+	void processLidarData(cDataBuffer& buffer) override;
+	void processLidarDataFrameTimestamp(cDataBuffer& buffer) override;
 };
 

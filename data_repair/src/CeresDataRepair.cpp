@@ -1,5 +1,5 @@
 
-#include "DataRepair.hpp"
+#include "FileProcessor.hpp"
 #include "BS_thread_pool.hpp"
 
 #include <lyra/lyra.hpp>
@@ -46,21 +46,21 @@ int main(int argc, char** argv)
 	}
 
 	const std::filesystem::path input{ input_directory };
-	const std::filesystem::path failed = input / "failed";
+	const std::filesystem::path failed_dir = input / "failed";
 
-	if (!std::filesystem::exists(failed))
+	if (!std::filesystem::exists(failed_dir))
 	{
 		// If the failed directory does not exists, we are done!
 		return 0;
 	}
 
 	std::vector<directory_entry> files_to_repair;
-	for (auto const& dir_entry : std::filesystem::directory_iterator{ failed })
+	for (auto const& dir_entry : std::filesystem::directory_iterator{ failed_dir })
 	{
 		if (!dir_entry.is_regular_file())
 			continue;
 
-		if (dir_entry.path().extension() == "ceres")
+		if (dir_entry.path().extension() != ".ceres")
 			continue;
 
 		files_to_repair.push_back(dir_entry);
@@ -72,10 +72,16 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	const std::filesystem::path repaired = input / "repaired";
-	if (!std::filesystem::exists(repaired))
+	const std::filesystem::path recovered_dir = failed_dir / "recovered";
+	if (!std::filesystem::exists(recovered_dir))
 	{
-		std::filesystem::create_directory(repaired);
+		std::filesystem::create_directory(recovered_dir);
+	}
+
+	const std::filesystem::path repaired_dir = input / "repaired";
+	if (!std::filesystem::exists(repaired_dir))
+	{
+		std::filesystem::create_directory(repaired_dir);
 	}
 
 	int max_threads = std::thread::hardware_concurrency();
@@ -89,22 +95,22 @@ int main(int argc, char** argv)
 
 	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 
-	std::vector<cDataRepair*> data_repairs;
+	std::vector<cFileProcessor*> file_processors;
 
 	for (auto& file : files_to_repair)
 	{
-		cDataRepair* dv = new cDataRepair(repaired);
+		cFileProcessor* fp = new cFileProcessor(recovered_dir, repaired_dir);
 
-		pool.push_task(&cDataRepair::process_file, dv, file);
+		pool.push_task(&cFileProcessor::process_file, fp, file);
 
-		data_repairs.push_back(dv);
+		file_processors.push_back(fp);
 	}
 
 	pool.wait_for_tasks();
 
-	for (auto data_repair : data_repairs)
+	for (auto file_processor : file_processors)
 	{
-		delete data_repair;
+		delete file_processor;
 	}
 
 	return 0;

@@ -13,11 +13,24 @@ PRIVATE
 	BS_thread_pool.hpp
 	ParserExceptions.hpp
 
-	BlockDataFileRepair.hpp
-	BlockDataFileRepair.cpp
+	AxisCommunicationsRepairParser.hpp
+	AxisCommunicationsRepairParser.cpp
+
+	OusterRepairParser.hpp
+	OusterRepairParser.cpp
 
 	DataRepair.hpp
 	DataRepair.cpp
+
+	BlockDataFileRepair.hpp
+	BlockDataFileRepair.cpp
+
+	DataFileRecovery.hpp
+	DataFileRecovery.cpp
+
+	FileProcessor.hpp
+	FileProcessor.cpp
+
 	CeresDataRepair.cpp
 )
 
