@@ -68,3 +68,214 @@ void cOusterVerificationParser::onImuData(ouster::imu_data_t data)
 void cOusterVerificationParser::onLidarData(cOusterLidarData data)
 {}
 
+void cOusterVerificationParser::processConfigParam_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processConfigParam_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processConfigParam_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processSensorInfo_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processSensorInfo_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processSensorInfo_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processTimestamp_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processTimestamp_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processTimestamp_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processSyncPulseIn_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processSyncPulseIn_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processSyncPulseIn_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processSyncPulseOut_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processSyncPulseOut_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processSyncPulseOut_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processMultipurposeIO_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processMultipurposeIO_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processMultipurposeIO_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processNmea_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processNmea_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processNmea_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processTimeInfo_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processTimeInfo_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processTimeInfo_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processBeamIntrinsics_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processBeamIntrinsics_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processBeamIntrinsics_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processImuIntrinsics_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processImuIntrinsics_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processImuIntrinsics_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processLidarIntrinsics_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processLidarIntrinsics_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processLidarIntrinsics_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processLidarDataFormat_2(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processLidarDataFormat_2(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processLidarDataFormat_2: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processImuData(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processImuData(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processImuData: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processLidarData(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processLidarData(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processLidarData: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cOusterVerificationParser::processLidarDataFrameTimestamp(cDataBuffer& buffer)
+{
+    try
+    {
+        cOusterParser::processLidarDataFrameTimestamp(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processLidarDataFrameTimestamp: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+
