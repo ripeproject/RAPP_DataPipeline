@@ -176,7 +176,7 @@ bool cCeresDataVerifier::pass1()
         if (!mFileReader.eof())
         {
             std::string msg = mCurrentFile.string();
-            msg += ": Exception, ";
+            msg += ": std::exception, ";
             msg += e.what();
             console_message(msg);
 
@@ -235,7 +235,7 @@ bool cCeresDataVerifier::pass2()
     catch (const bdf::stream_error& e)
     {
         std::string msg = mCurrentFile.string();
-        msg += ": Failed due to ";
+        msg += ": Stream Error, ";
         msg += e.what();
         console_message(msg);
 
@@ -246,7 +246,7 @@ bool cCeresDataVerifier::pass2()
         if (!mFileReader.eof())
         {
             std::string msg = mCurrentFile.string();
-            msg += ": Failed due to ";
+            msg += ":  std::exception, ";
             msg += e.what();
             console_message(msg);
 
