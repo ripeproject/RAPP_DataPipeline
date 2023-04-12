@@ -112,29 +112,38 @@ void cDataRepair::run()
     }
     catch (const bdf::stream_error& e)
     {
-        std::string msg = e.what();
+        std::string msg = mCurrentFile.string();
+        msg += ": Failed due to ";
+        msg += e.what();
+        console_message(msg);
+
 //        emit fileResults(mId, false, e.what());
     }
     catch (const bdf::crc_error& e)
     {
+        std::string msg = mCurrentFile.string();
+        msg += ": CRC Error, ";
+        msg += e.what();
+        console_message(msg);
+
         moveFileToRepaired(false);
-        std::string msg = e.what();
         //        emit fileResults(mId, false, e.what());
         return;
     }
     catch (const bdf::unexpected_eof& e)
     {
+        std::string msg = mCurrentFile.string();
+        msg += ": Unexpected EOF, ";
+        msg += e.what();
+        console_message(msg);
+
         moveFileToRepaired(false);
 
-        std::string msg = "Unexpected EOF: ";
-        msg += e.what();
 //        emit fileResults(mId, true, msg);
         return;
     }
     catch (const std::exception& e)
     {
-        std::string msg = e.what();
-
         if (eof())
         {
             moveFileToRepaired();
@@ -147,7 +156,12 @@ void cDataRepair::run()
         }
         else
         {
-//            emit fileResults(mId, false, e.what());
+            std::string msg = mCurrentFile.string();
+            msg += ": Failed due to ";
+            msg += e.what();
+            console_message(msg);
+
+            //            emit fileResults(mId, false, e.what());
         }
         return;
     }
