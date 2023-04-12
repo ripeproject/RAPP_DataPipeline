@@ -64,11 +64,6 @@ void cCeresDataVerifier::process_file(std::filesystem::directory_entry file_to_c
 {
     if (open(file_to_check))
     {
-        std::string msg = "Processing ";
-        msg += file_to_check.path().string();
-        msg += "...";
-        console_message(msg);
-
         run();
     }
 }
@@ -98,6 +93,11 @@ void cCeresDataVerifier::run()
 //-----------------------------------------------------------------------------
 bool cCeresDataVerifier::pass1()
 {
+    std::string msg = "Pass1: ";
+    msg += mCurrentFile.string();
+    msg += "...";
+    console_message(msg);
+
     if (!mFileReader.isOpen())
     {
         throw std::logic_error("No file is open for verification.");
@@ -194,6 +194,11 @@ bool cCeresDataVerifier::pass1()
 //-----------------------------------------------------------------------------
 bool cCeresDataVerifier::pass2()
 {
+    std::string msg = "Pass2: ";
+    msg += mCurrentFile.string();
+    msg += "...";
+    console_message(msg);
+
     if (!mFileReader.isOpen())
     {
         throw std::logic_error("No file is open for verification.");
