@@ -103,7 +103,10 @@ void cCeresDataVerifier::run()
     catch (const bdf::stream_error& e)
     {
         mFileReader.close();
-        std::string msg = e.what();
+        std::string msg = mCurrentFile.string();
+        msg += ": Failed due to ";
+        msg += e.what();
+        console_message(msg);
 
         moveFileToFailed();
         return;
@@ -112,6 +115,11 @@ void cCeresDataVerifier::run()
     {
         if (!mFileReader.eof())
         {
+            std::string msg = mCurrentFile.string();
+            msg += ": Failed due to ";
+            msg += e.what();
+            console_message(msg);
+
             moveFileToFailed();
         }
         return;
