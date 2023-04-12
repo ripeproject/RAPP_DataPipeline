@@ -81,11 +81,11 @@ void cCeresDataVerifier::run()
         throw std::logic_error("No file is open for verification.");
     }
 
-    auto ouster = std::make_unique<cOusterVerificationParser>();
-    auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
+//    auto ouster = std::make_unique<cOusterVerificationParser>();
+//    auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
 
-    mFileReader.attach(ouster.get());
-    mFileReader.attach(axis.get());
+//    mFileReader.attach(ouster.get());
+//    mFileReader.attach(axis.get());
 
     try
     {
