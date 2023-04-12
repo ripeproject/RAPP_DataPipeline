@@ -23,6 +23,12 @@ public:
 	void run();
 
 protected:
+	// Pass1: A simple pass looking for CRC or other stream errors
+	bool pass1();
+
+	// Pass2: A pass through the file doing a data validation
+	bool pass2();
+
 	void moveFileToFailed();
 
 private:

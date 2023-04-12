@@ -76,16 +76,32 @@ void cCeresDataVerifier::process_file(std::filesystem::directory_entry file_to_c
 //-----------------------------------------------------------------------------
 void cCeresDataVerifier::run()
 {
+    if (!pass1())
+    {
+        mFileReader.close();
+        moveFileToFailed();
+        return;
+    }
+
+    mFileReader.open(mCurrentFile.string());
+
+    if (!pass2())
+    {
+        mFileReader.close();
+        moveFileToFailed();
+        return;
+    }
+
+    mFileReader.close();
+}
+
+//-----------------------------------------------------------------------------
+bool cCeresDataVerifier::pass1()
+{
     if (!mFileReader.isOpen())
     {
         throw std::logic_error("No file is open for verification.");
     }
-
-//    auto ouster = std::make_unique<cOusterVerificationParser>();
-//    auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
-
-//    mFileReader.attach(ouster.get());
-//    mFileReader.attach(axis.get());
 
     try
     {
@@ -94,7 +110,109 @@ void cCeresDataVerifier::run()
             if (mFileReader.fail())
             {
                 mFileReader.close();
-                return;
+                return true;
+            }
+
+            mFileReader.processBlock();
+        }
+    }
+    catch (const bdf::crc_error& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": CRC Error, ";
+        msg += " class id = ";
+        msg += std::to_string(e.class_id);
+        msg += ", major version = ";
+        msg += std::to_string(e.major_version);
+        msg += ", minor version = ";
+        msg += std::to_string(e.minor_version);
+        msg += ", data id = ";
+        msg += std::to_string(e.data_id);
+        msg += ", ";
+
+        msg += e.what();
+        console_message(msg);
+
+        return false;
+    }
+    catch (const bdf::formatting_error& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": Formatting Error, ";
+        msg += e.what();
+        console_message(msg);
+
+        return false;
+    }
+    catch (const bdf::stream_error& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": Stream Error, ";
+        msg += e.what();
+        console_message(msg);
+
+        return false;
+    }
+    catch (const bdf::io_error& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": IO Error, ";
+        msg += e.what();
+        console_message(msg);
+
+        return false;
+    }
+    catch (const std::runtime_error& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": Runtime Error, ";
+        msg += e.what();
+        console_message(msg);
+
+        return false;
+    }
+    catch (const std::exception& e)
+    {
+        if (!mFileReader.eof())
+        {
+            std::string msg = mCurrentFile.string();
+            msg += ": Exception, ";
+            msg += e.what();
+            console_message(msg);
+
+            moveFileToFailed();
+
+            return false;
+        }
+    }
+
+    mFileReader.close();
+
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+bool cCeresDataVerifier::pass2()
+{
+    if (!mFileReader.isOpen())
+    {
+        throw std::logic_error("No file is open for verification.");
+    }
+
+    auto ouster = std::make_unique<cOusterVerificationParser>();
+    auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
+
+    mFileReader.attach(ouster.get());
+    mFileReader.attach(axis.get());
+
+    try
+    {
+        while (!mFileReader.eof())
+        {
+            if (mFileReader.fail())
+            {
+                mFileReader.close();
+                return false;
             }
 
             mFileReader.processBlock();
@@ -102,25 +220,21 @@ void cCeresDataVerifier::run()
     }
     catch (const bdf::invalid_data& e)
     {
-        mFileReader.close();
         std::string msg = mCurrentFile.string();
-        msg += ": Failed due to ";
+        msg += ": Invalid Data, ";
         msg += e.what();
         console_message(msg);
 
-        moveFileToFailed();
-        return;
+        return false;
     }
     catch (const bdf::stream_error& e)
     {
-        mFileReader.close();
         std::string msg = mCurrentFile.string();
         msg += ": Failed due to ";
         msg += e.what();
         console_message(msg);
 
-        moveFileToFailed();
-        return;
+        return false;
     }
     catch (const std::exception& e)
     {
@@ -131,12 +245,13 @@ void cCeresDataVerifier::run()
             msg += e.what();
             console_message(msg);
 
-            moveFileToFailed();
+            return false;
         }
-        return;
     }
 
     mFileReader.close();
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
