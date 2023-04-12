@@ -100,6 +100,17 @@ void cCeresDataVerifier::run()
             mFileReader.processBlock();
         }
     }
+    catch (const bdf::invalid_data& e)
+    {
+        mFileReader.close();
+        std::string msg = mCurrentFile.string();
+        msg += ": Failed due to ";
+        msg += e.what();
+        console_message(msg);
+
+        moveFileToFailed();
+        return;
+    }
     catch (const bdf::stream_error& e)
     {
         mFileReader.close();
@@ -137,6 +148,13 @@ void cCeresDataVerifier::moveFileToFailed()
     ::create_directory(mFailedDirectory);
 
     std::filesystem::path dest = mFailedDirectory / mCurrentFile.filename();
+
+    std::string msg = "Moving ";
+    msg += mCurrentFile.string();
+    msg += " to ";
+    msg += dest.string();
+    console_message(msg);
+
     std::filesystem::rename(mCurrentFile, dest);
 }
 
