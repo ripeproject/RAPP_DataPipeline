@@ -46,4 +46,91 @@ void cAxisCommunicationsVerificationParser::onJPEG(const cJpegBuffer& buffer)
 void cAxisCommunicationsVerificationParser::onMpegFrame(const cMpegFrameBuffer& buffer)
 {}
 
+void cAxisCommunicationsVerificationParser::processActiveCameraId(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processActiveCameraId(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processActiveCameraId: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cAxisCommunicationsVerificationParser::processFramesPerSecond(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processFramesPerSecond(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processFramesPerSecond: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cAxisCommunicationsVerificationParser::processBitmap(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processBitmap(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processBitmap: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cAxisCommunicationsVerificationParser::processJPEG(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processJPEG(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processJPEG: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cAxisCommunicationsVerificationParser::processMpegFrame(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processMpegFrame(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processMpegFrame: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cAxisCommunicationsVerificationParser::processImageSize(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processImageSize(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processImageSize: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+
+
+
 

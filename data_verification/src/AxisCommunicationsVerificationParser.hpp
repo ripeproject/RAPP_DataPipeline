@@ -16,6 +16,14 @@ public:
 	void onBitmap(const cBitmapBuffer& buffer) override;
 	void onJPEG(const cJpegBuffer& buffer) override;
 	void onMpegFrame(const cMpegFrameBuffer& buffer) override;
+
+protected:
+	void processActiveCameraId(cDataBuffer& buffer) override;
+	void processFramesPerSecond(cDataBuffer& buffer) override;
+	void processBitmap(cDataBuffer& buffer) override;
+	void processJPEG(cDataBuffer& buffer) override;
+	void processMpegFrame(cDataBuffer& buffer) override;
+	void processImageSize(cDataBuffer& buffer) override;
 };
 
 
