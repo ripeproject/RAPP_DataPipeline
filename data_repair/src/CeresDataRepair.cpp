@@ -25,7 +25,8 @@ int main(int argc, char** argv)
 {
 	using namespace std::filesystem;
 
-	int num_of_threads = 0;
+	// The default is one thread because this application in I/O bound.
+	int num_of_threads = 1;
 	std::string input_directory = current_path().string();
 
 	auto cli = lyra::cli()
@@ -82,7 +83,7 @@ int main(int argc, char** argv)
 	num_of_threads = std::max(num_of_threads, 0);
 	num_of_threads = std::min(num_of_threads, max_threads);
 
-	// Constructs a thread pool with as many threads as available in the hardware.
+	// Constructs a thread pool with the desired number of threads.
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
