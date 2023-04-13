@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "DataFileRecovery.hpp"
+#include "DataRepair.hpp"
+
 #include <filesystem>
 #include <string>
 #include <memory>
@@ -26,4 +29,7 @@ private:
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
+
+	std::unique_ptr<cDataFileRecovery>	mDataFileRecovery;
+	std::unique_ptr<cDataRepair>		mDataRepair;
 };

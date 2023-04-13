@@ -22,8 +22,8 @@ PRIVATE
 	DataRepair.hpp
 	DataRepair.cpp
 
-	BlockDataFileRepair.hpp
-	BlockDataFileRepair.cpp
+	BlockDataFileRecovery.hpp
+	BlockDataFileRecovery.cpp
 
 	DataFileRecovery.hpp
 	DataFileRecovery.cpp

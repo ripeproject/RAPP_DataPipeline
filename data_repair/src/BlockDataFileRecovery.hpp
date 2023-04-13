@@ -10,14 +10,13 @@
 #include <map>
 
 
-class cBlockDataFileRepair : public cBlockDataFileReader
+class cBlockDataFileRecovery : public cBlockDataFileReader
 {
 public:
 	bool processBlock() override;
 
 	virtual void processBlock(const cBlockID& id) = 0;
 	virtual void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len) = 0;
-
 
 private:
 	void readPayload(uint32_t len, cDataBuffer& buffer);

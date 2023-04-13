@@ -11,28 +11,19 @@
 
 extern void console_message(const std::string& msg);
 
-namespace
-{
-    void create_directory(std::filesystem::path recovered_dir)
-    {
-        if (!std::filesystem::exists(recovered_dir))
-        {
-            std::filesystem::create_directory(recovered_dir);
-        }
-    }
-}
-
 
 //-----------------------------------------------------------------------------
 cDataRepair::cDataRepair(std::filesystem::path repaired_dir)
 {
     mRepairedDirectory = repaired_dir;
+
+    mOusterRepairParser = std::make_unique<cOusterRepairParser>();
 }
 
-cDataRepair::cDataRepair(std::filesystem::directory_entry file_to_repair,
-    std::filesystem::path repaired_dir)
+cDataRepair::cDataRepair(std::filesystem::path file_to_repair,
+                        std::filesystem::path repaired_dir)
+    : cDataRepair(repaired_dir)
 {
-    mRepairedDirectory = repaired_dir;
     mCurrentFile = file_to_repair;
 
     mRepairedFile = mRepairedDirectory / mCurrentFile.filename();
@@ -42,9 +33,10 @@ cDataRepair::cDataRepair(std::filesystem::directory_entry file_to_repair,
         throw std::logic_error("File already exists");
     }
 
+    mFileReader.open(mCurrentFile.string());
     mFileWriter.open(mRepairedFile.string());
 
-    if (!cBlockDataFileRepair::open(file_to_repair.path().string()))
+    if (!mFileReader.isOpen() || !mFileWriter.isOpen())
     {
         throw std::logic_error(mCurrentFile.string());
     }
@@ -52,12 +44,13 @@ cDataRepair::cDataRepair(std::filesystem::directory_entry file_to_repair,
 
 cDataRepair::~cDataRepair()
 {
+    mFileReader.close();
     mFileWriter.close();
 }
 
 
 //-----------------------------------------------------------------------------
-bool cDataRepair::open(std::filesystem::directory_entry file_to_repair)
+bool cDataRepair::open(std::filesystem::path file_to_repair)
 {
     mCurrentFile = file_to_repair;
     mRepairedFile = mRepairedDirectory / mCurrentFile.filename();
@@ -68,46 +61,32 @@ bool cDataRepair::open(std::filesystem::directory_entry file_to_repair)
     }
 
     mFileWriter.open(mRepairedFile.string());
-    cBlockDataFileRepair::open(file_to_repair.path().string());
+    mFileReader.open(mCurrentFile.string());
 
-    return mFileWriter.isOpen() && cBlockDataFileRepair::isOpen();
-}
-
-//-----------------------------------------------------------------------------
-void cDataRepair::process_file(std::filesystem::directory_entry file_to_repair)
-{
-    if (open(file_to_repair))
-    {
-        std::string msg = "Processing ";
-        msg += file_to_repair.path().string();
-        msg += "...";
-        console_message(msg);
-
-        run();
-    }
+    return mFileWriter.isOpen() && mFileReader.isOpen();
 }
 
 //-----------------------------------------------------------------------------
 void cDataRepair::run()
 {
-    if (!cBlockDataFileRepair::isOpen())
-    {
-        throw std::logic_error("No file is open for repair.");
-    }
+    mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
+    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len) { this->processBlock(id, buf, len); });
+
+    mFileReader.attach(mOusterRepairParser.get());
+    mOusterRepairParser->attach(&mFileWriter);
 
     try
     {
-        while (!eof())
+        while (!mFileReader.eof())
         {
-            if (fail())
+            if (mFileReader.fail())
             {
-//                emit fileResults(mId, false, "I/O Error: failbit is set.");
-                cBlockDataFileRepair::close();
+                mFileReader.close();
                 mFileWriter.close();
                 return;
             }
 
-            cBlockDataFileRepair::processBlock();
+            mFileReader.processBlock();
         }
     }
     catch (const bdf::stream_error& e)
@@ -116,8 +95,6 @@ void cDataRepair::run()
         msg += ": Failed due to ";
         msg += e.what();
         console_message(msg);
-
-//        emit fileResults(mId, false, e.what());
     }
     catch (const bdf::crc_error& e)
     {
@@ -126,8 +103,7 @@ void cDataRepair::run()
         msg += e.what();
         console_message(msg);
 
-        moveFileToRepaired(false);
-        //        emit fileResults(mId, false, e.what());
+//        moveFileToRepaired(false);
         return;
     }
     catch (const bdf::unexpected_eof& e)
@@ -137,22 +113,14 @@ void cDataRepair::run()
         msg += e.what();
         console_message(msg);
 
-        moveFileToRepaired(false);
-
-//        emit fileResults(mId, true, msg);
+//        moveFileToRepaired(false);
         return;
     }
     catch (const std::exception& e)
     {
-        if (eof())
+        if (mFileReader.eof())
         {
-            moveFileToRepaired();
-            /*
-            if (!moveFileToRepaired())
-                emit fileResults(mId, false, "File size mismatch!");
-            else
-                emit fileResults(mId, true, QString());
-            */
+//            moveFileToRepaired();
         }
         else
         {
@@ -160,19 +128,14 @@ void cDataRepair::run()
             msg += ": Failed due to ";
             msg += e.what();
             console_message(msg);
-
-            //            emit fileResults(mId, false, e.what());
         }
         return;
     }
 
-    moveFileToRepaired();
-/*
-    if (!moveFileToRepaired())
-        emit fileResults(mId, false, "File size mismatch!");
-    else
-        emit fileResults(mId, true, QString());
-*/
+//    moveFileToRepaired();
+
+    mFileReader.close();
+    mFileWriter.close();
 }
 
 void cDataRepair::processBlock(const cBlockID& id)
@@ -186,8 +149,9 @@ void cDataRepair::processBlock(const cBlockID& id, const std::byte* buf, std::si
 }
 
 //-----------------------------------------------------------------------------
-bool cDataRepair::moveFileToRepaired(bool size_check)
+bool cDataRepair::moveFile(bool size_check)
 {
+/*
     if (cBlockDataFileReader::isOpen())
         cBlockDataFileReader::close();
 
@@ -242,7 +206,7 @@ bool cDataRepair::moveFileToRepaired(bool size_check)
 
         std::filesystem::rename(mRepairedFile, dest);
     }
-
+*/
     return true;
 }
 

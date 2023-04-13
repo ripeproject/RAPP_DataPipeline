@@ -64,6 +64,8 @@ int main(int argc, char** argv)
 			continue;
 
 		files_to_repair.push_back(dir_entry);
+
+		break;
 	}
 
 	if (files_to_repair.empty())

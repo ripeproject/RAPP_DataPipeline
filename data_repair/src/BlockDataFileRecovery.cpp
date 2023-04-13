@@ -1,5 +1,5 @@
 
-#include "BlockDataFileRepair.hpp"
+#include "BlockDataFileRecovery.hpp"
 
 #include <cbdf/BlockId.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
@@ -31,11 +31,11 @@
 
 /*******************************************************************
  *
- * B L O C K   D A T A   F I L E   R E P A I R
+ * B L O C K   D A T A   F I L E   R E C O V E R Y
  *
  ******************************************************************/
 
-bool cBlockDataFileRepair::processBlock()
+bool cBlockDataFileRecovery::processBlock()
 {
     if (mFile.eof())
         return false;
@@ -203,7 +203,7 @@ bool cBlockDataFileRepair::processBlock()
     return !mFile.eof();
 }
 
-void cBlockDataFileRepair::readPayload(uint32_t len, cDataBuffer& buffer)
+void cBlockDataFileRecovery::readPayload(uint32_t len, cDataBuffer& buffer)
 {
     if (buffer.capacity() < len)
     {
@@ -231,7 +231,7 @@ void cBlockDataFileRepair::readPayload(uint32_t len, cDataBuffer& buffer)
     }
 }
 
-uint32_t cBlockDataFileRepair::readCRC()
+uint32_t cBlockDataFileRecovery::readCRC()
 {
     uint32_t file_crc = 0;
     mFile.read(reinterpret_cast<char*>(&file_crc), sizeof(file_crc));
@@ -249,7 +249,7 @@ uint32_t cBlockDataFileRepair::readCRC()
     return file_crc;
 }
 
-bool cBlockDataFileRepair::tryToFixBlockId(const cBlockID blockID)
+bool cBlockDataFileRecovery::tryToFixBlockId(const cBlockID blockID)
 {
     auto result = checkBlockId(blockID, 0);
     if (result != eBlockStatus::OK)
@@ -280,7 +280,7 @@ bool cBlockDataFileRepair::tryToFixBlockId(const cBlockID blockID)
     return false;
 }
 
-bool cBlockDataFileRepair::tryToFixBlock(const cBlockID blockID, const cDataBuffer buffer, const uint32_t len)
+bool cBlockDataFileRecovery::tryToFixBlock(const cBlockID blockID, const cDataBuffer buffer, const uint32_t len)
 {
     auto result = checkBlockId(blockID, len);
     if (result != eBlockStatus::OK)
@@ -328,7 +328,7 @@ bool cBlockDataFileRepair::tryToFixBlock(const cBlockID blockID, const cDataBuff
     return false;
 }
 
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkBlockId(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkBlockId(const cBlockID blockID, uint32_t len)
 {
     switch (static_cast<ClassIDs>(blockID.classID()))
     {
@@ -427,7 +427,7 @@ cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkBlockId(const cBlo
     return eBlockStatus::OK;
 }
 
-bool cBlockDataFileRepair::fixAtBlockId(const cBlockID originalBlockID, uint32_t originalLen, eBlockStatus blockStatus)
+bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32_t originalLen, eBlockStatus blockStatus)
 {
     std::ifstream::pos_type mStartPos = 0;
     std::ifstream::pos_type mEndPos = 0;
@@ -762,7 +762,7 @@ bool cBlockDataFileRepair::fixAtBlockId(const cBlockID originalBlockID, uint32_t
     return false;
 }
 
-bool cBlockDataFileRepair::recoverBlockID(cBlockID& blockID, uint32_t len, eBlockStatus blockStatus)
+bool cBlockDataFileRecovery::recoverBlockID(cBlockID& blockID, uint32_t len, eBlockStatus blockStatus)
 {
     BLOCK_CLASS_ID_t classID = 0;
     BLOCK_MAJOR_VERSION_t majorVer = 0;
@@ -808,7 +808,7 @@ bool cBlockDataFileRepair::recoverBlockID(cBlockID& blockID, uint32_t len, eBloc
     return (eBlockStatus::OK == checkBlockId(blockID, len));
 }
 
-bool cBlockDataFileRepair::fixAtDataBuffer(const std::size_t pos,
+bool cBlockDataFileRecovery::fixAtDataBuffer(const std::size_t pos,
     const cBlockID originalBlockID, uint32_t originalLen,
     const cBlockID insertedBlockID, uint32_t insertedLen)
 {
@@ -821,7 +821,7 @@ bool cBlockDataFileRepair::fixAtDataBuffer(const std::size_t pos,
     return false;
 }
 
-bool cBlockDataFileRepair::fixAtStartPayload(const cBlockID originalBlockID, uint32_t originalLen,
+bool cBlockDataFileRecovery::fixAtStartPayload(const cBlockID originalBlockID, uint32_t originalLen,
             const cBlockID insertedBlockID, uint32_t insertedLen)
 {
     // This is a check to make sure we are setting the file position
@@ -995,14 +995,14 @@ bool cBlockDataFileRepair::fixAtStartPayload(const cBlockID originalBlockID, uin
     return false;
 }
 
-bool cBlockDataFileRepair::fixAtCRC(const cBlockID originalBlockID,
+bool cBlockDataFileRecovery::fixAtCRC(const cBlockID originalBlockID,
     const cBlockID insertedBlockID, uint32_t insertedLen)
 {
     uint32_t originalCRC = bdf::crc(originalBlockID);
     return false;
 }
 
-bool cBlockDataFileRepair::fixAtCRC(const cBlockID originalBlockID, const cDataBuffer originalBuffer,
+bool cBlockDataFileRecovery::fixAtCRC(const cBlockID originalBlockID, const cDataBuffer originalBuffer,
     uint32_t originalLen, const cBlockID insertedBlockID, uint32_t insertedLen)
 {
     uint32_t originalCRC = bdf::crc(originalBlockID, originalBuffer.data(), originalLen);
@@ -1091,7 +1091,7 @@ bool cBlockDataFileRepair::fixAtCRC(const cBlockID originalBlockID, const cDataB
 /**********************************************************
  * Data Block Verification
  **********************************************************/
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkExperimentBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkExperimentBlock(const cBlockID blockID, uint32_t len)
 {
     auto dataId = static_cast<experiment::DataID>(blockID.dataID());
 
@@ -1147,7 +1147,7 @@ cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkExperimentBlock(co
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkPvtBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkPvtBlock(const cBlockID blockID, uint32_t len)
 {
     auto dataId = static_cast<pvt::DataID>(blockID.dataID());
 
@@ -1171,7 +1171,7 @@ cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkPvtBlock(const cBl
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkAxisCommunicationBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkAxisCommunicationBlock(const cBlockID blockID, uint32_t len)
 {
     auto dataId = static_cast<axis::DataID>(blockID.dataID());
 
@@ -1200,7 +1200,7 @@ cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkAxisCommunicationB
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkOusterLidarBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkOusterLidarBlock(const cBlockID blockID, uint32_t len)
 {
     auto dataId = static_cast<ouster::DataID>(blockID.dataID());
 
@@ -1229,7 +1229,7 @@ cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkOusterLidarBlock(c
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkSpidercamBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSpidercamBlock(const cBlockID blockID, uint32_t len)
 {
     auto dataId = static_cast<spidercam::DataID>(blockID.dataID());
 
@@ -1246,7 +1246,7 @@ cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkSpidercamBlock(con
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkSsnxBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSsnxBlock(const cBlockID blockID, uint32_t len)
 {
     auto dataId = static_cast<ssnx::DataID>(blockID.dataID());
 
@@ -1333,7 +1333,7 @@ cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkSsnxBlock(const cB
 }
 
 
-cBlockDataFileRepair::eBlockStatus cBlockDataFileRepair::checkWeatherBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkWeatherBlock(const cBlockID blockID, uint32_t len)
 {
     auto dataId = static_cast<weather::DataID>(blockID.dataID());
 

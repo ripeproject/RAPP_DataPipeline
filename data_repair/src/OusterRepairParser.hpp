@@ -5,10 +5,17 @@
 #pragma once
 
 #include <cbdf/OusterParser.hpp>
+#include <cbdf/OusterSerializer.hpp>
 
 
 class cOusterRepairParser : public cOusterParser
 {
+public:
+	cOusterRepairParser();
+
+	void attach(cBlockDataFileWriter* pDataFile);
+	cBlockDataFileWriter* detach();
+
 public:
 	void onConfigParam(ouster::config_param_2_t config_param) override;
 	void onSensorInfo(ouster::sensor_info_2_t sensor_info) override;
@@ -41,5 +48,8 @@ protected:
 	void processImuData(cDataBuffer& buffer) override;
 	void processLidarData(cDataBuffer& buffer) override;
 	void processLidarDataFrameTimestamp(cDataBuffer& buffer) override;
+
+private:
+	cOusterSerializer mSerializer;
 };
 
