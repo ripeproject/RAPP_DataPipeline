@@ -82,7 +82,10 @@ int main(int argc, char** argv)
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
-	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+	if (n == 1)
+		std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
+	else
+		std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 
 	std::vector<cCeresDataVerifier*> ceres_data_verifiers;
 
