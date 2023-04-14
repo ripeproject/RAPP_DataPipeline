@@ -26,11 +26,19 @@ public:
 
 	void run();
 
+protected:
+	// Repair data in the recovered file if possible
+	bool pass1();
+
+	// Validate the repaired file
+	bool pass2();
+
 private:
     void processBlock(const cBlockID& id);
     void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len);
 
-    bool moveFile(bool size_check = true);
+	bool removeRecoveryFile();
+	bool moveRepairedFile();
 
 private:
 	cBlockDataFileReader mFileReader;

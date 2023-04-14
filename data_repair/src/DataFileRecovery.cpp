@@ -8,6 +8,7 @@
 #include <string>
 #include <stdexcept>
 
+#include <iostream>
 
 extern void console_message(const std::string& msg);
 
@@ -252,11 +253,18 @@ bool cDataFileRecovery::pass2()
 //-----------------------------------------------------------------------------
 void cDataFileRecovery::processBlock(const cBlockID& id)
 {
+//    std::cout << "Class ID = " << id.classID() << ", Major = " << static_cast<int>(id.majorVersion())
+//        << ", Minor = " << static_cast<int>(id.minorVersion()) << ", Data ID = " << id.dataID() << "\n";
+
     mFileWriter.writeBlock(id);
 }
 
 void cDataFileRecovery::processBlock(const cBlockID& id, const std::byte* buf, std::size_t len)
 {
+//    std::cout << "Class ID = " << id.classID() << ", Major = " << static_cast<int>(id.majorVersion())
+//        << ", Minor = " << static_cast<int>(id.minorVersion()) << ", Data ID = " << id.dataID()
+//        << ", len = " << len << "\n";
+
     mFileWriter.writeBlock(id, buf, len);
 }
 

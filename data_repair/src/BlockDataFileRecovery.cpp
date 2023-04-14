@@ -169,6 +169,23 @@ bool cBlockDataFileRecovery::processBlock()
         mStartOfCRC = mFile.tellg();
         uint32_t file_crc = readCRC();
 
+/*
+        if (file_crc == 0)
+        {
+            std::string msg = "File CRC Zero: Class ID=";
+            msg += std::to_string(classID);
+            msg += ", Major Version=";
+            msg += std::to_string(majorVersion);
+            msg += ", Minor Version=";
+            msg += std::to_string(minorVersion);
+            msg += ", Data ID=";
+            msg += std::to_string(data_id);
+            msg += ", Data Lenth=";
+            msg += std::to_string(len);
+            throw bdf::crc_error(classID, majorVersion, minorVersion, data_id, msg);
+        }
+*/
+
         uint32_t crc = bdf::crc(blockId, mBuffer.data(), len);
         if (file_crc != crc)
         {
@@ -517,6 +534,12 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
             auto crc = bdf::crc(testID, mBuffer.data(), originalLen);
             if (crc == test_crc)
             {
+                if (originalLen != mBuffer.read_size())
+                {
+                    int x = 5;
+                    ++x;
+                }
+
                 processBlock(testID, mBuffer.data(), originalLen);
                 processBlock(insertedBlockID);
                 return true;
@@ -552,6 +575,12 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
             auto crc = bdf::crc(testID, mBuffer.data(), originalLen);
             if (crc == test_crc)
             {
+                if (originalLen != mBuffer.read_size())
+                {
+                    int x = 5;
+                    ++x;
+                }
+
                 processBlock(testID, mBuffer.data(), originalLen);
                 processBlock(insertedBlockID);
                 return true;
@@ -578,6 +607,12 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
 
         if (((crc == crc1) || (crc == crc2)) && ((insertedCRC == crc1) || (insertedCRC == crc2)))
         {
+            if (originalLen != mBuffer.read_size())
+            {
+                int x = 5;
+                ++x;
+            }
+
             processBlock(testID, mBuffer.data(), originalLen);
             processBlock(insertedBlockID);
             return true;
@@ -619,6 +654,12 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
         uint32_t test_crc = readCRC();
         if (crc == test_crc)
         {
+            if (insertedLen != insertedBuffer.read_size())
+            {
+                int x = 5;
+                ++x;
+            }
+
             processBlock(testID, mBuffer.data(), originalLen);
             processBlock(insertedBlockID, insertedBuffer.data(), insertedLen);
             return true;

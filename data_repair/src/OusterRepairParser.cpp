@@ -233,6 +233,13 @@ void cOusterRepairParser::onLidarDataFormat(ouster::lidar_data_format_2_t format
 
 void cOusterRepairParser::onImuData(ouster::imu_data_t data)
 {
+    if ((data.acceleration_Xaxis_g == 0.0) &&
+        (data.acceleration_Yaxis_g == 0.0) &&
+        (data.acceleration_Zaxis_g == 0.0))
+    {
+        throw bdf::invalid_data("Bad lidar data");
+    }
+
     mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
 
     mSerializer.write(data);
@@ -240,6 +247,11 @@ void cOusterRepairParser::onImuData(ouster::imu_data_t data)
 
 void cOusterRepairParser::onLidarData(cOusterLidarData data)
 {
+    if (data.empty())
+    {
+        throw bdf::invalid_data("Bad lidar data");
+    }
+
     mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
 
     mSerializer.write(data.frame_id(), data);

@@ -46,7 +46,7 @@ void cFileProcessor::run()
     {
         std::string msg = "Warning: the file ";
         msg += mInputFile.filename().string();
-        msg += " could not be totally recovered!";
+        msg += " could not be completely recovered!";
         console_message(msg);
     }
 
