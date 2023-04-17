@@ -47,7 +47,8 @@ void cLidarData2CeresConverter::process_file(std::filesystem::directory_entry in
     {
         std::string msg = "Processing ";
         msg += in.path().string();
-        msg += "...";
+        msg += " -> ";
+        msg += out.string();
         console_message(msg);
 
         run();
