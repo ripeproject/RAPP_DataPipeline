@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 {
 	using namespace std::filesystem;
 
-	int num_of_threads = 0;
+	int num_of_threads = 1;
 	std::string input_directory = current_path().string();
 	std::string output_directory;
 
@@ -114,7 +114,10 @@ int main(int argc, char** argv)
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
-	std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+	if (n ==1)
+		std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
+	else
+		std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 
 	std::vector<cFileProcessor*> file_processors;
 
