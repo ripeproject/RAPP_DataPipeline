@@ -1140,10 +1140,10 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkExperimentBloc
     {
     case experiment::DataID::EXPERIMENT:
         break;
-    case experiment::DataID::START_TIME:
+    case experiment::DataID::EXPERIMENT_START_TIME:
         if (len != 24) return eBlockStatus::BAD_PAYLOAD;
         break;
-    case experiment::DataID::END_TIME:
+    case experiment::DataID::EXPERIMENT_END_TIME:
         if (len != 24) return eBlockStatus::BAD_PAYLOAD;
         break;
     case experiment::DataID::START_RECORDING_TIMESTAMP:
@@ -1180,6 +1180,12 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkExperimentBloc
         break;
     case experiment::DataID::RECORDING_HEARTBEAT_TIMESTAMP:
         if (len != 8) return eBlockStatus::BAD_PAYLOAD;
+        break;
+    case experiment::DataID::FILE_DATE:
+        break;
+    case experiment::DataID::FILE_DAY_OF_YEAR:
+        break;
+    case experiment::DataID::FILE_TIME:
         break;
     default:
         return eBlockStatus::BAD_DATA_ID;
