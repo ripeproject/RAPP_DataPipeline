@@ -1183,7 +1183,7 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkExperimentBloc
         break;
     case experiment::DataID::FILE_DATE:
         break;
-    case experiment::DataID::FILE_DAY_OF_YEAR:
+    case experiment::DataID::EXPERIMENT_DAY_OF_YEAR:
         break;
     case experiment::DataID::FILE_TIME:
         break;
