@@ -82,6 +82,7 @@ private:
     void onDOP(ssnx::gps::DOP_1_t dop) override;
     void onPVT_Residuals(ssnx::gps::PVT_Residuals_1_t residuals) override;
     void onRAIMStatistics(ssnx::gps::RAIMStatistics_1_t raim) override;
+    void onPOS_Local(ssnx::gps::POS_Local_1_t pos) override;
     void onPOS_Projected(ssnx::gps::POS_Projected_1_t pos) override;
     void onReceiverTime(ssnx::gps::ReceiverTime_1_t time) override;
     void onRtcmDatum(ssnx::gps::RtcmDatum_1_t datum) override;

@@ -364,14 +364,14 @@ void cPointCloud2Slam::onPosCovGeodetic(ssnx::gps::PosCovGeodetic_1_t cov)
 {
     if (!cov.dataValid) return;
 
-    auto n = cov.Cov_latlat_m;
+    auto n = cov.Cov_latlat_m2;
 }
 
 void cPointCloud2Slam::onVelCovGeodetic(ssnx::gps::VelCovGeodetic_1_t cov)
 {
     if (!cov.dataValid) return;
 
-    auto n = cov.Cov_VnVn_mps;
+    auto n = cov.Cov_VnVn_m2ps2;
 }
 
 void cPointCloud2Slam::onDOP(ssnx::gps::DOP_1_t dop) {}
@@ -382,6 +382,7 @@ void cPointCloud2Slam::onPVT_Residuals(ssnx::gps::PVT_Residuals_1_t residuals)
 }
 
 void cPointCloud2Slam::onRAIMStatistics(ssnx::gps::RAIMStatistics_1_t raim) {}
+void cPointCloud2Slam::onPOS_Local(ssnx::gps::POS_Local_1_t pos) {}
 void cPointCloud2Slam::onPOS_Projected(ssnx::gps::POS_Projected_1_t pos) {}
 void cPointCloud2Slam::onReceiverTime(ssnx::gps::ReceiverTime_1_t time) {}
 void cPointCloud2Slam::onRtcmDatum(ssnx::gps::RtcmDatum_1_t datum) {}
