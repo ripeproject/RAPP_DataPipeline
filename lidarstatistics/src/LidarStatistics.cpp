@@ -342,11 +342,6 @@ void cLidarStatistics::computerPointCloud(const cOusterLidarData& data)
 	double minDistance_mm = mMinDistance_m * m_to_mm;
 	double maxDistance_mm = mMaxDistance_m * m_to_mm;
 
-	if (!data.rangeDataIsValid())
-	{
-		std::cout << "Invalid range data!" << std::endl;
-	}
-
 	auto frameID = data.frame_id();
 	auto timestamp_ns = data.timestamp_ns();
 
