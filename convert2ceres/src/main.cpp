@@ -15,6 +15,12 @@
 
 std::mutex g_console_mutex;
 
+namespace
+{
+	int num_of_threads = 1;
+	std::string input_directory = std::filesystem::current_path().string();
+	std::string output_directory;
+}
 
 void console_message(const std::string& msg)
 {
@@ -25,11 +31,9 @@ void console_message(const std::string& msg)
 
 int main(int argc, char** argv)
 {
-	using namespace std::filesystem;
+	std::cerr << argc << std::endl;
 
-	int num_of_threads = 1;
-	std::string input_directory = current_path().string();
-	std::string output_directory;
+	using namespace std::filesystem;
 
 	bool showHelp = false;
 

@@ -3,16 +3,8 @@
 add_subdirectory(bdf_v1)
 
 
-add_executable(convert2ceres)
+set(CONVERT2CERES_COMMON_FILES
 
-set_target_properties(convert2ceres PROPERTIES LANGUAGE CXX)
-
-target_compile_features(convert2ceres PRIVATE cxx_std_20)
-
-target_sources(convert2ceres
-PRIVATE
-
-	BS_thread_pool.hpp
 	ParserExceptions.hpp
 
 	LidarData2CeresConverter.hpp
@@ -20,21 +12,78 @@ PRIVATE
 
 	FileProcessor.hpp
 	FileProcessor.cpp
-	main.cpp
 )
 
-target_include_directories(convert2ceres PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
-target_link_libraries(convert2ceres PRIVATE BlockDataFile_v1)
-target_link_libraries(convert2ceres PRIVATE cbdf::cbdf)
-target_link_libraries(convert2ceres PRIVATE cbdf::info)
-target_link_libraries(convert2ceres PRIVATE cbdf::sensors)
+add_executable(console_app)
+
+set_target_properties(console_app PROPERTIES LANGUAGE CXX)
+set_target_properties(console_app PROPERTIES OUTPUT_NAME "convert2ceres")
+
+target_compile_features(console_app PRIVATE cxx_std_20)
+
+target_sources(console_app
+PRIVATE
+
+	BS_thread_pool.hpp
+	
+	${CONVERT2CERES_COMMON_FILES}
+	
+	ConsoleApp.cpp
+)
+
+target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+
+target_link_libraries(console_app PRIVATE BlockDataFile_v1)
+target_link_libraries(console_app PRIVATE cbdf::cbdf)
+target_link_libraries(console_app PRIVATE cbdf::info)
+target_link_libraries(console_app PRIVATE cbdf::sensors)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
 # Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
-set_property(TARGET convert2ceres PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
+
+if(wxWidgets_FOUND)
+
+add_executable(gui_app WIN32 MACOSX_BUNDLE)
+
+set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
+set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresConvert")
+
+target_compile_features(gui_app PRIVATE cxx_std_20)
+
+target_sources(gui_app
+PRIVATE
+
+	MainWindow.hpp
+	MainWindow.cpp
+	MainFrame.hpp
+	MainFrame.cpp
+
+	${CONVERT2CERES_COMMON_FILES}
+	
+	GuiApp.cpp
+)
+
+include(${wxWidgets_USE_FILE})
+
+target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+
+target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
+target_link_libraries(gui_app PRIVATE BlockDataFile_v1)
+target_link_libraries(gui_app PRIVATE cbdf::cbdf)
+target_link_libraries(gui_app PRIVATE cbdf::info)
+target_link_libraries(gui_app PRIVATE cbdf::sensors)
+
+#
+# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
+# Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
+set_property(TARGET gui_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
+endif()
 
 #******************************************************************************
 # Installer
