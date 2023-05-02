@@ -1,21 +1,29 @@
 
 #include "MainWindow.hpp"
-#include "FileProcessor.hpp"
 
 #include <wx/aui/framemanager.h>
+#include <wx/aui/auibook.h>
+#include <wx/aboutdlg.h>
 #include <wx/thread.h>
 
 #include <cbdf/BlockDataFile.hpp>
-
-#include <filesystem>
-
-using namespace std::filesystem;
-
 
 void console_message(const std::string& msg)
 {
 	wxLogMessage(wxString(msg));
 }
+
+// ----------------------------------------------------------------------------
+// constants
+// ----------------------------------------------------------------------------
+
+// IDs for the controls and the menu commands
+enum
+{
+	// Custom submenu items
+	ID_RECONNECT = wxID_HIGHEST + 1,
+
+};
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -33,7 +41,7 @@ wxEND_EVENT_TABLE()
 cMainWindow::cMainWindow(wxWindow* parent)
 	: wxPanel(parent, wxID_ANY)
 {
-	mpHandler = GetEventHandler();
+//	mpHandler = GetEventHandler();
 
 	CreateControls();
 	CreateLayout();
@@ -45,21 +53,17 @@ cMainWindow::~cMainWindow()
 
 void cMainWindow::CreateControls()
 {
-	mpSourceCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, wxTextValidator(wxFILTER_ALPHANUMERIC));
-	mpSourceCtrl->Bind(wxEVT_KILL_FOCUS, &cMainWindow::OnValidateSrc, this);
+	mpLoadSrcFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, wxTextValidator(wxFILTER_ALPHANUMERIC));
+	mpLoadSrcFile->Bind(wxEVT_KILL_FOCUS, &cMainWindow::OnValidateSrc, this);
 
-	mpSrcFileButton = new wxButton(this, wxID_ANY, "File");
-	mpSrcFileButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcFile, this);
+	mpLoadSrcButton = new wxButton(this, wxID_ANY, "Browse");
+	mpLoadSrcButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcBrowse, this);
 
-	mpSrcDirButton = new wxButton(this, wxID_ANY, "Directory");
-	mpSrcDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcDirectory, this);
-
-	mpDstCtrl = new wxTextCtrl(this, wxID_ANY);
-	mpDstButton = new wxButton(this, wxID_ANY, "Browse");
-	mpDstButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDstDirectory, this);
+	mpLoadDstFile = new wxTextCtrl(this, wxID_ANY);
+	mpLoadDstButton = new wxButton(this, wxID_ANY, "Browse");
+	mpLoadDstButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDstBrowse, this);
 
 	mpConvertButton = new wxButton(this, wxID_ANY, "Convert");
-	mpConvertButton->Bind(wxEVT_BUTTON, &cMainWindow::OnConvert, this);
 
 	// redirect logs from our event handlers to text control
 	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
@@ -72,19 +76,18 @@ void cMainWindow::CreateLayout()
 	wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
 	topsizer->AddSpacer(10);
 
-	auto* grid_sizer = new wxFlexGridSizer(4);
+	auto* grid_sizer = new wxFlexGridSizer(3);
 	grid_sizer->SetVGap(5);
 	grid_sizer->SetHGap(5);
 	grid_sizer->AddGrowableCol(1, 1);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Source: "), 0, wxALIGN_CENTER_VERTICAL);
-	grid_sizer->Add(mpSourceCtrl, 1, wxEXPAND);
-	grid_sizer->Add(mpSrcFileButton, 0, wxALIGN_CENTER_VERTICAL);
-	grid_sizer->Add(mpSrcDirButton, 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpLoadSrcFile, 1, wxEXPAND);
+	grid_sizer->Add(mpLoadSrcButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Destination: "), 0, wxALIGN_CENTER_VERTICAL);
-	grid_sizer->Add(mpDstCtrl, 1, wxEXPAND);
-	grid_sizer->Add(mpDstButton, 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpLoadDstFile, 1, wxEXPAND);
+	grid_sizer->Add(mpLoadDstButton, 0, wxALIGN_CENTER_VERTICAL);
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
@@ -108,69 +111,38 @@ void cMainWindow::OnValidateSrc(wxFocusEvent& event)
 	event.Skip();
 }
 
-void cMainWindow::OnSrcFile(wxCommandEvent& WXUNUSED(event))
+void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), "", "",
-			"Lidar files (*.lidar_data)|*.lidar_data", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+//	wxFileSelector("Choose input directory");
 
-	if (dlg.ShowModal() == wxID_CANCEL)
-		return;     // the user changed their mind...
-
-	mSourceIsFile = true;
-	mSource = dlg.GetPath().ToStdString();
-	mpSourceCtrl->SetValue(mSource);
-
-	if (mpDstCtrl->GetValue().IsEmpty())
-	{
-		path dst(mSource);
-		dst.replace_extension("ceres");
-		mpDstCtrl->SetValue(dst.string());
-	}
-}
-
-void cMainWindow::OnSrcDirectory(wxCommandEvent& WXUNUSED(event))
-{
 	wxDirDialog dlg(NULL, "Choose input directory", "",
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
-	if (dlg.ShowModal() == wxID_CANCEL)
+	dlg.ShowModal();
+
+/*
+	wxFileDialog
+		openFileDialog(this, _("Open directory/file"), "", "",
+			"Lidar files (*.lidar_data)|*.lidar_data", wxFD_OPEN); // | wxFD_FILE_MUST_EXIST);
+
+	if (openFileDialog.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
 
-	mSourceIsFile = false;
-	mSource = dlg.GetPath().ToStdString();
-	mpSourceCtrl->SetValue(mSource);
+//	stopDataProcessing();
+
+	mFilename = openFileDialog.GetPath().ToStdString();
+
+//	startDataProcessing();
+*/
 }
 
-void cMainWindow::OnDstDirectory(wxCommandEvent& WXUNUSED(event))
-{
-	wxDirDialog dlg(NULL, "Choose output directory", "",
-		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
-
-	if (dlg.ShowModal() == wxID_CANCEL)
-		return;     // the user changed their mind...
-
-	auto dir = dlg.GetPath().ToStdString();
-
-	if (mSourceIsFile)
-	{
-		path dst(dir);
-		path src(mSource);
-		dst /= src.filename();
-		dst.replace_extension("ceres");
-		mpDstCtrl->SetValue(dst.string());
-	}
-	else
-	{
-		mpDstCtrl->SetValue(dir);
-	}
-}
-
-void cMainWindow::OnConvert(wxCommandEvent& WXUNUSED(event))
+void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 {
 
 }
 
-void cMainWindow::startDataProcessing()
+/*
+void cMainFrame::startDataProcessing()
 {
 	// Now we can start processing the new data file
 	if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR)
@@ -183,7 +155,7 @@ void cMainWindow::startDataProcessing()
 }
 
 
-void cMainWindow::stopDataProcessing()
+void cMainFrame::stopDataProcessing()
 {
 	// Stop the processing of any previous file
 	auto* pThread = GetThread();
@@ -198,14 +170,14 @@ void cMainWindow::stopDataProcessing()
 	}
 }
 
-wxThread::ExitCode cMainWindow::Entry()
+void cMainFrame::OnThreadUpdate(wxThreadEvent& evt)
 {
-	while (mFileProcessors.size() > 0)
-	{
-		auto* fp = mFileProcessors.front();
-		fp->process_file();
-	}
+	SetStatusText(evt.GetString());
+}
 
+
+wxThread::ExitCode cMainFrame::Entry()
+{
 	// VERY IMPORTANT: this function gets executed in the secondary thread context!
 	// Do not call any GUI function inside this function; rather use wxQueueEvent():
 	cBlockDataFileReader data_file;
@@ -269,4 +241,5 @@ wxThread::ExitCode cMainWindow::Entry()
 
 	return (wxThread::ExitCode) 0;
 }
+*/
 

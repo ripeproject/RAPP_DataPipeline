@@ -108,7 +108,7 @@ private:
                               const ouster::lidar_intrinsics_2_t& lidar,
                               const ouster::lidar_data_format_2_t& format);
 
-    void computerPointCloud(const cOusterLidarData& data);
+    void computePointCloud(const cOusterLidarData& data);
 
 private:
 	static double mMinDistance_m;

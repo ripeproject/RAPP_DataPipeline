@@ -28,11 +28,11 @@ public:
 protected:
 
 private:
-	double mX_m = 0.0;
+	double mEast_m = 0.0;
 	double mY_m = 0.0;
 	double mZ_m = 0.0;
 
-	double mVx_mps = 0.0;
+	double mEastSpeed_mps = 0.0;
 	double mVy_mps = 0.0;
 	double mVz_mps = 0.0;
 

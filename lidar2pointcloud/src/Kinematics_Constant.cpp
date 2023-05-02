@@ -5,7 +5,7 @@
 
 cKinematics_Constant::cKinematics_Constant(double Vx_mmps, double Vy_mmps, double Vz_mmps)
 {
-    mVx_mps = Vx_mmps * 0.001;
+    mEastSpeed_mps = Vx_mmps * 0.001;
     mVy_mps = Vy_mmps * 0.001;
     mVz_mps = Vz_mmps * 0.001;
 }
@@ -15,7 +15,7 @@ void cKinematics_Constant::transform(double time_us,
     ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud)
 {
     double time_sec = time_us / 1000000.0;
-    double x_m = mVx_mps * time_sec;
+    double x_m = mEastSpeed_mps * time_sec;
     double y_m = mVy_mps * time_sec;
     double z_m = mVz_mps * time_sec;
 

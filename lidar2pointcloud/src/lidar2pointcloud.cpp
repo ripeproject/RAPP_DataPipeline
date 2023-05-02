@@ -325,7 +325,7 @@ void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
 	write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_ENU);
 }
 
-void cLidar2PointCloud::computerPointCloud(const cOusterLidarData& data)
+void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 {
 	double minDistance_mm = mMinDistance_m * m_to_mm;
 	double maxDistance_mm = mMaxDistance_m * m_to_mm;
@@ -528,6 +528,6 @@ void cLidar2PointCloud::onLidarData(cOusterLidarData data)
 		return;
 	}
 
-	computerPointCloud(data);
+	computePointCloud(data);
 }
 

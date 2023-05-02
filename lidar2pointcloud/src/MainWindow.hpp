@@ -10,14 +10,8 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
-#include <queue>
-
-// Forward Declarations
-class cFileProcessor;
-
-
 // Define a new frame type: this is going to be our main frame
-class cMainWindow : public wxPanel, public wxThreadHelper
+class cMainWindow : public wxPanel
 {
 public:
 	// ctor(s)
@@ -31,29 +25,22 @@ public:
 
 protected:
 	void OnValidateSrc(wxFocusEvent& event);
-	void OnSrcFile(wxCommandEvent& event);
-	void OnSrcDirectory(wxCommandEvent& event);
-	void OnDstDirectory(wxCommandEvent& event);
-	void OnConvert(wxCommandEvent& event);
+	void OnSrcBrowse(wxCommandEvent& event);
+	void OnDstBrowse(wxCommandEvent& event);
 
-
-protected:
-	virtual wxThread::ExitCode Entry();
 
 private:
 	void startDataProcessing();
 	void stopDataProcessing();
 
 private:
-	bool mSourceIsFile = false;
-	std::string mSource;
+	std::string mFilename;
 
-	wxTextCtrl* mpSourceCtrl  = nullptr;
-	wxButton* mpSrcFileButton = nullptr;
-	wxButton* mpSrcDirButton  = nullptr;
+	wxTextCtrl* mpLoadSrcFile = nullptr;
+	wxButton* mpLoadSrcButton = nullptr;
 
-	wxTextCtrl* mpDstCtrl = nullptr;
-	wxButton* mpDstButton = nullptr;
+	wxTextCtrl* mpLoadDstFile = nullptr;
+	wxButton* mpLoadDstButton = nullptr;
 
 	wxButton* mpConvertButton = nullptr;
 
@@ -61,8 +48,6 @@ private:
 	wxLog* mpOriginalLog = nullptr;
 
 	wxEvtHandler* mpHandler = nullptr;
-	std::queue<cFileProcessor*> mFileProcessors;
-
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

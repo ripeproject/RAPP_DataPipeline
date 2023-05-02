@@ -23,6 +23,11 @@ cLidarData2CeresConverter::~cLidarData2CeresConverter()
     mFileReader.close();
 }
 
+bool cLidarData2CeresConverter::complete()
+{
+    return !mFileWriter.isOpen();
+}
+
 bool cLidarData2CeresConverter::open(std::filesystem::directory_entry in,
     std::filesystem::path out)
 {

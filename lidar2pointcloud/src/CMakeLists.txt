@@ -1,16 +1,7 @@
 
 
+set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
-add_executable(lidar2pointcloud)
-
-set_target_properties(lidar2pointcloud PROPERTIES LANGUAGE CXX)
-
-target_compile_features(lidar2pointcloud PRIVATE cxx_std_20)
-
-target_sources(lidar2pointcloud
-PRIVATE
-
-	BS_thread_pool.hpp
 	ParserExceptions.hpp
 
 	Kinematics.hpp
@@ -28,24 +19,87 @@ PRIVATE
 	
 	FileProcessor.hpp
 	FileProcessor.cpp
-	main.cpp
 )
 
 
-target_include_directories(lidar2pointcloud PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
-target_include_directories(lidar2pointcloud PRIVATE "../support/PointCloud")
-target_include_directories(lidar2pointcloud PRIVATE "../support/StringUtils")
+add_executable(console_app)
 
-target_link_libraries(lidar2pointcloud PRIVATE cbdf::cbdf)
-target_link_libraries(lidar2pointcloud PRIVATE cbdf::sensors)
-target_link_libraries(lidar2pointcloud PRIVATE pointcloud_io)
-target_link_libraries(lidar2pointcloud PRIVATE string_utils)
+set_target_properties(console_app PROPERTIES LANGUAGE CXX)
+set_target_properties(console_app PROPERTIES OUTPUT_NAME "lidar2pointcloud")
+
+target_compile_features(console_app PRIVATE cxx_std_20)
+
+target_sources(console_app
+PRIVATE
+
+	BS_thread_pool.hpp
+
+	${LIDAR_TO_POINT_CLOUD_COMMON_FILES}
+	
+	ConsoleApp.cpp
+)
+
+
+target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE "../support/PointCloud")
+target_include_directories(console_app PRIVATE "../support/StringUtils")
+
+target_link_libraries(console_app PRIVATE cbdf::cbdf)
+target_link_libraries(console_app PRIVATE cbdf::sensors)
+target_link_libraries(console_app PRIVATE cbdf::info)
+target_link_libraries(console_app PRIVATE pointcloud_io)
+target_link_libraries(console_app PRIVATE string_utils)
 
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
 # Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
-set_property(TARGET lidar2pointcloud PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
+
+if(wxWidgets_FOUND)
+
+	add_executable(gui_app WIN32 MACOSX_BUNDLE)
+
+	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
+	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "LidarConvert")
+
+	target_compile_features(gui_app PRIVATE cxx_std_20)
+
+	target_sources(gui_app
+	PRIVATE
+
+		MainWindow.hpp
+		MainWindow.cpp
+		MainFrame.hpp
+		MainFrame.cpp
+
+		${LIDAR_TO_POINT_CLOUD_COMMON_FILES}
+		
+		GuiApp.cpp
+	)
+
+	include(${wxWidgets_USE_FILE})
+
+	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE "../support/PointCloud")
+	target_include_directories(gui_app PRIVATE "../support/StringUtils")
+
+	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
+	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
+	target_link_libraries(gui_app PRIVATE cbdf::info)
+	target_link_libraries(gui_app PRIVATE cbdf::sensors)
+	target_link_libraries(gui_app PRIVATE pointcloud_io)
+	target_link_libraries(gui_app PRIVATE string_utils)
+
+	#
+	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
+	# Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
+	set_property(TARGET gui_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
+endif()
+
 
 
 #******************************************************************************

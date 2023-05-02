@@ -150,21 +150,22 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 
 # Find all the packages needed by this code
 
-FIND_PACKAGE(lyra REQUIRED)
-FIND_PACKAGE(Catch2 QUIET)
-FIND_PACKAGE(Eigen3 REQUIRED)
-FIND_PACKAGE(nlohmann_json REQUIRED)
+find_package(lyra REQUIRED)
+find_package(Catch2 QUIET)
+find_package(Eigen3 REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(wxWidgets QUIET COMPONENTS core base aui)
 
 
 # Find and include my libraries for data collection
-FIND_PACKAGE(CBDF REQUIRED cbdf sensors)
+find_package(CBDF REQUIRED cbdf sensors)
 
 # Required for the cbdf::sensors library
-FIND_PACKAGE(ouster REQUIRED)
-FIND_PACKAGE(ssnx REQUIRED)
+find_package(ouster REQUIRED)
+find_package(ssnx REQUIRED)
 
 # Required for the cbdf::exp_ctrl library
-#FIND_PACKAGE(spidercam REQUIRED)
+#find_package(spidercam REQUIRED)
 
 
 #******************************************************************************
@@ -172,19 +173,19 @@ FIND_PACKAGE(ssnx REQUIRED)
 #******************************************************************************
 
 # to distinguish between debug and release lib
-SET(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Add postfix to target for Release build.")
-SET(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Add postfix to target for Debug build.")
-SET(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "Add postfix to target for RelWithDebInfo build.")
-SET(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "Add postfix to target for MinSizeRel build")
+set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Add postfix to target for Release build.")
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Add postfix to target for Debug build.")
+set(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "Add postfix to target for RelWithDebInfo build.")
+set(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "Add postfix to target for MinSizeRel build")
 
 
 # To build shared libraries in Windows, we set CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS to TRUE.
 # See https://cmake.org/cmake/help/v3.4/variable/CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS.html
 # See https://blog.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
-SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 if(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
       "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel."
       FORCE)
 endif()

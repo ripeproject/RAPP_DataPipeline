@@ -24,6 +24,8 @@ public:
 	cLidarData2CeresConverter();
 	~cLidarData2CeresConverter();
 
+	bool complete() override;
+
 	bool open(std::filesystem::directory_entry in,
 		std::filesystem::path out);
 
