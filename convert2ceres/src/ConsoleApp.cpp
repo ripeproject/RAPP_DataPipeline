@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
 	std::vector<directory_entry> lidar_data_files_to_process;
 
-	// Scan input directory for all CERES files to operate on
+	// Scan input directory for all non-CERES files to operate on
 	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 	{
 		if (!dir_entry.is_regular_file())
@@ -134,9 +134,9 @@ int main(int argc, char** argv)
 		out_file /= in_file.path().filename();
 		out_file.replace_extension("ceres");
 
-		cFileProcessor* fp = new cLidarData2CeresConverter();
+		cFileProcessor* fp = new cLidarData2CeresConverter(in_file, out_file);
 
-		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
+		pool.push_task(&cFileProcessor::run, fp);
 
 		file_processors.push_back(fp);
 	}

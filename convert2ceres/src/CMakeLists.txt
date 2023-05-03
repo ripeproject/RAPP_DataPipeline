@@ -2,6 +2,9 @@
 
 add_subdirectory(bdf_v1)
 
+# Create the version information code
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
 
 set(CONVERT2CERES_COMMON_FILES
 
@@ -47,41 +50,65 @@ set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<
 
 if(wxWidgets_FOUND)
 
-add_executable(gui_app WIN32 MACOSX_BUNDLE)
+	if(WIN32)
+		# Include a RC file for windows
+		set(resource_files
+			./Resources/ripe.ico
+			./Resources/CeresConvert.rc
+		)
 
-set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
-set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresConvert")
+	#	source_group("Resources" FILES
+	#		${resource_files}
+	#)
 
-target_compile_features(gui_app PRIVATE cxx_std_20)
+	elseif(APPLE)
 
-target_sources(gui_app
-PRIVATE
+		# Add an icon for the apple .app file
+		set(resource_files
+			Resources/ripe.icns
+		)
 
-	MainWindow.hpp
-	MainWindow.cpp
-	MainFrame.hpp
-	MainFrame.cpp
+	endif()
 
-	${CONVERT2CERES_COMMON_FILES}
-	
-	GuiApp.cpp
-)
+	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
-include(${wxWidgets_USE_FILE})
+	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
+	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresConvert")
 
-target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_compile_features(gui_app PRIVATE cxx_std_20)
 
-target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
-target_link_libraries(gui_app PRIVATE BlockDataFile_v1)
-target_link_libraries(gui_app PRIVATE cbdf::cbdf)
-target_link_libraries(gui_app PRIVATE cbdf::info)
-target_link_libraries(gui_app PRIVATE cbdf::sensors)
+	target_sources(gui_app
+	PRIVATE
 
-#
-# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
-# Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
-set_property(TARGET gui_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+		MainWindow.hpp
+		MainWindow.cpp
+		MainFrame.hpp
+		MainFrame.cpp
+
+		${CONVERT2CERES_COMMON_FILES}
+
+		${resource_files}
+		
+		version.cpp
+		
+		GuiApp.cpp
+	)
+
+	include(${wxWidgets_USE_FILE})
+
+	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+
+	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
+	target_link_libraries(gui_app PRIVATE BlockDataFile_v1)
+	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
+	target_link_libraries(gui_app PRIVATE cbdf::info)
+	target_link_libraries(gui_app PRIVATE cbdf::sensors)
+
+	#
+	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
+	# Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
+	set_property(TARGET gui_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 endif()
 

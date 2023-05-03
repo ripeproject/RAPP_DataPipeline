@@ -8,7 +8,10 @@
 extern void console_message(const std::string& msg);
 
 
-cLidarData2CeresConverter::cLidarData2CeresConverter()
+cLidarData2CeresConverter::cLidarData2CeresConverter(std::filesystem::directory_entry in,
+    std::filesystem::path out)
+:
+    mInputFile(in), mOutputFile(out)
 {
     mOusterSerializer.setVersion(2, 3);
     mOusterSerializer.setBufferCapacity(256*1024*1024);
@@ -28,39 +31,34 @@ bool cLidarData2CeresConverter::complete()
     return !mFileWriter.isOpen();
 }
 
-bool cLidarData2CeresConverter::open(std::filesystem::directory_entry in,
-    std::filesystem::path out)
+bool cLidarData2CeresConverter::open()
 {
-    mInputFile = in;
-    mOutputFile = out;
-
     if (std::filesystem::exists(mOutputFile))
     {
         return false;
     }
 
     mFileWriter.open(mOutputFile.string());
-    mFileReader.open(mInputFile.string());
+    mFileReader.open(mInputFile.path().string());
 
     return mFileReader.isOpen() && mFileWriter.isOpen();
 }
 
-void cLidarData2CeresConverter::process_file(std::filesystem::directory_entry in,
-    std::filesystem::path out)
+void cLidarData2CeresConverter::run()
 {
-    if (open(in, out))
+    if (open())
     {
         std::string msg = "Processing ";
-        msg += in.path().string();
+        msg += mInputFile.path().string();
         msg += " -> ";
-        msg += out.string();
+        msg += mOutputFile.string();
         console_message(msg);
 
-        run();
+        convert();
     }
 }
 
-void cLidarData2CeresConverter::run()
+void cLidarData2CeresConverter::convert()
 {
     if (!mFileReader.isOpen())
     {

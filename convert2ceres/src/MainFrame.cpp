@@ -43,7 +43,7 @@ cMainFrame::cMainFrame()
 	mpMainWindow = new cMainWindow(this);
 
 	// set the frame icon
-	SetIcon(wxICON(ceresconvert));
+	SetIcon(wxICON(CeresConvert));
 
 #if wxUSE_MENUBAR
 	// create a menu bar
@@ -89,7 +89,7 @@ cMainFrame::cMainFrame()
 	SetBackgroundStyle(wxBG_STYLE_SYSTEM);
 
 	auto size = GetBestSize();
-	size.IncBy(50);
+	size.IncBy(350);
 	size.SetHeight(450);
 	SetMinSize(size);
 

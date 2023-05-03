@@ -1,6 +1,6 @@
 
 #include "MainWindow.hpp"
-#include "FileProcessor.hpp"
+#include "LidarData2CeresConverter.hpp"
 
 #include <wx/aui/framemanager.h>
 #include <wx/thread.h>
@@ -59,6 +59,7 @@ void cMainWindow::CreateControls()
 	mpDstButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDstDirectory, this);
 
 	mpConvertButton = new wxButton(this, wxID_ANY, "Convert");
+	mpConvertButton->Disable();
 	mpConvertButton->Bind(wxEVT_BUTTON, &cMainWindow::OnConvert, this);
 
 	// redirect logs from our event handlers to text control
@@ -120,12 +121,11 @@ void cMainWindow::OnSrcFile(wxCommandEvent& WXUNUSED(event))
 	mSource = dlg.GetPath().ToStdString();
 	mpSourceCtrl->SetValue(mSource);
 
-	if (mpDstCtrl->GetValue().IsEmpty())
-	{
-		path dst(mSource);
-		dst.replace_extension("ceres");
-		mpDstCtrl->SetValue(dst.string());
-	}
+	path dst(mSource);
+	dst.replace_extension("ceres");
+	mpDstCtrl->SetValue(dst.string());
+
+	mpConvertButton->Enable();
 }
 
 void cMainWindow::OnSrcDirectory(wxCommandEvent& WXUNUSED(event))
@@ -167,11 +167,76 @@ void cMainWindow::OnDstDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnConvert(wxCommandEvent& WXUNUSED(event))
 {
+	if (mSourceIsFile)
+	{
+		std::filesystem::directory_entry in_file(mSource);
 
+		std::filesystem::path out_file = mpDstCtrl->GetValue().ToStdString();
+		out_file.replace_extension("ceres");
+
+		if (std::filesystem::exists(out_file))
+			return;
+
+		cFileProcessor* fp = new cLidarData2CeresConverter(in_file, out_file);
+		mFileProcessors.push(fp);
+
+	}
+	else
+	{
+		const std::filesystem::path input(mSource);
+		const std::filesystem::path output{ mpDstCtrl->GetValue().ToStdString() };
+
+		// Scan input directory for all non-CERES files to operate on
+		std::vector<directory_entry> lidar_data_files_to_process;
+		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
+		{
+			if (!dir_entry.is_regular_file())
+				continue;
+
+			// Don't process any ceres files!
+			if (dir_entry.path().extension() == ".ceres")
+				continue;
+
+			// Test for the lidar_data extension...
+			if (dir_entry.path().extension() == ".lidar_data")
+			{
+				// If there is already a file by the same name in
+				// the output directory with a ceres extension,
+				// skip the file!
+				auto test = output;
+				test /= dir_entry.path().filename();
+				test.replace_extension("ceres");
+				if (std::filesystem::exists(test))
+					continue;
+
+				lidar_data_files_to_process.push_back(dir_entry);
+			}
+		}
+
+		for (auto& in_file : lidar_data_files_to_process)
+		{
+			std::filesystem::path out_file = output;
+			out_file /= in_file.path().filename();
+			out_file.replace_extension("ceres");
+
+			cFileProcessor* fp = new cLidarData2CeresConverter(in_file, out_file);
+			mFileProcessors.push(fp);
+		}
+
+		lidar_data_files_to_process.clear();
+	}
+
+	startDataProcessing();
 }
 
 void cMainWindow::startDataProcessing()
 {
+	auto* pThread = GetThread();
+	if (pThread && pThread->IsRunning())
+	{
+		return;
+	}
+
 	// Now we can start processing the new data file
 	if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR)
 	{
@@ -189,10 +254,10 @@ void cMainWindow::stopDataProcessing()
 	auto* pThread = GetThread();
 	if (pThread && pThread->IsRunning())
 	{
-		wxString msg = "Stopping the processing of: ";
-		msg += mFilename;
+//		wxString msg = "Stopping the processing of: ";
+//		msg += mFilename;
 
-		SetStatusText(msg);
+//		SetStatusText(msg);
 
 		pThread->Delete();
 	}
@@ -203,68 +268,9 @@ wxThread::ExitCode cMainWindow::Entry()
 	while (mFileProcessors.size() > 0)
 	{
 		auto* fp = mFileProcessors.front();
-		fp->process_file();
-	}
-
-	// VERY IMPORTANT: this function gets executed in the secondary thread context!
-	// Do not call any GUI function inside this function; rather use wxQueueEvent():
-	cBlockDataFileReader data_file;
-
-	data_file.open(mFilename);
-
-	if (!data_file.isOpen())
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Could not open ";
-		msg += mFilename;
-		msg += " for processing!";
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-
-		return (wxThread::ExitCode) 1;
-	}
-
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Processing: ";
-		msg += mFilename;
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-	}
-
-	try
-	{
-		while (!data_file.eof())
-		{
-			if (data_file.fail() || GetThread()->TestDestroy())
-			{
-				data_file.close();
-				return (wxThread::ExitCode)0;
-			}
-
-			data_file.processBlock();
-		}
-	}
-	catch (const std::exception& e)
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Unknown Exception: ";
-		msg += e.what();
-
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-
-		return (wxThread::ExitCode) 2;
-	}
-
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		event->SetString("Processing complete.");
-		wxQueueEvent(mpHandler, event);
+		fp->run();
+		mFileProcessors.pop();
+		delete fp;
 	}
 
 	return (wxThread::ExitCode) 0;

@@ -21,18 +21,19 @@ class cLidarData2CeresConverter : public cFileProcessor,
 									private v1::cPvtVerificationParser
 {
 public:
-	cLidarData2CeresConverter();
+	cLidarData2CeresConverter(std::filesystem::directory_entry in,
+		std::filesystem::path out);
+
 	~cLidarData2CeresConverter();
 
 	bool complete() override;
 
-	bool open(std::filesystem::directory_entry in,
-		std::filesystem::path out);
+	bool open();
 
-	void process_file(std::filesystem::directory_entry in,
-		std::filesystem::path out) override;
+	void run() override;
 
-	void run();
+protected:
+	void convert();
 
 protected:
 	void onConfigParam(::ouster::config_param_2_t config_param) override;
@@ -67,6 +68,9 @@ private:
 	void processBlock(const v1::cBlockID& id, const std::byte* buf, std::size_t len);
 
 private:
+	std::filesystem::directory_entry mInputFile;
+	std::filesystem::path mOutputFile;
+
 	v1::cBlockDataFileReader mFileReader;
 	cBlockDataFileWriter	 mFileWriter;
 
