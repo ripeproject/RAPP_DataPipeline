@@ -15,7 +15,9 @@ public:
 	cFileProcessor(std::filesystem::path recovered_dir, std::filesystem::path repaired_dir);
 	~cFileProcessor();
 
-	void process_file(std::filesystem::directory_entry file_to_repair);
+	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
+
+	void process_file();
 
 protected:
 	void run();
