@@ -33,12 +33,12 @@ cCeresDataVerifier::cCeresDataVerifier(std::filesystem::directory_entry file_to_
     std::filesystem::path failed_dir)
 {
     mFailedDirectory = failed_dir;
-    mCurrentFile = file_to_check;
+    mFileToCheck = file_to_check;
     mFileReader.open(file_to_check.path().string());
 
     if (!mFileReader.isOpen())
     {
-        throw std::logic_error(mCurrentFile.string());
+        throw std::logic_error(mFileToCheck.string());
     }
 }
 
@@ -47,22 +47,27 @@ cCeresDataVerifier::~cCeresDataVerifier()
     mFileReader.close();
 }
 
+bool cCeresDataVerifier::setFileToCheck(std::filesystem::directory_entry file_to_check)
+{
+    mFileToCheck = file_to_check;
+    return true;
+}
+
 //-----------------------------------------------------------------------------
-bool cCeresDataVerifier::open(std::filesystem::directory_entry file_to_check)
+bool cCeresDataVerifier::open(std::filesystem::path file_to_check)
 {
     if (mFileReader.isOpen())
         mFileReader.close();
         
-    mCurrentFile = file_to_check;
-    mFileReader.open(file_to_check.path().string());
+    mFileReader.open(file_to_check.string());
 
     return mFileReader.isOpen();
 }
 
 //-----------------------------------------------------------------------------
-void cCeresDataVerifier::process_file(std::filesystem::directory_entry file_to_check)
+void cCeresDataVerifier::process_file()
 {
-    if (open(file_to_check))
+    if (open(mFileToCheck))
     {
         run();
     }
@@ -78,7 +83,7 @@ void cCeresDataVerifier::run()
         return;
     }
 
-    mFileReader.open(mCurrentFile.string());
+    mFileReader.open(mFileToCheck.string());
 
     if (!pass2())
     {
@@ -94,7 +99,7 @@ void cCeresDataVerifier::run()
 bool cCeresDataVerifier::pass1()
 {
     std::string msg = "Pass1: ";
-    msg += mCurrentFile.string();
+    msg += mFileToCheck.string();
     msg += "...";
     console_message(msg);
 
@@ -118,7 +123,7 @@ bool cCeresDataVerifier::pass1()
     }
     catch (const bdf::crc_error& e)
     {
-        std::string msg = mCurrentFile.string();
+        std::string msg = mFileToCheck.string();
         msg += ": CRC Error, ";
         msg += " class id = ";
         msg += std::to_string(e.class_id);
@@ -137,7 +142,7 @@ bool cCeresDataVerifier::pass1()
     }
     catch (const bdf::formatting_error& e)
     {
-        std::string msg = mCurrentFile.string();
+        std::string msg = mFileToCheck.string();
         msg += ": Formatting Error, ";
         msg += e.what();
         console_message(msg);
@@ -146,7 +151,7 @@ bool cCeresDataVerifier::pass1()
     }
     catch (const bdf::stream_error& e)
     {
-        std::string msg = mCurrentFile.string();
+        std::string msg = mFileToCheck.string();
         msg += ": Stream Error, ";
         msg += e.what();
         console_message(msg);
@@ -155,7 +160,7 @@ bool cCeresDataVerifier::pass1()
     }
     catch (const bdf::io_error& e)
     {
-        std::string msg = mCurrentFile.string();
+        std::string msg = mFileToCheck.string();
         msg += ": IO Error, ";
         msg += e.what();
         console_message(msg);
@@ -164,7 +169,7 @@ bool cCeresDataVerifier::pass1()
     }
     catch (const std::runtime_error& e)
     {
-        std::string msg = mCurrentFile.string();
+        std::string msg = mFileToCheck.string();
         msg += ": Runtime Error, ";
         msg += e.what();
         console_message(msg);
@@ -175,7 +180,7 @@ bool cCeresDataVerifier::pass1()
     {
         if (!mFileReader.eof())
         {
-            std::string msg = mCurrentFile.string();
+            std::string msg = mFileToCheck.string();
             msg += ": std::exception, ";
             msg += e.what();
             console_message(msg);
@@ -195,7 +200,7 @@ bool cCeresDataVerifier::pass1()
 bool cCeresDataVerifier::pass2()
 {
     std::string msg = "Pass2: ";
-    msg += mCurrentFile.string();
+    msg += mFileToCheck.string();
     msg += "...";
     console_message(msg);
 
@@ -225,7 +230,7 @@ bool cCeresDataVerifier::pass2()
     }
     catch (const bdf::invalid_data& e)
     {
-        std::string msg = mCurrentFile.string();
+        std::string msg = mFileToCheck.string();
         msg += ": Invalid Data, ";
         msg += e.what();
         console_message(msg);
@@ -234,7 +239,7 @@ bool cCeresDataVerifier::pass2()
     }
     catch (const bdf::stream_error& e)
     {
-        std::string msg = mCurrentFile.string();
+        std::string msg = mFileToCheck.string();
         msg += ": Stream Error, ";
         msg += e.what();
         console_message(msg);
@@ -245,7 +250,7 @@ bool cCeresDataVerifier::pass2()
     {
         if (!mFileReader.eof())
         {
-            std::string msg = mCurrentFile.string();
+            std::string msg = mFileToCheck.string();
             msg += ":  std::exception, ";
             msg += e.what();
             console_message(msg);
@@ -267,15 +272,15 @@ void cCeresDataVerifier::moveFileToFailed()
 
     ::create_directory(mFailedDirectory);
 
-    std::filesystem::path dest = mFailedDirectory / mCurrentFile.filename();
+    std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
 
     std::string msg = "Moving ";
-    msg += mCurrentFile.string();
+    msg += mFileToCheck.string();
     msg += " to ";
     msg += dest.string();
     console_message(msg);
 
-    std::filesystem::rename(mCurrentFile, dest);
+    std::filesystem::rename(mFileToCheck, dest);
 }
 
 //-----------------------------------------------------------------------------

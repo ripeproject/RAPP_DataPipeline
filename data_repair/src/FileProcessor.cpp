@@ -23,10 +23,19 @@ cFileProcessor::~cFileProcessor()
 {
 }
 
-void cFileProcessor::process_file(std::filesystem::directory_entry file_to_repair)
+bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_repair)
 {
-    mInputFile = file_to_repair.path();
+    if (file_to_repair.exists())
+    {
+        mInputFile = file_to_repair.path();
+        return true;
+    }
 
+    return false;
+}
+
+void cFileProcessor::process_file()
+{
     mDataFileRecovery = std::make_unique<cDataFileRecovery>(mRecoveredDirectory);
     
     if (mDataFileRecovery->open(mInputFile))

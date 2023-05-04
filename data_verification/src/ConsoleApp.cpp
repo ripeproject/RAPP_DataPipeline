@@ -92,8 +92,9 @@ int main(int argc, char** argv)
 	for (auto& file : ceres_files_to_check)
 	{
 		cCeresDataVerifier* dv = new cCeresDataVerifier(failed);
+		dv->setFileToCheck(file);
 
-		pool.push_task(&cCeresDataVerifier::process_file, dv, file);
+		pool.push_task(&cCeresDataVerifier::process_file, dv);
 
 		ceres_data_verifiers.push_back(dv);
 	}

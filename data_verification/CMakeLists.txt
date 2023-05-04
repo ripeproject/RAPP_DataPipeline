@@ -150,15 +150,17 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 
 # Find all the packages needed by this code
 
-FIND_PACKAGE(lyra REQUIRED)
-FIND_PACKAGE(Catch2 QUIET)
-#FIND_PACKAGE(nlohmann_json REQUIRED)
+find_package(lyra REQUIRED)
+find_package(Catch2 QUIET)
+find_package(nlohmann_json REQUIRED)
+
+find_package(wxWidgets QUIET COMPONENTS core base aui)
 
 
 # Find and include my libraries for data collection
-FIND_PACKAGE(CBDF REQUIRED cbdf sensors)
-FIND_PACKAGE(ouster REQUIRED)
-FIND_PACKAGE(ssnx REQUIRED)
+find_package(CBDF REQUIRED cbdf sensors)
+find_package(ouster REQUIRED)
+find_package(ssnx REQUIRED)
 #FIND_PACKAGE(ssnx2net REQUIRED)
 #FIND_PACKAGE(spidercam REQUIRED)
 

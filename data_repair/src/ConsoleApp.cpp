@@ -64,8 +64,6 @@ int main(int argc, char** argv)
 			continue;
 
 		files_to_repair.push_back(dir_entry);
-
-		break;
 	}
 
 	if (files_to_repair.empty())
@@ -105,8 +103,11 @@ int main(int argc, char** argv)
 	for (auto& file : files_to_repair)
 	{
 		cFileProcessor* fp = new cFileProcessor(recovered_dir, repaired_dir);
-
-		pool.push_task(&cFileProcessor::process_file, fp, file);
+		
+		if (fp->setFileToRepair(file))
+		{
+			pool.push_task(&cFileProcessor::process_file, fp);
+		}
 
 		file_processors.push_back(fp);
 	}

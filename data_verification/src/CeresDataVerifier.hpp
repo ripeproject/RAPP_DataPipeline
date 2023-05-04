@@ -17,12 +17,14 @@ public:
 		std::filesystem::path failed_dir);
     ~cCeresDataVerifier();
 
-	bool open(std::filesystem::directory_entry file_to_check);
+	bool setFileToCheck(std::filesystem::directory_entry file_to_check);
 
-	void process_file(std::filesystem::directory_entry file_to_check);
-	void run();
+	void process_file();
 
 protected:
+	bool open(std::filesystem::path file_to_check);
+	void run();
+
 	// Pass1: A simple pass looking for CRC or other stream errors
 	bool pass1();
 
@@ -37,6 +39,6 @@ private:
     cBlockDataFileReader mFileReader;
 
 	std::filesystem::path mFailedDirectory;
-	std::filesystem::path mCurrentFile;
+	std::filesystem::path mFileToCheck;
 };
 
