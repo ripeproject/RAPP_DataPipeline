@@ -34,6 +34,10 @@ IF(POLICY CMP0071)
      CMAKE_POLICY(SET CMP0071 NEW)
 ENDIF()
 
+IF(POLICY CMP0115)
+     CMAKE_POLICY(SET CMP0115 NEW)
+ENDIF()
+
 #
 # Setting this policy to NEW allows us to use the MSVC_RUNTIME_LIBRARY 
 # target property.  The generator expression would look like:

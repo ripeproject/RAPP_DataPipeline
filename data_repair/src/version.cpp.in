@@ -3,25 +3,25 @@
 
 std::string getVersionString()
 {
-	return "@CeresConvert_VERSION@";
+	return "@DATA_REPAIR_VERSION@";
 }
 
 unsigned int getMajorVersion()
 {
-	return @CeresConvert_VERSION_MAJOR@ +0;
+	return @DATA_REPAIR_MAJOR@ +0;
 }
 
 unsigned int getMinorVersion()
 {
-	return @CeresConvert_VERSION_MINOR@ +0;
+	return @DATA_REPAIR_MINOR@ +0;
 }
 
 unsigned int getPatchVersion()
 {
-	return @CeresConvert_VERSION_PATCH@ +0;
+	return @DATA_REPAIR_PATCH@ +0;
 }
 
 unsigned int getTweakVersion()
 {
-	return @CeresConvert_VERSION_TWEAK@ +0;
+	return @DATA_REPAIR_TWEAK@ +0;
 }

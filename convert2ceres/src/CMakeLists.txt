@@ -89,7 +89,8 @@ if(wxWidgets_FOUND)
 
 		${resource_files}
 		
-		version.cpp
+#		version.hpp
+#		version.cpp
 		
 		GuiApp.cpp
 	)
@@ -97,6 +98,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})

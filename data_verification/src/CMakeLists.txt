@@ -61,9 +61,9 @@ if(wxWidgets_FOUND)
 			./Resources/CeresDataVerification.rc
 		)
 
-	#	source_group("Resources" FILES
-	#		${resource_files}
-	#)
+		source_group("Resources" FILES
+			${resource_files}
+		)
 
 	elseif(APPLE)
 
@@ -93,7 +93,7 @@ if(wxWidgets_FOUND)
 
 		${resource_files}
 		
-		version.cpp
+#		version.cpp
 		
 		GuiApp.cpp
 	)

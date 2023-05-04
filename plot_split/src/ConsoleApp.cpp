@@ -1,7 +1,7 @@
 
 #include "BS_thread_pool.hpp"
 
-#include "LidarData2CeresConverter.hpp"
+#include "FileProcessor.hpp"
 
 #include <lyra/lyra.hpp>
 
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 		out_file /= in_file.path().filename();
 		out_file.replace_extension("ceres");
 
-		cFileProcessor* fp = new cLidarData2CeresConverter();
+		cFileProcessor* fp = nullptr;	// new cLidarData2CeresConverter();
 
 		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
 

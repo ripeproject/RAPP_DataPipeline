@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 	using namespace std::filesystem;
 	using namespace nStringUtils;
 
-	int num_of_threads = 0;
+	int num_of_threads = 1;
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
 

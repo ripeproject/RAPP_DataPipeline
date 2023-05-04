@@ -78,6 +78,10 @@ if(wxWidgets_FOUND)
 
 	endif()
 
+	source_group("Resources" FILES
+		${resource_files}
+	)
+
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
 	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
@@ -97,7 +101,8 @@ if(wxWidgets_FOUND)
 
 		${resource_files}
 		
-		version.cpp
+#		version.hpp
+#		version.cpp
 		
 		GuiApp.cpp
 	)

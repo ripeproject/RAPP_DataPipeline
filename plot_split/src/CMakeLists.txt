@@ -5,8 +5,8 @@ set(PLOT_SPLIT_COMMON_FILES
 
 	ParserExceptions.hpp
 
-	LidarData2CeresConverter.hpp
-	LidarData2CeresConverter.cpp
+	PlotBoundaries.hpp
+	PlotBoundaries.cpp
 
 	FileProcessor.hpp
 	FileProcessor.cpp
