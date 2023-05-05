@@ -16,6 +16,13 @@ namespace
         buffer >> system;
         return static_cast<eCOORDINATE_SYSTEM>(system);
     };
+
+    eKINEMATIC_MODEL to_kinematics_model(cDataBuffer& buffer)
+    {
+        uint8_t system = 0;
+        buffer >> system;
+        return static_cast<eKINEMATIC_MODEL>(system);
+    };
 }
 
 cPointCloudParser::cPointCloudParser()
@@ -56,6 +63,12 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::POINT_CLOUD_DATA:
         processPointCloudData(buffer);
         break;
+    case DataID::KINEMATICS_MODEL:
+        processKinematicsModel(buffer);
+        break;
+    case DataID::SENSOR_ROTATION_ANGLES:
+        processSensorAngles(buffer);
+        break;
     }
 }
 
@@ -67,6 +80,28 @@ void cPointCloudParser::processCoordinateSystem(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processCoordinateSystem.");
 
     onCoordinateSystem(coordinate_sys);
+}
+
+void cPointCloudParser::processKinematicsModel(cDataBuffer& buffer)
+{
+    eKINEMATIC_MODEL model = to_kinematics_model(buffer);
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processKinematicsModel.");
+
+    onKinematicModel(model);
+}
+
+void cPointCloudParser::processSensorAngles(cDataBuffer& buffer)
+{
+    double pitch_deg = buffer.get<double>();
+    double roll_deg = buffer.get<double>();
+    double yaw_deg = buffer.get<double>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processSensorAngles.");
+
+    onSensorAngles(pitch_deg, roll_deg, yaw_deg);
 }
 
 void cPointCloudParser::processImuData(cDataBuffer& buffer)

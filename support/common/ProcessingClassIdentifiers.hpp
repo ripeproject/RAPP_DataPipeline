@@ -15,5 +15,10 @@ enum class ProcessingClassIDs : ClassID_t
      */
     POINT_CLOUD  = static_cast<ClassID_t>(ClassIDs::PROCESSED_DATA_BASE_ID),
 
+    /*
+     * General Processing Information
+     */
+    PROCESSING_INFO = POINT_CLOUD + 0x0080,
+
 };
 

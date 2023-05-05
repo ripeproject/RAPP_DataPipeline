@@ -27,6 +27,8 @@ public:
 	cBlockID& blockID() override;
 
 	virtual void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) = 0;
+	virtual void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) = 0;
+	virtual void onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) = 0;
 	virtual void onImuData(pointcloud::imu_data_t data) = 0;
 	virtual void onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns,
 											cReducedPointCloudByFrame pointCloud) = 0;
@@ -42,6 +44,8 @@ protected:
 
 protected:
 	void processCoordinateSystem(cDataBuffer& buffer);
+	void processKinematicsModel(cDataBuffer& buffer);
+	void processSensorAngles(cDataBuffer& buffer);
 	void processImuData(cDataBuffer& buffer);
 	void processReducedPointCloudByFrame(cDataBuffer& buffer);
 	void processSensorPointCloudByFrame(cDataBuffer& buffer);

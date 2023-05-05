@@ -30,10 +30,11 @@ cBlockID& cPointCloudSerializer::blockID()
     return *mBlockID;
 }
 
-void cPointCloudSerializer::write(const pointcloud::eCOORDINATE_SYSTEM& in)
+void cPointCloudSerializer::write(const pointcloud::eCOORDINATE_SYSTEM in)
 {
     assert(mpDataFile);
 
+    mBlockID->setVersion(1, 0);
 	mBlockID->dataID(DataID::COORDINATE_SYSTEM);
 
     mDataBuffer.clear();
@@ -47,10 +48,29 @@ void cPointCloudSerializer::write(const pointcloud::eCOORDINATE_SYSTEM& in)
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
 }
 
+void cPointCloudSerializer::write(const pointcloud::eKINEMATIC_MODEL in)
+{
+    assert(mpDataFile);
+
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::KINEMATICS_MODEL);
+
+    mDataBuffer.clear();
+    mDataBuffer << static_cast<uint8_t>(in);
+
+    assert(!mDataBuffer.overrun());
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing eKINEMATIC_MODEL data.");
+
+    mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
+}
+
 void cPointCloudSerializer::write(const imu_data_t& in)
 {
     assert(mpDataFile);
 
+    mBlockID->setVersion(1, 0);
     mBlockID->dataID(DataID::IMU_DATA);
 
     mDataBuffer.clear();
@@ -77,6 +97,7 @@ void cPointCloudSerializer::write(const cReducedPointCloudByFrame& in)
 {
     assert(mpDataFile);
 
+    mBlockID->setVersion(1, 0);
     mBlockID->dataID(DataID::REDUCED_POINT_CLOUD_DATA_BY_FRAME);
 
     mDataBuffer.clear();
@@ -114,6 +135,7 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame& in)
 {
     assert(mpDataFile);
 
+    mBlockID->setVersion(1, 0);
     mBlockID->dataID(DataID::SENSOR_POINT_CLOUD_DATA_BY_FRAME);
 
     mDataBuffer.clear();
@@ -150,6 +172,7 @@ void cPointCloudSerializer::write(const cPointCloud& in)
 {
     assert(mpDataFile);
 
+    mBlockID->setVersion(1, 0);
     mBlockID->dataID(DataID::POINT_CLOUD_DATA);
 
     mDataBuffer.clear();
@@ -187,4 +210,23 @@ void cPointCloudSerializer::write(const cPointCloud& in)
     mDataBuffer.capacity(old_size);
 }
 
+void cPointCloudSerializer::writeSensorAngles(double pitch_deg, double roll_deg, double yaw_deg)
+{
+    assert(mpDataFile);
+
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::SENSOR_ROTATION_ANGLES);
+
+    mDataBuffer.clear();
+    mDataBuffer << pitch_deg;
+    mDataBuffer << roll_deg;
+    mDataBuffer << yaw_deg;
+
+    assert(!mDataBuffer.overrun());
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing sensor angles data.");
+
+    mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
+}
 

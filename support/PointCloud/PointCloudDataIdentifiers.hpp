@@ -15,6 +15,9 @@ namespace pointcloud
         REDUCED_POINT_CLOUD_DATA_BY_FRAME,
         SENSOR_POINT_CLOUD_DATA_BY_FRAME,
         POINT_CLOUD_DATA,
+        SENSOR_ROTATION_ANGLES,
+        KINEMATICS_MODEL,
+        KINEMATICS_SPEEDS,
     };
 }
 

@@ -6,13 +6,22 @@
 
 namespace pointcloud
 {
-	enum class eCOORDINATE_SYSTEM : uint8_t
-	{
-		UNKNOWN,
-		SENSOR,
-		SENSOR_ENU,
-	};
-	
+    enum class eCOORDINATE_SYSTEM : uint8_t
+    {
+        UNKNOWN,
+        SENSOR,
+        SENSOR_ENU,
+    };
+
+    enum class eKINEMATIC_MODEL : uint8_t
+    {
+        UNKNOWN,
+        CONSTANT,
+        DOLLY,
+        GPS,
+        SLAM,
+    };
+
     struct imu_data_t
     {
         uint64_t	accelerometer_read_time_ns;
