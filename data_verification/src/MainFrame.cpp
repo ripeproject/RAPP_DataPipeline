@@ -43,7 +43,7 @@ cMainFrame::cMainFrame()
 	mpMainWindow = new cMainWindow(this);
 
 	// set the frame icon
-	SetIcon(wxICON(CeresConvert));
+	SetIcon(wxICON(CeresDataVerification));
 
 #if wxUSE_MENUBAR
 	// create a menu bar
