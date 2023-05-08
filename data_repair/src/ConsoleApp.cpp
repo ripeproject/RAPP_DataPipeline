@@ -27,9 +27,13 @@ int main(int argc, char** argv)
 
 	// The default is one thread because this application in I/O bound.
 	int num_of_threads = 1;
+	bool showHelp = false;
+
 	std::string input_directory = current_path().string();
 
 	auto cli = lyra::cli()
+		| lyra::help(showHelp)
+		("Show usage information.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")
@@ -38,6 +42,12 @@ int main(int argc, char** argv)
 		("The path to input directory for repairing of ceres data.");
 
 	auto result = cli.parse({argc, argv});
+
+	if (showHelp)
+	{
+		std::cout << cli << std::endl;
+		return 0;
+	}
 
 	if (!result)
 	{
