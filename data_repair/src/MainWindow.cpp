@@ -96,8 +96,7 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnFailedDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", "",
-		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+	wxDirDialog dlg(NULL, "Choose directory", "", wxDD_DEFAULT_STYLE);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
