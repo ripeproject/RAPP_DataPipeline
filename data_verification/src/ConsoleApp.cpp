@@ -28,9 +28,13 @@ int main(int argc, char** argv)
 
 	// The default is to use only one thread as this application is I/O limited.
 	int num_of_threads = 1;
+	bool showHelp = false;
+
 	std::string input_directory = current_path().string();
 
 	auto cli = lyra::cli()
+		| lyra::help(showHelp)
+		("Show usage information.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for verification.")
@@ -39,6 +43,12 @@ int main(int argc, char** argv)
 		("The path to input directory for verification of ceres data.");
 
 	auto result = cli.parse({argc, argv});
+
+	if (showHelp)
+	{
+		std::cout << cli << std::endl;
+		return 0;
+	}
 
 	if (!result)
 	{
