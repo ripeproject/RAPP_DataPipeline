@@ -119,7 +119,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetCopyright(wxT("Copyright (c) 2022, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
-	info.SetIcon(wxICON(ceresinfo));
+	info.SetIcon(wxICON(CeresDataVerification));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
