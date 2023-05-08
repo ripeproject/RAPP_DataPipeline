@@ -2,6 +2,10 @@
 #include "MainFrame.hpp"
 #include "MainWindow.hpp"
 
+#ifndef wxHAS_IMAGES_IN_RESOURCES
+    #include "Resources/CeresDataVerification.xpm"
+#endif
+
 #include <wx/aui/framemanager.h>
 #include <wx/aui/auibook.h>
 #include <wx/aboutdlg.h>

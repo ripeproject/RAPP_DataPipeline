@@ -1,5 +1,5 @@
 /* XPM */
-static char * ripe_xpm[] = {
+static const char * CeresDataVerification_xpm[] = {
 "256 256 415 2",
 "  	c None",
 ". 	c #C0C0C0",
