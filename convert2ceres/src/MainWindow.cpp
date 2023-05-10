@@ -45,7 +45,7 @@ cMainWindow::~cMainWindow()
 
 void cMainWindow::CreateControls()
 {
-	mpSourceCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, wxTextValidator(wxFILTER_ALPHANUMERIC));
+	mpSourceCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), 0, wxTextValidator(wxFILTER_ALPHANUMERIC));
 	mpSourceCtrl->Bind(wxEVT_KILL_FOCUS, &cMainWindow::OnValidateSrc, this);
 
 	mpSrcFileButton = new wxButton(this, wxID_ANY, "File");
