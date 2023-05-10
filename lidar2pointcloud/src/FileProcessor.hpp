@@ -36,6 +36,9 @@ private:
 	void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len);
 
 private:
+	void deleteOutputFile();
+
+private:
 	cBlockDataFileReader mFileReader;
 	cBlockDataFileWriter mFileWriter;
 

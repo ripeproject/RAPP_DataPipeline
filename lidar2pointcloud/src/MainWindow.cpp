@@ -39,9 +39,30 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainWindow::cMainWindow(wxWindow* parent)
-	: wxPanel(parent, wxID_ANY)
+:
+	wxPanel(parent, wxID_ANY),
+	mKM_Vx_val(1, &mKM_Constant_Vx_mmps),
+	mKM_Vy_val(1, &mKM_Constant_Vy_mmps),
+	mKM_Vz_val(1, &mKM_Constant_Vz_mmps),
+	mKM_Sensor_Pitch_val(1, &mSensorPitch_deg),
+	mKM_Sensor_Roll_val(1, &mSensorRoll_deg),
+	mKM_Sensor_Yaw_val(1, &mSensorYaw_deg),
+	mMinimumDistance_val(3, &mMinimumDistance_m),
+	mMaximumDistance_val(3, &mMaximumDistance_m)
+
 {
 //	mpHandler = GetEventHandler();
+
+	mKM_Vx_val.SetRange(-2000.0, 2000.0);
+	mKM_Vy_val.SetRange(-2000.0, 2000.0);
+	mKM_Vz_val.SetRange(-2000.0, 2000.0);
+
+	mKM_Sensor_Pitch_val.SetRange(-90.0, 90.0);
+	mKM_Sensor_Roll_val.SetRange(-180.0, 180.0);
+	mKM_Sensor_Yaw_val.SetRange(0.0, 360.0);
+
+	mMinimumDistance_val.SetRange(0.0, 4.0);
+	mMaximumDistance_val.SetRange(5.0, 100.0);
 
 	CreateControls();
 	CreateLayout();
@@ -49,21 +70,60 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 cMainWindow::~cMainWindow()
 {
+	delete mpOriginalLog;
+	mpOriginalLog = nullptr;
 }
 
 void cMainWindow::CreateControls()
 {
-	mpLoadSrcFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, wxTextValidator(wxFILTER_ALPHANUMERIC));
-	mpLoadSrcFile->Bind(wxEVT_KILL_FOCUS, &cMainWindow::OnValidateSrc, this);
+	mpLoadSrcFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
 
 	mpLoadSrcButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadSrcButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcBrowse, this);
 
-	mpLoadDstFile = new wxTextCtrl(this, wxID_ANY);
+	mpLoadDstFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+
 	mpLoadDstButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadDstButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDstBrowse, this);
 
-	mpConvertButton = new wxButton(this, wxID_ANY, "Convert");
+	wxArrayString choice;
+	choice.Add("Constant Speed");
+	choice.Add("Dolly");
+	choice.Add("GPS");
+	choice.Add("SLAM");
+	mpKinematicModel = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, choice, wxCB_DROPDOWN | wxCB_READONLY);
+	mpKinematicModel->SetSelection(0);
+	mpKinematicModel->Bind(wxEVT_TEXT, &cMainWindow::OnModelChange, this);
+
+	mpKM_Constant_Vx_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpKM_Constant_Vx_mmps->SetValidator(mKM_Vx_val);
+
+	mpKM_Constant_Vy_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpKM_Constant_Vy_mmps->SetValidator(mKM_Vy_val);
+
+	mpKM_Constant_Vz_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpKM_Constant_Vz_mmps->SetValidator(mKM_Vz_val);
+
+	mpSensorPitch_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpSensorPitch_deg->SetValidator(mKM_Sensor_Pitch_val);
+
+	mpSensorRoll_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpSensorRoll_deg->SetValidator(mKM_Sensor_Roll_val);
+
+	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpSensorYaw_deg->SetValidator(mKM_Sensor_Yaw_val);
+
+	mpRotateSensorToENU = new wxCheckBox(this, wxID_ANY, "Rotate Sensor to ENU");
+
+	mpMinimumDistance_m = new wxTextCtrl(this, wxID_ANY, "1.0");
+	mpMinimumDistance_m->SetValidator(mMinimumDistance_val);
+
+	mpMaximumDistance_m = new wxTextCtrl(this, wxID_ANY, "40.0");
+	mpMaximumDistance_m->SetValidator(mMaximumDistance_val);
+
+	mpComputeButton = new wxButton(this, wxID_ANY, "Compute Point Cloud");
+	mpComputeButton->Disable();
+	mpComputeButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCompute, this);
 
 	// redirect logs from our event handlers to text control
 	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
@@ -91,7 +151,67 @@ void cMainWindow::CreateLayout()
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
-	topsizer->Add(mpConvertButton, wxSizerFlags().Proportion(0).Expand());
+	auto* sz = new wxStaticBoxSizer(wxVERTICAL, this, "Kinematic Model");
+	sz->Add(mpKinematicModel, wxSizerFlags().Proportion(0).Expand());
+	topsizer->Add(sz, wxSizerFlags().Proportion(0).Expand());
+	topsizer->AddSpacer(5);
+
+	{
+		wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+		auto* km_sz = new wxStaticBoxSizer(wxVERTICAL, this, "Constant Speeds");
+
+		auto* grid_sizer = new wxFlexGridSizer(2);
+		grid_sizer->SetVGap(5);
+		grid_sizer->SetHGap(5);
+		grid_sizer->AddGrowableCol(1, 1);
+
+		wxBoxSizer* ln_sz = new wxBoxSizer(wxHORIZONTAL);
+		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vx (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
+		grid_sizer->Add(mpKM_Constant_Vx_mmps, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vy (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
+		grid_sizer->Add(mpKM_Constant_Vy_mmps, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vz (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
+		grid_sizer->Add(mpKM_Constant_Vz_mmps, wxSizerFlags().Proportion(0).Expand());
+
+		km_sz->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+		sizer->Add(km_sz, wxSizerFlags().Proportion(1).Expand());
+
+		sizer->AddSpacer(10);
+
+		auto* so_sz = new wxStaticBoxSizer(wxVERTICAL, this, "Sensor Orientations");
+
+		grid_sizer = new wxFlexGridSizer(2);
+		grid_sizer->SetVGap(5);
+		grid_sizer->SetHGap(5);
+		grid_sizer->AddGrowableCol(1, 1);
+
+		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Pitch (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
+		grid_sizer->Add(mpSensorPitch_deg, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Roll (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
+		grid_sizer->Add(mpSensorRoll_deg, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Yaw (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
+		grid_sizer->Add(mpSensorYaw_deg, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(mpRotateSensorToENU, wxSizerFlags().Proportion(0).Expand());
+
+		so_sz->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+		sizer->Add(so_sz, wxSizerFlags().Proportion(1).Expand());
+
+		topsizer->Add(sizer, wxSizerFlags().Proportion(0).Expand());
+	}
+	topsizer->AddSpacer(10);
+
+	auto* rg_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Range Limits");
+	rg_sz->Add(new wxStaticText(this, wxID_ANY, "Minimum Distance (m) :"), 0, wxALIGN_CENTER_VERTICAL);
+	rg_sz->AddSpacer(5);
+	rg_sz->Add(mpMinimumDistance_m, wxSizerFlags().Proportion(1).Expand());
+	rg_sz->AddSpacer(10);
+	rg_sz->Add(new wxStaticText(this, wxID_ANY, "Maximum Distance (m) :"), 0, wxALIGN_CENTER_VERTICAL);
+	rg_sz->AddSpacer(5);
+	rg_sz->Add(mpMaximumDistance_m, wxSizerFlags().Proportion(1).Expand());
+	topsizer->Add(rg_sz, wxSizerFlags().Proportion(0).Expand());
+
+	topsizer->AddSpacer(5);
+	topsizer->Add(mpComputeButton, wxSizerFlags().Proportion(0).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
 
@@ -105,11 +225,6 @@ void cMainWindow::CreateLayout()
 }
 
 // event handlers
-
-void cMainWindow::OnValidateSrc(wxFocusEvent& event)
-{
-	event.Skip();
-}
 
 void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 {
@@ -139,6 +254,28 @@ void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 {
 
+}
+
+void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
+{
+	auto selection = mpKinematicModel->GetSelection();
+
+	if (selection == 0)
+	{
+		mpKM_Constant_Vx_mmps->Enable();
+		mpKM_Constant_Vy_mmps->Enable();
+		mpKM_Constant_Vz_mmps->Enable();
+	}
+	else
+	{
+		mpKM_Constant_Vx_mmps->Disable();
+		mpKM_Constant_Vy_mmps->Disable();
+		mpKM_Constant_Vz_mmps->Disable();
+	}
+}
+
+void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
+{
 }
 
 /*

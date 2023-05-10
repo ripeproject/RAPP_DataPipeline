@@ -75,6 +75,7 @@ public:
 	 * data file to precompute telemetry data.
 	 */
 	bool requiresTelemetryPass();
+	void telemetryPassComplete();
 
 	/*
 	 * Attach/Detach parser to for the kinematics model.

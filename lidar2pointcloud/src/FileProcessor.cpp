@@ -87,6 +87,7 @@ void cFileProcessor::run()
             }
 
             mFileReader.gotoBeginning();
+            mConverter->telemetryPassComplete();
 
             mConverter->detachKinematicParsers(mFileReader);
         }
@@ -133,6 +134,18 @@ void cFileProcessor::run()
         msg += e.what();
         console_message(msg);
     }
+    catch (const cKinematicNoData& e)
+    {
+        std::string msg = e.what();
+        console_message(msg);
+        deleteOutputFile();
+    }
+    catch (const cKinematicException& e)
+    {
+        std::string msg = "Kinematic Error: ";
+        msg += e.what();
+        console_message(msg);
+    }
     catch (const std::exception& e)
     {
         std::string msg = "Unknown Exception: ";
@@ -149,4 +162,10 @@ void cFileProcessor::processBlock(const cBlockID& id)
 void cFileProcessor::processBlock(const cBlockID& id, const std::byte* buf, std::size_t len)
 {
 	mFileWriter.writeBlock(id, buf, len);
+}
+
+void cFileProcessor::deleteOutputFile()
+{
+    mFileWriter.close();
+    std::filesystem::remove(mOutputFile);
 }

@@ -15,6 +15,7 @@ public:
 	 * Return false, no need to precompute telemetry data for this model.
 	 */
 	bool requiresTelemetryPass() override;
+	void telemetryPassComplete() override;
 
 	/*
 	 * Attach any parsers to the data file.
@@ -41,5 +42,6 @@ private:
 
 
 inline bool cKinematics_Constant::requiresTelemetryPass() { return false; }
+inline void cKinematics_Constant::telemetryPassComplete() {};
 
 

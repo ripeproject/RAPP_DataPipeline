@@ -13,6 +13,7 @@ public:
 	 * Return false, no need to precompute telemetry data for this model.
 	 */
 	bool requiresTelemetryPass() override;
+	void telemetryPassComplete() override;
 
 	/*
 	 * Attach/detach any parsers to the data file.
@@ -31,5 +32,6 @@ private:
 
 
 inline bool cKinematics_SLAM::requiresTelemetryPass() { return false; }
+inline void cKinematics_SLAM::telemetryPassComplete() {};
 
 

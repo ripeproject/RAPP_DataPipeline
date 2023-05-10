@@ -293,6 +293,13 @@ bool cLidar2PointCloud::requiresTelemetryPass()
 	return mKinematic->requiresTelemetryPass();
 }
 
+void cLidar2PointCloud::telemetryPassComplete()
+{
+	assert(mKinematic);
+
+	mKinematic->telemetryPassComplete();
+}
+
 void cLidar2PointCloud::attachKinematicParsers(cBlockDataFileReader& file)
 {
 	mKinematic->attachParsers(file);

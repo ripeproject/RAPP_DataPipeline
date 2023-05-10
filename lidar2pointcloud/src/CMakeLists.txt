@@ -45,8 +45,9 @@ target_include_directories(console_app PRIVATE "../support/PointCloud")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
-target_link_libraries(console_app PRIVATE cbdf::sensors)
 target_link_libraries(console_app PRIVATE cbdf::info)
+target_link_libraries(console_app PRIVATE cbdf::ctrl)
+target_link_libraries(console_app PRIVATE cbdf::sensors)
 target_link_libraries(console_app PRIVATE pointcloud_io)
 target_link_libraries(console_app PRIVATE string_utils)
 
@@ -58,6 +59,26 @@ set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<
 
 
 if(wxWidgets_FOUND)
+
+	if(WIN32)
+		# Include a RC file for windows
+		set(resource_files
+			./Resources/ripe.ico
+			./Resources/LidarConvert.rc
+		)
+
+		source_group("Resources" FILES
+			${resource_files}
+		)
+
+	elseif(APPLE)
+
+		# Add an icon for the apple .app file
+		set(resource_files
+			Resources/ripe.icns
+		)
+
+	endif()
 
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
@@ -75,6 +96,7 @@ if(wxWidgets_FOUND)
 		MainFrame.cpp
 
 		${LIDAR_TO_POINT_CLOUD_COMMON_FILES}
+		${resource_files}
 		
 		GuiApp.cpp
 	)
@@ -89,9 +111,11 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
+	target_link_libraries(gui_app PRIVATE cbdf::ctrl)
 	target_link_libraries(gui_app PRIVATE cbdf::sensors)
 	target_link_libraries(gui_app PRIVATE pointcloud_io)
 	target_link_libraries(gui_app PRIVATE string_utils)
+
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
