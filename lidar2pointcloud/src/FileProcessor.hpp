@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "PointCloudSerializer.hpp"
+#include "ProcessingInfoSerializer.hpp"
 #include "lidar2pointcloud.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
@@ -45,5 +45,6 @@ private:
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
 
+	cProcessingInfoSerializer mSerializer;
 	std::unique_ptr<cLidar2PointCloud> mConverter;
 };

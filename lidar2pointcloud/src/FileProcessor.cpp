@@ -15,7 +15,8 @@
 extern void console_message(const std::string& msg);
 
 
-cFileProcessor::cFileProcessor() : mConverter{new cLidar2PointCloud}
+cFileProcessor::cFileProcessor()
+    : mConverter{new cLidar2PointCloud}, mSerializer(1024)
 {}
 
 cFileProcessor::~cFileProcessor()
@@ -69,6 +70,10 @@ void cFileProcessor::run()
 	{
         throw std::logic_error("No file is open for reading.");
 	}
+
+    mSerializer.attach(&mFileWriter);
+
+    mSerializer.write("lidar2pointcloud", processing_info::ePROCESSING_TYPE::POINT_CLOUD_GENERATION);
 
     try
     {

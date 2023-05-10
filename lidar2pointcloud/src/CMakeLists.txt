@@ -42,6 +42,7 @@ PRIVATE
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE "../support/PointCloud")
+target_include_directories(console_app PRIVATE "../support/ProcessingInfo")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
@@ -49,6 +50,7 @@ target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE cbdf::ctrl)
 target_link_libraries(console_app PRIVATE cbdf::sensors)
 target_link_libraries(console_app PRIVATE pointcloud_io)
+target_link_libraries(console_app PRIVATE processing_info)
 target_link_libraries(console_app PRIVATE string_utils)
 
 
@@ -105,6 +107,7 @@ if(wxWidgets_FOUND)
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_include_directories(gui_app PRIVATE "../support/PointCloud")
+	target_include_directories(gui_app PRIVATE "../support/ProcessingInfo")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
@@ -114,6 +117,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::ctrl)
 	target_link_libraries(gui_app PRIVATE cbdf::sensors)
 	target_link_libraries(gui_app PRIVATE pointcloud_io)
+	target_link_libraries(gui_app PRIVATE processing_info)
 	target_link_libraries(gui_app PRIVATE string_utils)
 
 
