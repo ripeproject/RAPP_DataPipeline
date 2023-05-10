@@ -9,7 +9,8 @@ namespace processing_info
     enum class ePROCESSING_TYPE : uint16_t
     {
         UNKNOWN,
-        POINT_CLOUD,
+        POINT_CLOUD_GENERATION,
+        PLOT_SPLITTING
     };
 
     struct sProcessInfo_1_t

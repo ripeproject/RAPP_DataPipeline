@@ -22,6 +22,7 @@ public:
 	explicit cProcessingInfoSerializer(std::size_t n, cBlockDataFileWriter* pDataFile = nullptr);
 	virtual ~cProcessingInfoSerializer();
 
+	void write(const std::string& name, processing_info::ePROCESSING_TYPE type);
 	void write(const processing_info::sProcessInfo_1_t& info);
 
 protected:

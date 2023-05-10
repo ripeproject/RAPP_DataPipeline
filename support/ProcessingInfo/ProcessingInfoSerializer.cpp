@@ -28,6 +28,25 @@ cBlockID& cProcessingInfoSerializer::blockID()
     return *mBlockID;
 }
 
+void cProcessingInfoSerializer::write(const std::string& name, processing_info::ePROCESSING_TYPE type)
+{
+    processing_info::sProcessInfo_1_t info;
+
+    info.name = name;
+    info.type = type;
+
+    std::time_t t = std::time(nullptr);
+    auto time = std::localtime(&t);
+    info.year = time->tm_year + 1900;
+    info.month = time->tm_mon + 1;
+    info.day = time->tm_mday;
+    info.hour = time->tm_hour;
+    info.minute = time->tm_min;
+    info.seconds = time->tm_sec;
+
+    write(info);
+}
+
 void cProcessingInfoSerializer::write(const sProcessInfo_1_t& info)
 {
     assert(mpDataFile);
