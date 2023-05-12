@@ -35,7 +35,7 @@ PRIVATE
 	BS_thread_pool.hpp
 
 	${LIDAR_TO_POINT_CLOUD_COMMON_FILES}
-	
+
 	ConsoleApp.cpp
 )
 

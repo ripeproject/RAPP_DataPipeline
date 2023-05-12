@@ -9,6 +9,8 @@ class cKinematics_SLAM : public cKinematics
 public:
 	cKinematics_SLAM();
 
+	void writeHeader(cPointCloudSerializer& serializer) override;
+
 	/*
 	 * Return false, no need to precompute telemetry data for this model.
 	 */

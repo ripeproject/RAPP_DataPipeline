@@ -15,22 +15,30 @@
 extern void console_message(const std::string& msg);
 
 
-cFileProcessor::cFileProcessor() : mConverter{new cPointCloud2Ply}
-{}
+cFileProcessor::cFileProcessor(std::filesystem::directory_entry in,
+                                std::filesystem::path out) 
+:
+    mConverter{new cPointCloud2Ply}
+{
+    mInputFile = in;
+    mOutputFile = out;
+}
 
 cFileProcessor::~cFileProcessor()
 {
     mFileReader.close();
 }
 
-bool cFileProcessor::open(std::filesystem::directory_entry in,
-							std::filesystem::path out)
+bool cFileProcessor::open(std::filesystem::path out)
 {
-    mInputFile = in;
-
     std::filesystem::path outFile  = out.replace_extension();
     std::filesystem::path testFile = outFile;
-    testFile.replace_extension(".0.ply");
+
+    if (mConverter->mIndividualPlyFiles)
+        testFile.replace_extension(".0.ply");
+    else
+        testFile.replace_extension(".ply");
+
     if (std::filesystem::exists(testFile))
     {
         return false;
@@ -43,13 +51,12 @@ bool cFileProcessor::open(std::filesystem::directory_entry in,
     return mFileReader.isOpen();
 }
 
-void cFileProcessor::process_file(std::filesystem::directory_entry in,
-									std::filesystem::path out)
+void cFileProcessor::process_file()
 {
-    if (open(in, out))
+    if (open(mOutputFile))
     {
         std::string msg = "Processing ";
-        msg += in.path().string();
+        msg += mInputFile.string();
         msg += "...";
         console_message(msg);
 

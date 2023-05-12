@@ -1,6 +1,7 @@
 
 
 #include "Kinematics_Constant.hpp"
+#include "PointCloudSerializer.hpp"
 
 
 cKinematics_Constant::cKinematics_Constant(double Vx_mmps, double Vy_mmps, double Vz_mmps)
@@ -8,6 +9,13 @@ cKinematics_Constant::cKinematics_Constant(double Vx_mmps, double Vy_mmps, doubl
     mVx_mps = Vx_mmps * 0.001;
     mVy_mps = Vy_mmps * 0.001;
     mVz_mps = Vz_mmps * 0.001;
+}
+
+//-----------------------------------------------------------------------------
+void cKinematics_Constant::writeHeader(cPointCloudSerializer& serializer)
+{
+    serializer.write(pointcloud::eKINEMATIC_MODEL::CONSTANT);
+    serializer.writeKinematicSpeed(mVx_mps, mVy_mps, mVz_mps);
 }
 
 //-----------------------------------------------------------------------------
@@ -38,7 +46,6 @@ void cKinematics_Constant::transform(double time_us,
             cloud.set(r, c, point);
         }
     }
-
 }
 
 

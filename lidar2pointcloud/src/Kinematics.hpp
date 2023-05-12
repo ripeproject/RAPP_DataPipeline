@@ -10,6 +10,7 @@
 
 // Forward Declarations
 class cBlockDataFileReader;
+class cPointCloudSerializer;
 
 
 class cKinematicException : public std::logic_error
@@ -32,12 +33,16 @@ public:
 };
 
 
+enum class eKinematics { NONE, CONSTANT, DOLLY, GPS, SLAM };
+
 
 class cKinematics
 {
 public:
 	cKinematics() = default;
 	virtual ~cKinematics() = default;
+
+	virtual void writeHeader(cPointCloudSerializer& serializer) = 0;
 
 	/*
 	 * Does the kinematics model require a pass through the
@@ -63,6 +68,7 @@ public:
 	cKinematics_None() = default;
 	virtual ~cKinematics_None() = default;
 
+	void writeHeader(cPointCloudSerializer& serializer) override {};
 	bool requiresTelemetryPass() override { return false; };
 	void telemetryPassComplete() override {};
 	void attachParsers(cBlockDataFileReader& file) override {};

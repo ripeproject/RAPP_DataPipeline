@@ -39,6 +39,7 @@ public:
 	void write(const cPointCloud& in);
 
 	void writeSensorAngles(double pitch_deg, double roll_deg, double yaw_deg);
+	void writeKinematicSpeed(double vx_mps, double vy_mps, double vz_mps);
 
 protected:
 	cBlockID& blockID() override;

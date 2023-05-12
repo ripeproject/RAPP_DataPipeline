@@ -13,6 +13,8 @@ class cKinematics_Dolly : public cKinematics, public cSpidercamParser
 public:
 	cKinematics_Dolly();
 
+	void writeHeader(cPointCloudSerializer& serializer) override;
+
 	/*
 	 * Return true, we need to precompute telemetry data for this model.
 	 */
@@ -33,11 +35,22 @@ protected:
 
 private:
 
-	uint64_t mLastTimestamp = 0;
-	double mX_Offset_m = 0.0;
-	double mY_Offset_m = 0.0;
-	double mZ_Offset_m = 0.0;
+	uint64_t mStartTimestamp = 0;
 
+	double mSouth_Offset_m  = 0.0;
+	double mEast_Offset_m   = 0.0;
+	double mHeight_Offset_m = 0.0;
+
+	double mSouth_m  = 0.0;
+	double mEast_m   = 0.0;
+	double mHeight_m = 0.0;
+
+	/*
+	 * The dolly uses a south/east/up coordinate system
+	 * x axis is positive heading south
+	 * y axis is positive heading east
+	 * z axis is positive going up
+	 */
 	struct sDollyInfo_t
 	{
 		double timestamp_us = 0.0;
@@ -50,7 +63,8 @@ private:
 	};
 
 	std::vector<sDollyInfo_t> mDollyInfo;
-	std::vector<sDollyInfo_t>::iterator mDollyInfoIter;
+	std::vector<sDollyInfo_t>::size_type mDollyInfoIndex = 0;
+	std::vector<sDollyInfo_t>::size_type mDollyInfoMax = 0;
 };
 
 

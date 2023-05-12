@@ -1,9 +1,14 @@
 
 #include "MainWindow.hpp"
+#include "lidar2pointcloud.hpp"
+#include "FileProcessor.hpp"
+#include "StringUtils.hpp"
 
-#include <wx/aui/framemanager.h>
-#include <wx/aui/auibook.h>
-#include <wx/aboutdlg.h>
+#include "Kinematics_Constant.hpp"
+#include "Kinematics_Dolly.hpp"
+#include "Kinematics_GPS.hpp"
+#include "Kinematics_SLAM.hpp"
+
 #include <wx/thread.h>
 
 #include <cbdf/BlockDataFile.hpp>
@@ -113,13 +118,16 @@ void cMainWindow::CreateControls()
 	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
 	mpSensorYaw_deg->SetValidator(mKM_Sensor_Yaw_val);
 
-	mpRotateSensorToENU = new wxCheckBox(this, wxID_ANY, "Rotate Sensor to ENU");
+	mpRotateSensorToSEU = new wxCheckBox(this, wxID_ANY, "Rotate Sensor to South/East/Up Coordinates");
 
 	mpMinimumDistance_m = new wxTextCtrl(this, wxID_ANY, "1.0");
 	mpMinimumDistance_m->SetValidator(mMinimumDistance_val);
 
 	mpMaximumDistance_m = new wxTextCtrl(this, wxID_ANY, "40.0");
 	mpMaximumDistance_m->SetValidator(mMaximumDistance_val);
+
+	mpAggregatePointCloud = new wxCheckBox(this, wxID_ANY, "Aggregate Point Cloud");
+	mpSaveReducedPointCloud = new wxCheckBox(this, wxID_ANY, "Save Reduced Point Cloud");
 
 	mpComputeButton = new wxButton(this, wxID_ANY, "Compute Point Cloud");
 	mpComputeButton->Disable();
@@ -179,6 +187,7 @@ void cMainWindow::CreateLayout()
 		sizer->AddSpacer(10);
 
 		auto* so_sz = new wxStaticBoxSizer(wxVERTICAL, this, "Sensor Orientations");
+		wxBoxSizer* soi_sz = new wxBoxSizer(wxVERTICAL);
 
 		grid_sizer = new wxFlexGridSizer(2);
 		grid_sizer->SetVGap(5);
@@ -191,14 +200,17 @@ void cMainWindow::CreateLayout()
 		grid_sizer->Add(mpSensorRoll_deg, wxSizerFlags().Proportion(0).Expand());
 		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Yaw (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
 		grid_sizer->Add(mpSensorYaw_deg, wxSizerFlags().Proportion(0).Expand());
-		grid_sizer->Add(mpRotateSensorToENU, wxSizerFlags().Proportion(0).Expand());
 
-		so_sz->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+		soi_sz->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+		soi_sz->AddSpacer(5);
+		soi_sz->Add(mpRotateSensorToSEU, wxSizerFlags().Proportion(0).Expand());
+
+		so_sz->Add(soi_sz, wxSizerFlags().Proportion(0).Expand());
 		sizer->Add(so_sz, wxSizerFlags().Proportion(1).Expand());
 
 		topsizer->Add(sizer, wxSizerFlags().Proportion(0).Expand());
 	}
-	topsizer->AddSpacer(10);
+	topsizer->AddSpacer(5);
 
 	auto* rg_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Range Limits");
 	rg_sz->Add(new wxStaticText(this, wxID_ANY, "Minimum Distance (m) :"), 0, wxALIGN_CENTER_VERTICAL);
@@ -211,6 +223,14 @@ void cMainWindow::CreateLayout()
 	topsizer->Add(rg_sz, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
+
+	auto* op_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Options");
+	op_sz->Add(mpAggregatePointCloud, wxSizerFlags().Proportion(1).Expand());
+	op_sz->AddSpacer(10);
+	op_sz->Add(mpSaveReducedPointCloud, wxSizerFlags().Proportion(1).Expand());
+	topsizer->Add(op_sz, wxSizerFlags().Proportion(0).Expand());
+
+	topsizer->AddSpacer(10);
 	topsizer->Add(mpComputeButton, wxSizerFlags().Proportion(0).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
@@ -228,32 +248,32 @@ void cMainWindow::CreateLayout()
 
 void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 {
-//	wxFileSelector("Choose input directory");
-
 	wxDirDialog dlg(NULL, "Choose input directory", "",
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
-	dlg.ShowModal();
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;
 
-/*
-	wxFileDialog
-		openFileDialog(this, _("Open directory/file"), "", "",
-			"Lidar files (*.lidar_data)|*.lidar_data", wxFD_OPEN); // | wxFD_FILE_MUST_EXIST);
+	mSourceData = dlg.GetPath();
+	mpLoadSrcFile->SetValue(mSourceData);
 
-	if (openFileDialog.ShowModal() == wxID_CANCEL)
-		return;     // the user changed their mind...
-
-//	stopDataProcessing();
-
-	mFilename = openFileDialog.GetPath().ToStdString();
-
-//	startDataProcessing();
-*/
+	if (!mpLoadDstFile->GetValue().IsEmpty())
+		mpComputeButton->Enable();
 }
 
 void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 {
+	wxDirDialog dlg(NULL, "Choose output directory", "",
+		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;
+
+	mDestinationData = dlg.GetPath();
+	mpLoadDstFile->SetValue(mDestinationData);
+
+	if (!mpLoadSrcFile->GetValue().IsEmpty())
+		mpComputeButton->Enable();
 }
 
 void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))

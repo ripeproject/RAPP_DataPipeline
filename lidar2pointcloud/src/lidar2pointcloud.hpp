@@ -48,14 +48,23 @@ public:
 	 * Sets the sensor orientation
 	 * 
 	 * Compute the rotation matrix needed to convert the pointcloud from
-	 * the LiDAR sensor coordinate system to a earth East-North-Up (ENU)
-	 * coordinate system.
+	 * the LiDAR sensor coordinate system to a earth South-East-Up (SEU)
+	 * coordinate system of the spidercam system.
 	 * 
 	 * @param	yaw_deg		: The yaw angle of the sensor referenced to the east direction
 	 * @param	pitch_deg	: The pitch angle of the sensor
 	 * @param	roll_deg	: The roll angle of the sensor
+	 * @param	doRotation	: Rotate the sensor orientation to spidercam 
 	 */
-	static void setSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg);
+	static void setSensorOrientation(double yaw_deg, 
+									double pitch_deg,
+									double roll_deg, 
+									bool rotateToSEU);
+
+	static double getSensorPitch_deg();
+	static double getSensorRoll_deg();
+	static double getSensorYaw_deg();
+	static bool   rotateToSEU();
 
 	static void saveAggregatePointCloud();
 	static void saveReducedPointCloud();
@@ -82,6 +91,11 @@ public:
 	 */
 	void attachKinematicParsers(cBlockDataFileReader& file);
 	void detachKinematicParsers(cBlockDataFileReader& file);
+
+	/*
+	 * Write any header data
+	 */
+	void writeHeader();
 
 	/*
 	 * Write and close any pointcloud data
@@ -115,7 +129,16 @@ private:
 	static double mMinDistance_m;
 	static double mMaxDistance_m;
 
-	static ouster::cRotationMatrix<double> mSensorToENU;
+	static double mPitch_deg;
+	static double mRoll_deg;
+	static double mYaw_deg;
+	static bool   mRotateSensorData;
+
+	/*
+	 * The rotation needed to convert sensor orientation
+	 * to the spidercam South\East\Up coordination system
+	 */
+	static ouster::cRotationMatrix<double> mSensorToSEU;
 
 	static bool mAggregatePointCloud;
 	static bool mSaveReducedPointCloud;

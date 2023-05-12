@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 	}
 
 	cLidar2PointCloud::setValidRange_m(min_dist_m, max_dist_m);
-	cLidar2PointCloud::setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
+	cLidar2PointCloud::setSensorOrientation(yaw_deg, pitch_deg, roll_deg, true);
 
 	if (aggregatePointCloud)
 	{
@@ -199,8 +199,8 @@ int main(int argc, char** argv)
 	}
 
 
-	enum class Kinematics { NONE, CONSTANT, DOLLY, GPS, SLAM } model;
-	model = Kinematics::NONE;
+	eKinematics model;
+	model = eKinematics::NONE;
 
 	double eastSpeed_mmps  = 0;
 	double northSpeed_mmps = 0;
@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 
 	if (icontains(kinematics, "constant"))
 	{
-		model = Kinematics::CONSTANT;
+		model = eKinematics::CONSTANT;
 
 		auto parameters = get_parameters(kinematics);
 		if (parameters.size() != 3)
@@ -223,15 +223,15 @@ int main(int argc, char** argv)
 	}
 	else if (iequal(kinematics, "slam"))
 	{
-		model = Kinematics::DOLLY;
+		model = eKinematics::DOLLY;
 	}
 	else if (iequal(kinematics, "dolly"))
 	{
-		model = Kinematics::DOLLY;
+		model = eKinematics::DOLLY;
 	}
 	else if (iequal(kinematics, "gps"))
 	{
-		model = Kinematics::GPS;
+		model = eKinematics::GPS;
 	}
 
 	/*
@@ -261,26 +261,26 @@ int main(int argc, char** argv)
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor();
+		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
 
 		switch (model)
 		{
-		case Kinematics::CONSTANT:
+		case eKinematics::CONSTANT:
 			fp->setKinematicModel(std::make_unique<cKinematics_Constant>(eastSpeed_mmps,
 				northSpeed_mmps, vertSpeed_mmps));
 			break;
-		case Kinematics::DOLLY:
+		case eKinematics::DOLLY:
 			fp->setKinematicModel(std::make_unique<cKinematics_Dolly>());
 			break;
-		case Kinematics::GPS:
+		case eKinematics::GPS:
 			fp->setKinematicModel(std::make_unique<cKinematics_GPS>());
 			break;
-		case Kinematics::SLAM:
+		case eKinematics::SLAM:
 			fp->setKinematicModel(std::make_unique<cKinematics_SLAM>());
 			break;
 		}
 
-		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
+		pool.push_task(&cFileProcessor::process_file, fp);
 
 		file_processors.push_back(fp);
 	}

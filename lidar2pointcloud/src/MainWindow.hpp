@@ -12,6 +12,12 @@
 #include <cbdf/BlockDataFile.hpp>
 
 #include <memory>
+#include <queue>
+
+
+// Forward Declarations
+class cFileProcessor;
+
 
 // Define a new frame type: this is going to be our main frame
 class cMainWindow : public wxPanel
@@ -71,7 +77,7 @@ private:
 	wxTextCtrl* mpSensorPitch_deg = nullptr;
 	wxTextCtrl* mpSensorRoll_deg = nullptr;
 	wxTextCtrl* mpSensorYaw_deg = nullptr;
-	wxCheckBox* mpRotateSensorToENU = nullptr;
+	wxCheckBox* mpRotateSensorToSEU = nullptr;
 
 	double mMinimumDistance_m = 1.0;
 	double mMaximumDistance_m = 40.0;
@@ -82,12 +88,21 @@ private:
 	wxTextCtrl* mpMinimumDistance_m = nullptr;
 	wxTextCtrl* mpMaximumDistance_m = nullptr;
 
+	wxCheckBox* mpAggregatePointCloud = nullptr;
+	wxCheckBox* mpSaveReducedPointCloud = nullptr;
+
+
 	wxButton* mpComputeButton = nullptr;
 
 	wxTextCtrl* mpLogCtrl = nullptr;
 	wxLog* mpOriginalLog = nullptr;
 
 	wxEvtHandler* mpHandler = nullptr;
+	std::queue<cFileProcessor*> mFileProcessors;
+
+	bool mIsFile = false;
+	wxString mSourceData;
+	wxString mDestinationData;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

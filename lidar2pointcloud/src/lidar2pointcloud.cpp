@@ -192,7 +192,14 @@ namespace
 
 double cLidar2PointCloud::mMinDistance_m = 0.001;
 double cLidar2PointCloud::mMaxDistance_m = 1000.0;
-ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToENU;
+
+double cLidar2PointCloud::mPitch_deg = 0.0;
+double cLidar2PointCloud::mRoll_deg = 0.0;
+double cLidar2PointCloud::mYaw_deg = 0.0;
+bool   cLidar2PointCloud::mRotateSensorData = false;
+
+ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToSEU;
+
 bool cLidar2PointCloud::mAggregatePointCloud = false;
 bool cLidar2PointCloud::mSaveReducedPointCloud = false;
 
@@ -203,32 +210,47 @@ void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
 	mMaxDistance_m = std::min(max_dist_m, 1000.0);
 }
 
-void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg)
+void cLidar2PointCloud::setSensorOrientation(double yaw_deg, 
+											double pitch_deg,
+											double roll_deg,
+											bool rotateToSEU)
 {
-	auto pitch = -pitch_deg * std::numbers::pi / 180.0;
-	auto roll = -roll_deg * std::numbers::pi / 180.0;
-	auto yaw = -yaw_deg * std::numbers::pi / 180.0;
+	mPitch_deg = pitch_deg;
+	mRoll_deg = roll_deg;
+	mYaw_deg = yaw_deg;
+	mRotateSensorData = rotateToSEU;
 
-	Eigen::AngleAxisd rollAngle(roll, Eigen::Vector3d::UnitX());
-	Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitZ());
-	Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitY());
+	double pitch_rad = 0.0;
+	double roll_rad  = 0.0;
+	double yaw_rad   = 0.0;
+
+	if (rotateToSEU)
+	{
+		pitch_rad = -pitch_deg * std::numbers::pi / 180.0;
+		roll_rad = -roll_deg * std::numbers::pi / 180.0;
+		yaw_rad = -yaw_deg * std::numbers::pi / 180.0;
+	}
+
+	Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
+	Eigen::AngleAxisd yawAngle(yaw_rad, Eigen::Vector3d::UnitZ());
+	Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
 
 	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
 	Eigen::Matrix3d rotationMatrix = q.matrix();
 
 	double e; // Used for debugging;
 
-	auto c1 = mSensorToENU.column(0);
+	auto c1 = mSensorToSEU.column(0);
 	c1[0] = e = rotationMatrix.col(0)[0];
 	c1[1] = e = rotationMatrix.col(0)[1];
 	c1[2] = e = rotationMatrix.col(0)[2];
 
-	auto c2 = mSensorToENU.column(1);
+	auto c2 = mSensorToSEU.column(1);
 	c2[0] = e = rotationMatrix.col(1)[0];
 	c2[1] = e = rotationMatrix.col(1)[1];
 	c2[2] = e = rotationMatrix.col(1)[2];
 
-	auto c3 = mSensorToENU.column(2);
+	auto c3 = mSensorToSEU.column(2);
 	c3[0] = e = rotationMatrix.col(2)[0];
 	c3[1] = e = rotationMatrix.col(2)[1];
 	c3[2] = e = rotationMatrix.col(2)[2];
@@ -256,6 +278,12 @@ void cLidar2PointCloud::setSensorOrientation(double yaw_deg, double pitch_deg, d
 	c3[2] = e = cos(pitch) * cos(roll);
 */
 }
+
+double cLidar2PointCloud::getSensorPitch_deg() { return mPitch_deg; }
+double cLidar2PointCloud::getSensorRoll_deg()  { return mRoll_deg; }
+double cLidar2PointCloud::getSensorYaw_deg()   { return mYaw_deg; }
+bool   cLidar2PointCloud::rotateToSEU()		   { return mRotateSensorData; }
+
 
 void cLidar2PointCloud::saveAggregatePointCloud()
 {
@@ -308,6 +336,18 @@ void cLidar2PointCloud::attachKinematicParsers(cBlockDataFileReader& file)
 void cLidar2PointCloud::detachKinematicParsers(cBlockDataFileReader& file)
 {
 	mKinematic->detachParsers(file);
+}
+
+void cLidar2PointCloud::writeHeader()
+{
+	if (mRotateSensorData)
+		write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_SEU);
+	else
+		write(pointcloud::eCOORDINATE_SYSTEM::SENSOR);
+
+	writeSensorAngles(mPitch_deg, mRoll_deg, mYaw_deg);
+
+	mKinematic->writeHeader(*this);
 }
 
 void cLidar2PointCloud::writeAndCloseData()
@@ -388,7 +428,7 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 				point.Y_m = y_mm * mm_to_m;
 				point.Z_m = z_mm * mm_to_m;
 
-				rotate(point, mSensorToENU);
+				rotate(point, mSensorToSEU);
 			}
 
             point.range_mm = range_mm;
@@ -518,12 +558,12 @@ void cLidar2PointCloud::onImuData(ouster::imu_data_t data)
 	imu.angular_velocity_Zaxis_deg_per_sec = data.angular_velocity_Zaxis_deg_per_sec;
 
 	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mImuToSensor);
-	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mSensorToENU);
+	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mSensorToSEU);
 
 	rotate(imu.angular_velocity_Xaxis_deg_per_sec, imu.angular_velocity_Yaxis_deg_per_sec,
 		imu.angular_velocity_Zaxis_deg_per_sec, mImuToSensor);
 	rotate(imu.angular_velocity_Xaxis_deg_per_sec, imu.angular_velocity_Yaxis_deg_per_sec,
-		imu.angular_velocity_Zaxis_deg_per_sec, mSensorToENU);
+		imu.angular_velocity_Zaxis_deg_per_sec, mSensorToSEU);
 
 	write(imu);
 }

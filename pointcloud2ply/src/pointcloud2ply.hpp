@@ -25,6 +25,8 @@ public:
 
 private:
     void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;
+    void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) override;
+    void onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) override;
     void onImuData(pointcloud::imu_data_t data) override;
     void onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
     void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;

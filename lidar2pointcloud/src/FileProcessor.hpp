@@ -16,7 +16,9 @@
 class cFileProcessor
 {
 public:
-	cFileProcessor();
+	cFileProcessor(std::filesystem::directory_entry in,
+					std::filesystem::path out);
+
 	~cFileProcessor();
 
 	/**
@@ -24,11 +26,10 @@ public:
 	 */
 	void setKinematicModel(std::unique_ptr<cKinematics> model);
 
-	bool open(std::filesystem::directory_entry in, 
-				std::filesystem::path out);
+	void process_file();
 
-	void process_file(std::filesystem::directory_entry in,
-				std::filesystem::path out);
+protected:
+	bool open();
 	void run();
 
 private:

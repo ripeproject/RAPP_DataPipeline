@@ -230,3 +230,22 @@ void cPointCloudSerializer::writeSensorAngles(double pitch_deg, double roll_deg,
     mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
 }
 
+void cPointCloudSerializer::writeKinematicSpeed(double vx_mps, double vy_mps, double vz_mps)
+{
+    assert(mpDataFile);
+
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::KINEMATICS_SPEEDS);
+
+    mDataBuffer.clear();
+    mDataBuffer << vx_mps;
+    mDataBuffer << vy_mps;
+    mDataBuffer << vz_mps;
+
+    assert(!mDataBuffer.overrun());
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing kinematic speed data.");
+
+    mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
+}

@@ -15,9 +15,14 @@
 extern void console_message(const std::string& msg);
 
 
-cFileProcessor::cFileProcessor()
-    : mConverter{new cLidar2PointCloud}, mSerializer(1024)
-{}
+cFileProcessor::cFileProcessor(std::filesystem::directory_entry in,
+                                std::filesystem::path out)
+:
+    mConverter{new cLidar2PointCloud}, mSerializer(1024)
+{
+    mInputFile = in;
+    mOutputFile = out;
+}
 
 cFileProcessor::~cFileProcessor()
 {
@@ -33,12 +38,8 @@ void cFileProcessor::setKinematicModel(std::unique_ptr<cKinematics> model)
     mConverter->setKinematicModel(std::move(model));
 }
 
-bool cFileProcessor::open(std::filesystem::directory_entry in,
-							std::filesystem::path out)
+bool cFileProcessor::open()
 {
-    mInputFile = in;
-    mOutputFile = out;
-
     if (std::filesystem::exists(mOutputFile))
     {
         return false;
@@ -50,13 +51,12 @@ bool cFileProcessor::open(std::filesystem::directory_entry in,
     return mFileWriter.isOpen() && mFileReader.isOpen();
 }
 
-void cFileProcessor::process_file(std::filesystem::directory_entry in,
-									std::filesystem::path out)
+void cFileProcessor::process_file()
 {
-    if (open(in, out))
+    if (open())
     {
         std::string msg = "Processing ";
-        msg += in.path().string();
+        msg += mInputFile.string();
         msg += "...";
         console_message(msg);
 
@@ -74,6 +74,8 @@ void cFileProcessor::run()
     mSerializer.attach(&mFileWriter);
 
     mSerializer.write("lidar2pointcloud", processing_info::ePROCESSING_TYPE::POINT_CLOUD_GENERATION);
+
+    mConverter->writeHeader();
 
     try
     {

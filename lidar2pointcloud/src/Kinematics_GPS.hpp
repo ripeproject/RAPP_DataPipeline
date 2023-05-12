@@ -11,6 +11,8 @@ class cKinematics_GPS : public cKinematics, public cSsnxParser
 public:
 	cKinematics_GPS();
 
+	void writeHeader(cPointCloudSerializer& serializer) override;
+
 	/*
 	 * Return true, we need to precompute telemetry data for this model.
 	 */

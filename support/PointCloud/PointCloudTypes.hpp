@@ -11,6 +11,7 @@ namespace pointcloud
         UNKNOWN,
         SENSOR,
         SENSOR_ENU,
+        SENSOR_SEU,
     };
 
     enum class eKINEMATIC_MODEL : uint8_t

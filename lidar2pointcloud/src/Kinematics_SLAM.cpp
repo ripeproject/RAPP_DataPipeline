@@ -1,10 +1,16 @@
 
 
 #include "Kinematics_SLAM.hpp"
+#include "PointCloudSerializer.hpp"
 
 
 cKinematics_SLAM::cKinematics_SLAM()
 {
+}
+
+void cKinematics_SLAM::writeHeader(cPointCloudSerializer& serializer)
+{
+    serializer.write(pointcloud::eKINEMATIC_MODEL::SLAM);
 }
 
 void cKinematics_SLAM::attachParsers(cBlockDataFileReader& file)

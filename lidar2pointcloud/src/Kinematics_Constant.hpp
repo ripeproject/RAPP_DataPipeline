@@ -11,6 +11,8 @@ class cKinematics_Constant : public cKinematics
 public:
 	cKinematics_Constant(double Vx_mmps, double Vy_mmps, double Vz_mmps);
 
+	void writeHeader(cPointCloudSerializer& serializer) override;
+
 	/*
 	 * Return false, no need to precompute telemetry data for this model.
 	 */

@@ -1,11 +1,17 @@
 
 #include "Kinematics_GPS.hpp"
+#include "PointCloudSerializer.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
 
 
 cKinematics_GPS::cKinematics_GPS()
 {
+}
+
+void cKinematics_GPS::writeHeader(cPointCloudSerializer& serializer)
+{
+    serializer.write(pointcloud::eKINEMATIC_MODEL::GPS);
 }
 
 void cKinematics_GPS::attachParsers(cBlockDataFileReader& file)
