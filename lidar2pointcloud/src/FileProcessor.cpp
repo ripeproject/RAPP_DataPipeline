@@ -72,6 +72,7 @@ void cFileProcessor::run()
 	}
 
     mSerializer.attach(&mFileWriter);
+    mConverter->attach(&mFileWriter);
 
     mSerializer.write("lidar2pointcloud", processing_info::ePROCESSING_TYPE::POINT_CLOUD_GENERATION);
 

@@ -15,7 +15,7 @@ class cMainWindow;
 
 
 // Define a new frame type: this is going to be our main frame
-class cMainFrame : public wxFrame, public wxThreadHelper
+class cMainFrame : public wxFrame
 {
 public:
 	// ctor(s)
@@ -29,21 +29,10 @@ public:
 	void OnAbout(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& evt);
 
-protected:
-	void OnThreadUpdate(wxThreadEvent& evt);
-
-	virtual wxThread::ExitCode Entry();
-
-private:
-	void startDataProcessing();
-	void stopDataProcessing();
-
 private:
 	std::string mFilename;
 
 	cMainWindow* mpMainWindow = nullptr;
-
-	wxEvtHandler* mpHandler = nullptr;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

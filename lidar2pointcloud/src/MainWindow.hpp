@@ -20,7 +20,7 @@ class cFileProcessor;
 
 
 // Define a new frame type: this is going to be our main frame
-class cMainWindow : public wxPanel
+class cMainWindow : public wxPanel, public wxThreadHelper
 {
 public:
 	// ctor(s)
@@ -38,6 +38,8 @@ protected:
 	void OnModelChange(wxCommandEvent& event);
 	void OnCompute(wxCommandEvent& event);
 
+protected:
+	virtual wxThread::ExitCode Entry();
 
 private:
 	void startDataProcessing();
@@ -54,21 +56,21 @@ private:
 
 	wxComboBox* mpKinematicModel = nullptr;
 
-	double mKM_Constant_Vx_mmps = 0.0;
-	double mKM_Constant_Vy_mmps = 0.0;
-	double mKM_Constant_Vz_mmps = 0.0;
+	double mKM_Sensor_Vx_mmps = 0.0;
+	double mKM_Sensor_Vy_mmps = 0.0;
+	double mKM_Sensor_Vz_mmps = 0.0;
 
-	wxFloatingPointValidator<double> mKM_Vx_val;
-	wxFloatingPointValidator<double> mKM_Vy_val;
-	wxFloatingPointValidator<double> mKM_Vz_val;
+	wxFloatingPointValidator<double> mKM_Sensor_Vx_val;
+	wxFloatingPointValidator<double> mKM_Sensor_Vy_val;
+	wxFloatingPointValidator<double> mKM_Sensor_Vz_val;
 
-	wxTextCtrl* mpKM_Constant_Vx_mmps = nullptr;
-	wxTextCtrl* mpKM_Constant_Vy_mmps = nullptr;
-	wxTextCtrl* mpKM_Constant_Vz_mmps = nullptr;
+	wxTextCtrl* mpKM_Sensor_Vx_mmps = nullptr;
+	wxTextCtrl* mpKM_Sensor_Vy_mmps = nullptr;
+	wxTextCtrl* mpKM_Sensor_Vz_mmps = nullptr;
 
-	double mSensorPitch_deg = 0.0;
+	double mSensorPitch_deg = -90.0;
 	double mSensorRoll_deg = 0.0;
-	double mSensorYaw_deg = 0.0;
+	double mSensorYaw_deg = 270.0;
 
 	wxFloatingPointValidator<double> mKM_Sensor_Pitch_val;
 	wxFloatingPointValidator<double> mKM_Sensor_Roll_val;
@@ -79,8 +81,8 @@ private:
 	wxTextCtrl* mpSensorYaw_deg = nullptr;
 	wxCheckBox* mpRotateSensorToSEU = nullptr;
 
-	double mMinimumDistance_m = 1.0;
-	double mMaximumDistance_m = 40.0;
+	double mMinimumDistance_m = 0.0;
+	double mMaximumDistance_m = 0.0;
 
 	wxFloatingPointValidator<double> mMinimumDistance_val;
 	wxFloatingPointValidator<double> mMaximumDistance_val;
@@ -90,7 +92,6 @@ private:
 
 	wxCheckBox* mpAggregatePointCloud = nullptr;
 	wxCheckBox* mpSaveReducedPointCloud = nullptr;
-
 
 	wxButton* mpComputeButton = nullptr;
 

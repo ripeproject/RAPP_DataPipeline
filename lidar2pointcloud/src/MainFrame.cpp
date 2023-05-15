@@ -48,8 +48,6 @@ cMainFrame::cMainFrame()
 {
 	mpMainWindow = new cMainWindow(this);
 
-	mpHandler = GetEventHandler();
-
 	// set the frame icon
 	SetIcon(wxICON(LidarConvert));
 
@@ -86,9 +84,6 @@ cMainFrame::cMainFrame()
 	// create a status bar just for fun (by default with 1 pane only)
 	CreateStatusBar();
 
-	// It is also possible to use event tables, but dynamic binding is simpler.
-	Bind(wxEVT_THREAD, &cMainFrame::OnThreadUpdate, this);
-
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
 	sizer->Add(mpMainWindow, wxSizerFlags().Proportion(1).Expand().Border(wxALL, 5));
@@ -123,11 +118,7 @@ void cMainFrame::OnFileOpen(wxCommandEvent& WXUNUSED(event))
 	if (openFileDialog.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
 
-	stopDataProcessing();
-
 	mFilename = openFileDialog.GetPath().ToStdString();
-
-	startDataProcessing();
 }
 
 void cMainFrame::OnFileExport(wxCommandEvent& WXUNUSED(event))
@@ -136,7 +127,6 @@ void cMainFrame::OnFileExport(wxCommandEvent& WXUNUSED(event))
 
 void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
-	stopDataProcessing();
 
 	// true is to force the frame to close
 	Close(true);
@@ -193,106 +183,6 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 void cMainFrame::OnClose(wxCloseEvent&)
 {
 	Destroy();
-}
-
-void cMainFrame::startDataProcessing()
-{
-	// Now we can start processing the new data file
-	if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR)
-	{
-		wxLogError("Could not create the worker thread!");
-		return;
-	}
-
-	GetThread()->Run();
-}
-
-
-void cMainFrame::stopDataProcessing()
-{
-	// Stop the processing of any previous file
-	auto* pThread = GetThread();
-	if (pThread && pThread->IsRunning())
-	{
-		wxString msg = "Stopping the processing of: ";
-		msg += mFilename;
-
-		SetStatusText(msg);
-
-		pThread->Delete();
-	}
-}
-
-void cMainFrame::OnThreadUpdate(wxThreadEvent& evt)
-{
-	SetStatusText(evt.GetString());
-}
-
-
-wxThread::ExitCode cMainFrame::Entry()
-{
-	// VERY IMPORTANT: this function gets executed in the secondary thread context!
-	// Do not call any GUI function inside this function; rather use wxQueueEvent():
-	cBlockDataFileReader data_file;
-
-	data_file.open(mFilename);
-
-	if (!data_file.isOpen())
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Could not open ";
-		msg += mFilename;
-		msg += " for processing!";
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-
-		return (wxThread::ExitCode) 1;
-	}
-
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Processing: ";
-		msg += mFilename;
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-	}
-
-	try
-	{
-		while (!data_file.eof())
-		{
-			if (data_file.fail() || GetThread()->TestDestroy())
-			{
-				data_file.close();
-				return (wxThread::ExitCode)0;
-			}
-
-			data_file.processBlock();
-		}
-	}
-	catch (const std::exception& e)
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Unknown Exception: ";
-		msg += e.what();
-
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-
-		return (wxThread::ExitCode) 2;
-	}
-
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		event->SetString("Processing complete.");
-		wxQueueEvent(mpHandler, event);
-	}
-
-	return (wxThread::ExitCode) 0;
 }
 
 

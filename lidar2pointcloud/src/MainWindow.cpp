@@ -46,9 +46,9 @@ wxEND_EVENT_TABLE()
 cMainWindow::cMainWindow(wxWindow* parent)
 :
 	wxPanel(parent, wxID_ANY),
-	mKM_Vx_val(1, &mKM_Constant_Vx_mmps),
-	mKM_Vy_val(1, &mKM_Constant_Vy_mmps),
-	mKM_Vz_val(1, &mKM_Constant_Vz_mmps),
+	mKM_Sensor_Vx_val(1, &mKM_Sensor_Vx_mmps),
+	mKM_Sensor_Vy_val(1, &mKM_Sensor_Vy_mmps),
+	mKM_Sensor_Vz_val(1, &mKM_Sensor_Vz_mmps),
 	mKM_Sensor_Pitch_val(1, &mSensorPitch_deg),
 	mKM_Sensor_Roll_val(1, &mSensorRoll_deg),
 	mKM_Sensor_Yaw_val(1, &mSensorYaw_deg),
@@ -58,9 +58,9 @@ cMainWindow::cMainWindow(wxWindow* parent)
 {
 //	mpHandler = GetEventHandler();
 
-	mKM_Vx_val.SetRange(-2000.0, 2000.0);
-	mKM_Vy_val.SetRange(-2000.0, 2000.0);
-	mKM_Vz_val.SetRange(-2000.0, 2000.0);
+	mKM_Sensor_Vx_val.SetRange(-2000.0, 2000.0);
+	mKM_Sensor_Vy_val.SetRange(-2000.0, 2000.0);
+	mKM_Sensor_Vz_val.SetRange(-2000.0, 2000.0);
 
 	mKM_Sensor_Pitch_val.SetRange(-90.0, 90.0);
 	mKM_Sensor_Roll_val.SetRange(-180.0, 180.0);
@@ -97,28 +97,32 @@ void cMainWindow::CreateControls()
 	choice.Add("GPS");
 	choice.Add("SLAM");
 	mpKinematicModel = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, choice, wxCB_DROPDOWN | wxCB_READONLY);
-	mpKinematicModel->SetSelection(0);
+	mpKinematicModel->SetSelection(1);
 	mpKinematicModel->Bind(wxEVT_TEXT, &cMainWindow::OnModelChange, this);
 
-	mpKM_Constant_Vx_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
-	mpKM_Constant_Vx_mmps->SetValidator(mKM_Vx_val);
+	mpKM_Sensor_Vx_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpKM_Sensor_Vx_mmps->Disable();
+	mpKM_Sensor_Vx_mmps->SetValidator(mKM_Sensor_Vx_val);
 
-	mpKM_Constant_Vy_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
-	mpKM_Constant_Vy_mmps->SetValidator(mKM_Vy_val);
+	mpKM_Sensor_Vy_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpKM_Sensor_Vy_mmps->Disable();
+	mpKM_Sensor_Vy_mmps->SetValidator(mKM_Sensor_Vy_val);
 
-	mpKM_Constant_Vz_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
-	mpKM_Constant_Vz_mmps->SetValidator(mKM_Vz_val);
+	mpKM_Sensor_Vz_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpKM_Sensor_Vz_mmps->Disable();
+	mpKM_Sensor_Vz_mmps->SetValidator(mKM_Sensor_Vz_val);
 
-	mpSensorPitch_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpSensorPitch_deg = new wxTextCtrl(this, wxID_ANY, "-90.0");
 	mpSensorPitch_deg->SetValidator(mKM_Sensor_Pitch_val);
 
 	mpSensorRoll_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
 	mpSensorRoll_deg->SetValidator(mKM_Sensor_Roll_val);
 
-	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "270.0");
 	mpSensorYaw_deg->SetValidator(mKM_Sensor_Yaw_val);
 
 	mpRotateSensorToSEU = new wxCheckBox(this, wxID_ANY, "Rotate Sensor to South/East/Up Coordinates");
+	mpRotateSensorToSEU->SetValue(true);
 
 	mpMinimumDistance_m = new wxTextCtrl(this, wxID_ANY, "1.0");
 	mpMinimumDistance_m->SetValidator(mMinimumDistance_val);
@@ -166,7 +170,7 @@ void cMainWindow::CreateLayout()
 
 	{
 		wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
-		auto* km_sz = new wxStaticBoxSizer(wxVERTICAL, this, "Constant Speeds");
+		auto* km_sz = new wxStaticBoxSizer(wxVERTICAL, this, "Sensor Speeds");
 
 		auto* grid_sizer = new wxFlexGridSizer(2);
 		grid_sizer->SetVGap(5);
@@ -175,11 +179,11 @@ void cMainWindow::CreateLayout()
 
 		wxBoxSizer* ln_sz = new wxBoxSizer(wxHORIZONTAL);
 		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vx (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
-		grid_sizer->Add(mpKM_Constant_Vx_mmps, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(mpKM_Sensor_Vx_mmps, wxSizerFlags().Proportion(0).Expand());
 		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vy (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
-		grid_sizer->Add(mpKM_Constant_Vy_mmps, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(mpKM_Sensor_Vy_mmps, wxSizerFlags().Proportion(0).Expand());
 		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vz (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
-		grid_sizer->Add(mpKM_Constant_Vz_mmps, wxSizerFlags().Proportion(0).Expand());
+		grid_sizer->Add(mpKM_Sensor_Vz_mmps, wxSizerFlags().Proportion(0).Expand());
 
 		km_sz->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 		sizer->Add(km_sz, wxSizerFlags().Proportion(1).Expand());
@@ -282,25 +286,195 @@ void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 
 	if (selection == 0)
 	{
-		mpKM_Constant_Vx_mmps->Enable();
-		mpKM_Constant_Vy_mmps->Enable();
-		mpKM_Constant_Vz_mmps->Enable();
+		mpKM_Sensor_Vx_mmps->Enable();
+		mpKM_Sensor_Vy_mmps->Enable();
+		mpKM_Sensor_Vz_mmps->Enable();
 	}
 	else
 	{
-		mpKM_Constant_Vx_mmps->Disable();
-		mpKM_Constant_Vy_mmps->Disable();
-		mpKM_Constant_Vz_mmps->Disable();
+		mpKM_Sensor_Vx_mmps->Disable();
+		mpKM_Sensor_Vy_mmps->Disable();
+		mpKM_Sensor_Vz_mmps->Disable();
 	}
 }
 
 void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 {
+	using namespace std::filesystem;
+	using namespace nStringUtils;
+
+	mpMinimumDistance_m->TransferDataFromWindow();
+	mpMaximumDistance_m->TransferDataFromWindow();
+
+	cLidar2PointCloud::setValidRange_m(mMinimumDistance_m,
+		mMaximumDistance_m);
+
+	mpSensorYaw_deg->TransferDataFromWindow();
+	mpSensorPitch_deg->TransferDataFromWindow();
+	mpSensorRoll_deg->TransferDataFromWindow();
+
+	cLidar2PointCloud::setSensorOrientation(mSensorYaw_deg,
+		mSensorPitch_deg, mSensorRoll_deg,
+		mpRotateSensorToSEU->GetValue());
+
+	if (mpAggregatePointCloud->GetValue())
+	{
+		cLidar2PointCloud::saveAggregatePointCloud();
+	}
+	else if (mpSaveReducedPointCloud->GetValue())
+	{
+		cLidar2PointCloud::saveReducedPointCloud();
+	}
+
+	std::string input_directory = mSourceData.ToStdString();
+	std::string output_directory = mDestinationData.ToStdString();
+
+	const std::filesystem::path input{ input_directory };
+
+	std::vector<directory_entry> files_to_process;
+
+	/*
+	 * Create list of files to process
+	 */
+	if (mIsFile)
+	{
+		auto dir_entry = std::filesystem::directory_entry{ input };
+
+		if (!dir_entry.is_regular_file())
+			return;
+
+		if (dir_entry.path().extension() != ".ceres")
+			return;
+
+		if (!isCeresFile(dir_entry.path().string()))
+			return;
+
+		files_to_process.push_back(dir_entry);
+	}
+	else
+	{
+		// Scan input directory for all CERES files to operate on
+		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
+		{
+			if (!dir_entry.is_regular_file())
+				continue;
+
+			if (dir_entry.path().extension() != ".ceres")
+				continue;
+
+			if (!isCeresFile(dir_entry.path().string()))
+				continue;
+
+			files_to_process.push_back(dir_entry);
+		}
+	}
+
+	/*
+	 * Make sure the output directory exists
+	 */
+	const std::filesystem::path output{ output_directory };
+
+	std::filesystem::directory_entry output_dir;
+
+	if (mIsFile && output.has_extension())
+	{
+		output_dir = std::filesystem::directory_entry{ output.parent_path() };
+	}
+	else
+	{
+		output_dir = std::filesystem::directory_entry{ output };
+	}
+
+	if (!output_dir.exists())
+	{
+		std::filesystem::create_directories(output_dir);
+	}
+
+
+	eKinematics model;
+	model = eKinematics::NONE;
+
+	switch (mpKinematicModel->GetSelection())
+	{
+	case 0:
+		model = eKinematics::CONSTANT;
+		break;
+	case 1:
+		model = eKinematics::DOLLY;
+		break;
+	case 2:
+		model = eKinematics::GPS;
+		break;
+	case 3:
+		model = eKinematics::SLAM;
+		break;
+	default:
+		return;
+	}
+
+	/*
+	 * Add all of the files to process to the thread pool
+	 */
+	for (auto& in_file : files_to_process)
+	{
+		std::filesystem::path out_file;
+		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
+
+		if (mIsFile)
+		{
+			out_file = std::filesystem::path{ output_directory };
+		}
+
+		if (out_file.empty())
+		{
+			std::string out_filename = fe.filename;
+			out_file = output_directory;
+			out_file /= addProcessedTimestamp(out_filename);
+
+			if (!fe.extension.empty())
+			{
+				out_file += ".";
+				out_file += fe.extension;
+				//				out_file.replace_extension(fe.extension);
+			}
+		}
+
+		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
+
+		switch (model)
+		{
+		case eKinematics::CONSTANT:
+			mpKM_Sensor_Vx_mmps->TransferDataFromWindow();
+			mpKM_Sensor_Vy_mmps->TransferDataFromWindow();
+			mpKM_Sensor_Vz_mmps->TransferDataFromWindow();
+			fp->setKinematicModel(std::make_unique<cKinematics_Constant>(mKM_Sensor_Vx_mmps,
+				mKM_Sensor_Vy_mmps, mKM_Sensor_Vz_mmps));
+			break;
+		case eKinematics::DOLLY:
+			fp->setKinematicModel(std::make_unique<cKinematics_Dolly>());
+			break;
+		case eKinematics::GPS:
+			fp->setKinematicModel(std::make_unique<cKinematics_GPS>());
+			break;
+		case eKinematics::SLAM:
+			fp->setKinematicModel(std::make_unique<cKinematics_SLAM>());
+			break;
+		}
+
+		mFileProcessors.push(fp);
+	}
+
+	startDataProcessing();
 }
 
-/*
-void cMainFrame::startDataProcessing()
+void cMainWindow::startDataProcessing()
 {
+	auto* pThread = GetThread();
+	if (pThread && pThread->IsRunning())
+	{
+		return;
+	}
+
 	// Now we can start processing the new data file
 	if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR)
 	{
@@ -312,91 +486,36 @@ void cMainFrame::startDataProcessing()
 }
 
 
-void cMainFrame::stopDataProcessing()
+void cMainWindow::stopDataProcessing()
 {
 	// Stop the processing of any previous file
 	auto* pThread = GetThread();
 	if (pThread && pThread->IsRunning())
 	{
-		wxString msg = "Stopping the processing of: ";
-		msg += mFilename;
+		//		wxString msg = "Stopping the processing of: ";
+		//		msg += mFilename;
 
-		SetStatusText(msg);
+		//		SetStatusText(msg);
 
 		pThread->Delete();
 	}
 }
 
-void cMainFrame::OnThreadUpdate(wxThreadEvent& evt)
+wxThread::ExitCode cMainWindow::Entry()
 {
-	SetStatusText(evt.GetString());
-}
-
-
-wxThread::ExitCode cMainFrame::Entry()
-{
-	// VERY IMPORTANT: this function gets executed in the secondary thread context!
-	// Do not call any GUI function inside this function; rather use wxQueueEvent():
-	cBlockDataFileReader data_file;
-
-	data_file.open(mFilename);
-
-	if (!data_file.isOpen())
+	while (mFileProcessors.size() > 0)
 	{
-		wxThreadEvent* event = new wxThreadEvent();
+		if (GetThread()->TestDestroy())
+			break;
 
-		wxString msg = "Could not open ";
-		msg += mFilename;
-		msg += " for processing!";
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-
-		return (wxThread::ExitCode) 1;
+		auto* fp = mFileProcessors.front();
+		fp->process_file();
+		mFileProcessors.pop();
+		delete fp;
 	}
 
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Processing: ";
-		msg += mFilename;
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-	}
-
-	try
-	{
-		while (!data_file.eof())
-		{
-			if (data_file.fail() || GetThread()->TestDestroy())
-			{
-				data_file.close();
-				return (wxThread::ExitCode)0;
-			}
-
-			data_file.processBlock();
-		}
-	}
-	catch (const std::exception& e)
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		wxString msg = "Unknown Exception: ";
-		msg += e.what();
-
-		event->SetString(msg);
-		wxQueueEvent(mpHandler, event);
-
-		return (wxThread::ExitCode) 2;
-	}
-
-	{
-		wxThreadEvent* event = new wxThreadEvent();
-
-		event->SetString("Processing complete.");
-		wxQueueEvent(mpHandler, event);
-	}
+	wxLogMessage(wxString("LiDAR Data to Point Cloud Conversion Complete."));
 
 	return (wxThread::ExitCode) 0;
 }
-*/
 
