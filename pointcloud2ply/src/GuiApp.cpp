@@ -29,12 +29,12 @@ public:
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// The CeresConvert Application
+// The Point Cloud 2 Ply Application
 // ----------------------------------------------------------------------------
 
 cCeresDataRepairApp::cCeresDataRepairApp()
 {
-    SetAppDisplayName("Ceres Data Repair");
+    SetAppDisplayName("Point Cloud to Ply Files");
 }
 
 cCeresDataRepairApp::~cCeresDataRepairApp()
