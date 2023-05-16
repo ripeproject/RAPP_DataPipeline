@@ -34,7 +34,7 @@ public:
 
 cCeresConvertApp::cCeresConvertApp()
 {
-    SetAppDisplayName("Ceres Convert");
+    SetAppDisplayName("Plot Split");
 }
 
 cCeresConvertApp::~cCeresConvertApp()

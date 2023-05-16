@@ -40,14 +40,14 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Ceres Convert")
+	: wxFrame(NULL, wxID_ANY, "Plot Split")
 {
 	mpMainWindow = new cMainWindow(this);
 
 	mpHandler = GetEventHandler();
 
 	// set the frame icon
-	SetIcon(wxICON(ceresconvert));
+	SetIcon(wxICON(PlotSplit));
 
 #if wxUSE_MENUBAR
 	// create a menu bar
@@ -144,18 +144,18 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
 	info.SetDescription(_("Convert older experimental data files to a Ceres data formatted file.     \n"));
-	info.SetCopyright(wxT("Copyright (c) 2022, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
-	info.SetIcon(wxICON(ceresinfo));
+	info.SetIcon(wxICON(PlotSplit));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the CeresInfo repository and source\n"
-		"distribution.This includes CeresInfo’s source code, the examples, and\n"
+		"This license applies to all files in the PlotSplit repository and source\n"
+		"distribution.  This includes PlotSplit’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
-		"Copyright(c) 2022, Carl R.Woese Institute for Genomic Biology\n"
+		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
 		"All rights reserved.\n"
 		"\n"
 		"Redistribution and use in source and binary forms, with or without\n"
