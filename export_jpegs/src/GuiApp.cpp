@@ -15,11 +15,11 @@
 // ----------------------------------------------------------------------------
 
 // Define a new application type
-class cCeresDataRepairApp : public wxApp
+class cExport2JpegApp : public wxApp
 {
 public:
-    cCeresDataRepairApp();
-    virtual ~cCeresDataRepairApp();
+    cExport2JpegApp();
+    virtual ~cExport2JpegApp();
 
     virtual bool OnInit() wxOVERRIDE;
 };
@@ -32,17 +32,17 @@ public:
 // The CeresConvert Application
 // ----------------------------------------------------------------------------
 
-cCeresDataRepairApp::cCeresDataRepairApp()
+cExport2JpegApp::cExport2JpegApp()
 {
-    SetAppDisplayName("Ceres Data Repair");
+    SetAppDisplayName("Export-to-Jpeg");
 }
 
-cCeresDataRepairApp::~cCeresDataRepairApp()
+cExport2JpegApp::~cExport2JpegApp()
 {
 }
 
 // `Main program' equivalent, creating windows and returning main app frame
-bool cCeresDataRepairApp::OnInit()
+bool cExport2JpegApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
@@ -61,5 +61,5 @@ bool cCeresDataRepairApp::OnInit()
 // the application object during program execution (it's better than using a
 // static object for many reasons) and also implements the accessor function
 // wxGetApp() which will return the reference of the right type
-// (i.e. cCeresDataRepairApp and not wxApp)
-wxIMPLEMENT_APP(cCeresDataRepairApp);
+// (i.e. cExport2JpegApp and not wxApp)
+wxIMPLEMENT_APP(cExport2JpegApp);
