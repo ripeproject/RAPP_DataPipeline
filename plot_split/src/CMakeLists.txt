@@ -43,6 +43,26 @@ set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<
 
 if(wxWidgets_FOUND)
 
+	if(WIN32)
+		# Include a RC file for windows
+		set(resource_files
+			./Resources/ripe.ico
+			./Resources/PlotSplit.rc
+		)
+
+		source_group("Resources" FILES
+			${resource_files}
+		)
+
+	elseif(APPLE)
+
+		# Add an icon for the apple .app file
+		set(resource_files
+			Resources/ripe.icns
+		)
+
+	endif()
+
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
 	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
@@ -59,6 +79,7 @@ if(wxWidgets_FOUND)
 		MainFrame.cpp
 
 		${PLOT_SPLIT_COMMON_FILES}
+		${resource_files}
 		
 		GuiApp.cpp
 	)
