@@ -42,7 +42,7 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Ceres Data Repair")
+	: wxFrame(NULL, wxID_ANY, "Ceres Data Verificator")
 {
 	mpMainWindow = new cMainWindow(this);
 
@@ -119,19 +119,19 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	wxAboutDialogInfo info;
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
-	info.SetDescription(_("Tries to repair damaged Ceres data formatted files.\n"));
-	info.SetCopyright(wxT("Copyright (c) 2022, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetDescription(_("Verifies the data integrity of Ceres data files.\n"));
+	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(CeresDataVerification));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the data_repair repository and source\n"
-		"distribution.This includes data_repair’s source code, the examples, and\n"
+		"This license applies to all files in the data_verificator repository and source\n"
+		"distribution.This includes data_verificator’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
-		"Copyright(c) 2022, Carl R.Woese Institute for Genomic Biology\n"
+		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
 		"All rights reserved.\n"
 		"\n"
 		"Redistribution and use in source and binary forms, with or without\n"

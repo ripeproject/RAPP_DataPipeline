@@ -15,11 +15,11 @@
 // ----------------------------------------------------------------------------
 
 // Define a new application type
-class cCeresDataRepairApp : public wxApp
+class cCeresDataVerificatorApp : public wxApp
 {
 public:
-    cCeresDataRepairApp();
-    virtual ~cCeresDataRepairApp();
+    cCeresDataVerificatorApp();
+    virtual ~cCeresDataVerificatorApp();
 
     virtual bool OnInit() wxOVERRIDE;
 };
@@ -29,20 +29,20 @@ public:
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// The CeresConvert Application
+// The Ceres Data Verificator Application
 // ----------------------------------------------------------------------------
 
-cCeresDataRepairApp::cCeresDataRepairApp()
+cCeresDataVerificatorApp::cCeresDataVerificatorApp()
 {
-    SetAppDisplayName("Ceres Data Repair");
+    SetAppDisplayName("Ceres Data Verificator");
 }
 
-cCeresDataRepairApp::~cCeresDataRepairApp()
+cCeresDataVerificatorApp::~cCeresDataVerificatorApp()
 {
 }
 
 // `Main program' equivalent, creating windows and returning main app frame
-bool cCeresDataRepairApp::OnInit()
+bool cCeresDataVerificatorApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
@@ -61,5 +61,5 @@ bool cCeresDataRepairApp::OnInit()
 // the application object during program execution (it's better than using a
 // static object for many reasons) and also implements the accessor function
 // wxGetApp() which will return the reference of the right type
-// (i.e. cCeresDataRepairApp and not wxApp)
-wxIMPLEMENT_APP(cCeresDataRepairApp);
+// (i.e. cCeresDataVerificatorApp and not wxApp)
+wxIMPLEMENT_APP(cCeresDataVerificatorApp);
