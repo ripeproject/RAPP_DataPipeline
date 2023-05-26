@@ -48,13 +48,18 @@ void cMainWindow::CreateControls()
 {
 	mpSrcCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
 
-	mpSrcDirButton = new wxButton(this, wxID_ANY, "Browse");
+	mpSrcFileButton = new wxButton(this, wxID_ANY, "File");
+	mpSrcFileButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSourceFile, this);
+
+	mpSrcDirButton = new wxButton(this, wxID_ANY, "Directory");
 	mpSrcDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSourceDirectory, this);
 
 	mpDstCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
 
 	mpDstDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpDstDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDestinationDirectory, this);
+
+	mpIndividualPlyFiles = new wxCheckBox(this, wxID_ANY, "Save As Individual Ply Files");
 
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
@@ -71,21 +76,30 @@ void cMainWindow::CreateLayout()
 	wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
 	topsizer->AddSpacer(10);
 
-	auto* grid_sizer = new wxFlexGridSizer(3);
+	auto* grid_sizer = new wxFlexGridSizer(4);
 	grid_sizer->SetVGap(5);
 	grid_sizer->SetHGap(5);
 	grid_sizer->AddGrowableCol(1, 1);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Source Directory: "), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpSrcCtrl, 1, wxEXPAND);
+	grid_sizer->Add(mpSrcFileButton, 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpSrcDirButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Destination Directory: "), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpDstCtrl, 1, wxEXPAND);
 	grid_sizer->Add(mpDstDirButton, 0, wxALIGN_CENTER_VERTICAL);
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+	
+	topsizer->AddSpacer(10);
 
-	topsizer->AddSpacer(5);
+	auto* op_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Options");
+	op_sz->AddSpacer(10);
+	op_sz->Add(mpIndividualPlyFiles, wxSizerFlags().Proportion(1).Expand());
+	topsizer->Add(op_sz, wxSizerFlags().Proportion(0).Expand());
+
+	topsizer->AddSpacer(10);
+
 	topsizer->Add(mpExportButton, wxSizerFlags().Proportion(0).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
@@ -100,6 +114,25 @@ void cMainWindow::CreateLayout()
 }
 
 // event handlers
+void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
+{
+	wxFileDialog dlg(this, _("Open file"), "", "",
+		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mSource = dlg.GetPath().ToStdString();
+	mpSrcCtrl->SetValue(mSource);
+
+	mIsFile = true;
+
+	mpLogCtrl->Clear();
+
+	if (!mpDstCtrl->GetValue().IsEmpty())
+		mpExportButton->Enable();
+}
+
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
 	wxDirDialog dlg(NULL, "Choose directory", "",
@@ -108,8 +141,10 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
 
-	mSourceDataDirectory = dlg.GetPath().ToStdString();
-	mpSrcCtrl->SetValue(mSourceDataDirectory);
+	mSource = dlg.GetPath().ToStdString();
+	mpSrcCtrl->SetValue(mSource);
+
+	mIsFile = false;
 
 	mpLogCtrl->Clear();
 
@@ -136,7 +171,9 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 {
 	using namespace nStringUtils;
 
-	const std::filesystem::path input{ mSourceDataDirectory.ToStdString() };
+	cPointCloud2Ply::mIndividualPlyFiles = mpIndividualPlyFiles->GetValue();
+
+	const std::filesystem::path input{ mSource.ToStdString() };
 
 	std::vector<directory_entry> files_to_process;
 
@@ -190,10 +227,10 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-		if (mIsFile)
-		{
-			out_file = std::filesystem::path{ mDestinationDataDirectory.ToStdString()};
-		}
+//		if (mIsFile)
+//		{
+//			out_file = std::filesystem::path{ mDestinationDataDirectory.ToStdString()};
+//		}
 
 		if (out_file.empty())
 		{
