@@ -61,7 +61,22 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
         processSensorPointCloudByFrame(buffer);
         break;
     case DataID::POINT_CLOUD_DATA:
-        processPointCloudData(buffer);
+        switch (major_version)
+        {
+        case 1:
+        {
+            switch (minor_version)
+            {
+            case 0:
+                processPointCloudData_1_0(buffer);
+                break;
+            case 1:
+                processPointCloudData_1_1(buffer);
+                break;
+            }
+            break;
+        }
+        }
         break;
     case DataID::KINEMATICS_MODEL:
         processKinematicsModel(buffer);
@@ -195,7 +210,7 @@ void cPointCloudParser::processSensorPointCloudByFrame(cDataBuffer& buffer)
     onSensorPointCloudByFrame(frameID, timestamp_ns, pointCloud);
 }
 
-void cPointCloudParser::processPointCloudData(cDataBuffer& buffer)
+void cPointCloudParser::processPointCloudData_1_0(cDataBuffer& buffer)
 {
     uint32_t num_points = buffer.get<uint32_t>();
 
@@ -217,57 +232,35 @@ void cPointCloudParser::processPointCloudData(cDataBuffer& buffer)
     }
 
     if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData.");
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_0.");
 
     onPointCloudData(pointCloud);
 }
 
-/*
-void cPointCloudParser::processLidarData(cDataBuffer& buffer)
+void cPointCloudParser::processPointCloudData_1_1(cDataBuffer& buffer)
 {
-    uint16_t pixels_per_column = 0;
-    uint16_t columns_per_frame = 0;
+    uint64_t num_points = buffer.get<uint64_t>();
 
-    buffer >> pixels_per_column;
-    buffer >> columns_per_frame;
+    cPointCloud pointCloud;
+    pointCloud.resize(num_points);
 
-    mLidarData.resize(pixels_per_column, columns_per_frame);
-
-    lidar_data_block_t pixel;
-
-    for (uint16_t col = 0; col < columns_per_frame; ++col)
+    for (uint32_t n = 0; n < num_points; ++n)
     {
-        for (uint16_t chn = 0; chn < pixels_per_column; ++chn)
-        {
-            buffer >> pixel.range_mm;
-            buffer >> pixel.signal;
-            buffer >> pixel.reflectivity;
-            buffer >> pixel.nir;
-            mLidarData.channel(col, chn, pixel);
-        }
+        pointcloud::sCloudPoint_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+
+        pointCloud.set(n, point);
     }
 
     if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processLidarData.");
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_1.");
 
-    onLidarData(mLidarData);
+    onPointCloudData(pointCloud);
 }
-*/
-
-/*
-void cOusterParser::processLidarDataFrameTimestamp(cDataBuffer& buffer)
-{
-    uint16_t frame_id = 0;
-    uint64_t timestamp_ns = 0;
-
-    buffer >> frame_id;
-    buffer >> timestamp_ns;
-
-    mLidarData.frame_id(frame_id);
-    mLidarData.timestamp_ns(timestamp_ns);
-
-    processLidarData(buffer);
-}
-*/
-
 

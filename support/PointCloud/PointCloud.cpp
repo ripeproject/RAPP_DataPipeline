@@ -10,11 +10,21 @@
  *****************************************************************************/
 
 cPointCloudBase::cPointCloudBase()
-{}
+{
+	mHasPoints = false;
+	mMinX = mMaxX = 0.0;
+	mMinY = mMaxY = 0.0;
+	mMinZ = mMaxZ = 0.0;
+}
 
 void cPointCloudBase::clear()
 {
     mCloud.clear();
+
+	mHasPoints = false;
+	mMinX = mMaxX = 0.0;
+	mMinY = mMaxY = 0.0;
+	mMinZ = mMaxZ = 0.0;
 }
 
 bool cPointCloudBase::empty() const
@@ -26,6 +36,15 @@ std::size_t cPointCloudBase::size() const
 {
     return mCloud.size();
 }
+
+double cPointCloudBase::minX() const { return mMinX; }
+double cPointCloudBase::maxX() const { return mMaxX; }
+
+double cPointCloudBase::minY() const { return mMinY; }
+double cPointCloudBase::maxY() const { return mMaxY; }
+
+double cPointCloudBase::minZ() const { return mMinZ; }
+double cPointCloudBase::maxZ() const { return mMaxZ; }
 
 
 /******************************************************************************
@@ -152,6 +171,34 @@ void cSensorPointCloudByFrame::set(uint16_t column, uint16_t chn, const pointclo
 	assert(chn < mNumOfChannelsPerColumn);
 	assert(column < mNumOfColumnsPerFrame);
 
+	if (mHasPoints)
+	{
+		if (v.X_m < mMinX)
+			mMinX = v.X_m;
+
+		if (v.X_m > mMaxX)
+			mMaxX = v.X_m;
+
+		if (v.Y_m < mMinY)
+			mMinY = v.Y_m;
+
+		if (v.Y_m > mMaxY)
+			mMaxY = v.Y_m;
+
+		if (v.Z_m < mMinZ)
+			mMinZ = v.Z_m;
+
+		if (v.Z_m > mMaxZ)
+			mMaxZ = v.Z_m;
+	}
+	else
+	{
+		mHasPoints = true;
+		mMinX = mMaxX = v.X_m;
+		mMinY = mMaxY = v.Y_m;
+		mMinZ = mMaxZ = v.Z_m;
+	}
+
 	mCloud[chn + column * mNumOfChannelsPerColumn] = v;
 }
 
@@ -185,13 +232,72 @@ void cReducedPointCloudByFrame::resize(std::size_t num_of_points)
 void cReducedPointCloudByFrame::set(std::size_t point, const pointcloud::sCloudPoint_t& cloudPoint)
 {
 	if (point < mCloud.size())
+	{
+
+		if (mHasPoints)
+		{
+			if (cloudPoint.X_m < mMinX)
+				mMinX = cloudPoint.X_m;
+
+			if (cloudPoint.X_m > mMaxX)
+				mMaxX = cloudPoint.X_m;
+
+			if (cloudPoint.Y_m < mMinY)
+				mMinY = cloudPoint.Y_m;
+
+			if (cloudPoint.Y_m > mMaxY)
+				mMaxY = cloudPoint.Y_m;
+
+			if (cloudPoint.Z_m < mMinZ)
+				mMinZ = cloudPoint.Z_m;
+
+			if (cloudPoint.Z_m > mMaxZ)
+				mMaxZ = cloudPoint.Z_m;
+		}
+		else
+		{
+			mHasPoints = true;
+			mMinX = mMaxX = cloudPoint.X_m;
+			mMinY = mMaxY = cloudPoint.Y_m;
+			mMinZ = mMaxZ = cloudPoint.Z_m;
+		}
+
 		mCloud[point] = cloudPoint;
+	}
 }
 
 void cReducedPointCloudByFrame::addPoint(const pointcloud::sCloudPoint_t& cloudPoint)
 {
     if ((cloudPoint.X_m == 0.0) && (cloudPoint.Y_m == 0.0) && (cloudPoint.Z_m == 0.0))
         return;
+
+	if (mHasPoints)
+	{
+		if (cloudPoint.X_m < mMinX)
+			mMinX = cloudPoint.X_m;
+
+		if (cloudPoint.X_m > mMaxX)
+			mMaxX = cloudPoint.X_m;
+
+		if (cloudPoint.Y_m < mMinY)
+			mMinY = cloudPoint.Y_m;
+
+		if (cloudPoint.Y_m > mMaxY)
+			mMaxY = cloudPoint.Y_m;
+
+		if (cloudPoint.Z_m < mMinZ)
+			mMinZ = cloudPoint.Z_m;
+
+		if (cloudPoint.Z_m > mMaxZ)
+			mMaxZ = cloudPoint.Z_m;
+	}
+	else
+	{
+		mHasPoints = true;
+		mMinX = mMaxX = cloudPoint.X_m;
+		mMinY = mMaxY = cloudPoint.Y_m;
+		mMinZ = mMaxZ = cloudPoint.Z_m;
+	}
 
     mCloud.push_back(cloudPoint);
 }
@@ -210,13 +316,71 @@ void cPointCloud::resize(std::size_t num_of_points)
 void cPointCloud::set(std::size_t point, const pointcloud::sCloudPoint_t& cloudPoint)
 {
 	if (point < mCloud.size())
+	{
+		if (mHasPoints)
+		{
+			if (cloudPoint.X_m < mMinX)
+				mMinX = cloudPoint.X_m;
+
+			if (cloudPoint.X_m > mMaxX)
+				mMaxX = cloudPoint.X_m;
+
+			if (cloudPoint.Y_m < mMinY)
+				mMinY = cloudPoint.Y_m;
+
+			if (cloudPoint.Y_m > mMaxY)
+				mMaxY = cloudPoint.Y_m;
+
+			if (cloudPoint.Z_m < mMinZ)
+				mMinZ = cloudPoint.Z_m;
+
+			if (cloudPoint.Z_m > mMaxZ)
+				mMaxZ = cloudPoint.Z_m;
+		}
+		else
+		{
+			mHasPoints = true;
+			mMinX = mMaxX = cloudPoint.X_m;
+			mMinY = mMaxY = cloudPoint.Y_m;
+			mMinZ = mMaxZ = cloudPoint.Z_m;
+		}
+
 		mCloud[point] = cloudPoint;
+	}
 }
 
 void cPointCloud::addPoint(const pointcloud::sCloudPoint_t& cloudPoint)
 {
 	if ((cloudPoint.X_m == 0.0) && (cloudPoint.Y_m == 0.0) && (cloudPoint.Z_m == 0.0))
 		return;
+
+	if (mHasPoints)
+	{
+		if (cloudPoint.X_m < mMinX)
+			mMinX = cloudPoint.X_m;
+
+		if (cloudPoint.X_m > mMaxX)
+			mMaxX = cloudPoint.X_m;
+
+		if (cloudPoint.Y_m < mMinY)
+			mMinY = cloudPoint.Y_m;
+
+		if (cloudPoint.Y_m > mMaxY)
+			mMaxY = cloudPoint.Y_m;
+
+		if (cloudPoint.Z_m < mMinZ)
+			mMinZ = cloudPoint.Z_m;
+
+		if (cloudPoint.Z_m > mMaxZ)
+			mMaxZ = cloudPoint.Z_m;
+	}
+	else
+	{
+		mHasPoints = true;
+		mMinX = mMaxX = cloudPoint.X_m;
+		mMinY = mMaxY = cloudPoint.Y_m;
+		mMinZ = mMaxZ = cloudPoint.Z_m;
+	}
 
 	mCloud.push_back(cloudPoint);
 }

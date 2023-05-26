@@ -172,14 +172,14 @@ void cPointCloudSerializer::write(const cPointCloud& in)
 {
     assert(mpDataFile);
 
-    mBlockID->setVersion(1, 0);
+    mBlockID->setVersion(1, 1);
     mBlockID->dataID(DataID::POINT_CLOUD_DATA);
 
     mDataBuffer.clear();
 
     auto& data = in.data();
 
-    uint32_t num_points = data.size();
+    uint64_t num_points = data.size();
 
     auto old_size = mDataBuffer.capacity();
     cDataBuffer::size_type needed_size = 128 + num_points*sizeof(pointcloud::sCloudPoint_t);
@@ -188,7 +188,7 @@ void cPointCloudSerializer::write(const cPointCloud& in)
 
     mDataBuffer << num_points;
 
-    for (uint32_t n = 0; n < num_points; ++n)
+    for (uint64_t n = 0; n < num_points; ++n)
     {
         auto point = data[n];
         mDataBuffer << point.X_m;

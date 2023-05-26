@@ -49,7 +49,8 @@ protected:
 	void processImuData(cDataBuffer& buffer);
 	void processReducedPointCloudByFrame(cDataBuffer& buffer);
 	void processSensorPointCloudByFrame(cDataBuffer& buffer);
-	void processPointCloudData(cDataBuffer& buffer);
+	void processPointCloudData_1_0(cDataBuffer& buffer);
+	void processPointCloudData_1_1(cDataBuffer& buffer);
 
 private:
 	std::unique_ptr<cPointCloudID> mBlockID;

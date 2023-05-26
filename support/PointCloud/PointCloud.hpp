@@ -22,10 +22,30 @@ public:
     bool empty() const;
     std::size_t size() const;
 
+	double minX() const;
+	double maxX() const;
+
+	double minY() const;
+	double maxY() const;
+
+	double minZ() const;
+	double maxZ() const;
+
     const vCloud_t& data() const { return mCloud; }
 
 protected:
-    vCloud_t mCloud;
+	bool mHasPoints;
+
+	double mMinX;
+	double mMaxX;
+
+	double mMinY;
+	double mMaxY;
+
+	double mMinZ;
+	double mMaxZ;
+	
+	vCloud_t mCloud;
 };
 
 
