@@ -22,9 +22,15 @@ public:
 	/*
 	 * Attach/detach any parsers to the data file.
 	 */
-	void attachParsers(cBlockDataFileReader& file) override;
-	void detachParsers(cBlockDataFileReader& file) override;
+	void attachKinematicParsers(cBlockDataFileReader& file) override;
+	void detachKinematicParsers(cBlockDataFileReader& file) override;
 
+	void attachTransformParsers(cBlockDataFileReader& file) override;
+	void detachTransformParsers(cBlockDataFileReader& file) override;
+
+	/*
+	 * Transform the point cloud coordinated based on kinematic model
+	 */
 	void transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) override;
 

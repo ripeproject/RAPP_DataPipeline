@@ -13,11 +13,21 @@ void cKinematics_SLAM::writeHeader(cPointCloudSerializer& serializer)
     serializer.write(pointcloud::eKINEMATIC_MODEL::SLAM);
 }
 
-void cKinematics_SLAM::attachParsers(cBlockDataFileReader& file)
+//-----------------------------------------------------------------------------
+void cKinematics_SLAM::attachKinematicParsers(cBlockDataFileReader& file)
 {
 }
 
-void cKinematics_SLAM::detachParsers(cBlockDataFileReader& file)
+void cKinematics_SLAM::detachKinematicParsers(cBlockDataFileReader& file)
+{
+}
+
+//-----------------------------------------------------------------------------
+void cKinematics_SLAM::attachTransformParsers(cBlockDataFileReader& file)
+{
+}
+
+void cKinematics_SLAM::detachTransformParsers(cBlockDataFileReader& file)
 {
 }
 

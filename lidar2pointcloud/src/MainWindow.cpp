@@ -53,8 +53,11 @@ cMainWindow::cMainWindow(wxWindow* parent)
 	mKM_Sensor_Roll_val(1, &mSensorRoll_deg),
 	mKM_Sensor_Yaw_val(1, &mSensorYaw_deg),
 	mMinimumDistance_val(3, &mMinimumDistance_m),
-	mMaximumDistance_val(3, &mMaximumDistance_m)
-
+	mMaximumDistance_val(3, &mMaximumDistance_m),
+	mMinimumAzimuth_val(3, &mMinimumAzimuth_deg),
+	mMaximumAzimuth_val(3, &mMaximumAzimuth_deg),
+	mMinimumAltitude_val(3, &mMinimumAltitude_deg),
+	mMaximumAltitude_val(3, &mMaximumAltitude_deg)
 {
 //	mpHandler = GetEventHandler();
 
@@ -68,6 +71,12 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 	mMinimumDistance_val.SetRange(0.0, 4.0);
 	mMaximumDistance_val.SetRange(5.0, 100.0);
+
+	mMinimumAzimuth_val.SetRange(0.0, 360.0);
+	mMaximumAzimuth_val.SetRange(0.0, 360.0);
+
+	mMinimumAltitude_val.SetRange(-25.0, 0.0);
+	mMaximumAltitude_val.SetRange(0.0, 25.0);
 
 	CreateControls();
 	CreateLayout();
@@ -83,8 +92,11 @@ void cMainWindow::CreateControls()
 {
 	mpLoadSrcFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
 
-	mpLoadSrcButton = new wxButton(this, wxID_ANY, "Browse");
-	mpLoadSrcButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcBrowse, this);
+	mpSrcFileButton = new wxButton(this, wxID_ANY, "File");
+	mpSrcFileButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcFileBrowse, this);
+
+	mpSrcDirButton = new wxButton(this, wxID_ANY, "Directory");
+	mpSrcDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcDirBrowse, this);
 
 	mpLoadDstFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
 
@@ -130,6 +142,18 @@ void cMainWindow::CreateControls()
 	mpMaximumDistance_m = new wxTextCtrl(this, wxID_ANY, "40.0");
 	mpMaximumDistance_m->SetValidator(mMaximumDistance_val);
 
+	mpMinimumAzimuth_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
+	mpMinimumAzimuth_deg->SetValidator(mMinimumAzimuth_val);
+
+	mpMaximumAzimuth_deg = new wxTextCtrl(this, wxID_ANY, "360.0");
+	mpMaximumAzimuth_deg->SetValidator(mMaximumAzimuth_val);
+
+	mpMinimumAltitude_deg = new wxTextCtrl(this, wxID_ANY, "-25.0");
+	mpMinimumAltitude_deg->SetValidator(mMinimumAltitude_val);
+
+	mpMaximumAltitude_deg = new wxTextCtrl(this, wxID_ANY, "25.0");
+	mpMaximumAltitude_deg->SetValidator(mMaximumAltitude_val);
+
 	mpAggregatePointCloud = new wxCheckBox(this, wxID_ANY, "Aggregate Point Cloud");
 	mpSaveReducedPointCloud = new wxCheckBox(this, wxID_ANY, "Save Reduced Point Cloud");
 
@@ -148,14 +172,15 @@ void cMainWindow::CreateLayout()
 	wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
 	topsizer->AddSpacer(10);
 
-	auto* grid_sizer = new wxFlexGridSizer(3);
+	auto* grid_sizer = new wxFlexGridSizer(4);
 	grid_sizer->SetVGap(5);
 	grid_sizer->SetHGap(5);
 	grid_sizer->AddGrowableCol(1, 1);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Source: "), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpLoadSrcFile, 1, wxEXPAND);
-	grid_sizer->Add(mpLoadSrcButton, 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpSrcFileButton, 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpSrcDirButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Destination: "), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpLoadDstFile, 1, wxEXPAND);
@@ -216,15 +241,31 @@ void cMainWindow::CreateLayout()
 	}
 	topsizer->AddSpacer(5);
 
-	auto* rg_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Range Limits");
-	rg_sz->Add(new wxStaticText(this, wxID_ANY, "Minimum Distance (m) :"), 0, wxALIGN_CENTER_VERTICAL);
-	rg_sz->AddSpacer(5);
-	rg_sz->Add(mpMinimumDistance_m, wxSizerFlags().Proportion(1).Expand());
-	rg_sz->AddSpacer(10);
-	rg_sz->Add(new wxStaticText(this, wxID_ANY, "Maximum Distance (m) :"), 0, wxALIGN_CENTER_VERTICAL);
-	rg_sz->AddSpacer(5);
-	rg_sz->Add(mpMaximumDistance_m, wxSizerFlags().Proportion(1).Expand());
-	topsizer->Add(rg_sz, wxSizerFlags().Proportion(0).Expand());
+	auto* limit_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Sensor Limits");
+
+	auto* lg_sz = new wxFlexGridSizer(4);
+	lg_sz->SetVGap(5);
+	lg_sz->SetHGap(5);
+	lg_sz->AddGrowableCol(1, 1);
+	lg_sz->AddGrowableCol(3, 1);
+
+	lg_sz->Add(new wxStaticText(this, wxID_ANY, "Minimum Distance (m) :"), 0, wxALIGN_CENTER_VERTICAL);
+	lg_sz->Add(mpMinimumDistance_m, wxSizerFlags().Proportion(1).Expand());
+	lg_sz->Add(new wxStaticText(this, wxID_ANY, "Maximum Distance (m) :"), 0, wxALIGN_CENTER_VERTICAL);
+	lg_sz->Add(mpMaximumDistance_m, wxSizerFlags().Proportion(1).Expand());
+
+	lg_sz->Add(new wxStaticText(this, wxID_ANY, "Minimum Azimuth (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
+	lg_sz->Add(mpMinimumAzimuth_deg, wxSizerFlags().Proportion(1).Expand());
+	lg_sz->Add(new wxStaticText(this, wxID_ANY, "Maximum Azimuth (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
+	lg_sz->Add(mpMaximumAzimuth_deg, wxSizerFlags().Proportion(1).Expand());
+
+	lg_sz->Add(new wxStaticText(this, wxID_ANY, "Minimum Altitude (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
+	lg_sz->Add(mpMinimumAltitude_deg, wxSizerFlags().Proportion(1).Expand());
+	lg_sz->Add(new wxStaticText(this, wxID_ANY, "Maximum Altitude (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
+	lg_sz->Add(mpMaximumAltitude_deg, wxSizerFlags().Proportion(1).Expand());
+
+	limit_sz->Add(lg_sz, wxSizerFlags().Proportion(1).Expand());
+	topsizer->Add(limit_sz, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
 
@@ -250,7 +291,23 @@ void cMainWindow::CreateLayout()
 
 // event handlers
 
-void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
+void cMainWindow::OnSrcFileBrowse(wxCommandEvent& WXUNUSED(event))
+{
+	wxFileDialog dlg(this, _("Open file"), "", "",
+		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mIsFile = true;
+	mSourceData = dlg.GetPath();
+	mpLoadSrcFile->SetValue(mSourceData);
+
+	if (!mpLoadDstFile->GetValue().IsEmpty())
+		mpComputeButton->Enable();
+}
+
+void cMainWindow::OnSrcDirBrowse(wxCommandEvent& WXUNUSED(event))
 {
 	wxDirDialog dlg(NULL, "Choose input directory", "",
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
@@ -258,6 +315,7 @@ void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;
 
+	mIsFile = false;
 	mSourceData = dlg.GetPath();
 	mpLoadSrcFile->SetValue(mSourceData);
 
@@ -308,6 +366,18 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 	cLidar2PointCloud::setValidRange_m(mMinimumDistance_m,
 		mMaximumDistance_m);
+
+	mpMinimumAzimuth_deg->TransferDataFromWindow();
+	mpMaximumAzimuth_deg->TransferDataFromWindow();
+
+	cLidar2PointCloud::setAzimuthWindow_deg(mMinimumAzimuth_deg,
+		mMaximumAzimuth_deg);
+
+	mpMinimumAltitude_deg->TransferDataFromWindow();
+	mpMaximumAltitude_deg->TransferDataFromWindow();
+
+	cLidar2PointCloud::setAltitudeWindow_deg(mMinimumAltitude_deg,
+		mMaximumAltitude_deg);
 
 	mpSensorYaw_deg->TransferDataFromWindow();
 	mpSensorPitch_deg->TransferDataFromWindow();
@@ -420,10 +490,10 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-		if (mIsFile)
-		{
-			out_file = std::filesystem::path{ output_directory };
-		}
+//		if (mIsFile)
+//		{
+//			out_file = std::filesystem::path{ output_directory };
+//		}
 
 		if (out_file.empty())
 		{
@@ -463,6 +533,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		mFileProcessors.push(fp);
 	}
+
+	mpComputeButton->Disable();
 
 	startDataProcessing();
 }

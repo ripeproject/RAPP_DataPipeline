@@ -33,7 +33,8 @@ public:
 	// event handlers (these functions should _not_ be virtual)
 
 protected:
-	void OnSrcBrowse(wxCommandEvent& event);
+	void OnSrcFileBrowse(wxCommandEvent& event);
+	void OnSrcDirBrowse(wxCommandEvent& event);
 	void OnDstBrowse(wxCommandEvent& event);
 	void OnModelChange(wxCommandEvent& event);
 	void OnCompute(wxCommandEvent& event);
@@ -49,7 +50,8 @@ private:
 	std::string mFilename;
 
 	wxTextCtrl* mpLoadSrcFile = nullptr;
-	wxButton* mpLoadSrcButton = nullptr;
+	wxButton* mpSrcFileButton = nullptr;
+	wxButton* mpSrcDirButton  = nullptr;
 
 	wxTextCtrl* mpLoadDstFile = nullptr;
 	wxButton* mpLoadDstButton = nullptr;
@@ -89,6 +91,24 @@ private:
 
 	wxTextCtrl* mpMinimumDistance_m = nullptr;
 	wxTextCtrl* mpMaximumDistance_m = nullptr;
+
+	double mMinimumAzimuth_deg = 0.0;
+	double mMaximumAzimuth_deg = 360.0;
+
+	wxFloatingPointValidator<double> mMinimumAzimuth_val;
+	wxFloatingPointValidator<double> mMaximumAzimuth_val;
+
+	wxTextCtrl* mpMinimumAzimuth_deg = nullptr;
+	wxTextCtrl* mpMaximumAzimuth_deg = nullptr;
+
+	double mMinimumAltitude_deg = -25.0;
+	double mMaximumAltitude_deg = 25.0;
+
+	wxFloatingPointValidator<double> mMinimumAltitude_val;
+	wxFloatingPointValidator<double> mMaximumAltitude_val;
+
+	wxTextCtrl* mpMinimumAltitude_deg = nullptr;
+	wxTextCtrl* mpMaximumAltitude_deg = nullptr;
 
 	wxCheckBox* mpAggregatePointCloud = nullptr;
 	wxCheckBox* mpSaveReducedPointCloud = nullptr;

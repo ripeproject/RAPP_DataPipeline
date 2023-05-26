@@ -42,6 +42,9 @@ public:
 	cKinematics() = default;
 	virtual ~cKinematics() = default;
 
+	bool hasMultiplePasses() const { return mNumPasses > 1; };
+	uint32_t numPasses() const	   { return mNumPasses; };
+
 	virtual void writeHeader(cPointCloudSerializer& serializer) = 0;
 
 	/*
@@ -52,13 +55,22 @@ public:
 	virtual void telemetryPassComplete() = 0;
 
 	/*
-	 * Attach/Detach any parsers to the data file.
+	 * Attach/Detach any parsers needed for the kinematics pass to the data file.
 	 */
-	virtual void attachParsers(cBlockDataFileReader& file) = 0;
-	virtual void detachParsers(cBlockDataFileReader& file) = 0;
+	virtual void attachKinematicParsers(cBlockDataFileReader& file) = 0;
+	virtual void detachKinematicParsers(cBlockDataFileReader& file) = 0;
 
-	virtual void transform(double time_us, 
+	/*
+	 * Attach/Detach any parsers needed for the transform pass to the data file.
+	 */
+	virtual void attachTransformParsers(cBlockDataFileReader& file) = 0;
+	virtual void detachTransformParsers(cBlockDataFileReader& file) = 0;
+
+	virtual void transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) = 0;
+
+protected:
+	uint32_t mNumPasses = 0;
 };
 
 
@@ -71,8 +83,12 @@ public:
 	void writeHeader(cPointCloudSerializer& serializer) override {};
 	bool requiresTelemetryPass() override { return false; };
 	void telemetryPassComplete() override {};
-	void attachParsers(cBlockDataFileReader& file) override {};
-	void detachParsers(cBlockDataFileReader& file) override {};
+
+	void attachKinematicParsers(cBlockDataFileReader& file) override {};
+	void detachKinematicParsers(cBlockDataFileReader& file) override {};
+
+	void attachTransformParsers(cBlockDataFileReader& file) override {};
+	void detachTransformParsers(cBlockDataFileReader& file) override {};
 	void transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) override {};
 };

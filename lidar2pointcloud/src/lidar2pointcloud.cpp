@@ -26,6 +26,13 @@ namespace
 
 	constexpr double g_mps2 = 9.80665;
 
+	double min_encoder_rad = 0.0;
+	double max_encoder_rad = 2.0 * std::numbers::pi;
+
+	double min_altitude_rad = -std::numbers::pi;
+	double max_altitude_rad = +std::numbers::pi;
+
+
 	/** Lookup table of beam directions and offsets. */
 	struct sXYZ_Lut_t
 	{
@@ -81,6 +88,10 @@ namespace
 		{
 			sPoint_t& p = lhs[i];
 
+			if ((p.x == 0.0) && (p.y == 0.0) && (p.z == 0.0))
+			{
+				continue;
+			}
 			p.x += t.x();
 			p.y += t.y();
 			p.z += t.z();
@@ -148,7 +159,48 @@ namespace
 		}
 
 		sXYZ_Lut_t lut;
+		lut.direction.resize(w * h);
+		lut.offset.resize(w * h);
 
+		auto n = encoder_rad.size();
+		for (size_t i = 0; i < n; ++i)
+		{
+			double encoder  = encoder_rad[i];
+			double altitude = altitude_rad[i];
+			double azimuth  = azimuth_rad[i];
+
+			if (((min_encoder_rad < encoder) && (encoder < max_encoder_rad))
+				&& ((min_altitude_rad < altitude) && (altitude < max_altitude_rad)))
+			{
+				auto altitude_cos = cos(altitude);
+				auto x = cos(encoder + azimuth) * altitude_cos;
+				auto y = sin(encoder + azimuth) * altitude_cos;
+				auto z = sin(altitude);
+
+				lut.direction[i].x = x;
+				lut.direction[i].y = y;
+				lut.direction[i].z = z;
+
+				lut.offset[i].x = cos(encoder) - x;
+				lut.offset[i].y = sin(encoder) - y;
+				lut.offset[i].z = -z;
+			}
+			else
+			{
+				lut.direction[i].x = 0.0;
+				lut.direction[i].y = 0.0;
+				lut.direction[i].z = 0.0;
+
+				lut.offset[i].x = 0.0;
+				lut.offset[i].y = 0.0;
+				lut.offset[i].z = 0.0;
+			}
+		}
+
+		// offsets due to beam origin
+		lut.offset *= lidar_origin_to_beam_origin_mm;
+
+/*
 		auto altitude_cos = cos(altitude_rad);
 		auto x = cos(encoder_rad + azimuth_rad) * altitude_cos;
 		auto y = sin(encoder_rad + azimuth_rad) * altitude_cos;
@@ -166,6 +218,7 @@ namespace
 		set_y(lut.offset, sin(encoder_rad) - y);
 		set_z(lut.offset, -z);
 		lut.offset *= lidar_origin_to_beam_origin_mm;
+*/
 
 		// apply the supplied transform
 		auto rot = transform.rotation();
@@ -208,6 +261,18 @@ void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
 {
 	mMinDistance_m = std::max(min_dist_m, 0.001);
 	mMaxDistance_m = std::min(max_dist_m, 1000.0);
+}
+
+void cLidar2PointCloud::setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg)
+{
+	min_encoder_rad = min_azimuth_deg * std::numbers::pi / 180.0;
+	max_encoder_rad = max_azimuth_deg * std::numbers::pi / 180.0;
+}
+
+void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg)
+{
+	min_altitude_rad = min_altitude_deg * std::numbers::pi / 180.0;
+	max_altitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
 }
 
 void cLidar2PointCloud::setSensorOrientation(double yaw_deg, 
@@ -330,12 +395,22 @@ void cLidar2PointCloud::telemetryPassComplete()
 
 void cLidar2PointCloud::attachKinematicParsers(cBlockDataFileReader& file)
 {
-	mKinematic->attachParsers(file);
+	mKinematic->attachKinematicParsers(file);
 }
 
 void cLidar2PointCloud::detachKinematicParsers(cBlockDataFileReader& file)
 {
-	mKinematic->detachParsers(file);
+	mKinematic->detachKinematicParsers(file);
+}
+
+void cLidar2PointCloud::attachTransformParsers(cBlockDataFileReader& file)
+{
+	mKinematic->attachTransformParsers(file);
+}
+
+void cLidar2PointCloud::detachTransformParsers(cBlockDataFileReader& file)
+{
+	mKinematic->detachTransformParsers(file);
 }
 
 void cLidar2PointCloud::writeHeader()

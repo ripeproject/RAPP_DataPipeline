@@ -45,6 +45,29 @@ public:
 	static void setValidRange_m(double min_dist_m, double max_dist_m);
 
 	/**
+	 * Set the azimuth bounds to consider valid data
+	 *
+	 * The azimuth angle (zero) starts at the connector and increases in the
+	 * counter-clock-wise direction.
+	 * 		min_azimuth_deg < azimuth_deg < max_azimuth_deg
+	 *
+	 * @param	min_azimuth_deg	: The minimum azimuth to be considered valid
+	 * @param	max_azimuth_deg	: The maximum azimuth to be considered valid
+	 */
+	static void setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg);
+
+	/**
+	 * Set the altitude bounds to consider valid data
+	 *
+	 * The lidar return range is considered valid if:
+	 * 		min_dist_m < range_m < max_dist_m
+	 *
+	 * @param	min_altitude_deg	: The minimum altitude to be considered valid
+	 * @param	max_altitude_deg	: The maximum altitude to be considered valid
+	 */
+	static void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
+
+	/**
 	 * Sets the sensor orientation
 	 * 
 	 * Compute the rotation matrix needed to convert the pointcloud from
@@ -91,6 +114,9 @@ public:
 	 */
 	void attachKinematicParsers(cBlockDataFileReader& file);
 	void detachKinematicParsers(cBlockDataFileReader& file);
+
+	void attachTransformParsers(cBlockDataFileReader& file);
+	void detachTransformParsers(cBlockDataFileReader& file);
 
 	/*
 	 * Write any header data

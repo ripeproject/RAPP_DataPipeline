@@ -99,8 +99,8 @@ void cFileProcessor::run()
 
             mConverter->detachKinematicParsers(mFileReader);
         }
-        else
-            mConverter->attachKinematicParsers(mFileReader);
+
+        mConverter->attachTransformParsers(mFileReader);
 
 	    mFileReader.registerCallback([this](const cBlockID& id){ this->processBlock(id); });
 	    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });
@@ -116,6 +116,7 @@ void cFileProcessor::run()
                 mConverter->writeAndCloseData();
 
                 mFileWriter.close();
+
                 return;
             }
 
