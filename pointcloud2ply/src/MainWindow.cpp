@@ -60,6 +60,7 @@ void cMainWindow::CreateControls()
 	mpDstDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDestinationDirectory, this);
 
 	mpIndividualPlyFiles = new wxCheckBox(this, wxID_ANY, "Save As Individual Ply Files");
+	mpSavePositionFile = new wxCheckBox(this, wxID_ANY, "Save Dolly Position Ply File");
 
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
@@ -95,7 +96,9 @@ void cMainWindow::CreateLayout()
 
 	auto* op_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Options");
 	op_sz->AddSpacer(10);
-	op_sz->Add(mpIndividualPlyFiles, wxSizerFlags().Proportion(1).Expand());
+	op_sz->Add(mpIndividualPlyFiles, wxSizerFlags().Proportion(0).Expand());
+	op_sz->AddSpacer(10);
+	op_sz->Add(mpSavePositionFile, wxSizerFlags().Proportion(0).Expand());
 	topsizer->Add(op_sz, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(10);
@@ -172,6 +175,7 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	using namespace nStringUtils;
 
 	cPointCloud2Ply::mIndividualPlyFiles = mpIndividualPlyFiles->GetValue();
+	cPointCloud2Ply::mSaveDollyPositions = mpSavePositionFile->GetValue();
 
 	const std::filesystem::path input{ mSource.ToStdString() };
 

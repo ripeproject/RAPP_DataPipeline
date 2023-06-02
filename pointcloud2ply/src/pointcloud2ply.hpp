@@ -16,6 +16,7 @@ class cPointCloud2Ply : public cPointCloudParser, public cSpidercamParser
 {
 public:
     static bool mIndividualPlyFiles;
+    static bool mSaveDollyPositions;
 
 public:
 	cPointCloud2Ply();

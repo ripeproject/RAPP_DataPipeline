@@ -10,6 +10,7 @@
 //#define USE_BINARY
 
 bool cPointCloud2Ply::mIndividualPlyFiles = false;
+bool cPointCloud2Ply::mSaveDollyPositions = false;
 
 
 cPointCloud2Ply::cPointCloud2Ply() : cPointCloudParser()
@@ -40,19 +41,17 @@ cPointCloud2Ply::~cPointCloud2Ply()
         writePointcloud(filename);
     }
 
-/*BAF
+
     if (!mPositions.empty())
     {
         std::filesystem::path filename = mOutputPath;
 
-        std::string ext = std::to_string(mFrameCount);
-        ext += ".position.ply";
+        std::string ext = ".position.ply";
 
         filename.replace_extension(ext);
 
         writePosition(filename);
     }
-*/
 }
 
 void cPointCloud2Ply::setOutputPath(std::filesystem::path out)
@@ -237,14 +236,17 @@ void cPointCloud2Ply::onPosition(spidercam::sPosition_1_t pos)
 {
     mResyncTimestamp = true;
 
-    float4 xyz;
-    xyz.x = pos.X_mm / 1000.0;
-    xyz.y = pos.Y_mm / 1000.0;
-    xyz.z = pos.Z_mm / 1000.0;
-    xyz.s = pos.speed_mmps / 1000.0;
+    if (mSaveDollyPositions)
+    {
+        float4 xyz;
+        xyz.x = pos.X_mm / 1000.0;
+        xyz.y = pos.Y_mm / 1000.0;
+        xyz.z = pos.Z_mm / 1000.0;
+        xyz.s = pos.speed_mmps / 1000.0;
 
-    mPositions.push_back(xyz);
-    mColors.push_back(mColor);
+        mPositions.push_back(xyz);
+        mColors.push_back(mColor);
+    }
 }
 
 void cPointCloud2Ply::writePosition(std::filesystem::path filename)

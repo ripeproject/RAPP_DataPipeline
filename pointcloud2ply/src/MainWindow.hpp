@@ -52,6 +52,7 @@ private:
 	wxButton* mpDstDirButton = nullptr;
 
 	wxCheckBox* mpIndividualPlyFiles = nullptr;
+	wxCheckBox* mpSavePositionFile = nullptr;
 
 	wxButton* mpExportButton = nullptr;
 
