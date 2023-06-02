@@ -5,7 +5,6 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
-#include <cassert>
 #include <stdexcept>
 
 using namespace processing_info;
@@ -49,8 +48,6 @@ void cProcessingInfoSerializer::write(const std::string& name, processing_info::
 
 void cProcessingInfoSerializer::write(const sProcessInfo_1_t& info)
 {
-    assert(mpDataFile);
-
     mBlockID->setVersion(1,0);
 	mBlockID->dataID(DataID::PROCESSING_INFO);
 
@@ -64,12 +61,10 @@ void cProcessingInfoSerializer::write(const sProcessInfo_1_t& info)
     mDataBuffer << info.minute;
     mDataBuffer << info.seconds;
 
-    assert(!mDataBuffer.overrun());
-
     if (mDataBuffer.overrun())
         throw std::runtime_error("ERROR, Buffer Overrun in writing sProcessInfo_1_t data.");
 
-    mpDataFile->writeBlock(*mBlockID, mDataBuffer.data(), mDataBuffer.size());
+    writeBlock(*mBlockID, mDataBuffer);
 }
 
 
