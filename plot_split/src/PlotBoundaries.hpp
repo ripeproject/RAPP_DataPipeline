@@ -2,13 +2,14 @@
 #pragma once
 
 #include <utility>
+#include <vector>
 
 
-class cPlotBoundaries
+class cPlotBoundary
 {
 public:
-	cPlotBoundaries();
-	virtual ~cPlotBoundaries();
+	cPlotBoundary();
+	virtual ~cPlotBoundary();
 
 	std::pair<double, double> getNorthEastCorner();
 	std::pair<double, double> getNorthWestCorner();
@@ -21,10 +22,23 @@ public:
 	double getNorthBoundary_m();
 	double getSouthBoundary_m();
 
+	bool inPlot(double southPos_m, double eastPos_m) const;
+
 protected:
 	double mEastBoundary_m = 0.0;
 	double mWestBoundary_m = 0.0;
 
 	double mNorthBoundary_m = 0.0;
 	double mSouthBoundary_m = 0.0;
+};
+
+
+class cPlotBoundaries
+{
+public:
+	cPlotBoundaries();
+	virtual ~cPlotBoundaries();
+
+protected:
+	std::vector<cPlotBoundary> mPlotBoundaries;
 };
