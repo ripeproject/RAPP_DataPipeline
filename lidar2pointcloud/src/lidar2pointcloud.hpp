@@ -115,8 +115,14 @@ public:
 	void attachKinematicParsers(cBlockDataFileReader& file);
 	void detachKinematicParsers(cBlockDataFileReader& file);
 
+	/*
+	 * Attach/Detach parser/serializer to for the transform phase.
+	 */
 	void attachTransformParsers(cBlockDataFileReader& file);
 	void detachTransformParsers(cBlockDataFileReader& file);
+
+	void attachTransformSerializers(cBlockDataFileWriter& file);
+	void detachTransformSerializers(cBlockDataFileWriter& file);
 
 	/*
 	 * Write any header data

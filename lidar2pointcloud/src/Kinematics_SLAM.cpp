@@ -32,6 +32,15 @@ void cKinematics_SLAM::detachTransformParsers(cBlockDataFileReader& file)
 }
 
 //-----------------------------------------------------------------------------
+void cKinematics_SLAM::attachTransformSerializers(cBlockDataFileWriter& file)
+{
+}
+
+void cKinematics_SLAM::detachTransformSerializers(cBlockDataFileWriter& file)
+{
+}
+
+//-----------------------------------------------------------------------------
 void cKinematics_SLAM::transform(double time_us,
     ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud)
 {

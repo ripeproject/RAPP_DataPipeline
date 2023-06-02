@@ -101,6 +101,7 @@ void cFileProcessor::run()
         }
 
         mConverter->attachTransformParsers(mFileReader);
+        mConverter->attachTransformSerializers(mFileWriter);
 
 	    mFileReader.registerCallback([this](const cBlockID& id){ this->processBlock(id); });
 	    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });

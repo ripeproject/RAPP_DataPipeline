@@ -413,6 +413,16 @@ void cLidar2PointCloud::detachTransformParsers(cBlockDataFileReader& file)
 	mKinematic->detachTransformParsers(file);
 }
 
+void cLidar2PointCloud::attachTransformSerializers(cBlockDataFileWriter& file)
+{
+	mKinematic->attachTransformSerializers(file);
+}
+
+void cLidar2PointCloud::detachTransformSerializers(cBlockDataFileWriter& file)
+{
+	mKinematic->detachTransformSerializers(file);
+}
+
 void cLidar2PointCloud::writeHeader()
 {
 	if (mRotateSensorData)

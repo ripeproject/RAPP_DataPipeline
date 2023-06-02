@@ -28,6 +28,9 @@ public:
 	void attachTransformParsers(cBlockDataFileReader& file) override;
 	void detachTransformParsers(cBlockDataFileReader& file) override;
 
+	void attachTransformSerializers(cBlockDataFileWriter& file) override;
+	void detachTransformSerializers(cBlockDataFileWriter& file) override;
+
 	/*
 	 * Transform the point cloud coordinated based on kinematic model
 	 */

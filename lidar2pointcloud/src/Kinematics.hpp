@@ -10,6 +10,7 @@
 
 // Forward Declarations
 class cBlockDataFileReader;
+class cBlockDataFileWriter;
 class cPointCloudSerializer;
 
 
@@ -61,10 +62,13 @@ public:
 	virtual void detachKinematicParsers(cBlockDataFileReader& file) = 0;
 
 	/*
-	 * Attach/Detach any parsers needed for the transform pass to the data file.
+	 * Attach/Detach any parsers/serializers needed for the transform pass to the data file.
 	 */
 	virtual void attachTransformParsers(cBlockDataFileReader& file) = 0;
 	virtual void detachTransformParsers(cBlockDataFileReader& file) = 0;
+
+	virtual void attachTransformSerializers(cBlockDataFileWriter& file) = 0;
+	virtual void detachTransformSerializers(cBlockDataFileWriter& file) = 0;
 
 	virtual void transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) = 0;
@@ -89,6 +93,10 @@ public:
 
 	void attachTransformParsers(cBlockDataFileReader& file) override {};
 	void detachTransformParsers(cBlockDataFileReader& file) override {};
+
+	void attachTransformSerializers(cBlockDataFileWriter& file) override {};
+	void detachTransformSerializers(cBlockDataFileWriter& file) override {};
+
 	void transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) override {};
 };
