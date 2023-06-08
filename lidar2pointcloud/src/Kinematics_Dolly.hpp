@@ -6,11 +6,13 @@
 #include <cbdf/ExperimentParser.hpp>
 #include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/SpidercamParser.hpp>
+#include <cbdf/OusterParser.hpp>
 
 #include <vector>
 
 
-class cKinematics_Dolly : public cKinematics, public cSpidercamParser, public cExperimentParser
+class cKinematics_Dolly : public cKinematics, public cSpidercamParser, 
+						public cExperimentParser, public cOusterParser
 {
 public:
 	cKinematics_Dolly();
@@ -92,6 +94,22 @@ protected:
 	void onEndRecordingTimestamp(uint64_t timestamp_ns) override;
 	void onHeartbeatTimestamp(uint64_t timestamp_ns) override;
 
+	/** Ouster Parser **/
+	void onConfigParam(ouster::config_param_2_t config_param) override;
+	void onSensorInfo(ouster::sensor_info_2_t sensor_info) override;
+	void onTimestamp(ouster::timestamp_2_t timestamp) override;
+	void onSyncPulseIn(ouster::sync_pulse_in_2_t pulse_info) override;
+	void onSyncPulseOut(ouster::sync_pulse_out_2_t pulse_info) override;
+	void onMultipurposeIo(ouster::multipurpose_io_2_t io) override;
+	void onNmea(ouster::nmea_2_t nmea) override;
+	void onTimeInfo(ouster::time_info_2_t time_info) override;
+	void onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsics) override;
+	void onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics) override;
+	void onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics) override;
+	void onLidarDataFormat(ouster::lidar_data_format_2_t format) override;
+	void onImuData(ouster::imu_data_t data) override;
+	void onLidarData(cOusterLidarData data) override;
+
 private:
 
 	bool mStartPath = false;
@@ -107,12 +125,12 @@ private:
 	double mHeight_m = 0.0;
 
 	/*
-	 * The dolly uses a south/east/up coordinate system
+	 * The sensor uses a south/east/up coordinate system
 	 * x axis is positive heading south
 	 * y axis is positive heading east
 	 * z axis is positive going up
 	 */
-	struct sDollyInfo_t
+	struct sSensorInfo_t
 	{
 		double timestamp_us = 0.0;
 		double x_m = 0.0;
@@ -121,12 +139,30 @@ private:
 		double vx_mps = 0.0;
 		double vy_mps = 0.0;
 		double vz_mps = 0.0;
+
+		double pitch_deg = 0.0;
+		double roll_deg  = 0.0;
+		double pitchRate_dps = 0.0;
+		double rollRate_dps  = 0.0;
 	};
 
-	std::vector<sDollyInfo_t> mDollyInfo;
-	std::vector<sDollyInfo_t>::size_type mDollyInfoIndex = 0;
-	std::vector<sDollyInfo_t>::size_type mDollyPassIndex = 0;
-	std::vector<sDollyInfo_t>::size_type mDollyInfoMax = 0;
+	std::vector<sSensorInfo_t> mDollyInfo;
+	std::vector<sSensorInfo_t>::size_type mDollyInfoIndex = 0;
+	std::vector<sSensorInfo_t>::size_type mDollyPassIndex = 0;
+	std::vector<sSensorInfo_t>::size_type mDollyInfoMax = 0;
+
+	bool mUseImuData = true;
+
+	ouster::imu_intrinsics_2_t			mImuIntrinsics;
+	ouster::cTransformMatrix<double>	mImuTransform;
+	ouster::cRotationMatrix<double>		mImuToSensor;
+
+	double mPitch_Offset_deg = 0.0;
+	double mRoll_Offset_deg = 0.0;
+
+	double mPitch_deg = 0.0;
+	double mRoll_deg = 0.0;
+	uint32_t mImuCount = 0;
 
 	std::size_t mPassNumber = 0;
 	std::vector<std::size_t> mPassIndex;

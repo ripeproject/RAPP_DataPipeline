@@ -113,7 +113,6 @@ int main(int argc, char** argv)
 	}
 
 	cLidar2PointCloud::setValidRange_m(min_dist_m, max_dist_m);
-	cLidar2PointCloud::setSensorOrientation(yaw_deg, pitch_deg, roll_deg, true);
 
 	if (aggregatePointCloud)
 	{
@@ -263,22 +262,28 @@ int main(int argc, char** argv)
 
 		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
 
+		std::unique_ptr<cKinematics> kinematics;
+
 		switch (model)
 		{
 		case eKinematics::CONSTANT:
-			fp->setKinematicModel(std::make_unique<cKinematics_Constant>(eastSpeed_mmps,
-				northSpeed_mmps, vertSpeed_mmps));
+			kinematics = std::make_unique<cKinematics_Constant>(eastSpeed_mmps,
+				northSpeed_mmps, vertSpeed_mmps);
 			break;
 		case eKinematics::DOLLY:
-			fp->setKinematicModel(std::make_unique<cKinematics_Dolly>());
+			kinematics = std::make_unique<cKinematics_Dolly>();
 			break;
 		case eKinematics::GPS:
-			fp->setKinematicModel(std::make_unique<cKinematics_GPS>());
+			kinematics = std::make_unique<cKinematics_GPS>();
 			break;
 		case eKinematics::SLAM:
-			fp->setKinematicModel(std::make_unique<cKinematics_SLAM>());
+			kinematics = std::make_unique<cKinematics_SLAM>();
 			break;
 		}
+
+		kinematics->rotateToSEU(true);
+		kinematics->setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
+		fp->setKinematicModel(std::move(kinematics));
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 

@@ -383,10 +383,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	mpSensorPitch_deg->TransferDataFromWindow();
 	mpSensorRoll_deg->TransferDataFromWindow();
 
-	cLidar2PointCloud::setSensorOrientation(mSensorYaw_deg,
-		mSensorPitch_deg, mSensorRoll_deg,
-		mpRotateSensorToSEU->GetValue());
-
 	if (mpAggregatePointCloud->GetValue())
 	{
 		cLidar2PointCloud::saveAggregatePointCloud();
@@ -511,25 +507,32 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
 
+		std::unique_ptr<cKinematics> kinematics;
+
 		switch (model)
 		{
 		case eKinematics::CONSTANT:
 			mpKM_Sensor_Vx_mmps->TransferDataFromWindow();
 			mpKM_Sensor_Vy_mmps->TransferDataFromWindow();
 			mpKM_Sensor_Vz_mmps->TransferDataFromWindow();
-			fp->setKinematicModel(std::make_unique<cKinematics_Constant>(mKM_Sensor_Vx_mmps,
-				mKM_Sensor_Vy_mmps, mKM_Sensor_Vz_mmps));
+			kinematics = std::make_unique<cKinematics_Constant>(mKM_Sensor_Vx_mmps,
+				mKM_Sensor_Vy_mmps, mKM_Sensor_Vz_mmps);
 			break;
 		case eKinematics::DOLLY:
-			fp->setKinematicModel(std::make_unique<cKinematics_Dolly>());
+			kinematics = std::make_unique<cKinematics_Dolly>();
 			break;
 		case eKinematics::GPS:
-			fp->setKinematicModel(std::make_unique<cKinematics_GPS>());
+			kinematics = std::make_unique<cKinematics_GPS>();
 			break;
 		case eKinematics::SLAM:
-			fp->setKinematicModel(std::make_unique<cKinematics_SLAM>());
+			kinematics = std::make_unique<cKinematics_SLAM>();
 			break;
 		}
+
+		kinematics->rotateToSEU(mpRotateSensorToSEU->GetValue());
+		kinematics->setSensorOrientation(mSensorYaw_deg, mSensorPitch_deg, mSensorRoll_deg);
+
+		fp->setKinematicModel(std::move(kinematics));
 
 		mFileProcessors.push(fp);
 	}

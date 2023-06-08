@@ -246,13 +246,6 @@ namespace
 double cLidar2PointCloud::mMinDistance_m = 0.001;
 double cLidar2PointCloud::mMaxDistance_m = 1000.0;
 
-double cLidar2PointCloud::mPitch_deg = 0.0;
-double cLidar2PointCloud::mRoll_deg = 0.0;
-double cLidar2PointCloud::mYaw_deg = 0.0;
-bool   cLidar2PointCloud::mRotateSensorData = false;
-
-ouster::cRotationMatrix<double> cLidar2PointCloud::mSensorToSEU;
-
 bool cLidar2PointCloud::mAggregatePointCloud = false;
 bool cLidar2PointCloud::mSaveReducedPointCloud = false;
 
@@ -275,6 +268,7 @@ void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double ma
 	max_altitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
 }
 
+#if 0
 void cLidar2PointCloud::setSensorOrientation(double yaw_deg, 
 											double pitch_deg,
 											double roll_deg,
@@ -343,12 +337,7 @@ void cLidar2PointCloud::setSensorOrientation(double yaw_deg,
 	c3[2] = e = cos(pitch) * cos(roll);
 */
 }
-
-double cLidar2PointCloud::getSensorPitch_deg() { return mPitch_deg; }
-double cLidar2PointCloud::getSensorRoll_deg()  { return mRoll_deg; }
-double cLidar2PointCloud::getSensorYaw_deg()   { return mYaw_deg; }
-bool   cLidar2PointCloud::rotateToSEU()		   { return mRotateSensorData; }
-
+#endif
 
 void cLidar2PointCloud::saveAggregatePointCloud()
 {
@@ -377,6 +366,11 @@ cLidar2PointCloud::~cLidar2PointCloud()
 void cLidar2PointCloud::setKinematicModel(std::unique_ptr<cKinematics> model)
 {
 	mKinematic.reset(model.release());
+}
+
+const cKinematics* cLidar2PointCloud::getcKinematicModel() const
+{
+	return mKinematic.get();
 }
 
 bool cLidar2PointCloud::requiresTelemetryPass()
@@ -425,12 +419,14 @@ void cLidar2PointCloud::detachTransformSerializers(cBlockDataFileWriter& file)
 
 void cLidar2PointCloud::writeHeader()
 {
-	if (mRotateSensorData)
+	
+	if (mKinematic->rotateToSEU())
 		write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_SEU);
 	else
 		write(pointcloud::eCOORDINATE_SYSTEM::SENSOR);
 
-	writeSensorAngles(mPitch_deg, mRoll_deg, mYaw_deg);
+	writeSensorAngles(mKinematic->getSensorPitch_deg(), 
+		mKinematic->getSensorRoll_deg(), mKinematic->getSensorYaw_deg());
 
 	mKinematic->writeHeader(*this);
 }
@@ -512,8 +508,6 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 				point.X_m = x_mm * mm_to_m;
 				point.Y_m = y_mm * mm_to_m;
 				point.Z_m = z_mm * mm_to_m;
-
-				rotate(point, mSensorToSEU);
 			}
 
             point.range_mm = range_mm;
@@ -603,7 +597,6 @@ void cLidar2PointCloud::onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics)
 	mImuIntrinsics = intrinsics;
 	mImuTransform.set(mImuIntrinsics.imu_to_sensor_transform, true);
 	mImuToSensor = mImuTransform.rotation();
-
 }
 
 void cLidar2PointCloud::onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics)
@@ -643,12 +636,14 @@ void cLidar2PointCloud::onImuData(ouster::imu_data_t data)
 	imu.angular_velocity_Zaxis_deg_per_sec = data.angular_velocity_Zaxis_deg_per_sec;
 
 	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mImuToSensor);
-	rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g, mSensorToSEU);
+
+	mKinematic->rotate(imu.acceleration_X_g, imu.acceleration_Y_g, imu.acceleration_Z_g);
 
 	rotate(imu.angular_velocity_Xaxis_deg_per_sec, imu.angular_velocity_Yaxis_deg_per_sec,
 		imu.angular_velocity_Zaxis_deg_per_sec, mImuToSensor);
-	rotate(imu.angular_velocity_Xaxis_deg_per_sec, imu.angular_velocity_Yaxis_deg_per_sec,
-		imu.angular_velocity_Zaxis_deg_per_sec, mSensorToSEU);
+
+	mKinematic->rotate(imu.angular_velocity_Xaxis_deg_per_sec, imu.angular_velocity_Yaxis_deg_per_sec,
+		imu.angular_velocity_Zaxis_deg_per_sec);
 
 	write(imu);
 }

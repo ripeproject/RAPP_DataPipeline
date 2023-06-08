@@ -5,6 +5,15 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
+#include <ouster/simple_blas.h>
+
+#include <numbers>
+
+namespace
+{
+    double RAD_TO_DEG = 180.0 / std::numbers::pi;
+    double DEG_TO_RAD = std::numbers::pi / 180.0;
+}
 
 cKinematics_Dolly::cKinematics_Dolly()
 :
@@ -22,12 +31,14 @@ void cKinematics_Dolly::attachKinematicParsers(cBlockDataFileReader& file)
 {
     file.attach(static_cast<cSpidercamParser*>(this));
     file.attach(static_cast<cExperimentParser*>(this));
+    file.attach(static_cast<cOusterParser*>(this));
 }
 
 void cKinematics_Dolly::detachKinematicParsers(cBlockDataFileReader& file)
 {
     file.detach(static_cast<cSpidercamParser*>(this)->blockID());
     file.detach(static_cast<cExperimentParser*>(this)->blockID());
+    file.detach(static_cast<cOusterParser*>(this)->blockID());
 }
 
 //-----------------------------------------------------------------------------
@@ -63,7 +74,11 @@ void cKinematics_Dolly::telemetryPassComplete()
 
     if (!mDollyInfo.empty())
     {
-        sDollyInfo_t info = mDollyInfo.front();
+        sSensorInfo_t info = mDollyInfo.front();
+
+        // Set the sensor orientation
+        mPitch_Offset_deg = info.pitch_deg;
+        mRoll_Offset_deg = info.roll_deg;
 
         // The dolly x movement is the north/south direction
         mSouth_Offset_m = info.x_m;
@@ -89,10 +104,13 @@ void cKinematics_Dolly::transform(double time_us,
         throw cKinematicNoData("File does not contain dolly information.");
     }
 
+    bool newPass = false;
+
     if (mDollyInfoIndex == mDollyPassIndex)
     {
         ++mPassNumber;
         mDollyPassIndex = mPassIndex[mPassNumber];
+        newPass = true;
     }
 
     auto lower = mDollyInfoIndex;
@@ -108,7 +126,11 @@ void cKinematics_Dolly::transform(double time_us,
     {
         mDollyInfoIndex = lower;
 
-        sDollyInfo_t info = mDollyInfo[mDollyInfoIndex];
+        sSensorInfo_t info = mDollyInfo[mDollyInfoIndex];
+
+        // Set the sensor orientation
+        mPitch_Offset_deg = info.pitch_deg;
+        mRoll_Offset_deg = info.roll_deg;
 
         // The dolly x movement is the north/south direction
         mSouth_Offset_m = info.x_m;
@@ -119,9 +141,17 @@ void cKinematics_Dolly::transform(double time_us,
         mHeight_Offset_m = info.z_m;
     }
 
-    sDollyInfo_t info = mDollyInfo[mDollyInfoIndex];
+    sSensorInfo_t info = mDollyInfo[mDollyInfoIndex];
 
     double time_sec = (time_us - info.timestamp_us) / 1000000.0;
+
+    mPitch_deg = mPitch_Offset_deg + info.pitchRate_dps * time_sec;
+    mRoll_deg  = mRoll_Offset_deg + info.rollRate_dps * time_sec;
+
+    if (mUseImuData)
+    {
+        setSensorOrientation(mPitch_deg, mRoll_deg);
+    }
 
     // The dolly x movement is the north/south direction
     mSouth_m = mSouth_Offset_m + info.vx_mps * time_sec;
@@ -143,6 +173,8 @@ void cKinematics_Dolly::transform(double time_us,
             if ((point.X_m == 0.0) && (point.Y_m == 0.0) && (point.Z_m == 0.0))
                 continue;
 
+            rotate(point);
+
             point.X_m += mSouth_m;
             point.Y_m += mEast_m;
             point.Z_m = mHeight_m - point.Z_m;
@@ -157,7 +189,10 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
     if (!mDataActive)
         return;
 
-    sDollyInfo_t info;
+    sSensorInfo_t info;
+
+    mPitch_deg = mPitch_deg / mImuCount;
+    mRoll_deg  = mRoll_deg / mImuCount;
 
     if (mDollyInfo.empty())
     {
@@ -172,6 +207,9 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
         info.vy_mps = 0;
         info.vz_mps = 0;
 
+        info.pitchRate_dps = 0;
+        info.rollRate_dps = 0;
+
         double dts = position.timestamp - mStartTimestamp;
         info.timestamp_us = dts * 0.1;
     }
@@ -183,6 +221,9 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
         double dy = (position.Y_mm * 0.001) - previous.y_m;
         double dz = (position.Z_mm * 0.001) - previous.z_m;
 
+        double dp = mPitch_deg - previous.pitch_deg;
+        double dr = mRoll_deg - previous.roll_deg;
+
         double dts = position.timestamp - mStartTimestamp;
         double dt = dts * 0.0000001;
 
@@ -191,11 +232,21 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
         previous.vx_mps = dx / dt;
         previous.vy_mps = dy / dt;
         previous.vz_mps = dz / dt;
+
+        previous.pitchRate_dps = dp / dt;
+        previous.rollRate_dps  = dr / dt;
     }
 
     info.x_m = position.X_mm * 0.001;
     info.y_m = position.Y_mm * 0.001;
     info.z_m = position.Z_mm * 0.001;
+
+    info.pitch_deg = mPitch_deg;
+    info.roll_deg = mRoll_deg;
+
+    mPitch_deg = 0;
+    mRoll_deg = 0;
+    mImuCount = 0;
 
     mDollyInfo.push_back(info);
 }
@@ -404,3 +455,47 @@ void cKinematics_Dolly::onHeartbeatTimestamp(uint64_t timestamp_ns)
     if (mSerializer)
         mSerializer.heartbeatTimestamp(timestamp_ns);
 }
+
+void cKinematics_Dolly::onConfigParam(ouster::config_param_2_t config_param) {};
+void cKinematics_Dolly::onSensorInfo(ouster::sensor_info_2_t sensor_info) {};
+void cKinematics_Dolly::onTimestamp(ouster::timestamp_2_t timestamp) {};
+void cKinematics_Dolly::onSyncPulseIn(ouster::sync_pulse_in_2_t pulse_info) {};
+void cKinematics_Dolly::onSyncPulseOut(ouster::sync_pulse_out_2_t pulse_info) {};
+void cKinematics_Dolly::onMultipurposeIo(ouster::multipurpose_io_2_t io) {};
+void cKinematics_Dolly::onNmea(ouster::nmea_2_t nmea) {};
+void cKinematics_Dolly::onTimeInfo(ouster::time_info_2_t time_info) {};
+void cKinematics_Dolly::onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsics) {};
+
+void cKinematics_Dolly::onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics)
+{
+    mImuIntrinsics = intrinsics;
+    mImuTransform.set(mImuIntrinsics.imu_to_sensor_transform, true);
+    mImuToSensor = mImuTransform.rotation();
+}
+
+void cKinematics_Dolly::onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics) {};
+void cKinematics_Dolly::onLidarDataFormat(ouster::lidar_data_format_2_t format) {};
+
+void cKinematics_Dolly::onImuData(ouster::imu_data_t data)
+{
+/*
+    rotate(data.acceleration_Xaxis_g, data.acceleration_Yaxis_g, data.acceleration_Zaxis_g, mImuToSensor);
+
+    rotate(data.angular_velocity_Xaxis_deg_per_sec, data.angular_velocity_Yaxis_deg_per_sec,
+        data.angular_velocity_Zaxis_deg_per_sec, mImuToSensor);
+*/
+
+    double x2 = data.acceleration_Xaxis_g * data.acceleration_Xaxis_g;
+    double y2 = data.acceleration_Yaxis_g * data.acceleration_Yaxis_g;
+    double z2 = data.acceleration_Zaxis_g * data.acceleration_Zaxis_g;
+
+    double pitch_deg = atan(data.acceleration_Xaxis_g / sqrt(y2 + z2)) * RAD_TO_DEG;
+    double roll_deg  = atan(data.acceleration_Yaxis_g / sqrt(x2 + z2)) * RAD_TO_DEG;
+
+    mPitch_deg += pitch_deg;
+    mRoll_deg += roll_deg;
+
+    ++mImuCount;
+};
+
+void cKinematics_Dolly::onLidarData(cOusterLidarData data) {};

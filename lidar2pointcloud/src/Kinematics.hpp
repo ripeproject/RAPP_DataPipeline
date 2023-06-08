@@ -40,11 +40,24 @@ enum class eKinematics { NONE, CONSTANT, DOLLY, GPS, SLAM };
 class cKinematics
 {
 public:
-	cKinematics() = default;
+	cKinematics();
 	virtual ~cKinematics() = default;
 
 	bool hasMultiplePasses() const { return mNumPasses > 1; };
 	uint32_t numPasses() const	   { return mNumPasses; };
+
+	double getSensorPitch_deg() const;
+	double getSensorRoll_deg() const;
+	double getSensorYaw_deg() const;
+	bool   rotateToSEU() const;
+	void   rotateToSEU(bool apply);
+
+	void setSensorOrientation(double yaw_deg, double pitch_deg,
+								double roll_deg);
+
+	void setSensorOrientation(double pitch_deg, double roll_deg);
+
+	const ouster::cRotationMatrix<double>& getRotationMatrix()const { return mSensorToSEU; }
 
 	virtual void writeHeader(cPointCloudSerializer& serializer) = 0;
 
@@ -70,11 +83,26 @@ public:
 	virtual void attachTransformSerializers(cBlockDataFileWriter& file) = 0;
 	virtual void detachTransformSerializers(cBlockDataFileWriter& file) = 0;
 
+	void rotate(float& x, float& y, float& z);
+	void rotate(double& x, double& y, double& z);
+	void rotate(pointcloud::sCloudPoint_t& p);
+
 	virtual void transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) = 0;
 
 protected:
 	uint32_t mNumPasses = 0;
+
+	double mPitch_deg = 0.0;
+	double mRoll_deg = 0.0;
+	double mYaw_deg = 0.0;
+	bool   mRotateSensorData = false;
+
+	/*
+	 * The rotation needed to convert sensor orientation
+	 * to the spidercam South\East\Up coordination system
+	 */
+	ouster::cRotationMatrix<double> mSensorToSEU;
 };
 
 
