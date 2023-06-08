@@ -5,6 +5,7 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	ParserExceptions.hpp
 
 	Kinematics.hpp
+	Kinematics.cpp
 	Kinematics_Constant.hpp
 	Kinematics_Constant.cpp
 	Kinematics_Dolly.hpp
