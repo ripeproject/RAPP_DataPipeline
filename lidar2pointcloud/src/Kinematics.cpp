@@ -35,7 +35,7 @@ double cKinematics::getSensorPitch_deg() const { return mPitch_deg; }
 double cKinematics::getSensorRoll_deg() const { return mRoll_deg; }
 double cKinematics::getSensorYaw_deg() const { return mYaw_deg; }
 bool   cKinematics::rotateToSEU() const { return mRotateSensorData; }
-void   cKinematics::rotateToSEU(bool apply) { mRotateSensorData = apply;  }
+void   cKinematics::rotateToSEU(bool apply) { mRotateSensorData = apply; }
 
 void cKinematics::setSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg)
 {
@@ -55,7 +55,8 @@ void cKinematics::setSensorOrientation(double yaw_deg, double pitch_deg, double 
 	Eigen::AngleAxisd yawAngle(yaw_rad, Eigen::Vector3d::UnitZ());
 	Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
 
-	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
+//	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
+	Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
 	Eigen::Matrix3d rotationMatrix = q.matrix();
 
 	double e; // Used for debugging;

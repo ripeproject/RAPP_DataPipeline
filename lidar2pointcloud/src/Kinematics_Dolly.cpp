@@ -11,8 +11,14 @@
 
 namespace
 {
-    double RAD_TO_DEG = 180.0 / std::numbers::pi;
-    double DEG_TO_RAD = std::numbers::pi / 180.0;
+    constexpr double RAD_TO_DEG = 180.0 / std::numbers::pi;
+    constexpr double DEG_TO_RAD = std::numbers::pi / 180.0;
+
+    constexpr double SEC_TO_MS = 1000.0;
+    constexpr double MS_TO_SEC = 1.0 / SEC_TO_MS;
+
+    constexpr double SEC_TO_US = 1'000'000.0;
+    constexpr double US_TO_SEC = 1.0 / SEC_TO_US;
 }
 
 cKinematics_Dolly::cKinematics_Dolly()
@@ -74,19 +80,34 @@ void cKinematics_Dolly::telemetryPassComplete()
 
     if (!mDollyInfo.empty())
     {
+        if (mUseAverageOrientation)
+        {
+            double pitch_deg = mPitchSum / mImuCount;
+            double roll_deg = mRollSum / mImuCount;
+
+            for (auto& info : mDollyInfo)
+            {
+                info.pitch_deg = pitch_deg;
+                info.roll_deg = roll_deg;
+                info.pitchRate_dps = 0.0;
+                info.rollRate_dps = 0.0;
+            }
+
+            mPitchSum = 0.0;
+            mRollSum = 0.0;
+            mImuCount = 0;
+        }
+
         sSensorInfo_t info = mDollyInfo.front();
 
         // Set the sensor orientation
-        mPitch_Offset_deg = info.pitch_deg;
-        mRoll_Offset_deg = info.roll_deg;
+        mInitPitch_deg = info.pitch_deg;
+        mInitRoll_deg = info.roll_deg;
 
-        // The dolly x movement is the north/south direction
-        mSouth_Offset_m = info.x_m;
-
-        // The dolly y movement is the east/west direction
-        mEast_Offset_m = info.y_m;
-
-        mHeight_Offset_m = info.z_m;
+        // Set the initial position of the dolly in the SEU system
+        mInitSouthPos_m = info.x_m;
+        mInitEastPos_m = info.y_m;
+        mInitHeightPos_m = info.z_m;
 
         mDollyInfoMax = mDollyInfo.size() - 1;
     }
@@ -104,14 +125,7 @@ void cKinematics_Dolly::transform(double time_us,
         throw cKinematicNoData("File does not contain dolly information.");
     }
 
-    bool newPass = false;
-
-    if (mDollyInfoIndex == mDollyPassIndex)
-    {
-        ++mPassNumber;
-        mDollyPassIndex = mPassIndex[mPassNumber];
-        newPass = true;
-    }
+    mAtEndOfPass = false;
 
     auto lower = mDollyInfoIndex;
 
@@ -129,37 +143,34 @@ void cKinematics_Dolly::transform(double time_us,
         sSensorInfo_t info = mDollyInfo[mDollyInfoIndex];
 
         // Set the sensor orientation
-        mPitch_Offset_deg = info.pitch_deg;
-        mRoll_Offset_deg = info.roll_deg;
+        mInitPitch_deg = info.pitch_deg;
+        mInitRoll_deg = info.roll_deg;
 
-        // The dolly x movement is the north/south direction
-        mSouth_Offset_m = info.x_m;
-
-        // The dolly y movement is the east/west direction
-        mEast_Offset_m = info.y_m;
-
-        mHeight_Offset_m = info.z_m;
+        // Set the initial position of the dolly in the SEU system
+        mInitSouthPos_m = info.x_m;
+        mInitEastPos_m = info.y_m;
+        mInitHeightPos_m = info.z_m;
     }
 
     sSensorInfo_t info = mDollyInfo[mDollyInfoIndex];
 
-    double time_sec = (time_us - info.timestamp_us) / 1000000.0;
+    double dtime_sec = (time_us - info.timestamp_us) * US_TO_SEC;
 
-    mPitch_deg = mPitch_Offset_deg + info.pitchRate_dps * time_sec;
-    mRoll_deg  = mRoll_Offset_deg + info.rollRate_dps * time_sec;
+    double pitch_deg = mInitPitch_deg + mOffsetPitch_deg + info.pitchRate_dps * dtime_sec;
+    double roll_deg  = mInitRoll_deg + mOffsetRoll_deg + info.rollRate_dps * dtime_sec;
 
     if (mUseImuData)
     {
-        setSensorOrientation(mPitch_deg, mRoll_deg);
+        setSensorOrientation(pitch_deg, roll_deg);
     }
 
     // The dolly x movement is the north/south direction
-    mSouth_m = mSouth_Offset_m + info.vx_mps * time_sec;
+    mSouthPos_m = mInitSouthPos_m + info.vx_mps * dtime_sec;
 
     // The dolly y movement is the east/west direction
-    mEast_m = mEast_Offset_m + info.vy_mps * time_sec;
+    mEastPos_m = mInitEastPos_m + info.vy_mps * dtime_sec;
 
-    mHeight_m = mHeight_Offset_m + info.vz_mps * time_sec;
+    mHeightPos_m = mInitHeightPos_m + info.vz_mps * dtime_sec;
 
     auto cols = cloud.num_columns();
     auto rows = cloud.num_rows();
@@ -175,12 +186,25 @@ void cKinematics_Dolly::transform(double time_us,
 
             rotate(point);
 
-            point.X_m += mSouth_m;
-            point.Y_m += mEast_m;
-            point.Z_m = mHeight_m - point.Z_m;
+            point.X_m += mSouthPos_m;
+            point.Y_m += mEastPos_m;
+            point.Z_m  = mHeightPos_m - point.Z_m;
 
             cloud.set(r, c, point);
         }
+    }
+
+    // Check for an end of pass event 
+    if (mDollyInfoIndex == mDollyPassIndex)
+    {
+        ++mPassNumber;
+
+        if (mPassNumber < mPassIndex.size())
+            mDollyPassIndex = mPassIndex[mPassNumber];
+        else
+            mDollyPassIndex = static_cast<std::size_t>(-1);
+
+        mAtEndOfPass = true;
     }
 }
 
@@ -191,8 +215,14 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
 
     sSensorInfo_t info;
 
-    mPitch_deg = mPitch_deg / mImuCount;
-    mRoll_deg  = mRoll_deg / mImuCount;
+    double pitch_deg = 0.0;
+    double roll_deg = 0.0;
+
+    if (!mUseAverageOrientation)
+    {
+        pitch_deg = mPitchSum / mImuCount;
+        roll_deg = mRollSum / mImuCount;
+    }
 
     if (mDollyInfo.empty())
     {
@@ -217,17 +247,17 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
     {
         auto& previous = mDollyInfo.back();
 
-        double dx = (position.X_mm * 0.001) - previous.x_m;
-        double dy = (position.Y_mm * 0.001) - previous.y_m;
-        double dz = (position.Z_mm * 0.001) - previous.z_m;
+        double dx = (position.X_mm * MM_TO_M) - previous.x_m;
+        double dy = (position.Y_mm * MM_TO_M) - previous.y_m;
+        double dz = (position.Z_mm * MM_TO_M) - previous.z_m;
 
-        double dp = mPitch_deg - previous.pitch_deg;
-        double dr = mRoll_deg - previous.roll_deg;
+        double dp = pitch_deg - previous.pitch_deg;
+        double dr = roll_deg - previous.roll_deg;
 
-        double dts = position.timestamp - mStartTimestamp;
-        double dt = dts * 0.0000001;
+        double dt_us = (position.timestamp - mStartTimestamp) * 0.1;
+        info.timestamp_us = dt_us;
 
-        info.timestamp_us = dt * 1'000'000.0;
+        double dt = (dt_us - previous.timestamp_us) * US_TO_SEC;
 
         previous.vx_mps = dx / dt;
         previous.vy_mps = dy / dt;
@@ -237,16 +267,19 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
         previous.rollRate_dps  = dr / dt;
     }
 
-    info.x_m = position.X_mm * 0.001;
-    info.y_m = position.Y_mm * 0.001;
-    info.z_m = position.Z_mm * 0.001;
+    info.x_m = position.X_mm * MM_TO_M;
+    info.y_m = position.Y_mm * MM_TO_M;
+    info.z_m = position.Z_mm * MM_TO_M;
 
-    info.pitch_deg = mPitch_deg;
-    info.roll_deg = mRoll_deg;
+    info.pitch_deg = pitch_deg;
+    info.roll_deg = roll_deg;
 
-    mPitch_deg = 0;
-    mRoll_deg = 0;
-    mImuCount = 0;
+    if (!mUseAverageOrientation)
+    {
+        mPitchSum = 0;
+        mRollSum = 0;
+        mImuCount = 0;
+    }
 
     mDollyInfo.push_back(info);
 }
@@ -442,9 +475,13 @@ void cKinematics_Dolly::onStartRecordingTimestamp(uint64_t timestamp_ns)
 
 void cKinematics_Dolly::onEndRecordingTimestamp(uint64_t timestamp_ns)
 {
-    mPassIndex.push_back(mDollyInfo.size());
     mDataActive = false;
-    ++mNumPasses;
+
+    if (!mDollyInfo.empty())
+    {
+        mPassIndex.push_back(mDollyInfo.size() - 1);
+        ++mNumPasses;
+    }
 
     if (mSerializer)
         mSerializer.endRecordingTimestamp(timestamp_ns);
@@ -492,8 +529,8 @@ void cKinematics_Dolly::onImuData(ouster::imu_data_t data)
     double pitch_deg = atan(data.acceleration_Xaxis_g / sqrt(y2 + z2)) * RAD_TO_DEG;
     double roll_deg  = atan(data.acceleration_Yaxis_g / sqrt(x2 + z2)) * RAD_TO_DEG;
 
-    mPitch_deg += pitch_deg;
-    mRoll_deg += roll_deg;
+    mPitchSum += pitch_deg;
+    mRollSum  += roll_deg;
 
     ++mImuCount;
 };

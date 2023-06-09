@@ -116,13 +116,17 @@ private:
 	bool mDataActive = false;
 	uint64_t mStartTimestamp = 0;
 
-	double mSouth_Offset_m  = 0.0;
-	double mEast_Offset_m   = 0.0;
-	double mHeight_Offset_m = 0.0;
+	double mInitSouthPos_m  = 0.0;
+	double mInitEastPos_m   = 0.0;
+	double mInitHeightPos_m = 0.0;
 
-	double mSouth_m  = 0.0;
-	double mEast_m   = 0.0;
-	double mHeight_m = 0.0;
+	double mSouthPos_m  = 0.0;
+	double mEastPos_m   = 0.0;
+	double mHeightPos_m = 0.0;
+
+	double mSouthOffset_m = 0.0;
+	double mEastOffset_m = 0.0;
+	double mHeightOffset_m = 0.0;
 
 	/*
 	 * The sensor uses a south/east/up coordinate system
@@ -157,11 +161,15 @@ private:
 	ouster::cTransformMatrix<double>	mImuTransform;
 	ouster::cRotationMatrix<double>		mImuToSensor;
 
-	double mPitch_Offset_deg = 0.0;
-	double mRoll_Offset_deg = 0.0;
+	double mInitPitch_deg = 0.0;
+	double mInitRoll_deg = 0.0;
 
-	double mPitch_deg = 0.0;
-	double mRoll_deg = 0.0;
+	double mOffsetPitch_deg = 0.0;
+	double mOffsetRoll_deg = -2.0;
+
+	bool mUseAverageOrientation = true;
+	double mPitchSum = 0.0;
+	double mRollSum = 0.0;
 	uint32_t mImuCount = 0;
 
 	std::size_t mPassNumber = 0;

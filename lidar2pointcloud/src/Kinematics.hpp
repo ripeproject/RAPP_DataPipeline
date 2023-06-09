@@ -43,12 +43,14 @@ public:
 	cKinematics();
 	virtual ~cKinematics() = default;
 
-	bool hasMultiplePasses() const { return mNumPasses > 1; };
-	uint32_t numPasses() const	   { return mNumPasses; };
+	bool     hasMultiplePasses() const { return mNumPasses > 1; };
+	uint32_t numPasses() const	       { return mNumPasses; };
+	bool     atEndOfPass() const	   { return mAtEndOfPass; };
 
 	double getSensorPitch_deg() const;
 	double getSensorRoll_deg() const;
 	double getSensorYaw_deg() const;
+
 	bool   rotateToSEU() const;
 	void   rotateToSEU(bool apply);
 
@@ -92,17 +94,21 @@ public:
 
 protected:
 	uint32_t mNumPasses = 0;
-
-	double mPitch_deg = 0.0;
-	double mRoll_deg = 0.0;
-	double mYaw_deg = 0.0;
-	bool   mRotateSensorData = false;
+	bool	 mAtEndOfPass = false;
 
 	/*
 	 * The rotation needed to convert sensor orientation
 	 * to the spidercam South\East\Up coordination system
 	 */
 	ouster::cRotationMatrix<double> mSensorToSEU;
+
+private:
+	bool   mRotateSensorData = false;
+
+private:
+	double mPitch_deg = 0.0;
+	double mRoll_deg = 0.0;
+	double mYaw_deg = 0.0;
 };
 
 

@@ -57,12 +57,6 @@ namespace
 	}
 
 	template<typename T>
-	inline void rotate(pointcloud::sCloudPoint_t& p, const ouster::cRotationMatrix<T>& r)
-	{
-		rotate(p.X_m, p.Y_m, p.Z_m, r);
-	}
-
-	template<typename T>
 	inline void rotate(std::vector<sPoint_t>& lhs, const ouster::cRotationMatrix<T>& r)
 	{
 		const auto& rX = r.column(0);
@@ -419,7 +413,6 @@ void cLidar2PointCloud::detachTransformSerializers(cBlockDataFileWriter& file)
 
 void cLidar2PointCloud::writeHeader()
 {
-	
 	if (mKinematic->rotateToSEU())
 		write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_SEU);
 	else
@@ -532,6 +525,11 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 
 				mPointCloud.addPoint(point);
 			}
+		}
+
+		if (mKinematic->atEndOfPass())
+		{
+			writeAndCloseData();
 		}
 	}
 	else if (mSaveReducedPointCloud)

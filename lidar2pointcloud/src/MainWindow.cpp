@@ -52,8 +52,8 @@ cMainWindow::cMainWindow(wxWindow* parent)
 	mKM_Sensor_Pitch_val(1, &mSensorPitch_deg),
 	mKM_Sensor_Roll_val(1, &mSensorRoll_deg),
 	mKM_Sensor_Yaw_val(1, &mSensorYaw_deg),
-	mMinimumDistance_val(3, &mMinimumDistance_m),
-	mMaximumDistance_val(3, &mMaximumDistance_m),
+	mMinimumDistance_val(1, &mMinimumDistance_m),
+	mMaximumDistance_val(1, &mMaximumDistance_m),
 	mMinimumAzimuth_val(3, &mMinimumAzimuth_deg),
 	mMaximumAzimuth_val(3, &mMaximumAzimuth_deg),
 	mMinimumAltitude_val(3, &mMinimumAltitude_deg),
@@ -70,7 +70,7 @@ cMainWindow::cMainWindow(wxWindow* parent)
 	mKM_Sensor_Yaw_val.SetRange(0.0, 360.0);
 
 	mMinimumDistance_val.SetRange(0.0, 4.0);
-	mMaximumDistance_val.SetRange(5.0, 100.0);
+	mMaximumDistance_val.SetRange(0.0, 100.0);
 
 	mMinimumAzimuth_val.SetRange(0.0, 360.0);
 	mMaximumAzimuth_val.SetRange(0.0, 360.0);
@@ -130,7 +130,7 @@ void cMainWindow::CreateControls()
 	mpSensorRoll_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
 	mpSensorRoll_deg->SetValidator(mKM_Sensor_Roll_val);
 
-	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "270.0");
+	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "90.0");
 	mpSensorYaw_deg->SetValidator(mKM_Sensor_Yaw_val);
 
 	mpRotateSensorToSEU = new wxCheckBox(this, wxID_ANY, "Rotate Sensor to South/East/Up Coordinates");
