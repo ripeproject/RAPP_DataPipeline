@@ -165,7 +165,7 @@ private:
 	double mInitRoll_deg = 0.0;
 
 	double mOffsetPitch_deg = 0.0;
-	double mOffsetRoll_deg = -2.0;
+	double mOffsetRoll_deg = 0.0;
 
 	bool mUseAverageOrientation = true;
 	double mPitchSum = 0.0;
