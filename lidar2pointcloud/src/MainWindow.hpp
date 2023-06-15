@@ -47,6 +47,10 @@ private:
 	void stopDataProcessing();
 
 private:
+	void createConstantSpeedLayout();
+	void createDollyLayout();
+
+private:
 	std::string mFilename;
 
 	wxTextCtrl* mpLoadSrcFile = nullptr;
@@ -57,26 +61,55 @@ private:
 	wxButton* mpLoadDstButton = nullptr;
 
 	wxComboBox* mpKinematicModel = nullptr;
+	wxStaticBoxSizer* mpKinematicOptions = nullptr;
 
-	double mKM_Sensor_Vx_mmps = 0.0;
-	double mKM_Sensor_Vy_mmps = 0.0;
-	double mKM_Sensor_Vz_mmps = 0.0;
+	/*** Constant Speed Options (CSO) ***/
+	wxPanel* mpKM_ConstantSpeedOptions = nullptr;
 
-	wxFloatingPointValidator<double> mKM_Sensor_Vx_val;
-	wxFloatingPointValidator<double> mKM_Sensor_Vy_val;
-	wxFloatingPointValidator<double> mKM_Sensor_Vz_val;
+	double mKM_CSO_Vx_mmps = 0.0;
+	double mKM_CSO_Vy_mmps = 0.0;
+	double mKM_CSO_Vz_mmps = 0.0;
+	double mKM_CSO_Height_m = 0.0;
 
-	wxTextCtrl* mpKM_Sensor_Vx_mmps = nullptr;
-	wxTextCtrl* mpKM_Sensor_Vy_mmps = nullptr;
-	wxTextCtrl* mpKM_Sensor_Vz_mmps = nullptr;
+	wxFloatingPointValidator<double> mKM_CSO_Vx_val;
+	wxFloatingPointValidator<double> mKM_CSO_Vy_val;
+	wxFloatingPointValidator<double> mKM_CSO_Vz_val;
+	wxFloatingPointValidator<double> mKM_CSO_Height_val;
 
+	wxTextCtrl* mpKM_CSO_Vx_mmps = nullptr;
+	wxTextCtrl* mpKM_CSO_Vy_mmps = nullptr;
+	wxTextCtrl* mpKM_CSO_Vz_mmps = nullptr;
+	wxTextCtrl* mpKM_CSO_Height_m = nullptr;
+	wxComboBox* mpKM_CSO_HeightAxis = nullptr;
+
+	/*** Dolly Options ***/
+	wxPanel* mpKM_DollyOptions = nullptr;
+
+	double mKM_DO_PitchOffset_deg = 0.0;
+	double mKM_DO_RollOffset_deg = 0.0;
+
+	wxFloatingPointValidator<double> mKM_DO_Pitch_Offset_val;
+	wxFloatingPointValidator<double> mKM_DO_Roll_Offset_val;
+
+	wxCheckBox* mpKM_DO_UseImuData = nullptr;
+	wxCheckBox* mpKM_DO_AverageImuData = nullptr;
+	wxTextCtrl* mpKM_DO_PitchOffset_deg = nullptr;
+	wxTextCtrl* mpKM_DO_RollOffset_deg = nullptr;
+
+	/*** GPS Options ***/
+	wxPanel* mpKM_GpsOptions = nullptr;
+
+	/*** SLAM Options ***/
+	wxPanel* mpKM_SlamOptions = nullptr;
+
+	/*** Sensor Orientation ***/
 	double mSensorPitch_deg = -90.0;
 	double mSensorRoll_deg = 0.0;
 	double mSensorYaw_deg = 270.0;
 
-	wxFloatingPointValidator<double> mKM_Sensor_Pitch_val;
-	wxFloatingPointValidator<double> mKM_Sensor_Roll_val;
-	wxFloatingPointValidator<double> mKM_Sensor_Yaw_val;
+	wxFloatingPointValidator<double> mSensorPitch_val;
+	wxFloatingPointValidator<double> mSensorRoll_val;
+	wxFloatingPointValidator<double> mSensorYaw_val;
 
 	wxTextCtrl* mpSensorPitch_deg = nullptr;
 	wxTextCtrl* mpSensorRoll_deg = nullptr;

@@ -17,6 +17,18 @@ class cKinematics_Dolly : public cKinematics, public cSpidercamParser,
 public:
 	cKinematics_Dolly();
 
+	bool usingImuData() const;
+	void useImuData(bool useImuData);
+
+	bool averagingImuData() const;
+	void averageImuData(bool average);
+
+	double sensorPitchOffset_deg() const;
+	void setSensorPitchOffset_deg(double offset_deg);
+
+	double sensorRollOffset_deg() const;
+	void setSensorRollOffset_deg(double offset_deg);
+
 	void writeHeader(cPointCloudSerializer& serializer) override;
 
 	/*
@@ -155,7 +167,7 @@ private:
 	std::vector<sSensorInfo_t>::size_type mDollyPassIndex = 0;
 	std::vector<sSensorInfo_t>::size_type mDollyInfoMax = 0;
 
-	bool mUseImuData = true;
+	bool mUseImuData = false;
 
 	ouster::imu_intrinsics_2_t			mImuIntrinsics;
 	ouster::cTransformMatrix<double>	mImuTransform;
@@ -165,9 +177,9 @@ private:
 	double mInitRoll_deg = 0.0;
 
 	double mOffsetPitch_deg = 0.0;
-	double mOffsetRoll_deg = 0.0;
+	double mOffsetRoll_deg = -5.0;
 
-	bool mUseAverageOrientation = true;
+	bool mUseAverageOrientation = false;
 	double mPitchSum = 0.0;
 	double mRollSum = 0.0;
 	uint32_t mImuCount = 0;

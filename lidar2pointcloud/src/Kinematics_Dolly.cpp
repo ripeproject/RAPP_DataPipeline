@@ -19,12 +19,97 @@ namespace
 
     constexpr double SEC_TO_US = 1'000'000.0;
     constexpr double US_TO_SEC = 1.0 / SEC_TO_US;
+
+    template<typename T>
+    inline void rotate(ouster::imu_data_t& lhs, const ouster::cRotationMatrix<T>& r)
+    {
+/*
+        const auto& rX = r.column(0);
+        const auto& rY = r.column(1);
+        const auto& rZ = r.column(2);
+
+        data.acceleration_Xaxis_g, data.acceleration_Yaxis_g, data.acceleration_Zaxis_g
+        for (std::size_t i = 0; i < lhs.size(); ++i)
+        {
+            sPoint_t p = lhs[i];
+
+            double x = p.x * rX[0] + p.y * rX[1] + p.z * rX[2];
+            double y = p.x * rY[0] + p.y * rY[1] + p.z * rY[2];
+            double z = p.x * rZ[0] + p.y * rZ[1] + p.z * rZ[2];
+
+            lhs[i] = sPoint_t(x, y, z);
+        }
+*/
+    }
+
+    template<typename T>
+    inline void translate(ouster::imu_data_t& lhs, const ouster::cTranslation<T>& t)
+    {
+/*
+        data.acceleration_Xaxis_g
+        data.acceleration_Yaxis_g
+        data.acceleration_Zaxis_g
+            for (std::size_t i = 0; i < lhs.size(); ++i)
+        {
+            sPoint_t& p = lhs[i];
+
+            if ((p.x == 0.0) && (p.y == 0.0) && (p.z == 0.0))
+            {
+                continue;
+            }
+            p.x += t.x();
+            p.y += t.y();
+            p.z += t.z();
+        }
+*/
+    }
+
 }
 
 cKinematics_Dolly::cKinematics_Dolly()
 :
     mSerializer(4096)
 {
+}
+
+bool cKinematics_Dolly::usingImuData() const
+{
+    return mUseImuData;
+}
+
+void cKinematics_Dolly::useImuData(bool useImuData)
+{
+    mUseImuData = useImuData;
+}
+
+bool cKinematics_Dolly::averagingImuData() const
+{
+    return mUseAverageOrientation;
+}
+
+void cKinematics_Dolly::averageImuData(bool average)
+{
+    mUseAverageOrientation = average;
+}
+
+double cKinematics_Dolly::sensorPitchOffset_deg() const
+{
+    return mOffsetPitch_deg;
+}
+
+void cKinematics_Dolly::setSensorPitchOffset_deg(double offset_deg)
+{
+    mOffsetPitch_deg = offset_deg;
+}
+
+double cKinematics_Dolly::sensorRollOffset_deg() const
+{
+    return mOffsetRoll_deg;
+}
+
+void cKinematics_Dolly::setSensorRollOffset_deg(double offset_deg)
+{
+    mOffsetRoll_deg = offset_deg;
 }
 
 void cKinematics_Dolly::writeHeader(cPointCloudSerializer& serializer)
@@ -184,7 +269,8 @@ void cKinematics_Dolly::transform(double time_us,
             if ((point.X_m == 0.0) && (point.Y_m == 0.0) && (point.Z_m == 0.0))
                 continue;
 
-            rotate(point);
+            if (rotateToSEU())
+                rotate(point);
 
             point.X_m += mSouthPos_m;
             point.Y_m += mEastPos_m;
@@ -516,6 +602,12 @@ void cKinematics_Dolly::onLidarDataFormat(ouster::lidar_data_format_2_t format) 
 void cKinematics_Dolly::onImuData(ouster::imu_data_t data)
 {
 /*
+    auto rot = mImuTransform.rotation();
+    auto trans = mImuTransform.translation();
+
+    ::rotate(data, rot);
+    ::translate(data, trans);
+
     rotate(data.acceleration_Xaxis_g, data.acceleration_Yaxis_g, data.acceleration_Zaxis_g, mImuToSensor);
 
     rotate(data.angular_velocity_Xaxis_deg_per_sec, data.angular_velocity_Yaxis_deg_per_sec,

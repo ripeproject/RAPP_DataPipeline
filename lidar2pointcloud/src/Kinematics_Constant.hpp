@@ -9,7 +9,14 @@
 class cKinematics_Constant : public cKinematics
 {
 public:
+	enum class eHEIGHT_AXIS { NONE, X, Y, Z };
+public:
 	cKinematics_Constant(double Vx_mmps, double Vy_mmps, double Vz_mmps);
+
+	void setHeightAxis(eHEIGHT_AXIS axis);
+	void setX_Offset_m(double offset_m);
+	void setY_Offset_m(double offset_m);
+	void setZ_Offset_m(double offset_m);
 
 	void writeHeader(cPointCloudSerializer& serializer) override;
 
@@ -40,9 +47,11 @@ public:
 protected:
 
 private:
-	double mX_m = 0.0;
-	double mY_m = 0.0;
-	double mZ_m = 0.0;
+	double mX_Offset_m = 0.0;
+	double mY_Offset_m = 0.0;
+	double mZ_Offset_m = 0.0;
+
+	eHEIGHT_AXIS mHeightAxis = eHEIGHT_AXIS::NONE;
 
 	double mVx_mps = 0.0;
 	double mVy_mps = 0.0;

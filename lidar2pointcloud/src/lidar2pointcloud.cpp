@@ -3,6 +3,7 @@
 #include "PointCloudTypes.hpp"
 
 #include <ouster/simple_blas.h>
+#include <ouster/ouster_utils.h>
 
 #include <eigen3/Eigen/Eigen>
 
@@ -36,6 +37,7 @@ namespace
 	/** Lookup table of beam directions and offsets. */
 	struct sXYZ_Lut_t
 	{
+		std::vector<bool>	  exclude;
 		std::vector<sPoint_t> direction;
 		std::vector<sPoint_t> offset;
 	};
@@ -153,6 +155,7 @@ namespace
 		}
 
 		sXYZ_Lut_t lut;
+		lut.exclude.resize(w * h);
 		lut.direction.resize(w * h);
 		lut.offset.resize(w * h);
 
@@ -171,6 +174,8 @@ namespace
 				auto y = sin(encoder + azimuth) * altitude_cos;
 				auto z = sin(altitude);
 
+				lut.exclude[i] = false;
+
 				lut.direction[i].x = x;
 				lut.direction[i].y = y;
 				lut.direction[i].z = z;
@@ -181,6 +186,7 @@ namespace
 			}
 			else
 			{
+				lut.exclude[i] = true;
 				lut.direction[i].x = 0.0;
 				lut.direction[i].y = 0.0;
 				lut.direction[i].z = 0.0;
@@ -261,77 +267,6 @@ void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double ma
 	min_altitude_rad = min_altitude_deg * std::numbers::pi / 180.0;
 	max_altitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
 }
-
-#if 0
-void cLidar2PointCloud::setSensorOrientation(double yaw_deg, 
-											double pitch_deg,
-											double roll_deg,
-											bool rotateToSEU)
-{
-	mPitch_deg = pitch_deg;
-	mRoll_deg = roll_deg;
-	mYaw_deg = yaw_deg;
-	mRotateSensorData = rotateToSEU;
-
-	double pitch_rad = 0.0;
-	double roll_rad  = 0.0;
-	double yaw_rad   = 0.0;
-
-	if (rotateToSEU)
-	{
-		pitch_rad = -pitch_deg * std::numbers::pi / 180.0;
-		roll_rad = -roll_deg * std::numbers::pi / 180.0;
-		yaw_rad = -yaw_deg * std::numbers::pi / 180.0;
-	}
-
-	Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
-	Eigen::AngleAxisd yawAngle(yaw_rad, Eigen::Vector3d::UnitZ());
-	Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
-
-	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
-	Eigen::Matrix3d rotationMatrix = q.matrix();
-
-	double e; // Used for debugging;
-
-	auto c1 = mSensorToSEU.column(0);
-	c1[0] = e = rotationMatrix.col(0)[0];
-	c1[1] = e = rotationMatrix.col(0)[1];
-	c1[2] = e = rotationMatrix.col(0)[2];
-
-	auto c2 = mSensorToSEU.column(1);
-	c2[0] = e = rotationMatrix.col(1)[0];
-	c2[1] = e = rotationMatrix.col(1)[1];
-	c2[2] = e = rotationMatrix.col(1)[2];
-
-	auto c3 = mSensorToSEU.column(2);
-	c3[0] = e = rotationMatrix.col(2)[0];
-	c3[1] = e = rotationMatrix.col(2)[1];
-	c3[2] = e = rotationMatrix.col(2)[2];
-
-/*
-	auto pitch = pitch_deg * std::numbers::pi / 180.0;
-	auto roll = roll_deg * std::numbers::pi / 180.0;
-	auto yaw = yaw_deg * std::numbers::pi / 180.0;
-
-	double e; // Used for debugging;
-
-	auto c1 = mSensorToENU.column(0);
-	c1[0] = e = cos(yaw) * cos(pitch);
-	c1[1] = e = sin(yaw) * cos(pitch);
-	c1[2] = e = -sin(pitch);
-
-	auto c2 = mSensorToENU.column(1);
-	c2[0] = e = cos(yaw) * sin(pitch) * sin(roll) - sin(yaw) * cos(roll);
-	c2[1] = e = sin(yaw) * sin(pitch) * sin(roll) + cos(yaw) * cos(roll);
-	c2[2] = e = cos(pitch) * sin(roll);
-
-	auto c3 = mSensorToENU.column(2);
-	c3[0] = e = cos(yaw) * sin(pitch) * cos(roll) + sin(yaw) * sin(roll);
-	c3[1] = e = sin(yaw) * sin(pitch) * cos(roll) - cos(yaw) * sin(roll);
-	c3[2] = e = cos(pitch) * cos(roll);
-*/
-}
-#endif
 
 void cLidar2PointCloud::saveAggregatePointCloud()
 {
@@ -440,6 +375,7 @@ void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
     auto xyz = make_xyz_lut(format.columns_per_frame, format.pixels_per_column, range_unit_mm,
         beam.lidar_to_beam_origins_mm, transform, beam.azimuth_angles_deg, beam.altitude_angles_deg);
 
+	mExcludePoint = xyz.exclude;
     mUnitVectors = xyz.direction;
     mOffsets = xyz.offset;
 
@@ -465,7 +401,7 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 
     // Their example code seems to indicate that we need to destagger the image, but
     // that does not seem to be true!
-    //    auto lidar_data = destagger(data, mPixelShiftByRow);
+    //auto lidar_data = destagger(data, mPixelShiftByRow);
     auto lidar_data = ouster::to_matrix_row_major(data.data());
 
 	pointcloud::sCloudPoint_t point;
@@ -477,12 +413,9 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
         {
             std::size_t i = p * columns_per_frame + c;
 
-            auto unit_vec = mUnitVectors[i];
-            auto offset = mOffsets[i];
+			auto range_mm = column[p].range_mm;
 
-            auto range_mm = column[p].range_mm;
-
-			if ((range_mm < minDistance_mm) || (range_mm > maxDistance_mm))
+			if (mExcludePoint[i])
 			{
 				point.X_m = 0.0;
 				point.Y_m = 0.0;
@@ -490,17 +423,29 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 			}
 			else
 			{
-				double x_mm = unit_vec.x * range_mm;
-				double y_mm = unit_vec.y * range_mm;
-				double z_mm = unit_vec.z * range_mm;
+				if ((range_mm < minDistance_mm) || (range_mm > maxDistance_mm))
+				{
+					point.X_m = 0.0;
+					point.Y_m = 0.0;
+					point.Z_m = 0.0;
+				}
+				else
+				{
+					auto unit_vec = mUnitVectors[i];
+					auto offset = mOffsets[i];
 
-				x_mm += offset.x;
-				y_mm += offset.y;
-				z_mm += offset.z;
+					double x_mm = unit_vec.x * range_mm;
+					double y_mm = unit_vec.y * range_mm;
+					double z_mm = unit_vec.z * range_mm;
 
-				point.X_m = x_mm * mm_to_m;
-				point.Y_m = y_mm * mm_to_m;
-				point.Z_m = z_mm * mm_to_m;
+					x_mm += offset.x;
+					y_mm += offset.y;
+					z_mm += offset.z;
+
+					point.X_m = x_mm * mm_to_m;
+					point.Y_m = y_mm * mm_to_m;
+					point.Z_m = z_mm * mm_to_m;
+				}
 			}
 
             point.range_mm = range_mm;
@@ -610,6 +555,10 @@ void cLidar2PointCloud::onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsic
 void cLidar2PointCloud::onLidarDataFormat(ouster::lidar_data_format_2_t format)
 {
 	mLidarDataFormat = format;
+
+	mPixelShiftByRow = format.pixel_shift_by_row;
+	for (int i = 0; i < mPixelShiftByRow.size(); ++i)
+		mPixelShiftByRow[i] -= 12;
 
 	setBufferCapacity(static_cast<std::size_t>(format.pixels_per_column) *
 		static_cast<std::size_t>(format.columns_per_frame) *

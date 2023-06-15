@@ -147,6 +147,7 @@ private:
 	std::optional<ouster::beam_intrinsics_2_t>   mBeamIntrinsics;
 	std::optional<ouster::lidar_intrinsics_2_t>  mLidarIntrinsics;
 	std::optional<ouster::lidar_data_format_2_t> mLidarDataFormat;
+	std::vector<int> mPixelShiftByRow;
 
 	ouster::imu_intrinsics_2_t			mImuIntrinsics;
 	ouster::cTransformMatrix<double>	mImuTransform;
@@ -159,8 +160,8 @@ private:
 
 	cPointCloud mPointCloud;
 
-
-    std::vector<sPoint_t> mUnitVectors;
+	std::vector<bool>     mExcludePoint;
+	std::vector<sPoint_t> mUnitVectors;
     std::vector<sPoint_t> mOffsets;
 
 	uint64_t mStartTimestamp_ns = 0;

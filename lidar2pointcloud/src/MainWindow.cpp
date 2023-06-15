@@ -44,30 +44,38 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainWindow::cMainWindow(wxWindow* parent)
-:
+	:
 	wxPanel(parent, wxID_ANY),
-	mKM_Sensor_Vx_val(1, &mKM_Sensor_Vx_mmps),
-	mKM_Sensor_Vy_val(1, &mKM_Sensor_Vy_mmps),
-	mKM_Sensor_Vz_val(1, &mKM_Sensor_Vz_mmps),
-	mKM_Sensor_Pitch_val(1, &mSensorPitch_deg),
-	mKM_Sensor_Roll_val(1, &mSensorRoll_deg),
-	mKM_Sensor_Yaw_val(1, &mSensorYaw_deg),
+	mKM_CSO_Vx_val(1, &mKM_CSO_Vx_mmps),
+	mKM_CSO_Vy_val(1, &mKM_CSO_Vy_mmps),
+	mKM_CSO_Vz_val(1, &mKM_CSO_Vz_mmps),
+	mKM_CSO_Height_val(2, &mKM_CSO_Height_m),
+	mKM_DO_Pitch_Offset_val(1, &mKM_DO_PitchOffset_deg),
+	mKM_DO_Roll_Offset_val(1, &mKM_DO_RollOffset_deg),
+	mSensorPitch_val(1, &mSensorPitch_deg),
+	mSensorRoll_val(1, &mSensorRoll_deg),
+	mSensorYaw_val(1, &mSensorYaw_deg),
 	mMinimumDistance_val(1, &mMinimumDistance_m),
 	mMaximumDistance_val(1, &mMaximumDistance_m),
-	mMinimumAzimuth_val(3, &mMinimumAzimuth_deg),
-	mMaximumAzimuth_val(3, &mMaximumAzimuth_deg),
-	mMinimumAltitude_val(3, &mMinimumAltitude_deg),
-	mMaximumAltitude_val(3, &mMaximumAltitude_deg)
+	mMinimumAzimuth_val(2, &mMinimumAzimuth_deg),
+	mMaximumAzimuth_val(2, &mMaximumAzimuth_deg),
+	mMinimumAltitude_val(2, &mMinimumAltitude_deg),
+	mMaximumAltitude_val(2, &mMaximumAltitude_deg)
 {
-//	mpHandler = GetEventHandler();
+	/* Constant Speed Options */
+	mKM_CSO_Vx_val.SetRange(-2000.0, 2000.0);
+	mKM_CSO_Vy_val.SetRange(-2000.0, 2000.0);
+	mKM_CSO_Vz_val.SetRange(-2000.0, 2000.0);
+	mKM_CSO_Height_val.SetRange(0.0, 10.0);
 
-	mKM_Sensor_Vx_val.SetRange(-2000.0, 2000.0);
-	mKM_Sensor_Vy_val.SetRange(-2000.0, 2000.0);
-	mKM_Sensor_Vz_val.SetRange(-2000.0, 2000.0);
+	/* Dolly Options */
+	mKM_DO_Pitch_Offset_val.SetRange(-30.0, 30.0);
+	mKM_DO_Roll_Offset_val.SetRange(-30.0, 30.0);
 
-	mKM_Sensor_Pitch_val.SetRange(-90.0, 90.0);
-	mKM_Sensor_Roll_val.SetRange(-180.0, 180.0);
-	mKM_Sensor_Yaw_val.SetRange(0.0, 360.0);
+	/* General Options */
+	mSensorPitch_val.SetRange(-90.0, 90.0);
+	mSensorRoll_val.SetRange(-180.0, 180.0);
+	mSensorYaw_val.SetRange(0.0, 360.0);
 
 	mMinimumDistance_val.SetRange(0.0, 4.0);
 	mMaximumDistance_val.SetRange(0.0, 100.0);
@@ -112,26 +120,14 @@ void cMainWindow::CreateControls()
 	mpKinematicModel->SetSelection(1);
 	mpKinematicModel->Bind(wxEVT_TEXT, &cMainWindow::OnModelChange, this);
 
-	mpKM_Sensor_Vx_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
-	mpKM_Sensor_Vx_mmps->Disable();
-	mpKM_Sensor_Vx_mmps->SetValidator(mKM_Sensor_Vx_val);
-
-	mpKM_Sensor_Vy_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
-	mpKM_Sensor_Vy_mmps->Disable();
-	mpKM_Sensor_Vy_mmps->SetValidator(mKM_Sensor_Vy_val);
-
-	mpKM_Sensor_Vz_mmps = new wxTextCtrl(this, wxID_ANY, "0.0");
-	mpKM_Sensor_Vz_mmps->Disable();
-	mpKM_Sensor_Vz_mmps->SetValidator(mKM_Sensor_Vz_val);
-
 	mpSensorPitch_deg = new wxTextCtrl(this, wxID_ANY, "-90.0");
-	mpSensorPitch_deg->SetValidator(mKM_Sensor_Pitch_val);
+	mpSensorPitch_deg->SetValidator(mSensorPitch_val);
 
 	mpSensorRoll_deg = new wxTextCtrl(this, wxID_ANY, "0.0");
-	mpSensorRoll_deg->SetValidator(mKM_Sensor_Roll_val);
+	mpSensorRoll_deg->SetValidator(mSensorRoll_val);
 
-	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "90.0");
-	mpSensorYaw_deg->SetValidator(mKM_Sensor_Yaw_val);
+	mpSensorYaw_deg = new wxTextCtrl(this, wxID_ANY, "270.0");
+	mpSensorYaw_deg->SetValidator(mSensorYaw_val);
 
 	mpRotateSensorToSEU = new wxCheckBox(this, wxID_ANY, "Rotate Sensor to South/East/Up Coordinates");
 	mpRotateSensorToSEU->SetValue(true);
@@ -155,6 +151,8 @@ void cMainWindow::CreateControls()
 	mpMaximumAltitude_deg->SetValidator(mMaximumAltitude_val);
 
 	mpAggregatePointCloud = new wxCheckBox(this, wxID_ANY, "Aggregate Point Cloud");
+	mpAggregatePointCloud->SetValue(true);
+
 	mpSaveReducedPointCloud = new wxCheckBox(this, wxID_ANY, "Save Reduced Point Cloud");
 
 	mpComputeButton = new wxButton(this, wxID_ANY, "Compute Point Cloud");
@@ -165,7 +163,134 @@ void cMainWindow::CreateControls()
 	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
 	mpLogCtrl->SetMinSize(wxSize(-1, 100));
 	mpOriginalLog = wxLog::SetActiveTarget(new wxLogTextCtrl(mpLogCtrl));
+
+	mpKinematicOptions = new wxStaticBoxSizer(wxVERTICAL, this);
+
+	/////////////////////////////////////////////////////////////////
+	// Build the Constant Speed Options Panel
+	/////////////////////////////////////////////////////////////////
+	mpKM_ConstantSpeedOptions = new wxPanel(this, wxID_ANY);
+
+	mpKM_CSO_Vx_mmps = new wxTextCtrl(mpKM_ConstantSpeedOptions, wxID_ANY, "0.0");
+	mpKM_CSO_Vx_mmps->SetValidator(mKM_CSO_Vx_val);
+
+	mpKM_CSO_Vy_mmps = new wxTextCtrl(mpKM_ConstantSpeedOptions, wxID_ANY, "0.0");
+	mpKM_CSO_Vy_mmps->SetValidator(mKM_CSO_Vy_val);
+
+	mpKM_CSO_Vz_mmps = new wxTextCtrl(mpKM_ConstantSpeedOptions, wxID_ANY, "0.0");
+	mpKM_CSO_Vz_mmps->SetValidator(mKM_CSO_Vz_val);
+
+	mpKM_CSO_Height_m = new wxTextCtrl(mpKM_ConstantSpeedOptions, wxID_ANY, "0.0");
+	mpKM_CSO_Height_m->SetValidator(mKM_CSO_Height_val);
+
+	wxArrayString axis_choices;
+	axis_choices.Add("None");
+	axis_choices.Add("X");
+	axis_choices.Add("Y");
+	axis_choices.Add("Z");
+	mpKM_CSO_HeightAxis = new wxComboBox(mpKM_ConstantSpeedOptions, wxID_ANY, "",
+		wxDefaultPosition, wxDefaultSize, axis_choices, wxCB_DROPDOWN | wxCB_READONLY);
+	mpKM_CSO_HeightAxis->SetSelection(0);
+
+	createConstantSpeedLayout();
+
+	/////////////////////////////////////////////////////////////////
+	// Build the Dolly Options Panel
+	/////////////////////////////////////////////////////////////////
+	mpKM_DollyOptions = new wxPanel(this, wxID_ANY);
+
+	mpKM_DO_UseImuData = new wxCheckBox(mpKM_DollyOptions, wxID_ANY, "Use IMU Data");
+	mpKM_DO_UseImuData->SetValue(true);
+
+	mpKM_DO_AverageImuData = new wxCheckBox(mpKM_DollyOptions, wxID_ANY, "Average IMU Data");
+
+	mpKM_DO_PitchOffset_deg = new wxTextCtrl(mpKM_DollyOptions, wxID_ANY, "0.0");
+	mpKM_DO_PitchOffset_deg->SetValidator(mKM_DO_Pitch_Offset_val);
+
+	mpKM_DO_RollOffset_deg = new wxTextCtrl(mpKM_DollyOptions, wxID_ANY, "0.0");
+	mpKM_DO_RollOffset_deg->SetValidator(mKM_DO_Roll_Offset_val);
+
+	createDollyLayout();
+
+	/////////////////////////////////////////////////////////////////
+	// Build the GPS Options Panel
+	/////////////////////////////////////////////////////////////////
+	mpKM_GpsOptions = new wxPanel(this, wxID_ANY);
+
+	/////////////////////////////////////////////////////////////////
+	// Build the SLAM Options Panel
+	/////////////////////////////////////////////////////////////////
+	mpKM_SlamOptions = new wxPanel(this, wxID_ANY);
 }
+
+void cMainWindow::createConstantSpeedLayout()
+{
+	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+	sizer->AddSpacer(5);
+
+	auto* grid_sizer = new wxFlexGridSizer(2);
+	grid_sizer->SetVGap(5);
+	grid_sizer->SetHGap(5);
+	grid_sizer->AddGrowableCol(1, 1);
+
+	grid_sizer->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Vx (mm/sec) :"),
+		0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpKM_CSO_Vx_mmps, wxSizerFlags().Proportion(1).Expand());
+	grid_sizer->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Vy (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpKM_CSO_Vy_mmps, wxSizerFlags().Proportion(1).Expand());
+	grid_sizer->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Vz (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpKM_CSO_Vz_mmps, wxSizerFlags().Proportion(1).Expand());
+
+	sizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+	sizer->AddSpacer(5);
+
+	wxBoxSizer* height_sz = new wxBoxSizer(wxHORIZONTAL);
+
+	height_sz->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Height (m) :"),
+		0, wxALIGN_CENTER_VERTICAL);
+	height_sz->AddSpacer(5);
+	height_sz->Add(mpKM_CSO_Height_m, wxSizerFlags().Proportion(1).Expand());
+	height_sz->AddSpacer(5);
+	height_sz->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Axis :"),
+		0, wxALIGN_CENTER_VERTICAL);
+	height_sz->AddSpacer(5);
+	height_sz->Add(mpKM_CSO_HeightAxis, wxSizerFlags().Proportion(1).Expand());
+
+	sizer->Add(height_sz, wxSizerFlags().Proportion(1).Expand());
+
+	mpKM_ConstantSpeedOptions->SetSizerAndFit(sizer);
+	mpKM_ConstantSpeedOptions->Hide();
+}
+
+void cMainWindow::createDollyLayout()
+{
+	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+	sizer->AddSpacer(5);
+
+	sizer->Add(mpKM_DO_UseImuData, wxSizerFlags().Proportion(1).Expand());
+	sizer->AddSpacer(5);
+	sizer->Add(mpKM_DO_AverageImuData, wxSizerFlags().Proportion(1).Expand());
+	sizer->AddSpacer(5);
+
+	auto* grid_sizer = new wxFlexGridSizer(2);
+	grid_sizer->SetVGap(5);
+	grid_sizer->SetHGap(5);
+	grid_sizer->AddGrowableCol(1, 1);
+
+	grid_sizer->Add(new wxStaticText(mpKM_DollyOptions, wxID_ANY, "Pitch Offset (deg) :"),
+		0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpKM_DO_PitchOffset_deg, wxSizerFlags().Proportion(1).Expand());
+
+	grid_sizer->Add(new wxStaticText(mpKM_DollyOptions, wxID_ANY, "Roll Offset (deg) :"),
+		0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpKM_DO_RollOffset_deg, wxSizerFlags().Proportion(1).Expand());
+
+	sizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+
+	mpKM_DollyOptions->SetSizerAndFit(sizer);
+	mpKM_DollyOptions->Hide();
+}
+
 
 void cMainWindow::CreateLayout()
 {
@@ -195,23 +320,7 @@ void cMainWindow::CreateLayout()
 
 	{
 		wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
-		auto* km_sz = new wxStaticBoxSizer(wxVERTICAL, this, "Sensor Speeds");
-
-		auto* grid_sizer = new wxFlexGridSizer(2);
-		grid_sizer->SetVGap(5);
-		grid_sizer->SetHGap(5);
-		grid_sizer->AddGrowableCol(1, 1);
-
-		wxBoxSizer* ln_sz = new wxBoxSizer(wxHORIZONTAL);
-		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vx (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
-		grid_sizer->Add(mpKM_Sensor_Vx_mmps, wxSizerFlags().Proportion(0).Expand());
-		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vy (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
-		grid_sizer->Add(mpKM_Sensor_Vy_mmps, wxSizerFlags().Proportion(0).Expand());
-		grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Vz (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
-		grid_sizer->Add(mpKM_Sensor_Vz_mmps, wxSizerFlags().Proportion(0).Expand());
-
-		km_sz->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
-		sizer->Add(km_sz, wxSizerFlags().Proportion(1).Expand());
+		sizer->Add(mpKinematicOptions, wxSizerFlags().Proportion(1).Expand());
 
 		sizer->AddSpacer(10);
 
@@ -237,7 +346,7 @@ void cMainWindow::CreateLayout()
 		so_sz->Add(soi_sz, wxSizerFlags().Proportion(0).Expand());
 		sizer->Add(so_sz, wxSizerFlags().Proportion(1).Expand());
 
-		topsizer->Add(sizer, wxSizerFlags().Proportion(0).Expand());
+		topsizer->Add(sizer, wxSizerFlags().Proportion(1).Expand());
 	}
 	topsizer->AddSpacer(5);
 
@@ -280,13 +389,13 @@ void cMainWindow::CreateLayout()
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
 
+	mpKinematicOptions->GetStaticBox()->SetLabelText("Dolly Options");
+	mpKinematicOptions->Add(mpKM_DollyOptions, 1, wxGROW);
+	mpKM_DollyOptions->Show();
+
 	topsizer->Layout();
 
 	SetSizerAndFit(topsizer);
-
-	auto size = GetBestSize();
-	size.IncBy(10);
-	SetMinSize(size);
 }
 
 // event handlers
@@ -342,18 +451,44 @@ void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 {
 	auto selection = mpKinematicModel->GetSelection();
 
-	if (selection == 0)
+	mpKinematicOptions->Detach(0);
+	switch (selection)
 	{
-		mpKM_Sensor_Vx_mmps->Enable();
-		mpKM_Sensor_Vy_mmps->Enable();
-		mpKM_Sensor_Vz_mmps->Enable();
+	case 0:
+		mpKM_DollyOptions->Hide();
+		mpKM_GpsOptions->Hide();
+		mpKM_SlamOptions->Hide();
+		mpKinematicOptions->Prepend(mpKM_ConstantSpeedOptions, 1, wxGROW);
+		mpKinematicOptions->GetStaticBox()->SetLabelText("Constant Speeds Options");
+		mpKM_ConstantSpeedOptions->Show();
+		break;
+	case 1:
+		mpKM_ConstantSpeedOptions->Hide();
+		mpKM_GpsOptions->Hide();
+		mpKM_SlamOptions->Hide();
+		mpKinematicOptions->Prepend(mpKM_DollyOptions, 1, wxGROW);
+		mpKinematicOptions->GetStaticBox()->SetLabelText("Dolly Options");
+		mpKM_DollyOptions->Show();
+		break;
+	case 2:
+		mpKM_ConstantSpeedOptions->Hide();
+		mpKM_DollyOptions->Hide();
+		mpKM_SlamOptions->Hide();
+		mpKinematicOptions->Prepend(mpKM_GpsOptions, 1, wxGROW);
+		mpKinematicOptions->GetStaticBox()->SetLabelText("GPS Options");
+		mpKM_GpsOptions->Show();
+		break;
+	case 3:
+		mpKM_ConstantSpeedOptions->Hide();
+		mpKM_DollyOptions->Hide();
+		mpKM_GpsOptions->Hide();
+		mpKinematicOptions->Prepend(mpKM_SlamOptions, 1, wxGROW);
+		mpKinematicOptions->GetStaticBox()->SetLabelText("SLAM Options");
+		mpKM_SlamOptions->Show();
+		break;
 	}
-	else
-	{
-		mpKM_Sensor_Vx_mmps->Disable();
-		mpKM_Sensor_Vy_mmps->Disable();
-		mpKM_Sensor_Vz_mmps->Disable();
-	}
+
+	mpKinematicOptions->Layout();
 }
 
 void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
@@ -464,9 +599,15 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	{
 	case 0:
 		model = eKinematics::CONSTANT;
+		mpKM_CSO_Vx_mmps->TransferDataFromWindow();
+		mpKM_CSO_Vy_mmps->TransferDataFromWindow();
+		mpKM_CSO_Vz_mmps->TransferDataFromWindow();
+		mpKM_CSO_Height_m->TransferDataFromWindow();
 		break;
 	case 1:
 		model = eKinematics::DOLLY;
+		mpKM_DO_PitchOffset_deg->TransferDataFromWindow();
+		mpKM_DO_RollOffset_deg->TransferDataFromWindow();
 		break;
 	case 2:
 		model = eKinematics::GPS;
@@ -512,21 +653,59 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		switch (model)
 		{
 		case eKinematics::CONSTANT:
-			mpKM_Sensor_Vx_mmps->TransferDataFromWindow();
-			mpKM_Sensor_Vy_mmps->TransferDataFromWindow();
-			mpKM_Sensor_Vz_mmps->TransferDataFromWindow();
-			kinematics = std::make_unique<cKinematics_Constant>(mKM_Sensor_Vx_mmps,
-				mKM_Sensor_Vy_mmps, mKM_Sensor_Vz_mmps);
+		{
+			auto km = std::make_unique<cKinematics_Constant>(mKM_CSO_Vx_mmps,
+				mKM_CSO_Vy_mmps, mKM_CSO_Vz_mmps);
+
+			switch (mpKM_CSO_HeightAxis->GetSelection())
+			{
+			case 0:
+				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::NONE);
+				break;
+			case 1:
+				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
+				km->setX_Offset_m(mKM_CSO_Height_m);
+				break;
+			case 2:
+				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
+				km->setY_Offset_m(mKM_CSO_Height_m);
+				break;
+			case 3:
+				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
+				km->setZ_Offset_m(mKM_CSO_Height_m);
+				break;
+			}
+
+			kinematics = std::move(km);
 			break;
+		}
 		case eKinematics::DOLLY:
-			kinematics = std::make_unique<cKinematics_Dolly>();
+		{
+			auto km = std::make_unique<cKinematics_Dolly>();
+			km->useImuData(mpKM_DO_UseImuData->GetValue());
+			km->averageImuData(mpKM_DO_AverageImuData->GetValue());
+			km->setSensorPitchOffset_deg(mKM_DO_PitchOffset_deg);
+			km->setSensorRollOffset_deg(mKM_DO_RollOffset_deg);
+			kinematics = std::move(km);
 			break;
+		}
 		case eKinematics::GPS:
-			kinematics = std::make_unique<cKinematics_GPS>();
+		{
+			auto km = std::make_unique<cKinematics_GPS>();
+			kinematics = std::move(km);
 			break;
+		}
 		case eKinematics::SLAM:
-			kinematics = std::make_unique<cKinematics_SLAM>();
+		{
+			auto km = std::make_unique<cKinematics_SLAM>();
+			kinematics = std::move(km);
 			break;
+		}
+		}
+
+		if (!kinematics)
+		{
+
 		}
 
 		kinematics->rotateToSEU(mpRotateSensorToSEU->GetValue());
