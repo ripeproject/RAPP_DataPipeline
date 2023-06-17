@@ -424,6 +424,12 @@ void cKinematics_Dolly::onCultivar(const std::string& cultivar)
         mSerializer.writeCultivar(cultivar);
 }
 
+void cKinematics_Dolly::onPermitInfo(const std::string& permit)
+{
+    if (mSerializer)
+        mSerializer.writePermitInfo(permit);
+}
+
 void cKinematics_Dolly::onExperimentDoc(const std::string& doc)
 {
     if (mSerializer)

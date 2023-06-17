@@ -74,6 +74,7 @@ protected:
 	void onResearcher(const std::string& researcher) override;
 	void onSpecies(const std::string& species) override;
 	void onCultivar(const std::string& cultivar) override;
+	void onPermitInfo(const std::string& permit) override;
 	void onExperimentDoc(const std::string& doc) override;
 
 	void onBeginTreatmentList() override;

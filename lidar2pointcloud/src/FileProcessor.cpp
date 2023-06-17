@@ -114,7 +114,7 @@ void cFileProcessor::run()
             {
                 mFileReader.close();
 
-                mConverter->writeAndCloseData();
+                mConverter->writeAndClearData();
 
                 mFileWriter.close();
 
@@ -124,7 +124,7 @@ void cFileProcessor::run()
             mFileReader.processBlock();
         }
 
-        mConverter->writeAndCloseData();
+        mConverter->writeAndClearData();
     }
     catch (const bdf::stream_error& e)
     {

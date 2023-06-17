@@ -109,9 +109,9 @@ public:
 	void writeHeader();
 
 	/*
-	 * Write and close any pointcloud data
+	 * Write and clear any pointcloud data
 	 */
-	void writeAndCloseData();
+	void writeAndClearData();
 
 private:
 	void onConfigParam(ouster::config_param_2_t config_param) override;

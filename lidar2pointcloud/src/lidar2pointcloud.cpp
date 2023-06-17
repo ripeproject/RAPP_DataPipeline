@@ -359,9 +359,13 @@ void cLidar2PointCloud::writeHeader()
 	mKinematic->writeHeader(*this);
 }
 
-void cLidar2PointCloud::writeAndCloseData()
+void cLidar2PointCloud::writeAndClearData()
 {
 	if (mPointCloud.empty()) return;
+
+	writeDimensions(mPointCloud.minX(), mPointCloud.maxX(),
+		mPointCloud.minY(), mPointCloud.maxY(),
+		mPointCloud.minZ(), mPointCloud.maxZ());
 
 	write(mPointCloud);
 	mPointCloud.clear();
@@ -474,7 +478,7 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 
 		if (mKinematic->atEndOfPass())
 		{
-			writeAndCloseData();
+			writeAndClearData();
 		}
 	}
 	else if (mSaveReducedPointCloud)
@@ -492,6 +496,9 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 				pc.addPoint(point);
 			}
 		}
+
+		writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+			pc.maxY(), pc.minZ(), pc.maxZ());
 
 		write(pc);
 	}
@@ -511,6 +518,9 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 				pc.set(c, p, point);
 			}
 		}
+
+		writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+			pc.maxY(), pc.minZ(), pc.maxZ());
 
 		write(pc);
 	}
