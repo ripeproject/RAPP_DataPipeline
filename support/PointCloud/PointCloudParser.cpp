@@ -84,6 +84,12 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::SENSOR_ROTATION_ANGLES:
         processSensorAngles(buffer);
         break;
+    case DataID::KINEMATICS_SPEEDS:
+        processKinematicSpeed(buffer);
+        break;
+    case DataID::POINT_CLOUD_DIMENSIONS:
+        processDimensions(buffer);
+        break;
     }
 }
 
@@ -117,6 +123,33 @@ void cPointCloudParser::processSensorAngles(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processSensorAngles.");
 
     onSensorAngles(pitch_deg, roll_deg, yaw_deg);
+}
+
+void cPointCloudParser::processKinematicSpeed(cDataBuffer& buffer)
+{
+    double vx_mps = buffer.get<double>();
+    double vy_mps = buffer.get<double>();
+    double vz_mps = buffer.get<double>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processKinematicSpeed.");
+
+    onKinematicSpeed(vx_mps, vy_mps, vz_mps);
+}
+
+void cPointCloudParser::processDimensions(cDataBuffer& buffer)
+{
+     double x_min_m = buffer.get<double>();
+     double x_max_m = buffer.get<double>();
+     double y_min_m = buffer.get<double>();
+     double y_max_m = buffer.get<double>();
+     double z_min_m = buffer.get<double>();
+     double z_max_m = buffer.get<double>();
+
+     if (buffer.underrun())
+         throw std::runtime_error("ERROR, Buffer under run in processDimensions.");
+
+     onDimensions(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
 }
 
 void cPointCloudParser::processImuData(cDataBuffer& buffer)

@@ -217,3 +217,25 @@ void cPointCloudSerializer::writeKinematicSpeed(double vx_mps, double vy_mps, do
 
     writeBlock(*mBlockID, mDataBuffer);
 }
+
+void cPointCloudSerializer::writeDimensions(double x_min_m, double x_max_m,
+    double y_min_m, double y_max_m, double z_min_m, double z_max_m)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::POINT_CLOUD_DIMENSIONS);
+
+    mDataBuffer.clear();
+    mDataBuffer << x_min_m;
+    mDataBuffer << x_max_m;
+    mDataBuffer << y_min_m;
+    mDataBuffer << y_max_m;
+    mDataBuffer << z_min_m;
+    mDataBuffer << z_max_m;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing dimemsional data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
+

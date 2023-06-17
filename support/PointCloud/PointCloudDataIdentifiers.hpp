@@ -18,6 +18,7 @@ namespace pointcloud
         SENSOR_ROTATION_ANGLES,
         KINEMATICS_MODEL,
         KINEMATICS_SPEEDS,
+        POINT_CLOUD_DIMENSIONS,
     };
 }
 
