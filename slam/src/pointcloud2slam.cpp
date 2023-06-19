@@ -257,6 +257,13 @@ bool cPointCloud2Slam::updateBaseToLidarOffset(uint32_t lidarFrameId, uint8_t li
  *  Called by cPointCloudParser
  *---------------------------------------------------------------------------*/
 void cPointCloud2Slam::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) {}
+void cPointCloud2Slam::onKinematicModel(pointcloud::eKINEMATIC_MODEL model) {}
+void cPointCloud2Slam::onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) {}
+void cPointCloud2Slam::onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) {}
+
+void cPointCloud2Slam::onDimensions(double x_min_m, double x_max_m,
+    double y_min_m, double y_max_m, double z_min_m, double z_max_m) {}
+
 void cPointCloud2Slam::onImuData(pointcloud::imu_data_t data) {}
 
 void cPointCloud2Slam::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)

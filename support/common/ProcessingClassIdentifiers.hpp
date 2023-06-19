@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <cbdf/ClassIdentifiers.hpp>
+#include <cbdf/extra/ClassIdentifiers.hpp>
 
 
 enum class ProcessingClassIDs : ClassID_t

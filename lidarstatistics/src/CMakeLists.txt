@@ -25,7 +25,7 @@ PRIVATE
 target_include_directories(lidar_stats PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
 target_link_libraries(lidar_stats PRIVATE cbdf::cbdf)
-target_link_libraries(lidar_stats PRIVATE cbdf::sensors)
+target_link_libraries(lidar_stats PRIVATE cbdf::lidar)
 target_link_libraries(lidar_stats PRIVATE fmt::fmt)
 
 #

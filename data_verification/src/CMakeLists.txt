@@ -47,7 +47,7 @@ target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
 target_link_libraries(console_app PRIVATE BlockDataFile_v1)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
-target_link_libraries(console_app PRIVATE cbdf::sensors)
+target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
 
 set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
@@ -106,7 +106,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE BlockDataFile_v1)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
-	target_link_libraries(gui_app PRIVATE cbdf::sensors)
+	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)
 
 	set_property(TARGET gui_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 

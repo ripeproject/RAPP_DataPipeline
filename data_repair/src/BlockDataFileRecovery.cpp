@@ -3,7 +3,8 @@
 
 #include <cbdf/BlockId.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
-#include <cbdf/ClassIdentifiers.hpp>
+
+#include <cbdf/extra/ClassIdentifiers.hpp>
 
 #include <cbdf/extra/Crc.hpp>
 

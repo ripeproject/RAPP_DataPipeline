@@ -48,7 +48,7 @@ PRIVATE
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
-target_link_libraries(console_app PRIVATE cbdf::sensors)
+target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
@@ -114,7 +114,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
-	target_link_libraries(gui_app PRIVATE cbdf::sensors)
+	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

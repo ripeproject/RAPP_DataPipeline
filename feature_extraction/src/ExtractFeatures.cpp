@@ -39,6 +39,13 @@ void cExtractFeatures::setOutputPath(std::filesystem::path out)
 }
 
 void cExtractFeatures::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) {}
+void cExtractFeatures::onKinematicModel(pointcloud::eKINEMATIC_MODEL model) {}
+void cExtractFeatures::onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) {}
+void cExtractFeatures::onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) {}
+
+void cExtractFeatures::onDimensions(double x_min_m, double x_max_m,
+    double y_min_m, double y_max_m, double z_min_m, double z_max_m) {}
+
 void cExtractFeatures::onImuData(pointcloud::imu_data_t data) {}
 
 void cExtractFeatures::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
