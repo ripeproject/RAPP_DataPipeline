@@ -62,6 +62,11 @@ void cPointCloud2Ply::setOutputPath(std::filesystem::path out)
 void cPointCloud2Ply::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) {}
 void cPointCloud2Ply::onKinematicModel(pointcloud::eKINEMATIC_MODEL model) {}
 void cPointCloud2Ply::onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) {}
+void cPointCloud2Ply::onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) {}
+
+void cPointCloud2Ply::onDimensions(double x_min_m, double x_max_m,
+    double y_min_m, double y_max_m, double z_min_m, double z_max_m) {}
+
 void cPointCloud2Ply::onImuData(pointcloud::imu_data_t data) {}
 
 void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
