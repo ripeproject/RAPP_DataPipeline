@@ -1,4 +1,4 @@
-# The Carl project will build an application for executing the various steps
+# The CropOps project will build an application for executing the various steps
 # in the data processing pipeline
 
 # Usage:
@@ -61,17 +61,17 @@ if (MSVC)
 endif()
 
 # Use integer versions instead of strings for easier handling if required
-SET(CARL_MAJOR 1)
-SET(CARL_MINOR 0)
-SET(CARL_PATCH 0)
+SET(CROP_OPS_MAJOR 1)
+SET(CROP_OPS_MINOR 0)
+SET(CROP_OPS_PATCH 0)
 
 ADD_DEFINITIONS(
-     -DCARL_MAJOR=${CARL_MAJOR}
-     -DCARL_MINOR=${CARL_MINOR}
-     -DCARL_PATCH=${CARL_PATCH}
+     -DCROP_OPS_MAJOR=${CROP_OPS_MAJOR}
+     -DCROP_OPS_MINOR=${CROP_OPS_MINOR}
+     -DCROP_OPS_PATCH=${CROP_OPS_PATCH}
 )
 
-SET(CARL_VERSION "${CARL_MAJOR}.${CARL_MINOR}.${CARL_PATCH}")
+SET(CROP_OPS_VERSION "${CROP_OPS_MAJOR}.${CROP_OPS_MINOR}.${CROP_OPS_PATCH}")
 
 # Public version has format YY.V, where:
 # -- YY - two last digits of the year of release
@@ -90,7 +90,7 @@ SET(CARL_VERSION "${CARL_MAJOR}.${CARL_MINOR}.${CARL_PATCH}")
 #******************************************************************************
 
 # We need a C and C++ compiler, so make sure project() test for it.
-project(carl VERSION "${CARL_VERSION}" LANGUAGES C CXX)
+project(crop_ops VERSION "${CROP_OPS_VERSION}" LANGUAGES C CXX)
 
 
 set(CMAKE_CXX_STANDARD 17)
@@ -153,8 +153,6 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 find_package(lyra REQUIRED)
 find_package(Catch2 QUIET)
 find_package(nlohmann_json REQUIRED)
-find_package(wxWidgets QUIET COMPONENTS core base aui)
-
 
 
 #******************************************************************************
