@@ -8,6 +8,8 @@
 #include <ouster/simple_blas.h>
 
 #include <numbers>
+#include <cmath>
+
 
 namespace
 {
