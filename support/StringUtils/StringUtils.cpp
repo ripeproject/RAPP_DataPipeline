@@ -2,6 +2,8 @@
 #include "StringUtils.hpp"
 
 #include <ctime>
+#include <cstring>
+
 
 bool nStringUtils::iequal(const std::string& lhs, const char* const rhs)
 {
