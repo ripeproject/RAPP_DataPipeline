@@ -3,7 +3,7 @@
 #include "MainWindow.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
-    #include "Resources/Export2Ply.xpm"
+    #include "Resources/ExportJpegs.xpm"
 #endif
 
 #include <wx/aui/framemanager.h>
@@ -123,7 +123,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
-	info.SetIcon(wxICON(Export2Ply));
+	info.SetIcon(wxICON(ExportJpegs));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
