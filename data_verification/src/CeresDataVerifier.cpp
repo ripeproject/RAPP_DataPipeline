@@ -12,10 +12,15 @@
 
 extern void console_message(const std::string& msg);
 
+std::mutex g_failed_dir_mutex;
+
+
 namespace
 {
     void create_directory(std::filesystem::path failed_dir)
     {
+        std::lock_guard<std::mutex> guard(g_failed_dir_mutex);
+
         if (!std::filesystem::exists(failed_dir))
         {
             std::filesystem::create_directory(failed_dir);
