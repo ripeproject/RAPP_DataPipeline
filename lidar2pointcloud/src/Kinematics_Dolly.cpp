@@ -408,6 +408,18 @@ void cKinematics_Dolly::onPrincipalInvestigator(const std::string& investigator)
         mSerializer.writePrincipalInvestigator(investigator);
 }
 
+void cKinematics_Dolly::onBeginResearcherList()
+{
+    if (mSerializer)
+        mSerializer.writeBeginResearchers();
+}
+
+void cKinematics_Dolly::onEndOfResearcherList()
+{
+    if (mSerializer)
+        mSerializer.writeEndOfResearchers();
+}
+
 void cKinematics_Dolly::onResearcher(const std::string& researcher)
 {
     if (mSerializer)

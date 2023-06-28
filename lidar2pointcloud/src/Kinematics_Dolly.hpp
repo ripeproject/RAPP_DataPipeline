@@ -71,7 +71,11 @@ protected:
 
 	void onTitle(const std::string& title) override;
 	void onPrincipalInvestigator(const std::string& investigator) override;
+
+	void onBeginResearcherList() override;
+	void onEndOfResearcherList() override;
 	void onResearcher(const std::string& researcher) override;
+
 	void onSpecies(const std::string& species) override;
 	void onCultivar(const std::string& cultivar) override;
 	void onPermitInfo(const std::string& permit) override;
