@@ -50,6 +50,7 @@ int main(int argc, char** argv)
 	std::string kinematics;
 	bool isFile = false;
 	bool showHelp = false;
+	std::string config_file;
 
 	int num_of_threads = 1;
 	std::string input_directory = current_path().string();
@@ -58,6 +59,10 @@ int main(int argc, char** argv)
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
 		("Show usage information.")
+		| lyra::opt(config_file, "configuration")
+		["-c"]["--config"]
+		("Configuration file to set the options in generating the point cloud data.")
+		.optional()
 		| lyra::opt(isFile)
 		["-f"]["--file"]
 		("Operate on a single file instead of directory.")
@@ -83,7 +88,7 @@ int main(int argc, char** argv)
 		["-x"]["--max_distance_m"]
 		("The maximum distance of the lidar return to use in meters.")
 		| lyra::opt(saveReducedPointCloud)
-		["-c"]["--compact"]
+		["-s"]["--space"]
 		("Save a reduced pointcloud.  Points outside min/max distances are not stored.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
