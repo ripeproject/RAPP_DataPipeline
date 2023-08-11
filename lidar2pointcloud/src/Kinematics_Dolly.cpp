@@ -474,6 +474,12 @@ void cKinematics_Dolly::onConstructName(const std::string& name)
         mSerializer.writeConstructName(name);
 }
 
+void cKinematics_Dolly::onBeginEventNumberList()
+{}
+
+void cKinematics_Dolly::onEndOfEventNumberList()
+{}
+
 void cKinematics_Dolly::onEventNumber(const std::string& event)
 {
     if (mSerializer)

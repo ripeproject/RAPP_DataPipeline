@@ -86,7 +86,11 @@ protected:
 	void onTreatment(const std::string& treatment) override;
 
 	void onConstructName(const std::string& name) override;
+
+	void onBeginEventNumberList() override;
+	void onEndOfEventNumberList() override;
 	void onEventNumber(const std::string& event) override;
+
 	void onFieldDesign(const std::string& design) override;
 	void onPlantingDate(std::uint16_t year, std::uint8_t month, std::uint8_t day, std::uint16_t doy) override;
 	void onHarvestDate(std::uint16_t year, std::uint8_t month, std::uint8_t day, std::uint16_t doy) override;
