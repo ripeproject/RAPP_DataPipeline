@@ -30,6 +30,7 @@ public:
 	// event handlers (these functions should _not_ be virtual)
 
 protected:
+	void OnSourceFile(wxCommandEvent& event);
 	void OnSourceDirectory(wxCommandEvent& event);
 	void OnDestinationDirectory(wxCommandEvent& event);
 	void OnExport(wxCommandEvent& event);
@@ -44,6 +45,7 @@ private:
 
 private:
 	wxTextCtrl* mpSrcCtrl  = nullptr;
+	wxButton* mpSrcFileButton = nullptr;
 	wxButton* mpSrcDirButton  = nullptr;
 
 	wxTextCtrl* mpDstCtrl = nullptr;
@@ -58,7 +60,7 @@ private:
 	std::queue<cFileProcessor*> mFileProcessors;
 
 	bool mIsFile = false;
-	wxString mSourceDataDirectory;
+	wxString mSource;
 	wxString mDestinationDataDirectory;
 
 	// any class wishing to process wxWidgets events must use this macro
