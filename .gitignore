@@ -33,6 +33,7 @@
 
 # Project files
 .vs
+.vscode
 build
 
 # OS files
