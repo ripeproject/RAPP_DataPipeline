@@ -55,6 +55,7 @@ bool cFileProcessor::open(std::filesystem::path out)
     mSwirConverter->setOutputPath(outFile);
 
     mFileReader.open(mInputFile.string());
+    auto pos = mFileReader.filePosition();
 
     return mFileReader.isOpen();
 }

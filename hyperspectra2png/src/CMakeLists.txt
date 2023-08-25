@@ -1,14 +1,14 @@
 
 
-set(HYPER_SPECTRA_2_RGB_COMMON_FILES
+set(HYPER_SPECTRA_2_PNG_COMMON_FILES
 
 	ParserExceptions.hpp
 
-	HySpexVNIR3000N_2_RGB.hpp
-	HySpexVNIR3000N_2_RGB.cpp
+	HySpexVNIR3000N_2_PNG.hpp
+	HySpexVNIR3000N_2_PNG.cpp
 
-	HySpexSWIR384_2_RGB.hpp
-	HySpexSWIR384_2_RGB.cpp
+	HySpexSWIR384_2_PNG.hpp
+	HySpexSWIR384_2_PNG.cpp
 
 	FileProcessor.hpp
 	FileProcessor.cpp
@@ -18,7 +18,7 @@ set(HYPER_SPECTRA_2_RGB_COMMON_FILES
 add_executable(console_app)
 
 set_target_properties(console_app PROPERTIES LANGUAGE CXX)
-set_target_properties(console_app PROPERTIES OUTPUT_NAME "hyperspectra2rgb")
+set_target_properties(console_app PROPERTIES OUTPUT_NAME "hyperspectra2png")
 
 target_compile_features(console_app PRIVATE cxx_std_20)
 
@@ -27,7 +27,7 @@ PRIVATE
 
 	BS_thread_pool.hpp
 
-	${HYPER_SPECTRA_2_RGB_COMMON_FILES}
+	${HYPER_SPECTRA_2_PNG_COMMON_FILES}
 
 	ConsoleApp.cpp
 )
@@ -56,7 +56,7 @@ if(wxWidgets_FOUND)
 		# Include a RC file for windows
 		set(resource_files
 			./Resources/ripe.ico
-			./Resources/Export2Rgb.rc
+			./Resources/Export2Png.rc
 		)
 
 		source_group("Resources" FILES
@@ -75,7 +75,7 @@ if(wxWidgets_FOUND)
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
 	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
-	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "Export2RGB")
+	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "Export2Png")
 
 	target_compile_features(gui_app PRIVATE cxx_std_20)
 
@@ -87,7 +87,7 @@ if(wxWidgets_FOUND)
 		MainFrame.hpp
 		MainFrame.cpp
 
-		${HYPER_SPECTRA_2_RGB_COMMON_FILES}
+		${HYPER_SPECTRA_2_PNG_COMMON_FILES}
 		${resource_files}
 		
 		GuiApp.cpp

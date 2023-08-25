@@ -15,11 +15,11 @@
 // ----------------------------------------------------------------------------
 
 // Define a new application type
-class cCeresDataRepairApp : public wxApp
+class cExport2PngApp : public wxApp
 {
 public:
-    cCeresDataRepairApp();
-    virtual ~cCeresDataRepairApp();
+    cExport2PngApp();
+    virtual ~cExport2PngApp();
 
     virtual bool OnInit() wxOVERRIDE;
 };
@@ -29,20 +29,20 @@ public:
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// The Point Cloud 2 Ply Application
+// The Hyperspectral 2 Png Application
 // ----------------------------------------------------------------------------
 
-cCeresDataRepairApp::cCeresDataRepairApp()
+cExport2PngApp::cExport2PngApp()
 {
-    SetAppDisplayName("Point Cloud to Ply Files");
+    SetAppDisplayName("Hyperspectral to Png Files");
 }
 
-cCeresDataRepairApp::~cCeresDataRepairApp()
+cExport2PngApp::~cExport2PngApp()
 {
 }
 
 // `Main program' equivalent, creating windows and returning main app frame
-bool cCeresDataRepairApp::OnInit()
+bool cExport2PngApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
@@ -62,4 +62,4 @@ bool cCeresDataRepairApp::OnInit()
 // static object for many reasons) and also implements the accessor function
 // wxGetApp() which will return the reference of the right type
 // (i.e. cCeresDataRepairApp and not wxApp)
-wxIMPLEMENT_APP(cCeresDataRepairApp);
+wxIMPLEMENT_APP(cExport2PngApp);

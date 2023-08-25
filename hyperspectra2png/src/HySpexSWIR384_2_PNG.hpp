@@ -4,6 +4,8 @@
 #include <cbdf/HySpexSWIR_384_Parser.hpp>
 #include <cbdf/SpidercamParser.hpp>
 
+#include <opencv2/core.hpp>
+
 #include <filesystem>
 #include <string>
 #include <fstream>
@@ -65,6 +67,11 @@ private:
 private:
     std::filesystem::path mOutputPath;
 
+	std::size_t mSpatialSize = 0;
+	std::size_t mMaxRows = 0;
+
+	float mColorScale = 1.0;
+
 	float mRed_nm = 1220.19f;
 	float mGreen_nm = 1655.20f;
 	float mBlue_nm = 2144.57f;
@@ -73,6 +80,10 @@ private:
 	std::size_t mGreenIndex = 129;
 	std::size_t mBlueIndex = 219;
 
+	std::size_t mActiveRow = 0;
+
+	cv::Mat mImage;
+
     uint32_t    mFrameCount = 0;
 
     struct float3 { float x, y, z; };
@@ -80,11 +91,6 @@ private:
     struct uint3 { uint16_t s, r, a; };
 
     std::vector<float4>   mPositions;
-
-    std::vector<float3>   mVertices;
-    std::vector<uint32_t> mRanges;
-    std::vector<uint3>    mReturns;
-    std::vector<uint16_t> mFrameIDs;
 
     bool mResyncTimestamp = false;
 	uint64_t mStartTimestamp_ns = 0;
