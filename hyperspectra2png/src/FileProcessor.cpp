@@ -1,9 +1,13 @@
 
 #include "FileProcessor.hpp"
-#include "HySpexVNIR3000N_2_RGB.hpp"
-#include "HySpexSWIR384_2_RGB.hpp"
+#include "HySpexVNIR3000N_2_PNG.hpp"
+#include "HySpexSWIR384_2_PNG.hpp"
+
+#include "../wxCustomWidgets/FileProgressCtrl.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
+
+#include <wx/event.h>
 
 #include <filesystem>
 #include <string>
@@ -16,10 +20,10 @@
 extern void console_message(const std::string& msg);
 
 
-cFileProcessor::cFileProcessor(std::filesystem::directory_entry in,
+cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
-    mVnirConverter{new cHySpexVNIR3000N_2_Rgb()}, mSwirConverter {new cHySpexSWIR384_2_Rgb()
+    mID(id), mVnirConverter{new cHySpexVNIR3000N_2_Png()}, mSwirConverter {new cHySpexSWIR384_2_Png()
 }
 {
     mInputFile = in;
@@ -30,6 +34,12 @@ cFileProcessor::~cFileProcessor()
 {
     mFileReader.close();
 }
+
+void cFileProcessor::setEventHandler(wxEvtHandler* handler)
+{
+    mpEventHandler = handler;
+}
+
 
 void cFileProcessor::setVnirRgb(float red_nm, float green_nm, float blue_nm)
 {
@@ -55,7 +65,7 @@ bool cFileProcessor::open(std::filesystem::path out)
     mSwirConverter->setOutputPath(outFile);
 
     mFileReader.open(mInputFile.string());
-    auto pos = mFileReader.filePosition();
+    mFileSize = mFileReader.size();
 
     return mFileReader.isOpen();
 }
@@ -65,9 +75,15 @@ void cFileProcessor::process_file()
     if (open(mOutputFile))
     {
         std::string msg = "Processing ";
-        msg += mInputFile.string();
-        msg += "...";
-        console_message(msg);
+        msg = mInputFile.string();
+        if (mpEventHandler)
+        {
+            auto event = new cFileProgressEvent(NEW_FILE_PROGRESS);
+            event->SetFileProcessID(mID);
+            event->SetFileName(msg);
+
+            wxQueueEvent(mpEventHandler, event);
+        }
 
         run();
     }
@@ -80,9 +96,13 @@ void cFileProcessor::run()
         throw std::logic_error("No file is open for reading.");
 	}
 
-    cHySpexVNIR3000N_2_Rgb* p = mVnirConverter.get();
-	mFileReader.attach(static_cast<cHySpexVNIR_3000N_Parser*>(p));
-    mFileReader.attach(static_cast<cSpidercamParser*>(p));
+    cHySpexVNIR3000N_2_Png* pVnir = mVnirConverter.get();
+	mFileReader.attach(static_cast<cHySpexVNIR_3000N_Parser*>(pVnir));
+    mFileReader.attach(static_cast<cSpidercamParser*>(pVnir));
+
+    cHySpexSWIR384_2_Png* pSwir = mSwirConverter.get();
+    mFileReader.attach(static_cast<cHySpexSWIR_384_Parser*>(pSwir));
+    mFileReader.attach(static_cast<cSpidercamParser*>(pSwir));
 
 	try
     {
@@ -95,6 +115,18 @@ void cFileProcessor::run()
             }
 
             mFileReader.processBlock();
+
+            if (mpEventHandler)
+            {
+                auto file_pos = static_cast<double>(mFileReader.filePosition());
+                file_pos = 100.0 * (file_pos / mFileSize);
+
+                auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+                event->SetFileProcessID(mID);
+                event->SetProgress_pct(static_cast<int>(file_pos));
+
+                wxQueueEvent(mpEventHandler, event);
+            }
         }
     }
     catch (const bdf::stream_error& e)
@@ -120,6 +152,15 @@ void cFileProcessor::run()
         std::string msg = "Unknown Exception: ";
         msg += e.what();
         console_message(msg);
+    }
+
+    if (mpEventHandler)
+    {
+        auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+        event->SetFileProcessID(mID);
+        event->SetProgress_pct(100);
+
+        wxQueueEvent(mpEventHandler, event);
     }
 }
 

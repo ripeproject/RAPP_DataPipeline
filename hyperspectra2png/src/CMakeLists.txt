@@ -42,6 +42,7 @@ target_link_libraries(console_app PRIVATE cbdf::hyperspectral)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE HySpexConnect::HySpexConnect_minimal_static)
 target_link_libraries(console_app PRIVATE ${OpenCV_LIBS} )
+target_link_libraries(console_app PRIVATE wxCustomWidgets)
 
 
 #
@@ -97,6 +98,7 @@ if(wxWidgets_FOUND)
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
+	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
@@ -104,6 +106,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::ctrl)
 	target_link_libraries(gui_app PRIVATE cbdf::hyperspectral)
 	target_link_libraries(gui_app PRIVATE string_utils)
+	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 	target_link_libraries(gui_app PRIVATE HySpexConnect::HySpexConnect_minimal_static)
 	target_link_libraries(gui_app PRIVATE ${OpenCV_LIBS} )
 

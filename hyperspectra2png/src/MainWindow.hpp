@@ -8,6 +8,8 @@
 	#include <wx/wx.h>
 #endif
 
+#include "../wxCustomWidgets/FileProgressCtrl.hpp"
+
 #include <cbdf/BlockDataFile.hpp>
 
 #include <queue>
@@ -69,6 +71,8 @@ private:
 
 	wxButton* mpExportButton = nullptr;
 
+	cFileProgressCtrl* mpProgressCtrl = nullptr;
+
 	wxTextCtrl* mpLogCtrl = nullptr;
 	wxLog* mpOriginalLog = nullptr;
 
@@ -78,6 +82,8 @@ private:
 	bool mIsFile = false;
 	wxString mSource;
 	wxString mDestinationDataDirectory;
+
+	int mNumFilesToProcess = 0;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

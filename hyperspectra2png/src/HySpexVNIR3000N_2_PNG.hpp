@@ -13,11 +13,11 @@
 
 
 
-class cHySpexVNIR3000N_2_Rgb : public cHySpexVNIR_3000N_Parser, public cSpidercamParser
+class cHySpexVNIR3000N_2_Png : public cHySpexVNIR_3000N_Parser, public cSpidercamParser
 {
 public:
-    cHySpexVNIR3000N_2_Rgb();
-	~cHySpexVNIR3000N_2_Rgb();
+    cHySpexVNIR3000N_2_Png();
+	~cHySpexVNIR3000N_2_Png();
 
     void setOutputPath(std::filesystem::path out);
 

@@ -1,7 +1,7 @@
 
 #include "MainWindow.hpp"
-#include "HySpexVNIR3000N_2_RGB.hpp"
-#include "HySpexSWIR384_2_RGB.hpp"
+#include "HySpexVNIR3000N_2_PNG.hpp"
+#include "HySpexSWIR384_2_PNG.hpp"
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
 
@@ -16,7 +16,7 @@ using namespace std::filesystem;
 
 void console_message(const std::string& msg)
 {
-	wxLogMessage(wxString(msg));
+//	wxLogMessage(wxString(msg));
 }
 
 // ----------------------------------------------------------------------------
@@ -80,10 +80,12 @@ void cMainWindow::CreateControls()
 	mpExportButton->Disable();
 	mpExportButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExport, this);
 
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+
 	// redirect logs from our event handlers to text control
-	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
-	mpLogCtrl->SetMinSize(wxSize(-1, 100));
-	mpOriginalLog = wxLog::SetActiveTarget(new wxLogTextCtrl(mpLogCtrl));
+//	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+//	mpLogCtrl->SetMinSize(wxSize(-1, 100));
+//	mpOriginalLog = wxLog::SetActiveTarget(new wxLogTextCtrl(mpLogCtrl));
 }
 
 void cMainWindow::CreateLayout()
@@ -146,7 +148,8 @@ void cMainWindow::CreateLayout()
 
 	topsizer->Add(mpExportButton, wxSizerFlags().Proportion(0).Expand());
 	topsizer->AddSpacer(5);
-	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
+//	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
+	topsizer->Add(mpProgressCtrl, wxSizerFlags().Proportion(1).Expand());
 
 	topsizer->Layout();
 
@@ -171,7 +174,7 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 
 	mIsFile = true;
 
-	mpLogCtrl->Clear();
+//	mpLogCtrl->Clear();
 
 	if (!mpDstCtrl->GetValue().IsEmpty())
 		mpExportButton->Enable();
@@ -190,7 +193,7 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 
 	mIsFile = false;
 
-	mpLogCtrl->Clear();
+//	mpLogCtrl->Clear();
 
 	if (!mpDstCtrl->GetValue().IsEmpty())
 		mpExportButton->Enable();
@@ -283,6 +286,7 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	/*
 	 * Add all of the files to process
 	 */
+	mNumFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
 		std::filesystem::path out_file;
@@ -305,7 +309,8 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(mNumFilesToProcess++, in_file, out_file);
+		fp->setEventHandler(mpProgressCtrl);
 
 		fp->setVnirRgb(mVnirRed_nm, mVnirGreen_nm, mVnirBlue_nm);
 		fp->setSwirRgb(mSwirRed_nm, mSwirGreen_nm, mSwirBlue_nm);

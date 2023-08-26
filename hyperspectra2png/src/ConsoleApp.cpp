@@ -1,8 +1,8 @@
 
 #include "BS_thread_pool.hpp"
 
-#include "HySpexVNIR3000N_2_RGB.hpp"
-#include "HySpexSWIR384_2_RGB.hpp"
+#include "HySpexVNIR3000N_2_PNG.hpp"
+#include "HySpexSWIR384_2_PNG.hpp"
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
 
@@ -18,6 +18,10 @@
 
 std::mutex g_console_mutex;
 
+namespace
+{
+	int numFilesToProcess = 0;
+}
 
 void console_message(const std::string& msg)
 {
@@ -169,7 +173,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 

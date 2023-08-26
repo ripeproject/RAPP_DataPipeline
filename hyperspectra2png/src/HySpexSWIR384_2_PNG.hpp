@@ -12,11 +12,11 @@
 
 
 
-class cHySpexSWIR384_2_Rgb : public cHySpexSWIR_384_Parser, public cSpidercamParser
+class cHySpexSWIR384_2_Png : public cHySpexSWIR_384_Parser, public cSpidercamParser
 {
 public:
-    cHySpexSWIR384_2_Rgb();
-	~cHySpexSWIR384_2_Rgb();
+    cHySpexSWIR384_2_Png();
+	~cHySpexSWIR384_2_Png();
 
     void setOutputPath(std::filesystem::path out);
 
