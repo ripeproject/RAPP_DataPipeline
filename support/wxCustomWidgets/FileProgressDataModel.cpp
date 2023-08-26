@@ -17,12 +17,16 @@ cFileProgressDataModel::cFileProgressDataModel()
     mProgressColValues.reserve(NUMBER_REAL_ITEMS);
 }
 
-void cFileProgressDataModel::Append(const wxString& text)
+int cFileProgressDataModel::Append(const wxString& text)
 {
+    auto row = mTimestampColValues.size();
+
     mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
     mFilenameColValues.Add(text);
     mProgressColValues.Add(0);
     RowAppended();
+
+    return row;
 }
 
 void cFileProgressDataModel::DeleteItem(const wxDataViewItem& item)

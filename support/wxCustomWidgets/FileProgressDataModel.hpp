@@ -25,7 +25,7 @@ public:
 
     // helper methods to change the model
 
-    void Append( const wxString &text );
+    int Append( const wxString &text );
     void DeleteItem( const wxDataViewItem &item );
     void DeleteItems( const wxDataViewItemArray &items );
     void AddMany();
