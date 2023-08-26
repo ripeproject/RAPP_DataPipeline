@@ -2,7 +2,10 @@
 #include "FileProcessor.hpp"
 #include "pointcloud2ply.hpp"
 
+#include "../wxCustomWidgets/FileProgressCtrl.hpp"
 #include <cbdf/BlockDataFileExceptions.hpp>
+
+#include <wx/event.h>
 
 #include <filesystem>
 #include <string>
@@ -15,10 +18,10 @@
 extern void console_message(const std::string& msg);
 
 
-cFileProcessor::cFileProcessor(std::filesystem::directory_entry in,
+cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
-    mConverter{new cPointCloud2Ply}
+    mID(id), mConverter{new cPointCloud2Ply}
 {
     mInputFile = in;
     mOutputFile = out;
@@ -27,6 +30,11 @@ cFileProcessor::cFileProcessor(std::filesystem::directory_entry in,
 cFileProcessor::~cFileProcessor()
 {
     mFileReader.close();
+}
+
+void cFileProcessor::setEventHandler(wxEvtHandler* handler)
+{
+    mpEventHandler = handler;
 }
 
 bool cFileProcessor::open(std::filesystem::path out)
@@ -47,6 +55,7 @@ bool cFileProcessor::open(std::filesystem::path out)
     mConverter->setOutputPath(outFile);
 
     mFileReader.open(mInputFile.string());
+    mFileSize = mFileReader.size();
 
     return mFileReader.isOpen();
 }
@@ -58,7 +67,15 @@ void cFileProcessor::process_file()
         std::string msg = "Processing ";
         msg += mInputFile.string();
         msg += "...";
-        console_message(msg);
+//        console_message(msg);
+        if (mpEventHandler)
+        {
+            auto event = new cFileProgressEvent(NEW_FILE_PROGRESS);
+            event->SetFileProcessID(mID);
+            event->SetFileName(mInputFile.string());
+
+            wxQueueEvent(mpEventHandler, event);
+        }
 
         run();
     }
@@ -86,6 +103,18 @@ void cFileProcessor::run()
             }
 
             mFileReader.processBlock();
+
+            if (mpEventHandler)
+            {
+                auto file_pos = static_cast<double>(mFileReader.filePosition());
+                file_pos = 100.0 * (file_pos / mFileSize);
+
+                auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+                event->SetFileProcessID(mID);
+                event->SetProgress_pct(static_cast<int>(file_pos));
+
+                wxQueueEvent(mpEventHandler, event);
+            }
         }
     }
     catch (const bdf::stream_error& e)
@@ -111,6 +140,15 @@ void cFileProcessor::run()
         std::string msg = "Unknown Exception: ";
         msg += e.what();
         console_message(msg);
+    }
+
+    if (mpEventHandler)
+    {
+        auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+        event->SetFileProcessID(mID);
+        event->SetProgress_pct(100);
+
+        wxQueueEvent(mpEventHandler, event);
     }
 }
 

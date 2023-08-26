@@ -66,6 +66,8 @@ void cMainWindow::CreateControls()
 	mpExportButton->Disable();
 	mpExportButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExport, this);
 
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+
 	// redirect logs from our event handlers to text control
 	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
 	mpLogCtrl->SetMinSize(wxSize(-1, 100));
@@ -104,6 +106,8 @@ void cMainWindow::CreateLayout()
 	topsizer->AddSpacer(10);
 
 	topsizer->Add(mpExportButton, wxSizerFlags().Proportion(0).Expand());
+	topsizer->AddSpacer(5);
+	topsizer->Add(mpProgressCtrl, wxSizerFlags().Proportion(1).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
 
@@ -226,6 +230,7 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	/*
 	 * Add all of the files to process
 	 */
+	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
 		std::filesystem::path out_file;
@@ -248,7 +253,8 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+		fp->setEventHandler(mpProgressCtrl);
 
 		mFileProcessors.push(fp);
 	}

@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 	 * Add all of the files to process to the thread pool
 	 */
 	std::vector<cFileProcessor*> file_processors;
-
+	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
 		std::filesystem::path out_file;
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 
