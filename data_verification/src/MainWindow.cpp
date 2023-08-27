@@ -1,6 +1,7 @@
 
 #include "MainWindow.hpp"
 #include "CeresDataVerifier.hpp"
+#include "StringUtils.hpp"
 
 #include <wx/thread.h>
 
@@ -10,10 +11,54 @@
 
 using namespace std::filesystem;
 
+namespace
+{
+	wxEvtHandler* g_pEventHandler = nullptr;
+}
 
 void console_message(const std::string& msg)
 {
 	wxLogMessage(wxString(msg));
+}
+
+void new_file_progress(const int id, std::string filename)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(NEW_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetFileName(filename);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+void update_file_progress(const int id, std::string filename, const int progress_pct)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+
+		if (!filename.empty())
+			event->SetFileName(filename);
+
+		event->SetProgress_pct(progress_pct);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetProgress_pct(progress_pct);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -40,6 +85,10 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 cMainWindow::~cMainWindow()
 {
+	g_pEventHandler = nullptr;
+
+	delete mpOriginalLog;
+	mpOriginalLog = nullptr;
 }
 
 void cMainWindow::CreateControls()
@@ -54,6 +103,9 @@ void cMainWindow::CreateControls()
 	mpVerifyButton = new wxButton(this, wxID_ANY, "Verify");
 	mpVerifyButton->Disable();
 	mpVerifyButton->Bind(wxEVT_BUTTON, &cMainWindow::OnVerify, this);
+
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
 	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
@@ -81,6 +133,8 @@ void cMainWindow::CreateLayout()
 
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpVerifyButton, wxSizerFlags().Proportion(0).Expand());
+	topsizer->AddSpacer(5);
+	topsizer->Add(mpProgressCtrl, wxSizerFlags().Proportion(1).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
 
@@ -139,14 +193,10 @@ void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
 	}
 
 	const std::filesystem::path failed_dir = mFailedDataDirectory.ToStdString();
-	if (!std::filesystem::exists(failed_dir))
-	{
-		std::filesystem::create_directory(failed_dir);
-	}
-
+	int numOfFiles = 0;
 	for (auto& file : files_to_verify)
 	{
-		cCeresDataVerifier* fp = new cCeresDataVerifier(failed_dir);
+		cCeresDataVerifier* fp = new cCeresDataVerifier(numOfFiles++, failed_dir);
 
 		if (fp->setFileToCheck(file))
 		{
@@ -157,6 +207,12 @@ void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
 			delete fp;
 		}
 	}
+
+	wxString msg = "Processing ";
+	msg += wxString::Format("%d", numOfFiles);
+	msg += " files from ";
+	msg += mSourceDataDirectory;
+	wxLogMessage(msg);
 
 	startDataProcessing();
 }
@@ -208,7 +264,9 @@ wxThread::ExitCode cMainWindow::Entry()
 		delete fp;
 	}
 
-	wxLogMessage(wxString("File Verification Complete."));
+	wxString msg = "Finished processing ";
+	msg += mSourceDataDirectory;
+	wxLogMessage(msg);
 
 	return (wxThread::ExitCode) 0;
 }

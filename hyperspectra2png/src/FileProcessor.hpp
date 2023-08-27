@@ -10,7 +10,6 @@
 // Forward Declarations
 class cHySpexVNIR3000N_2_Png;
 class cHySpexSWIR384_2_Png;
-class wxEvtHandler;
 
 
 class cFileProcessor
@@ -19,8 +18,6 @@ public:
 	cFileProcessor(int id, std::filesystem::directory_entry in,
 				std::filesystem::path out);
 	~cFileProcessor();
-
-	void setEventHandler(wxEvtHandler* handler);
 
 	void setVnirRgb(float red_nm, float green_nm, float blue_nm);
 	void setSwirRgb(float red_nm, float green_nm, float blue_nm);
@@ -41,6 +38,4 @@ private:
 
 	std::unique_ptr<cHySpexVNIR3000N_2_Png> mVnirConverter;
 	std::unique_ptr<cHySpexSWIR384_2_Png>   mSwirConverter;
-
-	wxEvtHandler* mpEventHandler = nullptr;
 };

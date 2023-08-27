@@ -11,6 +11,9 @@
 
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, std::string filename, const int progress_pct);
+extern void update_file_progress(const int id, const int progress_pct);
 
 std::mutex g_failed_dir_mutex;
 
@@ -29,13 +32,17 @@ namespace
 }
 
 //-----------------------------------------------------------------------------
-cCeresDataVerifier::cCeresDataVerifier(std::filesystem::path failed_dir)
+cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::path failed_dir)
+:
+    mID(id)
 {
     mFailedDirectory = failed_dir;
 }
 
-cCeresDataVerifier::cCeresDataVerifier(std::filesystem::directory_entry file_to_check,
+cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::directory_entry file_to_check,
     std::filesystem::path failed_dir)
+:
+    mID(id)
 {
     mFailedDirectory = failed_dir;
     mFileToCheck = file_to_check;
@@ -65,7 +72,6 @@ bool cCeresDataVerifier::open(std::filesystem::path file_to_check)
         mFileReader.close();
         
     mFileReader.open(file_to_check.string());
-
     return mFileReader.isOpen();
 }
 
@@ -74,6 +80,10 @@ void cCeresDataVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
+        mFileSize = mFileReader.size();
+
+        new_file_progress(mID, mFileToCheck.string());
+
         run();
     }
 }
@@ -90,6 +100,8 @@ void cCeresDataVerifier::run()
 
     mFileReader.open(mFileToCheck.string());
 
+    mFileSize = mFileReader.size();
+
     if (!pass2())
     {
         mFileReader.close();
@@ -98,15 +110,16 @@ void cCeresDataVerifier::run()
     }
 
     mFileReader.close();
+
+    update_file_progress(mID, mFileToCheck.string(), 100);
 }
 
 //-----------------------------------------------------------------------------
 bool cCeresDataVerifier::pass1()
 {
-    std::string msg = "Pass1: ";
-    msg += mFileToCheck.string();
-    msg += "...";
-    console_message(msg);
+    std::string msg = mFileToCheck.string();
+    msg += " [Pass1]";
+    update_file_progress(mID, msg, 0);
 
     if (!mFileReader.isOpen())
     {
@@ -124,6 +137,10 @@ bool cCeresDataVerifier::pass1()
             }
 
             mFileReader.processBlock();
+
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::crc_error& e)
@@ -204,10 +221,14 @@ bool cCeresDataVerifier::pass1()
 //-----------------------------------------------------------------------------
 bool cCeresDataVerifier::pass2()
 {
-    std::string msg = "Pass2: ";
-    msg += mFileToCheck.string();
-    msg += "...";
-    console_message(msg);
+//    std::string msg = "Pass2: ";
+//    msg += mFileToCheck.string();
+//    msg += "...";
+//    console_message(msg);
+    std::string msg = mFileToCheck.string();
+    msg += " [Pass2]";
+    update_file_progress(mID, msg, 0);
+
 
     if (!mFileReader.isOpen())
     {
@@ -231,6 +252,10 @@ bool cCeresDataVerifier::pass2()
             }
 
             mFileReader.processBlock();
+
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::invalid_data& e)

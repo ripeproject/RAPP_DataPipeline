@@ -44,6 +44,7 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE BlockDataFile_v1)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
@@ -101,15 +102,25 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE "../support/StringUtils")
+	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE BlockDataFile_v1)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)
+	target_link_libraries(gui_app PRIVATE string_utils)
+	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 
 	set_property(TARGET gui_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 endif()
+
+
+
+#******************************************************************************
+# Installer
+#******************************************************************************
 
 

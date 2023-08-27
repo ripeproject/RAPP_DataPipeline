@@ -97,7 +97,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::rgb)
 	target_link_libraries(gui_app PRIVATE string_utils)
-
+	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

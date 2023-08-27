@@ -13,11 +13,27 @@
 
 std::mutex g_console_mutex;
 
+namespace
+{
+	int numFilesToProcess = 0;
+}
 
 void console_message(const std::string& msg)
 {
 	std::lock_guard<std::mutex> guard(g_console_mutex);
 	std::cout << msg << std::endl;
+}
+
+void new_file_progress(const int id, std::string filename)
+{
+}
+
+void update_file_progress(const int id, std::string filename, const int progress_pct)
+{
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
 }
 
 
@@ -110,9 +126,10 @@ int main(int argc, char** argv)
 
 	std::vector<cFileProcessor*> file_processors;
 
+	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(recovered_dir, repaired_dir);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, recovered_dir, repaired_dir);
 		
 		if (fp->setFileToRepair(file))
 		{

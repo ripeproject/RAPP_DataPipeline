@@ -42,7 +42,6 @@ target_link_libraries(console_app PRIVATE cbdf::hyperspectral)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE HySpexConnect::HySpexConnect_minimal_static)
 target_link_libraries(console_app PRIVATE ${OpenCV_LIBS} )
-target_link_libraries(console_app PRIVATE wxCustomWidgets)
 
 
 #

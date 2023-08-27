@@ -8,6 +8,8 @@
 	#include <wx/wx.h>
 #endif
 
+#include "../wxCustomWidgets/FileProgressCtrl.hpp"
+
 #include <cbdf/BlockDataFile.hpp>
 
 #include <queue>
@@ -52,6 +54,8 @@ private:
 	wxButton* mpDstDirButton = nullptr;
 
 	wxButton* mpExportButton = nullptr;
+
+	cFileProgressCtrl* mpProgressCtrl = nullptr;
 
 	wxTextCtrl* mpLogCtrl = nullptr;
 	wxLog* mpOriginalLog = nullptr;

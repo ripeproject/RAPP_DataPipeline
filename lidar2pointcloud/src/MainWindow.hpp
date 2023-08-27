@@ -9,6 +9,8 @@
 	#include <wx/valnum.h>
 #endif
 
+#include "../wxCustomWidgets/FileProgressCtrl.hpp"
+
 #include <cbdf/BlockDataFile.hpp>
 
 #include <memory>
@@ -147,6 +149,8 @@ private:
 	wxCheckBox* mpSaveReducedPointCloud = nullptr;
 
 	wxButton* mpComputeButton = nullptr;
+
+	cFileProgressCtrl* mpProgressCtrl = nullptr;
 
 	wxTextCtrl* mpLogCtrl = nullptr;
 	wxLog* mpOriginalLog = nullptr;

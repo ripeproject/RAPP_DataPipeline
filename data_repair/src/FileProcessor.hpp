@@ -12,7 +12,7 @@
 class cFileProcessor
 {
 public:
-	cFileProcessor(std::filesystem::path recovered_dir, std::filesystem::path repaired_dir);
+	cFileProcessor(int id, std::filesystem::path recovered_dir, std::filesystem::path repaired_dir);
 	~cFileProcessor();
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
@@ -23,6 +23,8 @@ protected:
 	void run();
 
 private:
+	const int mID;
+
 	const std::filesystem::path mRecoveredDirectory;
 	std::filesystem::path mRecoveredFile;
 

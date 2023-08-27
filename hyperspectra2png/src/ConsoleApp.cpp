@@ -29,6 +29,14 @@ void console_message(const std::string& msg)
 	std::cout << msg << std::endl;
 }
 
+void new_file_progress(const int id, std::string filename)
+{
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
+}
+
 
 int main(int argc, char** argv)
 {

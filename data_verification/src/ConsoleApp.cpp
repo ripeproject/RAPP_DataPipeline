@@ -14,11 +14,27 @@
 
 std::mutex g_console_mutex;
 
+namespace
+{
+	int numFilesToProcess = 0;
+}
 
 void console_message(const std::string& msg)
 {
 	std::lock_guard<std::mutex> guard(g_console_mutex);
 	std::cout << msg << std::endl;
+}
+
+void new_file_progress(const int id, std::string filename)
+{
+}
+
+void update_file_progress(const int id, std::string filename, const int progress_pct)
+{
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
 }
 
 
@@ -101,7 +117,7 @@ int main(int argc, char** argv)
 
 	for (auto& file : ceres_files_to_check)
 	{
-		cCeresDataVerifier* dv = new cCeresDataVerifier(failed);
+		cCeresDataVerifier* dv = new cCeresDataVerifier(numFilesToProcess++, failed);
 		dv->setFileToCheck(file);
 
 		pool.push_task(&cCeresDataVerifier::process_file, dv);

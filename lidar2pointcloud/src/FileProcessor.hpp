@@ -16,9 +16,8 @@
 class cFileProcessor
 {
 public:
-	cFileProcessor(std::filesystem::directory_entry in,
-					std::filesystem::path out);
-
+	cFileProcessor(int id, std::filesystem::directory_entry in,
+				std::filesystem::path out);
 	~cFileProcessor();
 
 	/**
@@ -40,6 +39,10 @@ private:
 	void deleteOutputFile();
 
 private:
+	const int mID;
+
+	std::uintmax_t mFileSize;
+
 	cBlockDataFileReader mFileReader;
 	cBlockDataFileWriter mFileWriter;
 

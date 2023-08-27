@@ -15,9 +15,9 @@
 class cDataRepair
 {
 public:
-	explicit cDataRepair(std::filesystem::path repaired_dir);
+	explicit cDataRepair(int id, std::filesystem::path repaired_dir);
 
-    cDataRepair(std::filesystem::path file_to_repair,
+    cDataRepair(int id, std::filesystem::path file_to_repair,
 				std::filesystem::path repaired_dir);
 
     ~cDataRepair();
@@ -41,6 +41,10 @@ private:
 	bool moveRepairedFile();
 
 private:
+	const int mID;
+
+	std::uintmax_t mFileSize = 0;
+
 	cBlockDataFileReader mFileReader;
 	cBlockDataFileWriter mFileWriter;
 	

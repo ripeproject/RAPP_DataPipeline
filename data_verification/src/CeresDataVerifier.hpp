@@ -12,8 +12,8 @@
 class cCeresDataVerifier 
 {
 public:
-	explicit cCeresDataVerifier(std::filesystem::path failed_dir);
-	cCeresDataVerifier(std::filesystem::directory_entry file_to_check,
+	explicit cCeresDataVerifier(int id, std::filesystem::path failed_dir);
+	cCeresDataVerifier(int id, std::filesystem::directory_entry file_to_check,
 		std::filesystem::path failed_dir);
     ~cCeresDataVerifier();
 
@@ -34,8 +34,9 @@ protected:
 	void moveFileToFailed();
 
 private:
+	const int mID;
 
-private:
+	std::uintmax_t mFileSize;
     cBlockDataFileReader mFileReader;
 
 	std::filesystem::path mFailedDirectory;

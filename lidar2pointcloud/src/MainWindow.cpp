@@ -13,9 +13,40 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
+
+namespace
+{
+	wxEvtHandler* g_pEventHandler = nullptr;
+}
+
 void console_message(const std::string& msg)
 {
 	wxLogMessage(wxString(msg));
+}
+
+
+void new_file_progress(const int id, std::string filename)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(NEW_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetFileName(filename);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetProgress_pct(progress_pct);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -92,6 +123,8 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 cMainWindow::~cMainWindow()
 {
+	g_pEventHandler = nullptr;
+
 	delete mpOriginalLog;
 	mpOriginalLog = nullptr;
 }
@@ -158,6 +191,9 @@ void cMainWindow::CreateControls()
 	mpComputeButton = new wxButton(this, wxID_ANY, "Compute Point Cloud");
 	mpComputeButton->Disable();
 	mpComputeButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCompute, this);
+
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
 	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
@@ -386,6 +422,8 @@ void cMainWindow::CreateLayout()
 
 	topsizer->AddSpacer(10);
 	topsizer->Add(mpComputeButton, wxSizerFlags().Proportion(0).Expand());
+	topsizer->AddSpacer(5);
+	topsizer->Add(mpProgressCtrl, wxSizerFlags().Proportion(1).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
 
@@ -622,6 +660,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	/*
 	 * Add all of the files to process to the thread pool
 	 */
+	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
 		std::filesystem::path out_file;
@@ -646,7 +685,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
 		std::unique_ptr<cKinematics> kinematics;
 
@@ -768,7 +807,9 @@ wxThread::ExitCode cMainWindow::Entry()
 		delete fp;
 	}
 
-	wxLogMessage(wxString("LiDAR Data to Point Cloud Conversion Complete."));
+	wxString msg = "Finished processing ";
+	msg += mSourceData;
+	wxLogMessage(msg);
 
 	return (wxThread::ExitCode) 0;
 }

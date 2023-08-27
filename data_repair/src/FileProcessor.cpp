@@ -12,10 +12,13 @@
 
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, std::string filename, const int progress_pct);
+extern void update_file_progress(const int id, const int progress_pct);
 
 
-cFileProcessor::cFileProcessor(std::filesystem::path recovered_dir, std::filesystem::path repaired_dir)
-    : mRecoveredDirectory(recovered_dir), mRepairedDirectory(repaired_dir)
+cFileProcessor::cFileProcessor(int id, std::filesystem::path recovered_dir, std::filesystem::path repaired_dir)
+    : mID(id), mRecoveredDirectory(recovered_dir), mRepairedDirectory(repaired_dir)
 {
 }
 
@@ -36,13 +39,15 @@ bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_re
 
 void cFileProcessor::process_file()
 {
-    mDataFileRecovery = std::make_unique<cDataFileRecovery>(mRecoveredDirectory);
+    mDataFileRecovery = std::make_unique<cDataFileRecovery>(mID, mRecoveredDirectory);
     
     if (mDataFileRecovery->open(mInputFile))
     {
+        new_file_progress(mID, mInputFile.string());
+
         mRecoveredFile = mDataFileRecovery->recoveredFileName();
 
-        mDataRepair = std::make_unique<cDataRepair>(mRepairedDirectory);
+        mDataRepair = std::make_unique<cDataRepair>(mID, mRepairedDirectory);
 
         run();
     }
@@ -62,6 +67,7 @@ void cFileProcessor::run()
     if (mDataRepair->open(mRecoveredFile))
     {
         mDataRepair->run();
+        update_file_progress(mID, mInputFile.string(), 100);
     }
 }
 

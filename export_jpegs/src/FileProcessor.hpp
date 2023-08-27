@@ -14,7 +14,7 @@ class cExportJpegs;
 class cFileProcessor
 {
 public:
-	cFileProcessor(std::filesystem::directory_entry in,
+	cFileProcessor(int id, std::filesystem::directory_entry in,
 				std::filesystem::path out);
 	~cFileProcessor();
 
@@ -24,6 +24,9 @@ public:
 	void run();
 
 private:
+	const int mID;
+
+	std::uintmax_t mFileSize;
 	cBlockDataFileReader mFileReader;
 
 	std::filesystem::path mInputFile;

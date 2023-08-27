@@ -16,11 +16,23 @@
 
 std::mutex g_console_mutex;
 
+namespace
+{
+	int numFilesToProcess = 0;
+}
 
 void console_message(const std::string& msg)
 {
 	std::lock_guard<std::mutex> guard(g_console_mutex);
 	std::cout << msg << std::endl;
+}
+
+void new_file_progress(const int id, std::string filename)
+{
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
 }
 
 
@@ -170,7 +182,7 @@ int main(int argc, char** argv)
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 

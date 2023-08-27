@@ -10,19 +10,23 @@
 
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, std::string filename, const int progress_pct);
+extern void update_file_progress(const int id, const int progress_pct);
 
 
 //-----------------------------------------------------------------------------
-cDataRepair::cDataRepair(std::filesystem::path repaired_dir)
+cDataRepair::cDataRepair(int id, std::filesystem::path repaired_dir)
+    : mID(id)
 {
     mRepairedDirectory = repaired_dir;
 
     mOusterRepairParser = std::make_unique<cOusterRepairParser>();
 }
 
-cDataRepair::cDataRepair(std::filesystem::path file_to_repair,
+cDataRepair::cDataRepair(int id, std::filesystem::path file_to_repair,
                         std::filesystem::path repaired_dir)
-    : cDataRepair(repaired_dir)
+    : cDataRepair(id, repaired_dir)
 {
     mCurrentFile = file_to_repair;
 
@@ -35,6 +39,8 @@ cDataRepair::cDataRepair(std::filesystem::path file_to_repair,
 
     mFileReader.open(mCurrentFile.string());
     mFileWriter.open(mRepairedFile.string());
+
+    mFileSize = mFileReader.size();
 
     if (!mFileReader.isOpen() || !mFileWriter.isOpen())
     {
@@ -63,16 +69,22 @@ bool cDataRepair::open(std::filesystem::path file_to_repair)
     mFileWriter.open(mRepairedFile.string());
     mFileReader.open(mCurrentFile.string());
 
+    mFileSize = mFileReader.size();
+
     return mFileWriter.isOpen() && mFileReader.isOpen();
 }
 
 //-----------------------------------------------------------------------------
 void cDataRepair::run()
 {
-    std::string msg = "Repairing data in ";
-    msg += mCurrentFile.string();
-    msg += "...";
-    console_message(msg);
+//    std::string msg = "Repairing data in ";
+//    msg += mCurrentFile.string();
+//    msg += "...";
+//    console_message(msg);
+
+    std::string msg = mCurrentFile.string();
+    msg += " [Repair]";
+    update_file_progress(mID, msg, 0);
 
     mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
     mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len) { this->processBlock(id, buf, len); });
@@ -90,10 +102,14 @@ void cDataRepair::run()
         removeRecoveryFile();
     }
 
-    msg = "Verifing: ";
-    msg += mRepairedFile.string();
-    msg += "...";
-    console_message(msg);
+//    msg = "Verifing: ";
+//    msg += mRepairedFile.string();
+//    msg += "...";
+//    console_message(msg);
+
+    msg = mRepairedFile.string();
+    msg += " [Verifing]";
+    update_file_progress(mID, msg, 0);
 
     if (pass2())
     {
@@ -116,6 +132,10 @@ bool cDataRepair::pass1()
             }
 
             mFileReader.processBlock();
+
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::invalid_data& e)
@@ -177,6 +197,8 @@ bool cDataRepair::pass2()
         throw std::logic_error("No file is open for verification.");
     }
 
+    mFileSize = fileReader.size();
+
     try
     {
         while (!fileReader.eof())
@@ -188,6 +210,10 @@ bool cDataRepair::pass2()
             }
 
             fileReader.processBlock();
+
+            auto file_pos = static_cast<double>(fileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::invalid_data& e)

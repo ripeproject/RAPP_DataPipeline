@@ -19,7 +19,6 @@ public:
 				std::filesystem::path out);
 	~cFileProcessor();
 
-	void setEventHandler(wxEvtHandler* handler);
 
 	bool open(std::filesystem::path out);
 
@@ -36,6 +35,4 @@ private:
 	std::filesystem::path mOutputFile;
 
 	std::unique_ptr<cPointCloud2Ply> mConverter;
-
-	wxEvtHandler* mpEventHandler = nullptr;
 };

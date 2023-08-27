@@ -11,8 +11,8 @@
 class cDataFileRecovery : private cBlockDataFileRecovery
 {
 public:
-	explicit cDataFileRecovery(std::filesystem::path recovery_dir);
-	cDataFileRecovery(std::filesystem::path file_to_recover,
+	explicit cDataFileRecovery(int id, std::filesystem::path recovery_dir);
+	cDataFileRecovery(int id, std::filesystem::path file_to_recover,
 						std::filesystem::path recovery_dir);
     ~cDataFileRecovery();
 
@@ -37,7 +37,11 @@ private:
     bool removeFailedFile();
 
 private:
-    cBlockDataFileWriter mFileWriter;
+	const int mID;
+
+	std::uintmax_t mFileSize = 0;
+
+	cBlockDataFileWriter mFileWriter;
 
 	std::filesystem::path mRecoveryDirectory;
 	std::filesystem::path mCurrentFile;

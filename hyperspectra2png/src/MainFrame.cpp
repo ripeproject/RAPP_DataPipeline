@@ -42,12 +42,12 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Export to ply")
+	: wxFrame(NULL, wxID_ANY, "Export to png")
 {
 	mpMainWindow = new cMainWindow(this);
 
 	// set the frame icon
-	SetIcon(wxICON(Export2Ply));
+	SetIcon(wxICON(Export2Png));
 
 #if wxUSE_MENUBAR
 	// create a menu bar
@@ -94,7 +94,7 @@ cMainFrame::cMainFrame()
 
 	auto size = GetBestSize();
 	size.IncBy(350);
-	size.SetHeight(450);
+	size.SetHeight(650);
 	SetMinSize(size);
 
 	Centre();

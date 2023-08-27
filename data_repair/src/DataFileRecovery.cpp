@@ -11,16 +11,21 @@
 #include <iostream>
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, std::string filename, const int progress_pct);
+extern void update_file_progress(const int id, const int progress_pct);
 
 
 //-----------------------------------------------------------------------------
-cDataFileRecovery::cDataFileRecovery(std::filesystem::path recovery_dir)
+cDataFileRecovery::cDataFileRecovery(int id, std::filesystem::path recovery_dir)
+    : mID(id)
 {
     mRecoveryDirectory = recovery_dir;
 }
 
-cDataFileRecovery::cDataFileRecovery(std::filesystem::path file_to_recover,
+cDataFileRecovery::cDataFileRecovery(int id, std::filesystem::path file_to_recover,
                                     std::filesystem::path recovery_dir)
+    : mID(id)
 {
     mRecoveryDirectory = recovery_dir;
     mCurrentFile = file_to_recover;
@@ -38,6 +43,8 @@ cDataFileRecovery::cDataFileRecovery(std::filesystem::path file_to_recover,
     {
         throw std::logic_error(mCurrentFile.string());
     }
+
+    mFileSize = cBlockDataFileRecovery::size();
 }
 
 cDataFileRecovery::~cDataFileRecovery()
@@ -65,23 +72,33 @@ bool cDataFileRecovery::open(std::filesystem::path file_to_recover)
     mFileWriter.open(mRecoveryFile.string());
     cBlockDataFileRecovery::open(file_to_recover.string());
 
+    mFileSize = cBlockDataFileRecovery::size();
+
     return mFileWriter.isOpen() && cBlockDataFileRecovery::isOpen();
 }
 
 //-----------------------------------------------------------------------------
 bool cDataFileRecovery::run()
 {
-    std::string msg = "Recovering ";
-    msg += mCurrentFile.string();
-    msg += "...";
-    console_message(msg);
+//    std::string msg = "Recovering ";
+//    msg += mCurrentFile.string();
+//    msg += "...";
+//    console_message(msg);
+
+    std::string msg = mCurrentFile.string();
+    msg += " [Recovering]";
+    update_file_progress(mID, msg, 0);
 
     bool result = pass1();
 
-    msg = "Verifing: ";
-    msg += mRecoveryFile.string();
-    msg += "...";
-    console_message(msg);
+//    msg = "Verifing: ";
+//    msg += mRecoveryFile.string();
+//    msg += "...";
+//    console_message(msg);
+
+    msg = mCurrentFile.string();
+    msg += " [Verifing]";
+    update_file_progress(mID, msg, 0);
 
     if (!pass2())
     {
@@ -116,6 +133,10 @@ bool cDataFileRecovery::pass1()
             }
 
             cBlockDataFileRecovery::processBlock();
+
+            auto file_pos = static_cast<double>(cBlockDataFileRecovery::filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::crc_error& e)
@@ -174,6 +195,8 @@ bool cDataFileRecovery::pass2()
         throw std::logic_error("No file is open for verification.");
     }
 
+    mFileSize = fileReader.size();
+
     try
     {
         while (!fileReader.eof())
@@ -185,6 +208,10 @@ bool cDataFileRecovery::pass2()
             }
 
             fileReader.processBlock();
+
+            auto file_pos = static_cast<double>(fileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::crc_error& e)

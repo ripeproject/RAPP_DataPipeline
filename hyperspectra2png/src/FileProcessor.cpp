@@ -3,11 +3,7 @@
 #include "HySpexVNIR3000N_2_PNG.hpp"
 #include "HySpexSWIR384_2_PNG.hpp"
 
-#include "../wxCustomWidgets/FileProgressCtrl.hpp"
-
 #include <cbdf/BlockDataFileExceptions.hpp>
-
-#include <wx/event.h>
 
 #include <filesystem>
 #include <string>
@@ -18,6 +14,8 @@
 
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, const int progress_pct);
 
 
 cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
@@ -34,12 +32,6 @@ cFileProcessor::~cFileProcessor()
 {
     mFileReader.close();
 }
-
-void cFileProcessor::setEventHandler(wxEvtHandler* handler)
-{
-    mpEventHandler = handler;
-}
-
 
 void cFileProcessor::setVnirRgb(float red_nm, float green_nm, float blue_nm)
 {
@@ -74,16 +66,7 @@ void cFileProcessor::process_file()
 {
     if (open(mOutputFile))
     {
-        std::string msg = "Processing ";
-        msg = mInputFile.string();
-        if (mpEventHandler)
-        {
-            auto event = new cFileProgressEvent(NEW_FILE_PROGRESS);
-            event->SetFileProcessID(mID);
-            event->SetFileName(msg);
-
-            wxQueueEvent(mpEventHandler, event);
-        }
+        new_file_progress(mID, mInputFile.string());
 
         run();
     }
@@ -116,17 +99,9 @@ void cFileProcessor::run()
 
             mFileReader.processBlock();
 
-            if (mpEventHandler)
-            {
-                auto file_pos = static_cast<double>(mFileReader.filePosition());
-                file_pos = 100.0 * (file_pos / mFileSize);
-
-                auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
-                event->SetFileProcessID(mID);
-                event->SetProgress_pct(static_cast<int>(file_pos));
-
-                wxQueueEvent(mpEventHandler, event);
-            }
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::stream_error& e)
@@ -154,14 +129,7 @@ void cFileProcessor::run()
         console_message(msg);
     }
 
-    if (mpEventHandler)
-    {
-        auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
-        event->SetFileProcessID(mID);
-        event->SetProgress_pct(100);
-
-        wxQueueEvent(mpEventHandler, event);
-    }
+    update_file_progress(mID, 100);
 }
 
 

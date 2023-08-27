@@ -13,12 +13,14 @@
 
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, const int progress_pct);
 
 
-cFileProcessor::cFileProcessor(std::filesystem::directory_entry in,
+cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
-    mConverter{new cExportJpegs }
+    mID(id), mConverter{new cExportJpegs }
 {
     mInputFile = in;
     mOutputFile = out;
@@ -52,10 +54,7 @@ void cFileProcessor::process_file()
 {
     if (open(mOutputFile))
     {
-        std::string msg = "Processing ";
-        msg += mInputFile.string();
-        msg += "...";
-        console_message(msg);
+        new_file_progress(mID, mInputFile.string());
 
         run();
     }
@@ -82,6 +81,10 @@ void cFileProcessor::run()
             }
 
             mFileReader.processBlock();
+
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::stream_error& e)
@@ -108,6 +111,8 @@ void cFileProcessor::run()
         msg += e.what();
         console_message(msg);
     }
+
+    update_file_progress(mID, 100);
 }
 
 
