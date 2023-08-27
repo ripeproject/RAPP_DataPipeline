@@ -17,7 +17,7 @@ cFileProgressDataModel::cFileProgressDataModel()
     mProgressColValues.reserve(NUMBER_REAL_ITEMS);
 }
 
-int cFileProgressDataModel::Append(const wxString& text)
+std::size_t cFileProgressDataModel::Append(const wxString& text)
 {
     auto row = mTimestampColValues.size();
 
@@ -137,8 +137,11 @@ bool cFileProgressDataModel::SetValueByRow(const wxVariant& variant, unsigned in
     switch (col)
     {
     case Col_Timestamp:
-    case Col_Filename:
         wxLogError("Cannot edit the column %d", col);
+        break;
+
+    case Col_Filename:
+        mFilenameColValues[row] = variant.GetString();
         break;
 
     case Col_Progress:

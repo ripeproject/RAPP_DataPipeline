@@ -20,6 +20,7 @@ class cFileProgressEvent : public wxEvent
 {
 public:
     cFileProgressEvent(wxEventType eventType, int id = 0);
+    ~cFileProgressEvent();
 
     // You *must* copy here the data to be transported
     cFileProgressEvent(const cFileProgressEvent& event);
@@ -58,14 +59,14 @@ public:
         const wxSize& size = wxDefaultSize, long style = 0, const wxValidator& validator = wxDefaultValidator,
         const wxString& name = wxDataViewCtrlNameStr);
 
-    int Append(const wxString& text);
+    std::size_t Append(const wxString& text);
 
     // Event Handlers
     void OnNewFileProgress(cFileProgressEvent& event);
     void OnUpdateFileProgress(cFileProgressEvent& event);
 
 private:
-    std::map<int, int>  mID_to_Row;
+    std::map<int, std::size_t>  mID_to_Row;
     wxObjectDataPtr<cFileProgressDataModel> mpProgressModel;
 };
 

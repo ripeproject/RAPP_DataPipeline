@@ -14,6 +14,9 @@ cFileProgressEvent::cFileProgressEvent(wxEventType eventType, int id)
 	wxEvent(id, eventType) 
 {}
 
+cFileProgressEvent::~cFileProgressEvent()
+{}
+
 // You *must* copy here the data to be transported
 cFileProgressEvent::cFileProgressEvent(const cFileProgressEvent& event)
 :
@@ -56,7 +59,7 @@ void cFileProgressEvent::SetProgress_pct(int progress_pct)
 }
 
 
-
+//EVT_DATAVIEW_ITEM_VALUE_CHANGED(wxEVT_DATAVIEW_ITEM_VALUE_CHANGED, func)
 
 cFileProgressCtrl::cFileProgressCtrl()
 	:
@@ -68,7 +71,7 @@ cFileProgressCtrl::cFileProgressCtrl()
 
 cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
 :
-	wxDataViewCtrl(parent, id, pos, size, style, validator, name)
+	wxDataViewCtrl(parent, id, pos, size, style | wxDV_HORIZ_RULES | wxDV_VERT_RULES, validator, name)
 {
 	mpProgressModel = new cFileProgressDataModel();
 	AssociateModel(mpProgressModel.get());
@@ -87,9 +90,18 @@ cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxPo
 	Bind(UPDATE_FILE_PROGRESS, &cFileProgressCtrl::OnUpdateFileProgress, this);
 }
 
-int cFileProgressCtrl::Append(const wxString& text)
+std::size_t cFileProgressCtrl::Append(const wxString& text)
 {
+	// Freeze the window to prevent scrollbar jumping
+	Freeze();
+
 	auto row = mpProgressModel->Append(text);
+
+	EnsureVisible(mpProgressModel->GetItem(row));
+
+	// Allow the window to redraw
+	Thaw();
+
 	Refresh();
 
 	return row;
@@ -104,6 +116,12 @@ void cFileProgressCtrl::OnNewFileProgress(cFileProgressEvent& event)
 void cFileProgressCtrl::OnUpdateFileProgress(cFileProgressEvent& event)
 {
 	auto row = mID_to_Row[event.GetFileProcessID()];
+	if (!event.GetFileName().empty())
+	{
+		mpProgressModel->SetValueByRow(wxVariant(event.GetFileName()), row, 1);
+	}
+
 	mpProgressModel->SetValueByRow(wxVariant(event.GetProcess_pct()), row, 2);
 	Refresh();
 }
+
