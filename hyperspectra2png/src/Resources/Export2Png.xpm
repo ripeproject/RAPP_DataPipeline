@@ -1,5 +1,5 @@
 /* XPM */
-static const char * Export2Ply_xpm[] = {
+static const char * Export2Png_xpm[] = {
 "256 256 215 2",
 "  	c None",
 ". 	c #F3B422",
