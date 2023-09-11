@@ -269,8 +269,7 @@ void cMainWindow::createConstantSpeedLayout()
 	grid_sizer->SetHGap(5);
 	grid_sizer->AddGrowableCol(1, 1);
 
-	grid_sizer->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Vx (mm/sec) :"),
-		0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Vx (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpKM_CSO_Vx_mmps, wxSizerFlags().Proportion(1).Expand());
 	grid_sizer->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Vy (mm/sec) :"), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpKM_CSO_Vy_mmps, wxSizerFlags().Proportion(1).Expand());
@@ -278,21 +277,24 @@ void cMainWindow::createConstantSpeedLayout()
 	grid_sizer->Add(mpKM_CSO_Vz_mmps, wxSizerFlags().Proportion(1).Expand());
 
 	sizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
-	sizer->AddSpacer(5);
+	sizer->AddSpacer(15);
 
-	wxBoxSizer* height_sz = new wxBoxSizer(wxHORIZONTAL);
+//BAF	wxBoxSizer* height_sz = new wxBoxSizer(wxHORIZONTAL);
+	auto* height_sz = new wxFlexGridSizer(4);
+	height_sz->SetVGap(5);
+	height_sz->SetHGap(5);
+	height_sz->AddGrowableCol(1, 1);
+	height_sz->AddGrowableCol(3, 1);
 
-	height_sz->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Height (m) :"),
-		0, wxALIGN_CENTER_VERTICAL);
-	height_sz->AddSpacer(5);
+	height_sz->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Height (m) :"), 0, wxALIGN_CENTER_VERTICAL);
+//	height_sz->AddSpacer(5);
 	height_sz->Add(mpKM_CSO_Height_m, wxSizerFlags().Proportion(1).Expand());
-	height_sz->AddSpacer(5);
-	height_sz->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Axis :"),
-		0, wxALIGN_CENTER_VERTICAL);
-	height_sz->AddSpacer(5);
+//	height_sz->AddSpacer(5);
+	height_sz->Add(new wxStaticText(mpKM_ConstantSpeedOptions, wxID_ANY, "Axis :"), 0, wxALIGN_CENTER_VERTICAL);
+//	height_sz->AddSpacer(5);
 	height_sz->Add(mpKM_CSO_HeightAxis, wxSizerFlags().Proportion(1).Expand());
 
-	sizer->Add(height_sz, wxSizerFlags().Proportion(1).Expand());
+	sizer->Add(height_sz, wxSizerFlags().Proportion(0).Expand());
 
 	mpKM_ConstantSpeedOptions->SetSizerAndFit(sizer);
 	mpKM_ConstantSpeedOptions->Hide();
@@ -303,9 +305,9 @@ void cMainWindow::createDollyLayout()
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	sizer->AddSpacer(5);
 
-	sizer->Add(mpKM_DO_UseImuData, wxSizerFlags().Proportion(1).Expand());
+	sizer->Add(mpKM_DO_UseImuData, wxSizerFlags().Proportion(0));
 	sizer->AddSpacer(5);
-	sizer->Add(mpKM_DO_AverageImuData, wxSizerFlags().Proportion(1).Expand());
+	sizer->Add(mpKM_DO_AverageImuData, wxSizerFlags().Proportion(0));
 	sizer->AddSpacer(5);
 
 	auto* grid_sizer = new wxFlexGridSizer(2);
