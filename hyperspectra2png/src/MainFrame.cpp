@@ -3,7 +3,7 @@
 #include "MainWindow.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
-    #include "Resources/Export2Ply.xpm"
+    #include "Resources/Export2Png.xpm"
 #endif
 
 #include <wx/aui/framemanager.h>
@@ -119,16 +119,16 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	wxAboutDialogInfo info;
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
-	info.SetDescription(_("Export point cloud data in ceres data files to ply based files.\n"));
+	info.SetDescription(_("Export hyperspectral data in ceres data files to png based files.\n"));
 	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
-	info.SetIcon(wxICON(Export2Ply));
+	info.SetIcon(wxICON(Export2Png));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the pointcloud2ply repository and source\n"
-		"distribution.This includes pointcloud2ply’s source code, the examples, and\n"
+		"This license applies to all files in the hyperspectral2png repository and source\n"
+		"distribution.This includes hyperspectral2png’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
 		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
