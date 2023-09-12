@@ -99,4 +99,8 @@ void cKinematics::rotate(pointcloud::sCloudPoint_t& p)
 		::rotate(p.X_m, p.Y_m, p.Z_m, mSensorToSEU);
 }
 
+void cKinematics::setDebugFileName(const std::string& filename)
+{
+	mDebugFilename = filename;
+}
 

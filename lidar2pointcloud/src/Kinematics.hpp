@@ -92,6 +92,8 @@ public:
 	virtual void transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) = 0;
 
+	void setDebugFileName(const std::string& filename);
+
 protected:
 	uint32_t mNumPasses = 0;
 	bool	 mAtEndOfPass = false;
@@ -109,6 +111,9 @@ private:
 	double mPitch_deg = 0.0;
 	double mRoll_deg = 0.0;
 	double mYaw_deg = 0.0;
+
+protected:
+	std::string mDebugFilename;
 };
 
 
