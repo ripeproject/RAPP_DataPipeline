@@ -67,8 +67,8 @@ public:
 	 */
 	static void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
 
-	static void saveAggregatePointCloud();
-	static void saveReducedPointCloud();
+	static void saveAggregatePointCloud(bool aggregatePointCloud);
+	static void saveReducedPointCloud(bool reducePointCloud);
 
 
 public:
@@ -165,4 +165,6 @@ private:
     std::vector<sPoint_t> mOffsets;
 
 	uint64_t mStartTimestamp_ns = 0;
+	uint32_t mFrameID = 0;
+	uint64_t mTimeStep_ns = 100'000'000;
 };

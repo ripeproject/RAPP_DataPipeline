@@ -41,7 +41,7 @@ private:
 private:
 	const int mID;
 
-	std::uintmax_t mFileSize;
+	std::uintmax_t mFileSize = 0;
 
 	cBlockDataFileReader mFileReader;
 	cBlockDataFileWriter mFileWriter;

@@ -32,7 +32,8 @@ public:
 	void CreateControls();
 	void CreateLayout();
 
-	// event handlers (these functions should _not_ be virtual)
+	// Event Handlers
+	void OnComplete(wxCommandEvent& event);
 
 protected:
 	void OnSrcFileBrowse(wxCommandEvent& event);
@@ -155,7 +156,6 @@ private:
 	wxTextCtrl* mpLogCtrl = nullptr;
 	wxLog* mpOriginalLog = nullptr;
 
-	wxEvtHandler* mpHandler = nullptr;
 	std::queue<cFileProcessor*> mFileProcessors;
 
 	bool mIsFile = false;

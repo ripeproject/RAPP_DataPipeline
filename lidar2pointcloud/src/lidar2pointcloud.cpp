@@ -268,14 +268,14 @@ void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double ma
 	max_altitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
 }
 
-void cLidar2PointCloud::saveAggregatePointCloud()
+void cLidar2PointCloud::saveAggregatePointCloud(bool aggregatePointCloud)
 {
-	mAggregatePointCloud = true;
+	mAggregatePointCloud = aggregatePointCloud;
 }
 
-void cLidar2PointCloud::saveReducedPointCloud()
+void cLidar2PointCloud::saveReducedPointCloud(bool reducePointCloud)
 {
-	mSaveReducedPointCloud = true;
+	mSaveReducedPointCloud = reducePointCloud;
 }
 
 
@@ -396,6 +396,12 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 
 	if (mStartTimestamp_ns == 0)
 		mStartTimestamp_ns = timestamp_ns;
+
+	if (frameID == 0)
+	{
+		timestamp_ns = mFrameID * mTimeStep_ns;
+		++mFrameID;
+	}
 
 	auto time_us = static_cast<double>(timestamp_ns - mStartTimestamp_ns)/1000.0;
 

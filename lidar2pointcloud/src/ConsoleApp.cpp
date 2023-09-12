@@ -131,13 +131,16 @@ int main(int argc, char** argv)
 
 	cLidar2PointCloud::setValidRange_m(min_dist_m, max_dist_m);
 
+	cLidar2PointCloud::saveAggregatePointCloud(false);
+	cLidar2PointCloud::saveReducedPointCloud(false);
+
 	if (aggregatePointCloud)
 	{
-		cLidar2PointCloud::saveAggregatePointCloud();
+		cLidar2PointCloud::saveAggregatePointCloud(aggregatePointCloud);
 	}
 	else if (saveReducedPointCloud)
 	{
-		cLidar2PointCloud::saveReducedPointCloud();
+		cLidar2PointCloud::saveReducedPointCloud(saveReducedPointCloud);
 	}
 
 	const std::filesystem::path input{ input_directory };

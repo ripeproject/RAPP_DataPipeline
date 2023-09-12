@@ -50,6 +50,8 @@ bool cFileProcessor::open()
     mFileWriter.open(mOutputFile.string());
     mFileReader.open(mInputFile.string());
 
+    mFileSize = mFileReader.size();
+
     return mFileWriter.isOpen() && mFileReader.isOpen();
 }
 

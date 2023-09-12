@@ -57,18 +57,20 @@ void update_file_progress(const int id, const int progress_pct)
 enum
 {
 	// Custom submenu items
-	ID_RECONNECT = wxID_HIGHEST + 1,
+	ID_COMPLETE = wxID_HIGHEST + 1,
 
 };
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
+wxDEFINE_EVENT(COMPUTATION_COMPLETE, wxCommandEvent);
 
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 wxBEGIN_EVENT_TABLE(cMainWindow, wxPanel)
+	EVT_COMMAND(wxID_ANY, COMPUTATION_COMPLETE, cMainWindow::OnComplete)
 wxEND_EVENT_TABLE()
 
 
@@ -127,6 +129,11 @@ cMainWindow::~cMainWindow()
 
 	delete mpOriginalLog;
 	mpOriginalLog = nullptr;
+}
+
+void cMainWindow::OnComplete(wxCommandEvent& WXUNUSED(event))
+{
+	mpComputeButton->Enable();
 }
 
 void cMainWindow::CreateControls()
@@ -558,13 +565,16 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	mpSensorPitch_deg->TransferDataFromWindow();
 	mpSensorRoll_deg->TransferDataFromWindow();
 
+	cLidar2PointCloud::saveAggregatePointCloud(false);
+	cLidar2PointCloud::saveReducedPointCloud(false);
+
 	if (mpAggregatePointCloud->GetValue())
 	{
-		cLidar2PointCloud::saveAggregatePointCloud();
+		cLidar2PointCloud::saveAggregatePointCloud(true);
 	}
 	else if (mpSaveReducedPointCloud->GetValue())
 	{
-		cLidar2PointCloud::saveReducedPointCloud();
+		cLidar2PointCloud::saveReducedPointCloud(true);
 	}
 
 	std::string input_directory = mSourceData.ToStdString();
@@ -812,6 +822,10 @@ wxThread::ExitCode cMainWindow::Entry()
 	wxString msg = "Finished processing ";
 	msg += mSourceData;
 	wxLogMessage(msg);
+
+	auto event = new wxCommandEvent(COMPUTATION_COMPLETE);
+
+	wxQueueEvent(this, event);
 
 	return (wxThread::ExitCode) 0;
 }
