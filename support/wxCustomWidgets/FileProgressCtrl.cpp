@@ -7,6 +7,7 @@
 
 wxDEFINE_EVENT(NEW_FILE_PROGRESS, cFileProgressEvent);
 wxDEFINE_EVENT(UPDATE_FILE_PROGRESS, cFileProgressEvent);
+wxDEFINE_EVENT(COMPLETE_FILE_PROGRESS, cFileProgressEvent);
 
 
 cFileProgressEvent::cFileProgressEvent(wxEventType eventType, int id)
@@ -88,6 +89,7 @@ cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxPo
 
 	Bind(NEW_FILE_PROGRESS, &cFileProgressCtrl::OnNewFileProgress, this);
 	Bind(UPDATE_FILE_PROGRESS, &cFileProgressCtrl::OnUpdateFileProgress, this);
+	Bind(COMPLETE_FILE_PROGRESS, &cFileProgressCtrl::OnCompleteFileProgress, this);
 }
 
 std::size_t cFileProgressCtrl::Append(const wxString& text)
@@ -122,6 +124,13 @@ void cFileProgressCtrl::OnUpdateFileProgress(cFileProgressEvent& event)
 	}
 
 	mpProgressModel->SetValueByRow(wxVariant(event.GetProcess_pct()), row, 2);
+	Refresh();
+}
+
+void cFileProgressCtrl::OnCompleteFileProgress(cFileProgressEvent& event)
+{
+	auto row = mID_to_Row[event.GetFileProcessID()];
+	mpProgressModel->SetValueByRow(wxVariant(100), row, 2);
 	Refresh();
 }
 

@@ -46,6 +46,7 @@ private:
 
 wxDECLARE_EVENT(NEW_FILE_PROGRESS, cFileProgressEvent);
 wxDECLARE_EVENT(UPDATE_FILE_PROGRESS, cFileProgressEvent);
+wxDECLARE_EVENT(COMPLETE_FILE_PROGRESS, cFileProgressEvent);
 
 
 // The File Progress Control is a wxWidget that displays a three columns:
@@ -64,6 +65,7 @@ public:
     // Event Handlers
     void OnNewFileProgress(cFileProgressEvent& event);
     void OnUpdateFileProgress(cFileProgressEvent& event);
+    void OnCompleteFileProgress(cFileProgressEvent& event);
 
 private:
     std::map<int, std::size_t>  mID_to_Row;
