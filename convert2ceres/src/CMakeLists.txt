@@ -54,12 +54,8 @@ if(wxWidgets_FOUND)
 		# Include a RC file for windows
 		set(resource_files
 			./Resources/ripe.ico
-			./Resources/CeresConvert.rc
+			./Resources/Convert2Ceres.rc
 		)
-
-	#	source_group("Resources" FILES
-	#		${resource_files}
-	#)
 
 	elseif(APPLE)
 
@@ -69,6 +65,8 @@ if(wxWidgets_FOUND)
 		)
 
 	endif()
+
+	source_group("Resources" FILES ${resource_files})
 
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
