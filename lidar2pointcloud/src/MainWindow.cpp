@@ -49,6 +49,15 @@ void update_file_progress(const int id, const int progress_pct)
 	}
 }
 
+void complete_file_progress(const int id)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
 // ----------------------------------------------------------------------------
 // constants
 // ----------------------------------------------------------------------------

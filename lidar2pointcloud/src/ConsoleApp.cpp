@@ -32,7 +32,7 @@ namespace
 void console_message(const std::string& msg)
 {
 	std::lock_guard<std::mutex> guard(g_console_mutex);
-	std::cout << msg << std::endl;
+	std::clog << msg << std::endl;
 }
 
 void new_file_progress(const int id, std::string filename)
@@ -40,6 +40,10 @@ void new_file_progress(const int id, std::string filename)
 }
 
 void update_file_progress(const int id, const int progress_pct)
+{
+}
+
+void complete_file_progress(const int id)
 {
 }
 
