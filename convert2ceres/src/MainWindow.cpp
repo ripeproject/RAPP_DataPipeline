@@ -139,6 +139,9 @@ void cMainWindow::OnSrcDirectory(wxCommandEvent& WXUNUSED(event))
 	mSourceIsFile = false;
 	mSource = dlg.GetPath().ToStdString();
 	mpSourceCtrl->SetValue(mSource);
+
+	if (!mpDstCtrl->GetValue().IsEmpty())
+		mpConvertButton->Enable();
 }
 
 void cMainWindow::OnDstDirectory(wxCommandEvent& WXUNUSED(event))
@@ -162,6 +165,11 @@ void cMainWindow::OnDstDirectory(wxCommandEvent& WXUNUSED(event))
 	else
 	{
 		mpDstCtrl->SetValue(dir);
+	}
+
+	if (!mSource.empty())
+	{
+		mpConvertButton->Enable();
 	}
 }
 
