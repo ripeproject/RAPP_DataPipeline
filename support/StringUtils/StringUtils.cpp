@@ -3,6 +3,7 @@
 
 #include <ctime>
 #include <cstring>
+#include <filesystem>
 
 
 bool nStringUtils::iequal(const std::string& lhs, const char* const rhs)
@@ -162,4 +163,29 @@ nStringUtils::sFilenameAndExtension nStringUtils::removeProcessedTimestamp(const
 	}
 
 	return { base, extension };
+}
+
+std::string nStringUtils::compactFilename(const std::string& filename, std::size_t max_len)
+{
+	if (filename.length() < max_len)
+		return filename;
+
+	std::string result;
+
+	std::filesystem::path full_path(filename);
+
+	std::string fname = full_path.filename().string();
+	if (fname.length() > max_len)
+	{
+		if (max_len < 5)
+			return fname.substr(0, max_len);
+
+		result = fname.substr(0, max_len-3);
+		result += "...";
+		return result;
+	}
+
+//	std::string path = full_path.parent_path().string();
+
+	return fname;
 }
