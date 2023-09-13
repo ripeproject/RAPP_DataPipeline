@@ -2,7 +2,7 @@
 #include "FileProcessor.hpp"
 
 
-cFileProcessor::cFileProcessor()
+cFileProcessor::cFileProcessor(int id) : mID(id)
 {}
 
 cFileProcessor::~cFileProcessor()

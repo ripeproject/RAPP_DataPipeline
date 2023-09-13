@@ -3,6 +3,8 @@
 
 #include "LidarData2CeresConverter.hpp"
 
+#include "TextProgressBar.hpp"
+
 #include <lyra/lyra.hpp>
 
 #include <filesystem>
@@ -17,9 +19,11 @@ std::mutex g_console_mutex;
 
 namespace
 {
+	int numFilesToProcess = 0;
 	int num_of_threads = 1;
 	std::string input_directory = std::filesystem::current_path().string();
 	std::string output_directory;
+	cTextProgressBar progress_bar;
 }
 
 void console_message(const std::string& msg)
@@ -28,11 +32,23 @@ void console_message(const std::string& msg)
 	std::cout << msg << std::endl;
 }
 
+void new_file_progress(const int id, std::string filename)
+{
+	progress_bar.addProgressEntry(id, filename);
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
+	progress_bar.updateProgressEntry(id, progress_pct);
+}
+
+void complete_file_progress(const int id)
+{
+	progress_bar.finishProgressEntry(id);
+}
 
 int main(int argc, char** argv)
 {
-	std::cerr << argc << std::endl;
-
 	using namespace std::filesystem;
 
 	bool showHelp = false;
@@ -134,12 +150,14 @@ int main(int argc, char** argv)
 		out_file /= in_file.path().filename();
 		out_file.replace_extension("ceres");
 
-		cFileProcessor* fp = new cLidarData2CeresConverter(in_file, out_file);
+		cFileProcessor* fp = new cLidarData2CeresConverter(numFilesToProcess++, in_file, out_file);
 
 		pool.push_task(&cFileProcessor::run, fp);
 
 		file_processors.push_back(fp);
 	}
+
+	progress_bar.setMaxID(numFilesToProcess);
 
 	lidar_data_files_to_process.clear();
 

@@ -6,7 +6,10 @@
 
 #ifndef WX_PRECOMP
 	#include <wx/wx.h>
+	#include <wx/valnum.h>
 #endif
+
+#include "../support/wxCustomWidgets/FileProgressCtrl.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -27,7 +30,8 @@ public:
 	void CreateControls();
 	void CreateLayout();
 
-	// event handlers (these functions should _not_ be virtual)
+	// Event Handlers
+	void OnComplete(wxCommandEvent& event);
 
 protected:
 	void OnValidateSrc(wxFocusEvent& event);
@@ -56,6 +60,8 @@ private:
 	wxButton* mpDstButton = nullptr;
 
 	wxButton* mpConvertButton = nullptr;
+
+	cFileProgressCtrl* mpProgressCtrl = nullptr;
 
 	wxTextCtrl* mpLogCtrl = nullptr;
 	wxLog* mpOriginalLog = nullptr;

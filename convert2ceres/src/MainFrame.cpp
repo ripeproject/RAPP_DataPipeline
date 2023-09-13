@@ -42,7 +42,7 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Ceres Convert")
+	: wxFrame(NULL, wxID_ANY, "Convert-to-Ceres")
 {
 	mpMainWindow = new cMainWindow(this);
 

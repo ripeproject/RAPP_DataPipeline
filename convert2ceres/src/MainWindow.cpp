@@ -11,11 +11,67 @@
 
 using namespace std::filesystem;
 
+namespace
+{
+	wxEvtHandler* g_pEventHandler = nullptr;
+}
+
 
 void console_message(const std::string& msg)
 {
 	wxLogMessage(wxString(msg));
 }
+
+
+void new_file_progress(const int id, std::string filename)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(NEW_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetFileName(filename);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+void update_file_progress(const int id, const int progress_pct)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetProgress_pct(progress_pct);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+void complete_file_progress(const int id)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+// ----------------------------------------------------------------------------
+// constants
+// ----------------------------------------------------------------------------
+
+// IDs for the controls and the menu commands
+enum
+{
+	// Custom submenu items
+	ID_COMPLETE = wxID_HIGHEST + 1,
+
+};
+
+// ----------------------------------------------------------------------------
+// event tables and other macros for wxWidgets
+// ----------------------------------------------------------------------------
+wxDEFINE_EVENT(COMPUTATION_COMPLETE, wxCommandEvent);
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -25,6 +81,7 @@ void console_message(const std::string& msg)
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 wxBEGIN_EVENT_TABLE(cMainWindow, wxPanel)
+	EVT_COMMAND(wxID_ANY, COMPUTATION_COMPLETE, cMainWindow::OnComplete)
 wxEND_EVENT_TABLE()
 
 
@@ -41,6 +98,15 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 cMainWindow::~cMainWindow()
 {
+	g_pEventHandler = nullptr;
+
+	delete mpOriginalLog;
+	mpOriginalLog = nullptr;
+}
+
+void cMainWindow::OnComplete(wxCommandEvent& WXUNUSED(event))
+{
+	mpConvertButton->Enable();
 }
 
 void cMainWindow::CreateControls()
@@ -61,6 +127,9 @@ void cMainWindow::CreateControls()
 	mpConvertButton = new wxButton(this, wxID_ANY, "Convert");
 	mpConvertButton->Disable();
 	mpConvertButton->Bind(wxEVT_BUTTON, &cMainWindow::OnConvert, this);
+
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
 	mpLogCtrl = new wxTextCtrl(this, wxID_ANY, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
@@ -90,6 +159,8 @@ void cMainWindow::CreateLayout()
 
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpConvertButton, wxSizerFlags().Proportion(0).Expand());
+	topsizer->AddSpacer(5);
+	topsizer->Add(mpProgressCtrl, wxSizerFlags().Proportion(1).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpLogCtrl, wxSizerFlags().Proportion(1).Expand());
 
@@ -175,6 +246,8 @@ void cMainWindow::OnDstDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnConvert(wxCommandEvent& WXUNUSED(event))
 {
+	int numFilesToProcess = 0;
+
 	if (mSourceIsFile)
 	{
 		std::filesystem::directory_entry in_file(mSource);
@@ -185,7 +258,7 @@ void cMainWindow::OnConvert(wxCommandEvent& WXUNUSED(event))
 		if (std::filesystem::exists(out_file))
 			return;
 
-		cFileProcessor* fp = new cLidarData2CeresConverter(in_file, out_file);
+		cFileProcessor* fp = new cLidarData2CeresConverter(numFilesToProcess++, in_file, out_file);
 		mFileProcessors.push(fp);
 
 	}
@@ -227,7 +300,7 @@ void cMainWindow::OnConvert(wxCommandEvent& WXUNUSED(event))
 			out_file /= in_file.path().filename();
 			out_file.replace_extension("ceres");
 
-			cFileProcessor* fp = new cLidarData2CeresConverter(in_file, out_file);
+			cFileProcessor* fp = new cLidarData2CeresConverter(numFilesToProcess++, in_file, out_file);
 			mFileProcessors.push(fp);
 		}
 

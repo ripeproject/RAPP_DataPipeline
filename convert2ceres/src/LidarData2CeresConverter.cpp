@@ -6,12 +6,15 @@
 
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, const int progress_pct);
+extern void complete_file_progress(const int id);
 
 
-cLidarData2CeresConverter::cLidarData2CeresConverter(std::filesystem::directory_entry in,
+cLidarData2CeresConverter::cLidarData2CeresConverter(int id, std::filesystem::directory_entry in,
     std::filesystem::path out)
 :
-    mInputFile(in), mOutputFile(out)
+    cFileProcessor(id), mInputFile(in), mOutputFile(out)
 {
     mOusterSerializer.setVersion(2, 3);
     mOusterSerializer.setBufferCapacity(256*1024*1024);
@@ -41,6 +44,8 @@ bool cLidarData2CeresConverter::open()
     mFileWriter.open(mOutputFile.string());
     mFileReader.open(mInputFile.path().string());
 
+    mFileSize = mFileReader.size();
+
     return mFileReader.isOpen() && mFileWriter.isOpen();
 }
 
@@ -48,11 +53,13 @@ void cLidarData2CeresConverter::run()
 {
     if (open())
     {
-        std::string msg = "Processing ";
-        msg += mInputFile.path().string();
-        msg += " -> ";
-        msg += mOutputFile.string();
-        console_message(msg);
+//        std::string msg = "Processing ";
+//        msg += mInputFile.path().string();
+//        msg += " -> ";
+//        msg += mOutputFile.string();
+//        console_message(msg);
+
+        new_file_progress(mID, mInputFile.path().string());
 
         convert();
     }
@@ -90,6 +97,10 @@ void cLidarData2CeresConverter::convert()
             }
 
             mFileReader.processBlock();
+
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
 
         mExperimentSerializer.writeBeginFooter();
@@ -113,6 +124,8 @@ void cLidarData2CeresConverter::convert()
         msg += e.what();
         console_message(msg);
     }
+
+    complete_file_progress(mID);
 }
 
 void cLidarData2CeresConverter::onConfigParam(::ouster::config_param_2_t config_param)

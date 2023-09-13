@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
+#include <filesystem>
 
 
 namespace
@@ -178,6 +179,9 @@ v1::cBlockDataFileReader::~cBlockDataFileReader()
 
 bool v1::cBlockDataFileReader::open(const std::string& filename)
 {
+    auto file = std::filesystem::path(filename);
+    mFileSize = std::filesystem::file_size(file);
+
     mFile.open(filename, std::ios_base::binary);
     if (mFile.is_open())
     {
@@ -264,6 +268,11 @@ void v1::cBlockDataFileReader::gotoPosition(std::streampos pos)
     mFile.seekg(pos);
 }
 
+
+std::uintmax_t v1::cBlockDataFileReader::size() const
+{
+    return mFileSize;
+}
 
 void v1::cBlockDataFileReader::attach(cBlockParser* pParser)
 {

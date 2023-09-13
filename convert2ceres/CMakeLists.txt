@@ -210,3 +210,10 @@ endif()
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 
 #print_all_variables()
+
+# Add the support library source code directory
+# Note: the support directory is a symlink 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/Utilities)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
+

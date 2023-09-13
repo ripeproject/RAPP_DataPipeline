@@ -21,7 +21,7 @@ class cLidarData2CeresConverter : public cFileProcessor,
 									private v1::cPvtVerificationParser
 {
 public:
-	cLidarData2CeresConverter(std::filesystem::directory_entry in,
+	cLidarData2CeresConverter(int id, std::filesystem::directory_entry in,
 		std::filesystem::path out);
 
 	~cLidarData2CeresConverter();

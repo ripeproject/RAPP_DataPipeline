@@ -128,6 +128,11 @@ namespace v1
 		std::streampos filePosition();
 		void gotoPosition(std::streampos pos);
 
+		/**
+		 * @brief Returns the file size
+		 */
+		std::uintmax_t size() const;
+
 		void attach(cBlockParser* pParser);
 		cBlockParser* detach(cBlockID id);
 
@@ -139,6 +144,8 @@ namespace v1
 	private:
 		//    FILE* mpFile;
 		std::ifstream mFile;
+		std::uintmax_t mFileSize = 0;
+
 		std::string mFileName;
 		bool mByteSwapNeeded;
 
