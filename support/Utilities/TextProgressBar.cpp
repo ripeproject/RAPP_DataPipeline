@@ -54,10 +54,40 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& prefix)
     std::cout << line << std::flush;
 }
 
+void cTextProgressBar::addProgressEntry(int id, const std::string& prefix, const std::string& suffix)
+{
+    std::string str = nStringUtils::compactFilename(prefix, 50);
+    mProgressEntries[id] = { 0, str, suffix };
+
+    std::string line;
+
+    if (mMaxID > 0)
+        line = format("({}/{}): ", id + 1, mMaxID);
+
+    line += format("{:50s}   0% [", str);
+
+    for (int i = 0; i < mProgressLength; ++i)
+        line += mEmptyChar;
+
+    line += "] " + suffix;
+
+    std::cout << line << std::flush;
+}
+
+
 void cTextProgressBar::updateProgressEntry(int id, const std::string& prefix, float progress_pct)
 {
     auto& entry = mProgressEntries[id];
     entry.prefix = nStringUtils::compactFilename(prefix, 50);
+
+    updateProgressEntry(id, progress_pct);
+}
+
+void cTextProgressBar::updateProgressEntry(int id, const std::string& prefix, const std::string& suffix, float progress_pct)
+{
+    auto& entry = mProgressEntries[id];
+    entry.prefix = nStringUtils::compactFilename(prefix, 50);
+    entry.suffix = suffix;
 
     updateProgressEntry(id, progress_pct);
 }
@@ -105,6 +135,11 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
 
     line += "]";
 
+    if (!entry.suffix.empty())
+    {
+        line += " " + entry.suffix;
+    }
+
     std::cout << line << std::flush;
 }
 
@@ -112,6 +147,15 @@ void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix)
 {
     auto& entry = mProgressEntries[id];
     entry.prefix = nStringUtils::compactFilename(prefix, 50);
+
+    finishProgressEntry(id);
+}
+
+void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix, const std::string& suffix)
+{
+    auto& entry = mProgressEntries[id];
+    entry.prefix = nStringUtils::compactFilename(prefix, 50);
+    entry.suffix = suffix;
 
     finishProgressEntry(id);
 }
@@ -131,6 +175,11 @@ void cTextProgressBar::finishProgressEntry(int id)
         line += mFullChar;
 
     line += "]";
+
+    if (!entry.suffix.empty())
+    {
+        line += " " + entry.suffix;
+    }
 
     std::cout << line << std::endl;
 }
