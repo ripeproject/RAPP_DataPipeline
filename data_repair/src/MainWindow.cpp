@@ -61,6 +61,27 @@ void update_file_progress(const int id, const int progress_pct)
 	}
 }
 
+void complete_file_progress(const int id, std::string filename, std::string suffix)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+
+		if (!filename.empty())
+		{
+			event->SetFileName(filename);
+		}
+
+		if (!suffix.empty())
+		{
+			event->SetResult(suffix);
+		}
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
@@ -104,7 +125,7 @@ void cMainWindow::CreateControls()
 	mpRepairButton->Disable();
 	mpRepairButton->Bind(wxEVT_BUTTON, &cMainWindow::OnRepair, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Result");
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control

@@ -211,5 +211,6 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 # Note: the support directory is a symlink 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/Utilities)
 
 #print_all_variables()
