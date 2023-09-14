@@ -70,8 +70,12 @@ void complete_file_progress(const int id, std::string filename, std::string suff
 
 		if (!filename.empty())
 		{
-			filename += " => " + suffix;
 			event->SetFileName(filename);
+		}
+
+		if (!suffix.empty())
+		{
+			event->SetResult(suffix);
 		}
 
 		wxQueueEvent(g_pEventHandler, event);
@@ -122,7 +126,7 @@ void cMainWindow::CreateControls()
 	mpVerifyButton->Disable();
 	mpVerifyButton->Bind(wxEVT_BUTTON, &cMainWindow::OnVerify, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Result");
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
