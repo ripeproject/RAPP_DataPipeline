@@ -39,23 +39,21 @@ namespace v1
 			BLOCK_DATA_ID_t data_id,
 			cDataBuffer& buffer) override;
 
-		virtual void processPositionUnits(cDataBuffer& buffer);
-		virtual void processVelocityUnits(cDataBuffer& buffer);
-		virtual void processTimeUnits(cDataBuffer& buffer);
+		virtual void processPositionUnits(v1::cDataBuffer& buffer);
+		virtual void processVelocityUnits(v1::cDataBuffer& buffer);
+		virtual void processTimeUnits(v1::cDataBuffer& buffer);
 
-		virtual void processPosition1D(cDataBuffer& buffer);
-		virtual void processPosition2D(cDataBuffer& buffer);
-		virtual void processPosition3D(cDataBuffer& buffer);
+		virtual void processPosition1D(v1::cDataBuffer& buffer);
+		virtual void processPosition2D(v1::cDataBuffer& buffer);
+		virtual void processPosition3D(v1::cDataBuffer& buffer);
 
-		virtual void processVelocity1D(cDataBuffer& buffer);
-		virtual void processVelocity2D(cDataBuffer& buffer);
-		virtual void processVelocity3D(cDataBuffer& buffer);
+		virtual void processVelocity1D(v1::cDataBuffer& buffer);
+		virtual void processVelocity2D(v1::cDataBuffer& buffer);
+		virtual void processVelocity3D(v1::cDataBuffer& buffer);
 
-		virtual void processTimestamp(cDataBuffer& buffer);
+		virtual void processTimestamp(v1::cDataBuffer& buffer);
 
-	private:
-		cPvtID    mBlockID;
-
+	protected:
 		pvt::ePOSTION_UNITS  mPositionUnit;
 		pvt::eVELOCITY_UNITS mVelocityUnit;
 		pvt::eTIME_UNITS	 mTimeUnit;
@@ -63,5 +61,8 @@ namespace v1
 		double mX, mY, mZ;
 		double mVx, mVy, mVz;
 		std::uint64_t mTimeStamp;
+
+	private:
+		cPvtID    mBlockID;
 	};
 }

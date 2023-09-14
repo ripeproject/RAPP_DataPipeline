@@ -3,6 +3,7 @@
 
 #include <cstring>
 
+
 namespace
 {
 	template <typename T>

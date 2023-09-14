@@ -68,57 +68,57 @@ void v1::cPvtParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     }
 }
 
-void v1::cPvtParser::processPositionUnits(cDataBuffer& buffer)
+void v1::cPvtParser::processPositionUnits(v1::cDataBuffer& buffer)
 {
     uint8_t u;
     buffer >> u;
     mPositionUnit = static_cast<pvt::ePOSTION_UNITS>(u);
 }
 
-void v1::cPvtParser::processVelocityUnits(cDataBuffer& buffer)
+void v1::cPvtParser::processVelocityUnits(v1::cDataBuffer& buffer)
 {
     uint8_t u;
     buffer >> u;
     mVelocityUnit = static_cast<pvt::eVELOCITY_UNITS>(u);
 }
 
-void v1::cPvtParser::processTimeUnits(cDataBuffer& buffer)
+void v1::cPvtParser::processTimeUnits(v1::cDataBuffer& buffer)
 {
     uint8_t u = 0;
     buffer >> u;
     mTimeUnit = static_cast<pvt::eTIME_UNITS>(u);
 }
 
-void v1::cPvtParser::processPosition1D(cDataBuffer& buffer)
+void v1::cPvtParser::processPosition1D(v1::cDataBuffer& buffer)
 {
     buffer >> mX;
 }
 
-void v1::cPvtParser::processPosition2D(cDataBuffer& buffer)
+void v1::cPvtParser::processPosition2D(v1::cDataBuffer& buffer)
 {
     buffer >> mX;
     buffer >> mY;
 }
 
-void v1::cPvtParser::processPosition3D(cDataBuffer& buffer)
+void v1::cPvtParser::processPosition3D(v1::cDataBuffer& buffer)
 {
     buffer >> mX;
     buffer >> mY;
     buffer >> mZ;
 }
 
-void v1::cPvtParser::processVelocity1D(cDataBuffer& buffer)
+void v1::cPvtParser::processVelocity1D(v1::cDataBuffer& buffer)
 {
     buffer >> mVx;
 }
 
-void v1::cPvtParser::processVelocity2D(cDataBuffer& buffer)
+void v1::cPvtParser::processVelocity2D(v1::cDataBuffer& buffer)
 {
     buffer >> mVx;
     buffer >> mVy;
 }
 
-void v1::cPvtParser::processVelocity3D(cDataBuffer& buffer)
+void v1::cPvtParser::processVelocity3D(v1::cDataBuffer& buffer)
 {
     buffer >> mVx;
     buffer >> mVy;
@@ -126,7 +126,7 @@ void v1::cPvtParser::processVelocity3D(cDataBuffer& buffer)
 }
 
 
-void v1::cPvtParser::processTimestamp(cDataBuffer& buffer)
+void v1::cPvtParser::processTimestamp(v1::cDataBuffer& buffer)
 {
     buffer >> mTimeStamp;
 }
