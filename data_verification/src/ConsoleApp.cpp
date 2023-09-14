@@ -140,12 +140,14 @@ int main(int argc, char** argv)
 
 	for (auto& file : lidar_files_to_check)
 	{
-		cLidarDataVerifier* dv = new cLidarDataVerifier(failed);
+		cLidarDataVerifier* dv = new cLidarDataVerifier(numFilesToProcess++, failed);
 
 		pool.push_task(&cLidarDataVerifier::process_file, dv, file);
 
 		lidar_data_verifiers.push_back(dv);
 	}
+
+	progress_bar.setMaxID(numFilesToProcess);
 
 	pool.wait_for_tasks();
 

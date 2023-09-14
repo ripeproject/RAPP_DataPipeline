@@ -11,6 +11,11 @@
 
 
 extern void console_message(const std::string& msg);
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, std::string filename, const int progress_pct);
+extern void update_file_progress(const int id, const int progress_pct);
+extern void complete_file_progress(const int id, std::string filename);
+
 extern std::mutex g_failed_dir_mutex;
 
 namespace
@@ -27,21 +32,25 @@ namespace
 }
 
 //-----------------------------------------------------------------------------
-cLidarDataVerifier::cLidarDataVerifier(std::filesystem::path failed_dir)
+cLidarDataVerifier::cLidarDataVerifier(int id, std::filesystem::path failed_dir)
+    :
+    mID(id)
 {
     mFailedDirectory = failed_dir;
 }
 
-cLidarDataVerifier::cLidarDataVerifier(std::filesystem::directory_entry file_to_check,
+cLidarDataVerifier::cLidarDataVerifier(int id, std::filesystem::directory_entry file_to_check,
     std::filesystem::path failed_dir)
+    :
+    mID(id)
 {
     mFailedDirectory = failed_dir;
-    mCurrentFile = file_to_check;
+    mFileToCheck = file_to_check;
     mFileReader.open(file_to_check.path().string());
 
     if (!mFileReader.isOpen())
     {
-        throw std::logic_error(mCurrentFile.string());
+        throw std::logic_error(mFileToCheck.string());
     }
 }
 
@@ -56,7 +65,7 @@ bool cLidarDataVerifier::open(std::filesystem::directory_entry file_to_check)
     if (mFileReader.isOpen())
         mFileReader.close();
         
-    mCurrentFile = file_to_check;
+    mFileToCheck = file_to_check;
     mFileReader.open(file_to_check.path().string());
 
     return mFileReader.isOpen();
@@ -67,10 +76,9 @@ void cLidarDataVerifier::process_file(std::filesystem::directory_entry file_to_c
 {
     if (open(file_to_check))
     {
-        std::string msg = "Processing ";
-        msg += file_to_check.path().string();
-        msg += "...";
-        console_message(msg);
+        mFileSize = mFileReader.size();
+
+        new_file_progress(mID, mFileToCheck.string());
 
         run();
     }
@@ -101,6 +109,10 @@ void cLidarDataVerifier::run()
             }
 
             mFileReader.processBlock();
+
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_file_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const v1::bdf::invalid_data& e)
@@ -121,6 +133,8 @@ void cLidarDataVerifier::run()
     }
 
     mFileReader.close();
+
+    complete_file_progress(mID, mFileToCheck.string());
 }
 
 //-----------------------------------------------------------------------------
@@ -131,8 +145,8 @@ void cLidarDataVerifier::moveFileToFailed()
 
     ::create_directory(mFailedDirectory);
 
-    std::filesystem::path dest = mFailedDirectory / mCurrentFile.filename();
-    std::filesystem::rename(mCurrentFile, dest);
+    std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
+    std::filesystem::rename(mFileToCheck, dest);
 }
 
 //-----------------------------------------------------------------------------
