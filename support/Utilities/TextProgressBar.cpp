@@ -56,9 +56,8 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& prefix)
 
 void cTextProgressBar::updateProgressEntry(int id, const std::string& prefix, float progress_pct)
 {
-    auto entry = mProgressEntries[id];
+    auto& entry = mProgressEntries[id];
     entry.prefix = nStringUtils::compactFilename(prefix, 50);
-    mProgressEntries[id] = entry;
 
     updateProgressEntry(id, progress_pct);
 }
@@ -107,6 +106,14 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
     line += "]";
 
     std::cout << line << std::flush;
+}
+
+void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix)
+{
+    auto& entry = mProgressEntries[id];
+    entry.prefix = nStringUtils::compactFilename(prefix, 50);
+
+    finishProgressEntry(id);
 }
 
 void cTextProgressBar::finishProgressEntry(int id)

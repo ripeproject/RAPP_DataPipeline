@@ -20,6 +20,7 @@ public:
 	void updateProgressEntry(int id, const std::string& prefix, float progress_pct);
 	void updateProgressEntry(int id, float progress_pct);
 	void finishProgressEntry(int id);
+	void finishProgressEntry(int id, const std::string& prefix);
 
 private:
 	int mMaxID = -1;

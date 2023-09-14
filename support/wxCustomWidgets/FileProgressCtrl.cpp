@@ -130,6 +130,11 @@ void cFileProgressCtrl::OnUpdateFileProgress(cFileProgressEvent& event)
 void cFileProgressCtrl::OnCompleteFileProgress(cFileProgressEvent& event)
 {
 	auto row = mID_to_Row[event.GetFileProcessID()];
+	if (!event.GetFileName().empty())
+	{
+		mpProgressModel->SetValueByRow(wxVariant(event.GetFileName()), row, 1);
+	}
+
 	mpProgressModel->SetValueByRow(wxVariant(100), row, 2);
 	Refresh();
 }
