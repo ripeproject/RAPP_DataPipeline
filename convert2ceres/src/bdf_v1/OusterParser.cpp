@@ -25,10 +25,17 @@ namespace
         return str;
     }
 
+    ::ouster::version_t to_version(v1::cDataBuffer& buffer, uint16_t len)
+    {
+        std::string s;
+        buffer.read(s, len);
+        return ::to_version(s);
+    }
+
     ::ouster::version_t to_version(v1::cDataBuffer& buffer)
     {
         std::string s;
-        buffer.read(s, 6);
+        buffer >> s;
         return ::to_version(s);
     }
 
@@ -233,8 +240,6 @@ void v1::cOusterParser::processSensorInfo_2(v1::cDataBuffer& buffer)
             buffer.read(mSensorInfo.product_line, 8);
             buffer.read(mSensorInfo.product_part_number, 12);
             buffer.read(mSensorInfo.product_serial_number, 12);
-//            buffer.read(mSensorInfo.base_part_number);
-//            buffer.read(mSensorInfo.base_serial_number);
             buffer.read(mSensorInfo.image_rev, 47);
         }
         else
@@ -248,8 +253,16 @@ void v1::cOusterParser::processSensorInfo_2(v1::cDataBuffer& buffer)
         }
     }
 
-    mSensorInfo.build_revision = to_version(buffer);
-    mSensorInfo.proto_revision = to_version(buffer);
+    if (buf_len == 31)
+    {
+        mSensorInfo.build_revision = to_version(buffer);
+        mSensorInfo.proto_revision = to_version(buffer);
+    }
+    else
+    {
+        mSensorInfo.build_revision = to_version(buffer, 6);
+        mSensorInfo.proto_revision = to_version(buffer, 6);
+    }
 
     if (buf_len > 13)
     {

@@ -111,18 +111,21 @@ void cLidarData2CeresConverter::convert()
         std::string msg = "Stream Error: ";
         msg += e.what();
         console_message(msg);
+        return;
     }
     catch (const v1::bdf::crc_error& e)
     {
         std::string msg = "CRC Error: ";
         msg += e.what();
         console_message(msg);
+        return;
     }
     catch (const std::exception& e)
     {
         std::string msg = "Unknown Exception: ";
         msg += e.what();
         console_message(msg);
+        return;
     }
 
     complete_file_progress(mID);
