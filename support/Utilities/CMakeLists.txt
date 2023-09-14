@@ -75,7 +75,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
+find_package(fmt REQUIRED)
 
 add_library(utilities)
 
@@ -97,7 +97,7 @@ target_include_directories(utilities PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(utilities PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
 target_include_directories(utilities PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../StringUtils)
 
-#target_link_libraries(utilities PRIVATE cbdf::cbdf)
+target_link_libraries(utilities PRIVATE fmt::fmt)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
