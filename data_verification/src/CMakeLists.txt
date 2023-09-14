@@ -44,11 +44,14 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE BlockDataFile_v1)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
+target_link_libraries(console_app PRIVATE string_utils)
+target_link_libraries(console_app PRIVATE utilities)
 
 set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 

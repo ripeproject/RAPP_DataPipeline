@@ -61,6 +61,21 @@ void update_file_progress(const int id, const int progress_pct)
 	}
 }
 
+void complete_file_progress(const int id, std::string filename)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+
+		if (!filename.empty())
+			event->SetFileName(filename);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------

@@ -14,6 +14,7 @@ extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void update_file_progress(const int id, std::string filename, const int progress_pct);
 extern void update_file_progress(const int id, const int progress_pct);
+extern void complete_file_progress(const int id, std::string filename);
 
 std::mutex g_failed_dir_mutex;
 
@@ -111,7 +112,7 @@ void cCeresDataVerifier::run()
 
     mFileReader.close();
 
-    update_file_progress(mID, mFileToCheck.string(), 100);
+    complete_file_progress(mID, mFileToCheck.string());
 }
 
 //-----------------------------------------------------------------------------
