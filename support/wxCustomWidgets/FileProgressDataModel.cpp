@@ -15,6 +15,7 @@ cFileProgressDataModel::cFileProgressDataModel()
     mTimestampColValues.reserve(NUMBER_REAL_ITEMS);
     mFilenameColValues.reserve(NUMBER_REAL_ITEMS);
     mProgressColValues.reserve(NUMBER_REAL_ITEMS);
+    mResultColValues.reserve(NUMBER_REAL_ITEMS);
 }
 
 std::size_t cFileProgressDataModel::Append(const wxString& text)
@@ -24,6 +25,21 @@ std::size_t cFileProgressDataModel::Append(const wxString& text)
     mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
     mFilenameColValues.Add(text);
     mProgressColValues.Add(0);
+    mResultColValues.Add("");
+    RowAppended();
+
+    return row;
+}
+
+std::size_t cFileProgressDataModel::Append(const wxString& text, const wxString& result)
+{
+    auto row = mTimestampColValues.size();
+
+    mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
+    mFilenameColValues.Add(text);
+    mProgressColValues.Add(0);
+    mResultColValues.Add(result);
+
     RowAppended();
 
     return row;
@@ -43,6 +59,7 @@ void cFileProgressDataModel::DeleteItem(const wxDataViewItem& item)
 
     mFilenameColValues.RemoveAt(row);
     mProgressColValues.RemoveAt(row);
+    mResultColValues.RemoveAt(row);
     RowDeleted(row);
 }
 
@@ -97,7 +114,7 @@ unsigned int cFileProgressDataModel::GetColumnCount() const
 
 wxString cFileProgressDataModel::GetColumnType(unsigned int col) const
 {
-    if (col == Col_Progress)
+    if (col == columnProgress)
         return "long";
 
     return "string";
@@ -108,21 +125,26 @@ void cFileProgressDataModel::GetValueByRow(wxVariant& variant, unsigned int row,
 {
     switch (col)
     {
-    case Col_Timestamp:
+    case columnTimestamp:
         if (row < mTimestampColValues.GetCount())
             variant = mTimestampColValues[row];
 
         break;
 
-    case Col_Filename:
+    case columnFilename:
         if (row < mFilenameColValues.GetCount())
             variant = mFilenameColValues[row];
 
         break;
 
-    case Col_Progress:
+    case columnProgress:
         if (row < mProgressColValues.GetCount())
             variant = wxVariant(mProgressColValues[row]);
+        break;
+
+    case columnResult:
+        if (row < mResultColValues.GetCount())
+            variant = wxVariant(mResultColValues[row]);
         break;
     }
 }
@@ -136,16 +158,20 @@ bool cFileProgressDataModel::SetValueByRow(const wxVariant& variant, unsigned in
 {
     switch (col)
     {
-    case Col_Timestamp:
+    case columnTimestamp:
         wxLogError("Cannot edit the column %d", col);
         break;
 
-    case Col_Filename:
+    case columnFilename:
         mFilenameColValues[row] = variant.GetString();
         break;
 
-    case Col_Progress:
+    case columnProgress:
         mProgressColValues[row] = variant.GetInteger();
+        break;
+
+    case columnResult:
+        mResultColValues[row] = variant.GetString();
         break;
     }
 

@@ -59,6 +59,15 @@ void cFileProgressEvent::SetProgress_pct(int progress_pct)
     mProgress_pct = progress_pct;
 }
 
+wxString cFileProgressEvent::GetResult() const
+{
+	return mResult;
+}
+
+void cFileProgressEvent::SetResult(const wxString& result)
+{
+	mResult = result;
+}
 
 //EVT_DATAVIEW_ITEM_VALUE_CHANGED(wxEVT_DATAVIEW_ITEM_VALUE_CHANGED, func)
 
@@ -70,22 +79,29 @@ cFileProgressCtrl::cFileProgressCtrl()
 	AssociateModel(mpProgressModel.get());
 }
 
-cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
+cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxString& suffixColumnLabel, const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
 :
 	wxDataViewCtrl(parent, id, pos, size, style | wxDV_HORIZ_RULES | wxDV_VERT_RULES, validator, name)
 {
 	mpProgressModel = new cFileProgressDataModel();
 	AssociateModel(mpProgressModel.get());
 
-	auto timestamp = AppendTextColumn("Time", cFileProgressDataModel::Col_Timestamp);
+	auto timestamp = AppendTextColumn("Time", cFileProgressDataModel::columnTimestamp);
 	timestamp->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
 
-	auto filename = AppendTextColumn("File Name", cFileProgressDataModel::Col_Filename, wxDATAVIEW_CELL_INERT, 400);
+	auto filename = AppendTextColumn("File Name", cFileProgressDataModel::columnFilename, wxDATAVIEW_CELL_INERT, 400);
 	filename->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
 	filename->SetMinWidth(300);
 
-	auto progress = AppendProgressColumn("Progress", cFileProgressDataModel::Col_Progress);
+	auto progress = AppendProgressColumn("Progress", cFileProgressDataModel::columnProgress);
 	progress->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+
+	if (!suffixColumnLabel.empty())
+	{
+		auto result = AppendTextColumn(suffixColumnLabel, cFileProgressDataModel::columnResult, wxDATAVIEW_CELL_INERT, 50);
+		result->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+		result->SetMinWidth(50);
+	}
 
 	Bind(NEW_FILE_PROGRESS, &cFileProgressCtrl::OnNewFileProgress, this);
 	Bind(UPDATE_FILE_PROGRESS, &cFileProgressCtrl::OnUpdateFileProgress, this);
@@ -109,9 +125,32 @@ std::size_t cFileProgressCtrl::Append(const wxString& text)
 	return row;
 }
 
+std::size_t cFileProgressCtrl::Append(const wxString& text, const wxString& result)
+{
+	// Freeze the window to prevent scrollbar jumping
+	Freeze();
+
+	auto row = mpProgressModel->Append(text, result);
+
+	EnsureVisible(mpProgressModel->GetItem(row));
+
+	// Allow the window to redraw
+	Thaw();
+
+	Refresh();
+
+	return row;
+}
+
 void cFileProgressCtrl::OnNewFileProgress(cFileProgressEvent& event)
 {
-	auto row = Append(event.GetFileName());
+	size_t row = 0;
+
+	if (event.GetResult().empty())
+		row = Append(event.GetFileName());
+	else
+		row = Append(event.GetFileName(), event.GetResult());
+
 	mID_to_Row[event.GetFileProcessID()] = row;
 }
 
@@ -120,10 +159,15 @@ void cFileProgressCtrl::OnUpdateFileProgress(cFileProgressEvent& event)
 	auto row = mID_to_Row[event.GetFileProcessID()];
 	if (!event.GetFileName().empty())
 	{
-		mpProgressModel->SetValueByRow(wxVariant(event.GetFileName()), row, 1);
+		mpProgressModel->SetValueByRow(wxVariant(event.GetFileName()), row, cFileProgressDataModel::columnFilename);
 	}
 
-	mpProgressModel->SetValueByRow(wxVariant(event.GetProcess_pct()), row, 2);
+	if (!event.GetResult().empty())
+	{
+		mpProgressModel->SetValueByRow(wxVariant(event.GetResult()), row, cFileProgressDataModel::columnResult);
+	}
+
+	mpProgressModel->SetValueByRow(wxVariant(event.GetProcess_pct()), row, cFileProgressDataModel::columnProgress);
 	Refresh();
 }
 
@@ -132,10 +176,15 @@ void cFileProgressCtrl::OnCompleteFileProgress(cFileProgressEvent& event)
 	auto row = mID_to_Row[event.GetFileProcessID()];
 	if (!event.GetFileName().empty())
 	{
-		mpProgressModel->SetValueByRow(wxVariant(event.GetFileName()), row, 1);
+		mpProgressModel->SetValueByRow(wxVariant(event.GetFileName()), row, cFileProgressDataModel::columnFilename);
 	}
 
-	mpProgressModel->SetValueByRow(wxVariant(100), row, 2);
+	if (!event.GetResult().empty())
+	{
+		mpProgressModel->SetValueByRow(wxVariant(event.GetResult()), row, cFileProgressDataModel::columnResult);
+	}
+
+	mpProgressModel->SetValueByRow(wxVariant(100), row, cFileProgressDataModel::columnProgress);
 	Refresh();
 }
 

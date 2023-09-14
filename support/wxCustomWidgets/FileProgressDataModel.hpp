@@ -16,16 +16,19 @@ class cFileProgressDataModel: public wxDataViewVirtualListModel
 public:
     enum
     {
-        Col_Timestamp,
-        Col_Filename,
-        Col_Progress
+        columnTimestamp,
+        columnFilename,
+        columnProgress,
+        columnResult
     };
 
     cFileProgressDataModel();
 
     // helper methods to change the model
 
-    std::size_t Append( const wxString &text );
+    std::size_t Append(const wxString &text);
+    std::size_t Append(const wxString& text, const wxString& result);
+
     void DeleteItem( const wxDataViewItem &item );
     void DeleteItems( const wxDataViewItemArray &items );
     void AddMany();
@@ -38,11 +41,13 @@ public:
 
     void GetValueByRow( wxVariant &variant, unsigned int row, unsigned int col ) const override;
     bool GetAttrByRow( unsigned int row, unsigned int col, wxDataViewItemAttr &attr ) const override;
+
     bool SetValueByRow( const wxVariant &variant, unsigned int row, unsigned int col ) override;
 
 private:
     wxArrayString mTimestampColValues;
     wxArrayString mFilenameColValues;
     wxArrayInt    mProgressColValues;
+    wxArrayString mResultColValues;
 };
 

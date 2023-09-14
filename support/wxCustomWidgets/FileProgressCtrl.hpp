@@ -37,11 +37,15 @@ public:
     int GetProcess_pct() const;
     void SetProgress_pct(int progress_pct);
 
+    wxString GetResult() const;
+    void SetResult(const wxString& result);
+
 private:
     int mFileProcessID = 0; // <- id assigned to the file progress
     int mProgress_pct = 0;  // <- range is o to 100
 
     wxString mFileName;
+    wxString mResult;
 };
 
 wxDECLARE_EVENT(NEW_FILE_PROGRESS, cFileProgressEvent);
@@ -56,11 +60,12 @@ class cFileProgressCtrl: public wxDataViewCtrl
 {
 public:
     cFileProgressCtrl();
-    cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition,
+    cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxString& suffixColumnLabel, const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize, long style = 0, const wxValidator& validator = wxDefaultValidator,
         const wxString& name = wxDataViewCtrlNameStr);
 
     std::size_t Append(const wxString& text);
+    std::size_t Append(const wxString& text, const wxString& result);
 
     // Event Handlers
     void OnNewFileProgress(cFileProgressEvent& event);
