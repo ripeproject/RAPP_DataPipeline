@@ -20,7 +20,7 @@ cLidarData2CeresConverter::cLidarData2CeresConverter(int id, std::filesystem::di
     mOusterSerializer.setBufferCapacity(256*1024*1024);
 
     mExperimentSerializer.setVersion(1, 0);
-    mExperimentSerializer.setBufferCapacity(2048);
+    mExperimentSerializer.setBufferCapacity(16384);
 }
 
 cLidarData2CeresConverter::~cLidarData2CeresConverter()
