@@ -8,13 +8,16 @@
 
 #include <memory>
 #include <string>
+#include <atomic>
 
+
+extern std::atomic<uint32_t> g_num_failed_files;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void update_file_progress(const int id, std::string filename, const int progress_pct);
 extern void update_file_progress(const int id, const int progress_pct);
-extern void complete_file_progress(const int id, std::string filename);
+extern void complete_file_progress(const int id, std::string filename, std::string suffix);
 
 extern std::mutex g_failed_dir_mutex;
 
@@ -134,7 +137,7 @@ void cLidarDataVerifier::run()
 
     mFileReader.close();
 
-    complete_file_progress(mID, mFileToCheck.string());
+    complete_file_progress(mID, mFileToCheck.string(), "passed");
 }
 
 //-----------------------------------------------------------------------------
@@ -147,6 +150,10 @@ void cLidarDataVerifier::moveFileToFailed()
 
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
+
+    complete_file_progress(mID, mFileToCheck.string(), "failed");
+
+    ++g_num_failed_files;
 }
 
 //-----------------------------------------------------------------------------

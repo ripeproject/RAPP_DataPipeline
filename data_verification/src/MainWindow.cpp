@@ -61,7 +61,7 @@ void update_file_progress(const int id, const int progress_pct)
 	}
 }
 
-void complete_file_progress(const int id, std::string filename)
+void complete_file_progress(const int id, std::string filename, std::string suffix)
 {
 	if (g_pEventHandler)
 	{
@@ -69,7 +69,10 @@ void complete_file_progress(const int id, std::string filename)
 		event->SetFileProcessID(id);
 
 		if (!filename.empty())
+		{
+			filename += " => " + suffix;
 			event->SetFileName(filename);
+		}
 
 		wxQueueEvent(g_pEventHandler, event);
 	}
