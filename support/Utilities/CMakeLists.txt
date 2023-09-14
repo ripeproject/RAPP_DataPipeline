@@ -98,6 +98,7 @@ target_include_directories(utilities PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../comm
 target_include_directories(utilities PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../StringUtils)
 
 target_link_libraries(utilities PRIVATE fmt::fmt)
+target_link_libraries(utilities PRIVATE string_utils)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
