@@ -128,7 +128,7 @@ void cMainWindow::CreateControls()
 	mpConvertButton->Disable();
 	mpConvertButton->Bind(wxEVT_BUTTON, &cMainWindow::OnConvert, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "");
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
