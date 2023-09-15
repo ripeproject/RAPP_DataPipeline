@@ -52,6 +52,13 @@ namespace nStringUtils
 	 *
 	 * The filename: d:\test\long_file_name.extension -> d:\...\long_file_name
 	 */
+	std::string safeFilename(std::string filename);
+
+	/**
+	 * Compacts a filename to a maximum length
+	 *
+	 * The filename: d:\test\long_file_name.extension -> d:\...\long_file_name
+	 */
 	std::string compactFilename(const std::string& filename, std::size_t max_len);
 
 } // End of Namespace nStringUtils

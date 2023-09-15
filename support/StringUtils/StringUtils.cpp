@@ -4,6 +4,8 @@
 #include <ctime>
 #include <cstring>
 #include <filesystem>
+#include <algorithm>
+#include <cctype>
 
 
 bool nStringUtils::iequal(const std::string& lhs, const char* const rhs)
@@ -163,6 +165,29 @@ nStringUtils::sFilenameAndExtension nStringUtils::removeProcessedTimestamp(const
 	}
 
 	return { base, extension };
+}
+
+std::string nStringUtils::safeFilename(std::string filename)
+{
+	std::replace_if(filename.begin(), filename.end(),
+		[](std::string::value_type c) 
+		{
+			switch (c)
+			{
+			case ':': return true;
+			case '\\': return true;
+			case '/': return true;
+			case '<': return true;
+			case '>': return true;
+			case '|': return true;
+			case '?': return true;
+			case '*': return true;
+			case '"': return true;
+			}
+			return std::isspace(c) != 0;
+		}, '_');
+
+	return filename;
 }
 
 std::string nStringUtils::compactFilename(const std::string& filename, std::size_t max_len)
