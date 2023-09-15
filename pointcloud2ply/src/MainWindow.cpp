@@ -46,6 +46,17 @@ void update_file_progress(const int id, const int progress_pct)
 	}
 }
 
+void complete_file_progress(const int id)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
@@ -98,7 +109,7 @@ void cMainWindow::CreateControls()
 	mpExportButton->Disable();
 	mpExportButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExport, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "");
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control

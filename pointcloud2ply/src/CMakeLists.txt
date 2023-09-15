@@ -33,12 +33,14 @@ PRIVATE
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE "../support/PointCloud")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
+target_include_directories(console_app PRIVATE "../support/Utilities")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::ctrl)
 target_link_libraries(console_app PRIVATE pointcloud_io)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE tinyply)
+target_link_libraries(console_app PRIVATE utilities)
 
 
 #
