@@ -10,6 +10,8 @@
 #include "Kinematics_GPS.hpp"
 #include "Kinematics_SLAM.hpp"
 
+#include "TextProgressBar.hpp"
+
 #include <lyra/lyra.hpp>
 
 #include <eigen3/Eigen/Eigen>
@@ -27,24 +29,28 @@ std::mutex g_console_mutex;
 namespace
 {
 	int numFilesToProcess = 0;
+	cTextProgressBar progress_bar;
 }
 
 void console_message(const std::string& msg)
 {
 	std::lock_guard<std::mutex> guard(g_console_mutex);
-	std::clog << msg << std::endl;
+	std::clog << "\n" << msg << std::endl;
 }
 
 void new_file_progress(const int id, std::string filename)
 {
+	progress_bar.addProgressEntry(id, filename);
 }
 
 void update_file_progress(const int id, const int progress_pct)
 {
+	progress_bar.updateProgressEntry(id, progress_pct);
 }
 
 void complete_file_progress(const int id)
 {
+	progress_bar.finishProgressEntry(id);
 }
 
 
@@ -313,6 +319,8 @@ int main(int argc, char** argv)
 
 		file_processors.push_back(fp);
 	}
+
+	progress_bar.setMaxID(numFilesToProcess);
 
 	files_to_process.clear();
 
