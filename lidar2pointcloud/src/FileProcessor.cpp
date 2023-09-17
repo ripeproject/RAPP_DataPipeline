@@ -33,6 +33,31 @@ cFileProcessor::~cFileProcessor()
     mFileReader.close();
 }
 
+void cFileProcessor::setValidRange_m(double min_dist_m, double max_dist_m)
+{
+    mConverter->setValidRange_m(min_dist_m, max_dist_m);
+}
+
+void cFileProcessor::setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg)
+{
+    mConverter->setAzimuthWindow_deg(min_azimuth_deg, max_azimuth_deg);
+}
+
+void cFileProcessor::setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg)
+{
+    mConverter->setAltitudeWindow_deg(min_altitude_deg, max_altitude_deg);
+}
+
+void cFileProcessor::saveAggregatePointCloud(bool aggregatePointCloud)
+{
+    mConverter->saveAggregatePointCloud(aggregatePointCloud);
+}
+
+void cFileProcessor::saveReducedPointCloud(bool reducePointCloud)
+{
+    mConverter->saveReducedPointCloud(reducePointCloud);
+}
+
 /**
  * Set the kinematic type to apply to the pointcloud data.
  */

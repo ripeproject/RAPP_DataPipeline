@@ -33,16 +33,19 @@ struct sPoint_t
 class cLidar2PointCloud : public cOusterParser, public cPointCloudSerializer
 {
 public:
+	cLidar2PointCloud();
+	~cLidar2PointCloud();
+
 	/**
 	 * Set the valid range in meters
-	 * 
+	 *
 	 * The lidar return range is considered valid if:
 	 * 		min_dist_m < range_m < max_dist_m
-	 * 
+	 *
 	 * @param	min_dist_m	: The minimum distance to be considered valid
 	 * @param	max_dist_m	: The maximum distance to be considered valid
 	 */
-	static void setValidRange_m(double min_dist_m, double max_dist_m);
+	void setValidRange_m(double min_dist_m, double max_dist_m);
 
 	/**
 	 * Set the azimuth bounds to consider valid data
@@ -54,7 +57,7 @@ public:
 	 * @param	min_azimuth_deg	: The minimum azimuth to be considered valid
 	 * @param	max_azimuth_deg	: The maximum azimuth to be considered valid
 	 */
-	static void setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg);
+	void setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg);
 
 	/**
 	 * Set the altitude bounds to consider valid data
@@ -65,15 +68,22 @@ public:
 	 * @param	min_altitude_deg	: The minimum altitude to be considered valid
 	 * @param	max_altitude_deg	: The maximum altitude to be considered valid
 	 */
-	static void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
+	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
 
-	static void saveAggregatePointCloud(bool aggregatePointCloud);
-	static void saveReducedPointCloud(bool reducePointCloud);
+	/**
+	 * Save aggregate point cloud
+	 *
+	 * An aggregate point cloud is where all of the individual point clouds generated
+	 * by the individual lidar scan are combined into one point cloud.
+	 */
+	void saveAggregatePointCloud(bool aggregatePointCloud);
 
-
-public:
-	cLidar2PointCloud();
-	~cLidar2PointCloud();
+	/**
+	 * Save reduced point cloud
+	 *
+	 * If true, all points that are outside of some bound are not stored in the data file.
+	 */
+	void saveReducedPointCloud(bool reducePointCloud);
 
 	/**
 	 * Set the kinematic type to apply to the pointcloud data.
@@ -137,11 +147,17 @@ private:
     void computePointCloud(const cOusterLidarData& data);
 
 private:
-	static double mMinDistance_m;
-	static double mMaxDistance_m;
+	double mMinDistance_m = 0.001;
+	double mMaxDistance_m = 1000.0;
 
-	static bool mAggregatePointCloud;
-	static bool mSaveReducedPointCloud;
+	double mMinEncoder_rad = 0.0;
+	double mMaxEncoder_rad = 2.0 * std::numbers::pi;
+
+	double mMinAltitude_rad = -std::numbers::pi;
+	double mMaxAltitude_rad = +std::numbers::pi;
+
+	bool mAggregatePointCloud = false;
+	bool mSaveReducedPointCloud = false;
 
 private:
 	std::optional<ouster::beam_intrinsics_2_t>   mBeamIntrinsics;

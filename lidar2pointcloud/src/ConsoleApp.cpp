@@ -64,8 +64,14 @@ int main(int argc, char** argv)
 	double roll_deg = 0.0;
 	double yaw_deg = 0.0;
 
-	double min_dist_m = 0;
-	double max_dist_m = 1000;
+	double min_dist_m = 0.0;
+	double max_dist_m = 1000.0;
+
+	double min_azimuth_deg = 0.0;
+	double max_azimuth_deg = 360.0;
+
+	double min_altitude_deg = -90.0;
+	double max_altitude_deg = 90.0;
 
 	bool aggregatePointCloud = false;
 	bool saveReducedPointCloud = false;
@@ -139,19 +145,6 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	cLidar2PointCloud::setValidRange_m(min_dist_m, max_dist_m);
-
-	cLidar2PointCloud::saveAggregatePointCloud(false);
-	cLidar2PointCloud::saveReducedPointCloud(false);
-
-	if (aggregatePointCloud)
-	{
-		cLidar2PointCloud::saveAggregatePointCloud(aggregatePointCloud);
-	}
-	else if (saveReducedPointCloud)
-	{
-		cLidar2PointCloud::saveReducedPointCloud(saveReducedPointCloud);
-	}
 
 	const std::filesystem::path input{ input_directory };
 
@@ -291,6 +284,13 @@ int main(int argc, char** argv)
 		}
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+
+		fp->setValidRange_m(min_dist_m, max_dist_m);
+		fp->setAzimuthWindow_deg(min_azimuth_deg, max_azimuth_deg);
+		fp->setAltitudeWindow_deg(min_altitude_deg, max_altitude_deg);
+
+		fp->saveAggregatePointCloud(aggregatePointCloud);
+		fp->saveReducedPointCloud(saveReducedPointCloud);
 
 		std::unique_ptr<cKinematics> kinematics;
 

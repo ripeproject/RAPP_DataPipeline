@@ -161,12 +161,13 @@ void cMainWindow::CreateControls()
 	mpLoadDstButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDstBrowse, this);
 
 	wxArrayString choice;
+	choice.Add("Configuration File");
 	choice.Add("Constant Speed");
 	choice.Add("Dolly");
 	choice.Add("GPS");
 	choice.Add("SLAM");
 	mpKinematicModel = new wxComboBox(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, choice, wxCB_DROPDOWN | wxCB_READONLY);
-	mpKinematicModel->SetSelection(1);
+	mpKinematicModel->SetSelection(2);
 	mpKinematicModel->Bind(wxEVT_TEXT, &cMainWindow::OnModelChange, this);
 
 	mpSensorPitch_deg = new wxTextCtrl(this, wxID_ANY, "-90.0");
@@ -208,7 +209,7 @@ void cMainWindow::CreateControls()
 	mpComputeButton->Disable();
 	mpComputeButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCompute, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "");
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
@@ -217,6 +218,17 @@ void cMainWindow::CreateControls()
 	mpOriginalLog = wxLog::SetActiveTarget(new wxLogTextCtrl(mpLogCtrl));
 
 	mpKinematicOptions = new wxStaticBoxSizer(wxVERTICAL, this);
+
+	/////////////////////////////////////////////////////////////////
+	// Build the Configuration File Panel
+	/////////////////////////////////////////////////////////////////
+	mpKM_ConfigurationFile = new wxPanel(this, wxID_ANY);
+
+	mpLoadCfgFile	= new wxTextCtrl(mpKM_ConfigurationFile, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
+	mpLoadCfgButton = new wxButton(mpKM_ConfigurationFile, wxID_ANY, "Browse");
+	mpLoadCfgButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgFileBrowse, this);
+
+	createConfigFileLayout();
 
 	/////////////////////////////////////////////////////////////////
 	// Build the Constant Speed Options Panel
@@ -273,6 +285,19 @@ void cMainWindow::CreateControls()
 	// Build the SLAM Options Panel
 	/////////////////////////////////////////////////////////////////
 	mpKM_SlamOptions = new wxPanel(this, wxID_ANY);
+}
+
+void cMainWindow::createConfigFileLayout()
+{
+	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+	sizer->AddSpacer(5);
+
+	sizer->Add(mpLoadCfgFile, 1);
+	sizer->AddSpacer(5);
+	sizer->Add(mpLoadCfgButton);
+
+	mpKM_ConfigurationFile->SetSizerAndFit(sizer);
+	mpKM_ConfigurationFile->Hide();
 }
 
 void cMainWindow::createConstantSpeedLayout()
@@ -378,7 +403,7 @@ void cMainWindow::CreateLayout()
 
 		sizer->AddSpacer(10);
 
-		auto* so_sz = new wxStaticBoxSizer(wxVERTICAL, this, "Sensor Orientations");
+		mpSensorOrientation = new wxStaticBoxSizer(wxVERTICAL, this, "Sensor Orientation");
 		wxBoxSizer* soi_sz = new wxBoxSizer(wxVERTICAL);
 
 		grid_sizer = new wxFlexGridSizer(2);
@@ -397,14 +422,15 @@ void cMainWindow::CreateLayout()
 		soi_sz->AddSpacer(5);
 		soi_sz->Add(mpRotateSensorToSEU, wxSizerFlags().Proportion(0).Expand());
 
-		so_sz->Add(soi_sz, wxSizerFlags().Proportion(0).Expand());
-		sizer->Add(so_sz, wxSizerFlags().Proportion(1).Expand());
+		mpSensorOrientation->Add(soi_sz, wxSizerFlags().Proportion(0).Expand());
+		sizer->Add(mpSensorOrientation, wxSizerFlags().Proportion(1).Expand());
 
 		topsizer->Add(sizer, wxSizerFlags().Proportion(1).Expand());
 	}
+
 	topsizer->AddSpacer(5);
 
-	auto* limit_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Sensor Limits");
+	mpSensorLimits = new wxStaticBoxSizer(wxHORIZONTAL, this, "Sensor Limits");
 
 	auto* lg_sz = new wxFlexGridSizer(4);
 	lg_sz->SetVGap(5);
@@ -427,16 +453,16 @@ void cMainWindow::CreateLayout()
 	lg_sz->Add(new wxStaticText(this, wxID_ANY, "Maximum Altitude (deg) :"), 0, wxALIGN_CENTER_VERTICAL);
 	lg_sz->Add(mpMaximumAltitude_deg, wxSizerFlags().Proportion(1).Expand());
 
-	limit_sz->Add(lg_sz, wxSizerFlags().Proportion(1).Expand());
-	topsizer->Add(limit_sz, wxSizerFlags().Proportion(0).Expand());
+	mpSensorLimits->Add(lg_sz, wxSizerFlags().Proportion(1).Expand());
+	topsizer->Add(mpSensorLimits, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
 
-	auto* op_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Options");
-	op_sz->Add(mpAggregatePointCloud, wxSizerFlags().Proportion(1).Expand());
-	op_sz->AddSpacer(10);
-	op_sz->Add(mpSaveReducedPointCloud, wxSizerFlags().Proportion(1).Expand());
-	topsizer->Add(op_sz, wxSizerFlags().Proportion(0).Expand());
+	mpOptions = new wxStaticBoxSizer(wxHORIZONTAL, this, "Options");
+	mpOptions->Add(mpAggregatePointCloud, wxSizerFlags().Proportion(1).Expand());
+	mpOptions->AddSpacer(10);
+	mpOptions->Add(mpSaveReducedPointCloud, wxSizerFlags().Proportion(1).Expand());
+	topsizer->Add(mpOptions, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(10);
 	topsizer->Add(mpComputeButton, wxSizerFlags().Proportion(0).Expand());
@@ -503,6 +529,18 @@ void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 		mpComputeButton->Enable();
 }
 
+void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
+{
+	wxFileDialog dlg(this, _("Configuration file"), "", "",
+		"Config files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mConfigurationFilename = dlg.GetPath();
+	mpLoadCfgFile->SetValue(mConfigurationFilename);
+}
+
 void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 {
 	auto selection = mpKinematicModel->GetSelection();
@@ -511,6 +549,16 @@ void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 	switch (selection)
 	{
 	case 0:
+		mpKM_ConstantSpeedOptions->Hide();
+		mpKM_DollyOptions->Hide();
+		mpKM_GpsOptions->Hide();
+		mpKM_SlamOptions->Hide();
+		mpKinematicOptions->Prepend(mpKM_ConfigurationFile, 1, wxGROW);
+		mpKinematicOptions->GetStaticBox()->SetLabelText("Configuration File");
+		mpKM_ConfigurationFile->Show();
+		break;
+	case 1:
+		mpKM_ConfigurationFile->Hide();
 		mpKM_DollyOptions->Hide();
 		mpKM_GpsOptions->Hide();
 		mpKM_SlamOptions->Hide();
@@ -518,7 +566,8 @@ void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 		mpKinematicOptions->GetStaticBox()->SetLabelText("Constant Speeds Options");
 		mpKM_ConstantSpeedOptions->Show();
 		break;
-	case 1:
+	case 2:
+		mpKM_ConfigurationFile->Hide();
 		mpKM_ConstantSpeedOptions->Hide();
 		mpKM_GpsOptions->Hide();
 		mpKM_SlamOptions->Hide();
@@ -526,7 +575,8 @@ void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 		mpKinematicOptions->GetStaticBox()->SetLabelText("Dolly Options");
 		mpKM_DollyOptions->Show();
 		break;
-	case 2:
+	case 3:
+		mpKM_ConfigurationFile->Hide();
 		mpKM_ConstantSpeedOptions->Hide();
 		mpKM_DollyOptions->Hide();
 		mpKM_SlamOptions->Hide();
@@ -534,7 +584,8 @@ void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 		mpKinematicOptions->GetStaticBox()->SetLabelText("GPS Options");
 		mpKM_GpsOptions->Show();
 		break;
-	case 3:
+	case 4:
+		mpKM_ConfigurationFile->Hide();
 		mpKM_ConstantSpeedOptions->Hide();
 		mpKM_DollyOptions->Hide();
 		mpKM_GpsOptions->Hide();
@@ -555,36 +606,15 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	mpMinimumDistance_m->TransferDataFromWindow();
 	mpMaximumDistance_m->TransferDataFromWindow();
 
-	cLidar2PointCloud::setValidRange_m(mMinimumDistance_m,
-		mMaximumDistance_m);
-
 	mpMinimumAzimuth_deg->TransferDataFromWindow();
 	mpMaximumAzimuth_deg->TransferDataFromWindow();
-
-	cLidar2PointCloud::setAzimuthWindow_deg(mMinimumAzimuth_deg,
-		mMaximumAzimuth_deg);
 
 	mpMinimumAltitude_deg->TransferDataFromWindow();
 	mpMaximumAltitude_deg->TransferDataFromWindow();
 
-	cLidar2PointCloud::setAltitudeWindow_deg(mMinimumAltitude_deg,
-		mMaximumAltitude_deg);
-
 	mpSensorYaw_deg->TransferDataFromWindow();
 	mpSensorPitch_deg->TransferDataFromWindow();
 	mpSensorRoll_deg->TransferDataFromWindow();
-
-	cLidar2PointCloud::saveAggregatePointCloud(false);
-	cLidar2PointCloud::saveReducedPointCloud(false);
-
-	if (mpAggregatePointCloud->GetValue())
-	{
-		cLidar2PointCloud::saveAggregatePointCloud(true);
-	}
-	else if (mpSaveReducedPointCloud->GetValue())
-	{
-		cLidar2PointCloud::saveReducedPointCloud(true);
-	}
 
 	std::string input_directory = mSourceData.ToStdString();
 	std::string output_directory = mDestinationData.ToStdString();
@@ -654,24 +684,82 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	eKinematics model;
 	model = eKinematics::NONE;
 
+	bool useConfigFile = false;
+	double X_m = 0.0;
+	double Y_m = 0.0;
+	double Z_m = 0.0;
+
+	// Configuration File Defaults
+	double defaultVx_mmps = 0.0;
+	double defaultVy_mmps = 0.0;
+	double defaultVz_mmps = 0.0;
+	double defaultHeight_m = 0.0;
+	char defaultHeightAxis = 'Z';
+
+	double defaultPitch_deg = 0.0;
+	double defaultRoll_deg  = 0.0;
+	double defaultYaw_deg   = 0.0;
+	bool defaultRotateToSEU = true;
+
+	double defaultMinDistance_m = 0.0;
+	double defaultMaxDistance_m = 400.0;
+	double defaultMinAzimuth_deg = 0.0;
+	double defaultMaxAzimuth_deg = 360.0;
+	double defaultMinAltitude_deg = -25.0;
+	double defaultMaxAltitude_deg = 25.0;
+	
+	bool defaultAggregatePointCloud = true;
+	bool defaultSaveReducedPointCloud = false;
+
+
 	switch (mpKinematicModel->GetSelection())
 	{
 	case 0:
+	{
+		useConfigFile = true;
+
+		if (mConfigurationFilename.empty())
+			return;
+
+		std::ifstream in;
+		in.open(mConfigurationFilename.ToStdString());
+		if (!in.is_open())
+			return;
+
+		nlohmann::json configDoc;
+		try
+		{
+			in >> configDoc;
+		}
+		catch (const nlohmann::json::parse_error& e)
+		{
+			return;
+		}
+		catch (const std::exception& e)
+		{
+			return;
+		}
+
+//		mConfiguration;
+
+		break;
+	}
+	case 1:
 		model = eKinematics::CONSTANT;
 		mpKM_CSO_Vx_mmps->TransferDataFromWindow();
 		mpKM_CSO_Vy_mmps->TransferDataFromWindow();
 		mpKM_CSO_Vz_mmps->TransferDataFromWindow();
 		mpKM_CSO_Height_m->TransferDataFromWindow();
 		break;
-	case 1:
+	case 2:
 		model = eKinematics::DOLLY;
 		mpKM_DO_PitchOffset_deg->TransferDataFromWindow();
 		mpKM_DO_RollOffset_deg->TransferDataFromWindow();
 		break;
-	case 2:
+	case 3:
 		model = eKinematics::GPS;
 		break;
-	case 3:
+	case 4:
 		model = eKinematics::SLAM;
 		break;
 	default:
@@ -684,6 +772,12 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
+		if (useConfigFile)
+		{
+			auto in = removeMeasurementTimestamp(in_file.path().filename().string());
+			auto filename = safeFilename(in.filename);
+		}
+
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
@@ -708,6 +802,13 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
+		fp->setValidRange_m(mMinimumDistance_m, mMaximumDistance_m);
+		fp->setAzimuthWindow_deg(mMinimumAzimuth_deg, mMaximumAzimuth_deg);
+		fp->setAltitudeWindow_deg(mMinimumAltitude_deg, mMaximumAltitude_deg);
+
+		fp->saveAggregatePointCloud(mpAggregatePointCloud->GetValue());
+		fp->saveReducedPointCloud(mpSaveReducedPointCloud->GetValue());
+
 		std::unique_ptr<cKinematics> kinematics;
 
 		switch (model)
@@ -724,15 +825,15 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 				break;
 			case 1:
 				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
-				km->setX_Offset_m(mKM_CSO_Height_m);
+				km->setInitialPosition_m(mKM_CSO_Height_m, Y_m, Z_m);
 				break;
 			case 2:
 				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
-				km->setY_Offset_m(mKM_CSO_Height_m);
+				km->setInitialPosition_m(X_m, mKM_CSO_Height_m, Z_m);
 				break;
 			case 3:
 				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
-				km->setZ_Offset_m(mKM_CSO_Height_m);
+				km->setInitialPosition_m(X_m, Y_m, mKM_CSO_Height_m);
 				break;
 			}
 

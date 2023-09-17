@@ -14,9 +14,12 @@ public:
 	cKinematics_Constant(double Vx_mmps, double Vy_mmps, double Vz_mmps);
 
 	void setHeightAxis(eHEIGHT_AXIS axis);
-	void setX_Offset_m(double offset_m);
-	void setY_Offset_m(double offset_m);
-	void setZ_Offset_m(double offset_m);
+
+	void setInitialPosition_m(double x_m, double y_m, double z_m);
+
+//	void setX_Offset_m(double offset_m);
+//	void setY_Offset_m(double offset_m);
+//	void setZ_Offset_m(double offset_m);
 
 	void writeHeader(cPointCloudSerializer& serializer) override;
 

@@ -21,6 +21,14 @@ void cKinematics_Constant::setHeightAxis(eHEIGHT_AXIS axis)
     mHeightAxis = axis;
 }
 
+void cKinematics_Constant::setInitialPosition_m(double x_m, double y_m, double z_m)
+{
+    mX_Offset_m = x_m;
+    mY_Offset_m = y_m;
+    mZ_Offset_m = z_m;
+}
+
+/*
 void cKinematics_Constant::setX_Offset_m(double offset_m)
 {
     mX_Offset_m = offset_m;
@@ -35,6 +43,7 @@ void cKinematics_Constant::setZ_Offset_m(double offset_m)
 {
     mZ_Offset_m = offset_m;
 }
+*/
 
 //-----------------------------------------------------------------------------
 void cKinematics_Constant::writeHeader(cPointCloudSerializer& serializer)

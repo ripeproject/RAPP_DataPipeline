@@ -27,13 +27,6 @@ namespace
 
 	constexpr double g_mps2 = 9.80665;
 
-	double min_encoder_rad = 0.0;
-	double max_encoder_rad = 2.0 * std::numbers::pi;
-
-	double min_altitude_rad = -std::numbers::pi;
-	double max_altitude_rad = +std::numbers::pi;
-
-
 	/** Lookup table of beam directions and offsets. */
 	struct sXYZ_Lut_t
 	{
@@ -128,7 +121,9 @@ namespace
 	sXYZ_Lut_t make_xyz_lut(size_t w, size_t h, double range_unit, double lidar_origin_to_beam_origin_mm,
 		const ouster::cTransformMatrix<double>& transform,
 		const std::vector<double>& azimuth_angles_deg,
-		const std::vector<double>& altitude_angles_deg)
+		const std::vector<double>& altitude_angles_deg,
+		double min_encoder_rad, double max_encoder_rad,
+		double min_altitude_rad, double max_altitude_rad)
 	{
 		if (w <= 0 || h <= 0)
 			throw std::invalid_argument("lut dimensions must be greater than zero");
@@ -243,39 +238,10 @@ namespace
 // S t a t i c   V a r i a b l e s   a n d   M e t h o d s
 ///////////////////////////////////////////////////////////////////////////////
 
-double cLidar2PointCloud::mMinDistance_m = 0.001;
-double cLidar2PointCloud::mMaxDistance_m = 1000.0;
-
-bool cLidar2PointCloud::mAggregatePointCloud = false;
-bool cLidar2PointCloud::mSaveReducedPointCloud = false;
-
-
-void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
-{
-	mMinDistance_m = std::max(min_dist_m, 0.001);
-	mMaxDistance_m = std::min(max_dist_m, 1000.0);
-}
-
 void cLidar2PointCloud::setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg)
 {
-	min_encoder_rad = min_azimuth_deg * std::numbers::pi / 180.0;
-	max_encoder_rad = max_azimuth_deg * std::numbers::pi / 180.0;
-}
-
-void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg)
-{
-	min_altitude_rad = min_altitude_deg * std::numbers::pi / 180.0;
-	max_altitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
-}
-
-void cLidar2PointCloud::saveAggregatePointCloud(bool aggregatePointCloud)
-{
-	mAggregatePointCloud = aggregatePointCloud;
-}
-
-void cLidar2PointCloud::saveReducedPointCloud(bool reducePointCloud)
-{
-	mSaveReducedPointCloud = reducePointCloud;
+	mMinEncoder_rad = min_azimuth_deg * std::numbers::pi / 180.0;
+	mMaxEncoder_rad = max_azimuth_deg * std::numbers::pi / 180.0;
 }
 
 
@@ -290,6 +256,28 @@ cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(1024)
 
 cLidar2PointCloud::~cLidar2PointCloud()
 {
+}
+
+void cLidar2PointCloud::setValidRange_m(double min_dist_m, double max_dist_m)
+{
+	mMinDistance_m = std::max(min_dist_m, 0.001);
+	mMaxDistance_m = std::min(max_dist_m, 1000.0);
+}
+
+void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg)
+{
+	mMinAltitude_rad = min_altitude_deg * std::numbers::pi / 180.0;
+	mMaxAltitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
+}
+
+void cLidar2PointCloud::saveAggregatePointCloud(bool aggregatePointCloud)
+{
+	mAggregatePointCloud = aggregatePointCloud;
+}
+
+void cLidar2PointCloud::saveReducedPointCloud(bool reducePointCloud)
+{
+	mSaveReducedPointCloud = reducePointCloud;
 }
 
 void cLidar2PointCloud::setKinematicModel(std::unique_ptr<cKinematics> model)
@@ -377,7 +365,8 @@ void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
     cTransformMatrix<double> transform(lidar.lidar_to_sensor_transform, true);
 
     auto xyz = make_xyz_lut(format.columns_per_frame, format.pixels_per_column, range_unit_mm,
-        beam.lidar_to_beam_origins_mm, transform, beam.azimuth_angles_deg, beam.altitude_angles_deg);
+        beam.lidar_to_beam_origins_mm, transform, beam.azimuth_angles_deg, beam.altitude_angles_deg,
+		mMinEncoder_rad, mMaxEncoder_rad, mMinAltitude_rad, mMaxAltitude_rad);
 
 	mExcludePoint = xyz.exclude;
     mUnitVectors = xyz.direction;

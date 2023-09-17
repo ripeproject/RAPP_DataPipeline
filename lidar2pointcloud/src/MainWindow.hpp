@@ -13,8 +13,12 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <memory>
 #include <queue>
+#include <map>
+#include <string>
 
 
 // Forward Declarations
@@ -39,6 +43,7 @@ protected:
 	void OnSrcFileBrowse(wxCommandEvent& event);
 	void OnSrcDirBrowse(wxCommandEvent& event);
 	void OnDstBrowse(wxCommandEvent& event);
+	void OnCfgFileBrowse(wxCommandEvent& event);
 	void OnModelChange(wxCommandEvent& event);
 	void OnCompute(wxCommandEvent& event);
 
@@ -50,6 +55,7 @@ private:
 	void stopDataProcessing();
 
 private:
+	void createConfigFileLayout();
 	void createConstantSpeedLayout();
 	void createDollyLayout();
 
@@ -64,7 +70,14 @@ private:
 	wxButton* mpLoadDstButton = nullptr;
 
 	wxComboBox* mpKinematicModel = nullptr;
+
 	wxStaticBoxSizer* mpKinematicOptions = nullptr;
+
+	/*** Configuration File ***/
+	wxPanel*	mpKM_ConfigurationFile = nullptr;
+
+	wxTextCtrl* mpLoadCfgFile = nullptr;
+	wxButton*	mpLoadCfgButton = nullptr;
 
 	/*** Constant Speed Options (CSO) ***/
 	wxPanel* mpKM_ConstantSpeedOptions = nullptr;
@@ -106,6 +119,8 @@ private:
 	wxPanel* mpKM_SlamOptions = nullptr;
 
 	/*** Sensor Orientation ***/
+	wxStaticBoxSizer* mpSensorOrientation;
+
 	double mSensorPitch_deg = -90.0;
 	double mSensorRoll_deg = 0.0;
 	double mSensorYaw_deg = 270.0;
@@ -118,6 +133,9 @@ private:
 	wxTextCtrl* mpSensorRoll_deg = nullptr;
 	wxTextCtrl* mpSensorYaw_deg = nullptr;
 	wxCheckBox* mpRotateSensorToSEU = nullptr;
+
+	/*** Sensor Limits ***/
+	wxStaticBoxSizer* mpSensorLimits = nullptr;
 
 	double mMinimumDistance_m = 0.0;
 	double mMaximumDistance_m = 0.0;
@@ -146,6 +164,9 @@ private:
 	wxTextCtrl* mpMinimumAltitude_deg = nullptr;
 	wxTextCtrl* mpMaximumAltitude_deg = nullptr;
 
+	/*** Options ***/
+	wxStaticBoxSizer* mpOptions = nullptr;
+
 	wxCheckBox* mpAggregatePointCloud = nullptr;
 	wxCheckBox* mpSaveReducedPointCloud = nullptr;
 
@@ -161,6 +182,9 @@ private:
 	bool mIsFile = false;
 	wxString mSourceData;
 	wxString mDestinationData;
+	wxString mConfigurationFilename;
+
+	std::map<std::string, nlohmann::json> mConfiguration;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();
