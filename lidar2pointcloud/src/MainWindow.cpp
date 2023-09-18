@@ -4,6 +4,8 @@
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
 
+#include "ConfigFileData.hpp"
+
 #include "Kinematics_Constant.hpp"
 #include "Kinematics_Dolly.hpp"
 #include "Kinematics_GPS.hpp"
@@ -603,6 +605,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	using namespace std::filesystem;
 	using namespace nStringUtils;
 
+	cConfigFileData* pConfigData = nullptr;
+
 	mpMinimumDistance_m->TransferDataFromWindow();
 	mpMaximumDistance_m->TransferDataFromWindow();
 
@@ -718,29 +722,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	{
 		useConfigFile = true;
 
-		if (mConfigurationFilename.empty())
-			return;
-
-		std::ifstream in;
-		in.open(mConfigurationFilename.ToStdString());
-		if (!in.is_open())
-			return;
-
-		nlohmann::json configDoc;
-		try
-		{
-			in >> configDoc;
-		}
-		catch (const nlohmann::json::parse_error& e)
-		{
-			return;
-		}
-		catch (const std::exception& e)
-		{
-			return;
-		}
-
-//		mConfiguration;
+		pConfigData = new cConfigFileData(mConfigurationFilename.ToStdString());
 
 		break;
 	}
@@ -772,12 +754,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
-		if (useConfigFile)
-		{
-			auto in = removeMeasurementTimestamp(in_file.path().filename().string());
-			auto filename = safeFilename(in.filename);
-		}
-
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
@@ -811,66 +787,74 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		std::unique_ptr<cKinematics> kinematics;
 
-		switch (model)
+		if (useConfigFile)
 		{
-		case eKinematics::CONSTANT:
+			kinematics = pConfigData->getModel(in_file.path().filename().string());
+		}
+		else
 		{
-			auto km = std::make_unique<cKinematics_Constant>(mKM_CSO_Vx_mmps,
-				mKM_CSO_Vy_mmps, mKM_CSO_Vz_mmps);
-
-			switch (mpKM_CSO_HeightAxis->GetSelection())
+			switch (model)
 			{
-			case 0:
-				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::NONE);
-				break;
-			case 1:
-				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
-				km->setInitialPosition_m(mKM_CSO_Height_m, Y_m, Z_m);
-				break;
-			case 2:
-				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
-				km->setInitialPosition_m(X_m, mKM_CSO_Height_m, Z_m);
-				break;
-			case 3:
-				km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
-				km->setInitialPosition_m(X_m, Y_m, mKM_CSO_Height_m);
+			case eKinematics::CONSTANT:
+			{
+				auto km = std::make_unique<cKinematics_Constant>(mKM_CSO_Vx_mmps,
+					mKM_CSO_Vy_mmps, mKM_CSO_Vz_mmps);
+
+				switch (mpKM_CSO_HeightAxis->GetSelection())
+				{
+				case 0:
+					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::NONE);
+					break;
+				case 1:
+					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
+					km->setInitialPosition_m(mKM_CSO_Height_m, Y_m, Z_m);
+					break;
+				case 2:
+					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
+					km->setInitialPosition_m(X_m, mKM_CSO_Height_m, Z_m);
+					break;
+				case 3:
+					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
+					km->setInitialPosition_m(X_m, Y_m, mKM_CSO_Height_m);
+					break;
+				}
+
+				kinematics = std::move(km);
 				break;
 			}
+			case eKinematics::DOLLY:
+			{
+				auto km = std::make_unique<cKinematics_Dolly>();
+				km->useImuData(mpKM_DO_UseImuData->GetValue());
+				km->averageImuData(mpKM_DO_AverageImuData->GetValue());
+				km->setSensorPitchOffset_deg(mKM_DO_PitchOffset_deg);
+				km->setSensorRollOffset_deg(mKM_DO_RollOffset_deg);
+				kinematics = std::move(km);
+				break;
+			}
+			case eKinematics::GPS:
+			{
+				auto km = std::make_unique<cKinematics_GPS>();
+				kinematics = std::move(km);
+				break;
+			}
+			case eKinematics::SLAM:
+			{
+				auto km = std::make_unique<cKinematics_SLAM>();
+				kinematics = std::move(km);
+				break;
+			}
+			}
 
-			kinematics = std::move(km);
-			break;
+			kinematics->rotateToSEU(mpRotateSensorToSEU->GetValue());
+			kinematics->setSensorOrientation(mSensorYaw_deg, mSensorPitch_deg, mSensorRoll_deg);
 		}
-		case eKinematics::DOLLY:
-		{
-			auto km = std::make_unique<cKinematics_Dolly>();
-			km->useImuData(mpKM_DO_UseImuData->GetValue());
-			km->averageImuData(mpKM_DO_AverageImuData->GetValue());
-			km->setSensorPitchOffset_deg(mKM_DO_PitchOffset_deg);
-			km->setSensorRollOffset_deg(mKM_DO_RollOffset_deg);
-			kinematics = std::move(km);
-			break;
-		}
-		case eKinematics::GPS:
-		{
-			auto km = std::make_unique<cKinematics_GPS>();
-			kinematics = std::move(km);
-			break;
-		}
-		case eKinematics::SLAM:
-		{
-			auto km = std::make_unique<cKinematics_SLAM>();
-			kinematics = std::move(km);
-			break;
-		}
-		}
-
+		
 		if (!kinematics)
 		{
-
+			delete fp;
+			continue;
 		}
-
-		kinematics->rotateToSEU(mpRotateSensorToSEU->GetValue());
-		kinematics->setSensorOrientation(mSensorYaw_deg, mSensorPitch_deg, mSensorRoll_deg);
 
 		fp->setKinematicModel(std::move(kinematics));
 

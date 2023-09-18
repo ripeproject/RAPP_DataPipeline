@@ -15,6 +15,12 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	Kinematics_SLAM.hpp
 	Kinematics_SLAM.cpp
 
+	Kinematics_SLAM.hpp
+	Kinematics_SLAM.cpp
+
+	ConfigFileData.hpp
+	ConfigFileData.cpp
+
 	lidar2pointcloud.hpp
 	lidar2pointcloud.cpp
 	
