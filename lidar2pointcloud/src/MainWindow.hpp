@@ -30,7 +30,7 @@ class cMainWindow : public wxPanel, public wxThreadHelper
 {
 public:
 	// ctor(s)
-	cMainWindow(wxWindow* parent);
+	explicit cMainWindow(wxWindow* parent);
 	virtual ~cMainWindow();
 
 	void CreateControls();
@@ -44,6 +44,11 @@ protected:
 	void OnSrcDirBrowse(wxCommandEvent& event);
 	void OnDstBrowse(wxCommandEvent& event);
 	void OnCfgFileBrowse(wxCommandEvent& event);
+
+	void OnOrientationOverride(wxCommandEvent& event);
+	void OnSensorLimitsOverride(wxCommandEvent& event);
+	void OnOptionsOverride(wxCommandEvent& event);
+
 	void OnModelChange(wxCommandEvent& event);
 	void OnCompute(wxCommandEvent& event);
 
@@ -78,6 +83,14 @@ private:
 
 	wxTextCtrl* mpLoadCfgFile = nullptr;
 	wxButton*	mpLoadCfgButton = nullptr;
+
+	wxCheckBox* mpKM_CF_OverrideOrientation = nullptr;
+	wxCheckBox* mpKM_CF_OverrideLimits = nullptr;
+	wxCheckBox* mpKM_CF_OverrideOptions = nullptr;
+
+	bool mKM_CF_OverrideOrientation = false;
+	bool mKM_CF_OverrideLimits = false;
+	bool mKM_CF_OverrideOptions = false;
 
 	/*** Constant Speed Options (CSO) ***/
 	wxPanel* mpKM_ConstantSpeedOptions = nullptr;
@@ -119,7 +132,8 @@ private:
 	wxPanel* mpKM_SlamOptions = nullptr;
 
 	/*** Sensor Orientation ***/
-	wxStaticBoxSizer* mpSensorOrientation;
+	wxStaticBoxSizer* mpSensorOrientation = nullptr;
+//	wxPanel* mpSensorOrientation = nullptr;
 
 	double mSensorPitch_deg = -90.0;
 	double mSensorRoll_deg = 0.0;

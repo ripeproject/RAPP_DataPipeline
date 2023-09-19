@@ -12,10 +12,27 @@
 #include <fstream>
 
 
+namespace
+{
+	eHeightAxis to_HeightAxis(char axis)
+	{
+		switch (toupper(axis))
+		{
+		case 'X':
+			return eHeightAxis::X;
+		case 'Y':
+			return eHeightAxis::Y;
+		case 'Z':
+			return eHeightAxis::Z;
+		}
+
+		return eHeightAxis::Z;
+	}
+}
+
 cConfigFileData::cConfigFileData(const std::string& filename)
 	: mConfigFilename(filename)
 {
-	load(filename);
 }
 
 cConfigFileData::~cConfigFileData()
@@ -53,6 +70,36 @@ void cConfigFileData::setDefaultReducedPointCloud(bool reducedPointCloud)
 {
 	mDefaultOptions.saveReducedPointCloud = reducedPointCloud;
 }
+
+
+void cConfigFileData::setDefaultInitialPosition_m(double x_m, double y_m, double z_m)
+{
+	mDefault_X_m = x_m;
+	mDefault_Y_m = y_m;
+	mDefault_Z_m = z_m;
+}
+
+void cConfigFileData::setDefaultSpeeds_mmmps(double vx_mmps, double vy_mmps, double vz_mmps)
+{
+	mDefault_Vx_mmps = vx_mmps;
+	mDefault_Vy_mmps = vy_mmps;
+	mDefault_Vz_mmps = vz_mmps;
+}
+
+void cConfigFileData::setDefaultHeight_m(double height_m, eHeightAxis axis)
+{
+	mDefault_Height_m = height_m;
+	mDefault_HeightAxis = axis;
+}
+
+void cConfigFileData::setDefaultOrientation(double pitch_deg, double roll_deg, double yaw_deg, bool rotateToSEU)
+{
+	mDefault_SensorPitch_deg = pitch_deg;
+	mDefault_SensorRoll_deg = roll_deg;
+	mDefault_SensorYaw_deg = yaw_deg;
+	mDefault_RotateToSEU = rotateToSEU;
+}
+
 
 sOptions_t cConfigFileData::getOptions(const std::string& experiment_filename)
 {
@@ -112,22 +159,6 @@ bool cConfigFileData::loadDefaults()
 		return false;
 	}
 
-	double default_X_m = 0.0;
-	double default_Y_m = 0.0;
-	double default_Z_m = 0.0;
-
-	double default_Vx_mmps = 0.0;
-	double default_Vy_mmps = 0.0;
-	double default_Vz_mmps = 0.0;
-
-	double default_Height_m = 0.0;
-	char default_HeightAxis = 'Z';
-
-	double default_SensorPitch_deg = -90.0;
-	double default_SensorRoll_deg = 0.0;
-	double default_SensorYaw_deg = 270.0;
-	bool default_RotateToSEU = true;
-
 	/*** Load Defaults ***/
 
 	if (configDoc.contains("defaults"))
@@ -139,22 +170,22 @@ bool cConfigFileData::loadDefaults()
 			auto speeds = defaults["dolly speeds"];
 
 			if (speeds.contains("Vx (mm/s)"))
-				default_Vx_mmps = speeds["Vx (mm/s)"];
+				mDefault_Vx_mmps = speeds["Vx (mm/s)"];
 
 			if (speeds.contains("Vy (mm/s)"))
-				default_Vy_mmps = speeds["Vy (mm/s)"];
+				mDefault_Vy_mmps = speeds["Vy (mm/s)"];
 
 			if (speeds.contains("Vz (mm/s)"))
-				default_Vz_mmps = speeds["Vz (mm/s)"];
+				mDefault_Vz_mmps = speeds["Vz (mm/s)"];
 		}
 
 		if (defaults.contains("dolly height"))
 		{
 			auto height = defaults["dolly height"];
 
-			default_Height_m = height["height (m)"];
+			mDefault_Height_m = height["height (m)"];
 			std::string axis = height["height axis"];
-			default_HeightAxis = toupper(axis[0]);
+			mDefault_HeightAxis = to_HeightAxis(axis[0]);
 		}
 
 		if (defaults.contains("sensor orientation"))
@@ -162,16 +193,16 @@ bool cConfigFileData::loadDefaults()
 			auto orientation = defaults["sensor orientation"];
 
 			if (orientation.contains("pitch (deg)"))
-				default_SensorPitch_deg = orientation["pitch (deg)"];
+				mDefault_SensorPitch_deg = orientation["pitch (deg)"];
 
 			if (orientation.contains("roll (deg)"))
-				default_SensorRoll_deg = orientation["roll (deg)"];
+				mDefault_SensorRoll_deg = orientation["roll (deg)"];
 
 			if (orientation.contains("yaw (deg)"))
-				default_SensorYaw_deg = orientation["yaw (deg)"];
+				mDefault_SensorYaw_deg = orientation["yaw (deg)"];
 
 			if (orientation.contains("rotate to SEU"))
-				default_RotateToSEU = orientation["rotate to SEU"];
+				mDefault_RotateToSEU = orientation["rotate to SEU"];
 		}
 
 		if (defaults.contains("sensor limits"))
@@ -197,27 +228,31 @@ bool cConfigFileData::loadDefaults()
 				mDefaultOptions.maxAltitude_deg = limits["max altitude (deg)"];
 		}
 
-		/*
-				"options":
-				{
-					"aggregatePointCloud" : true,
-					"saveReducedPointCloud" : false
-				}
-		*/
+		if (defaults.contains("options"))
+		{
+			auto options = defaults["options"];
+
+			if (options.contains("aggregatePointCloud"))
+				mDefaultOptions.aggregatePointCloud = options["aggregatePointCloud"];
+
+			if (options.contains("saveReducedPointCloud"))
+				mDefaultOptions.saveReducedPointCloud = options["saveReducedPointCloud"];
+		}
 	}
 
 	return true;
 }
 
-
-void cConfigFileData::load(const std::string& filename)
+bool cConfigFileData::loadKinematicModels()
 {
 	using namespace nStringUtils;
 
+	if (mConfigFilename.empty()) return false;
+
 	std::ifstream in;
-	in.open(filename);
+	in.open(mConfigFilename);
 	if (!in.is_open())
-		return;
+		return false;
 
 	nlohmann::json configDoc;
 	try
@@ -227,105 +262,11 @@ void cConfigFileData::load(const std::string& filename)
 	catch (const nlohmann::json::parse_error& e)
 	{
 		auto msg = e.what();
-		return;
+		return false;
 	}
 	catch (const std::exception& e)
 	{
-		return;
-	}
-
-	double default_X_m = 0.0;
-	double default_Y_m = 0.0;
-	double default_Z_m = 0.0;
-
-	double default_Vx_mmps = 0.0;
-	double default_Vy_mmps = 0.0;
-	double default_Vz_mmps = 0.0;
-
-	double default_Height_m = 0.0;
-	char default_HeightAxis = 'Z';
-
-	double default_SensorPitch_deg = -90.0;
-	double default_SensorRoll_deg = 0.0;
-	double default_SensorYaw_deg = 270.0;
-	bool default_RotateToSEU = true;
-
-	/*** Load Defaults ***/
-
-	if (configDoc.contains("defaults"))
-	{
-		auto defaults = configDoc["defaults"];
-
-		if (defaults.contains("dolly speeds"))
-		{
-			auto speeds = defaults["dolly speeds"];
-
-			if (speeds.contains("Vx (mm/s)"))
-				default_Vx_mmps = speeds["Vx (mm/s)"];
-
-			if (speeds.contains("Vy (mm/s)"))
-				default_Vy_mmps = speeds["Vy (mm/s)"];
-
-			if (speeds.contains("Vz (mm/s)"))
-				default_Vz_mmps = speeds["Vz (mm/s)"];
-		}
-
-		if (defaults.contains("dolly height"))
-		{
-			auto height = defaults["dolly height"];
-
-			default_Height_m = height["height (m)"];
-			std::string axis = height["height axis"];
-			default_HeightAxis = toupper(axis[0]);
-		}
-
-		if (defaults.contains("sensor orientation"))
-		{
-			auto orientation = defaults["sensor orientation"];
-
-			if (orientation.contains("pitch (deg)"))
-				default_SensorPitch_deg = orientation["pitch (deg)"];
-
-			if (orientation.contains("roll (deg)"))
-				default_SensorRoll_deg = orientation["roll (deg)"];
-
-			if (orientation.contains("yaw (deg)"))
-				default_SensorYaw_deg = orientation["yaw (deg)"];
-
-			if (orientation.contains("rotate to SEU"))
-				default_RotateToSEU = orientation["rotate to SEU"];
-		}
-
-		if (defaults.contains("sensor limits"))
-		{
-			auto limits = defaults["sensor limits"];
-
-			if (limits.contains("min distance (m)"))
-				mDefaultOptions.maxDistance_m = limits["min distance (m)"];
-
-			if (limits.contains("max distance (m)"))
-				mDefaultOptions.maxDistance_m = limits["max distance (m)"];
-
-			if (limits.contains("min azimuth (deg)"))
-				mDefaultOptions.minAzimuth_deg = limits["min azimuth (deg)"];
-
-			if (limits.contains("max azimuth (deg)"))
-				mDefaultOptions.maxAzimuth_deg = limits["max azimuth (deg)"];
-
-			if (limits.contains("min altitude (deg)"))
-				mDefaultOptions.minAltitude_deg = limits["min altitude (deg)"];
-
-			if (limits.contains("max altitude (deg)"))
-				mDefaultOptions.maxAltitude_deg = limits["max altitude (deg)"];
-		}
-
-/*
-		"options":
-		{
-			"aggregatePointCloud" : true,
-			"saveReducedPointCloud" : false
-		}
-*/
+		return false;
 	}
 
 	if (configDoc.contains("experiments"))
@@ -337,10 +278,10 @@ void cConfigFileData::load(const std::string& filename)
 			std::string name = safeFilename(experiment["experiment_name"]);
 			std::string model = experiment["kinematic model"];
 
-			double sensorPitch_deg = -default_SensorPitch_deg;
-			double sensorRoll_deg = default_SensorRoll_deg;
-			double sensorYaw_deg = default_SensorYaw_deg;
-			bool rotateToSEU = default_RotateToSEU;
+			double sensorPitch_deg = mDefault_SensorPitch_deg;
+			double sensorRoll_deg = mDefault_SensorRoll_deg;
+			double sensorYaw_deg = mDefault_SensorYaw_deg;
+			bool rotateToSEU = mDefault_RotateToSEU;
 
 			if (experiment.contains("sensor orientation"))
 			{
@@ -362,16 +303,16 @@ void cConfigFileData::load(const std::string& filename)
 			if (model == "constant")
 			{
 
-				double X_m = default_X_m;
-				double Y_m = default_Y_m;
-				double Z_m = default_Z_m;
+				double X_m = mDefault_X_m;
+				double Y_m = mDefault_Y_m;
+				double Z_m = mDefault_Z_m;
 
-				double Vx_mmps = default_Vx_mmps;
-				double Vy_mmps = default_Vy_mmps;
-				double Vz_mmps = default_Vz_mmps;
+				double Vx_mmps = mDefault_Vx_mmps;
+				double Vy_mmps = mDefault_Vy_mmps;
+				double Vz_mmps = mDefault_Vz_mmps;
 
-				double height_m = default_Height_m;
-				char heightAxis = default_HeightAxis;
+				double height_m = mDefault_Height_m;
+				auto heightAxis = mDefault_HeightAxis;
 
 				if (experiment.contains("start position"))
 				{
@@ -402,20 +343,20 @@ void cConfigFileData::load(const std::string& filename)
 				{
 					height_m = experiment["height (m)"];
 					std::string axis = experiment["height axis"];
-					heightAxis = toupper(axis[0]);
+					heightAxis = to_HeightAxis(axis[0]);
 				}
 
 				switch (heightAxis)
 				{
-				case 'X':
+				case eHeightAxis::X:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
 					km->setInitialPosition_m(height_m, Y_m, Z_m);
 					break;
-				case 'Y':
+				case eHeightAxis::Y:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
 					km->setInitialPosition_m(X_m, height_m, Z_m);
 					break;
-				case 'Z':
+				case eHeightAxis::Z:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
 					km->setInitialPosition_m(X_m, Y_m, height_m);
 					break;
@@ -460,5 +401,7 @@ void cConfigFileData::load(const std::string& filename)
 			}
 		}
 	}
+
+	return true;
 }
 

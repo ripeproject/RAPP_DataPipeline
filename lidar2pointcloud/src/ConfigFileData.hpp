@@ -21,6 +21,8 @@ struct sOptions_t
 	bool saveReducedPointCloud = false;
 };
 
+enum class eHeightAxis {NONE, X, Y, Z};
+
 
 class cConfigFileData
 {
@@ -55,13 +57,12 @@ public:
 
 	void setDefaultInitialPosition_m(double x_m, double y_m, double z_m);
 	void setDefaultSpeeds_mmmps(double vx_mmps, double vy_mmps, double vz_mmps);
-	void setDefaultHeight_m(double height_m, char axis);
+	void setDefaultHeight_m(double height_m, eHeightAxis axis);
+
+	void setDefaultOrientation(double pitch_deg, double roll_deg, double yaw_deg, bool rotateToSEU);
 
 	sOptions_t getOptions(const std::string& experiment_filename);
 	std::unique_ptr<cKinematics> getModel(const std::string& experiment_filename);
-
-private:
-	void load(const std::string& filename);
 
 private:
 	std::string mConfigFilename;
@@ -77,7 +78,7 @@ private:
 	double mDefault_Vz_mmps = 0.0;
 
 	double mDefault_Height_m = 0.0;
-	char mDefault_HeightAxis = 'Z';
+	eHeightAxis mDefault_HeightAxis = eHeightAxis::NONE;
 
 	double mDefault_SensorPitch_deg = -90.0;
 	double mDefault_SensorRoll_deg = 0.0;

@@ -172,6 +172,8 @@ void cMainWindow::CreateControls()
 	mpKinematicModel->SetSelection(2);
 	mpKinematicModel->Bind(wxEVT_TEXT, &cMainWindow::OnModelChange, this);
 
+//	mpSensorOrientation = new wxPanel(this, wxID_ANY);
+
 	mpSensorPitch_deg = new wxTextCtrl(this, wxID_ANY, "-90.0");
 	mpSensorPitch_deg->SetValidator(mSensorPitch_val);
 
@@ -183,6 +185,7 @@ void cMainWindow::CreateControls()
 
 	mpRotateSensorToSEU = new wxCheckBox(this, wxID_ANY, "Rotate Sensor to South/East/Up Coordinates");
 	mpRotateSensorToSEU->SetValue(true);
+
 
 	mpMinimumDistance_m = new wxTextCtrl(this, wxID_ANY, "1.0");
 	mpMinimumDistance_m->SetValidator(mMinimumDistance_val);
@@ -229,6 +232,15 @@ void cMainWindow::CreateControls()
 	mpLoadCfgFile	= new wxTextCtrl(mpKM_ConfigurationFile, wxID_ANY, "", wxDefaultPosition, wxSize(200, -1));
 	mpLoadCfgButton = new wxButton(mpKM_ConfigurationFile, wxID_ANY, "Browse");
 	mpLoadCfgButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgFileBrowse, this);
+
+	mpKM_CF_OverrideOrientation = new wxCheckBox(mpKM_ConfigurationFile, wxID_ANY, "Override Sensor Orientation");
+	mpKM_CF_OverrideOrientation->Bind(wxEVT_CHECKBOX, &cMainWindow::OnOrientationOverride, this);
+
+	mpKM_CF_OverrideLimits = new wxCheckBox(mpKM_ConfigurationFile, wxID_ANY, "Override Sensor Limits");
+	mpKM_CF_OverrideLimits->Bind(wxEVT_CHECKBOX, &cMainWindow::OnSensorLimitsOverride, this);
+
+	mpKM_CF_OverrideOptions = new wxCheckBox(mpKM_ConfigurationFile, wxID_ANY, "Override Options");
+	mpKM_CF_OverrideOptions->Bind(wxEVT_CHECKBOX, &cMainWindow::OnOptionsOverride, this);
 
 	createConfigFileLayout();
 
@@ -291,12 +303,27 @@ void cMainWindow::CreateControls()
 
 void cMainWindow::createConfigFileLayout()
 {
-	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	sizer->AddSpacer(5);
 
-	sizer->Add(mpLoadCfgFile, 1);
+	wxBoxSizer* file_sz = new wxBoxSizer(wxHORIZONTAL);
+	file_sz->AddSpacer(5);
+
+	file_sz->Add(mpLoadCfgFile, 1);
+	file_sz->AddSpacer(5);
+	file_sz->Add(mpLoadCfgButton);
+
+	sizer->Add(file_sz, 1);
+
+	sizer->AddSpacer(10);
+
+	sizer->Add(mpKM_CF_OverrideOrientation, 1);
 	sizer->AddSpacer(5);
-	sizer->Add(mpLoadCfgButton);
+
+	sizer->Add(mpKM_CF_OverrideLimits, 1);
+	sizer->AddSpacer(5);
+
+	sizer->Add(mpKM_CF_OverrideOptions,1);
 
 	mpKM_ConfigurationFile->SetSizerAndFit(sizer);
 	mpKM_ConfigurationFile->Hide();
@@ -543,6 +570,21 @@ void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
 	mpLoadCfgFile->SetValue(mConfigurationFilename);
 }
 
+void cMainWindow::OnOrientationOverride(wxCommandEvent& event)
+{
+	mKM_CF_OverrideOrientation = event.IsChecked();
+}
+
+void cMainWindow::OnSensorLimitsOverride(wxCommandEvent& event)
+{
+	mKM_CF_OverrideLimits = event.IsChecked();
+}
+
+void cMainWindow::OnOptionsOverride(wxCommandEvent& event)
+{
+	mKM_CF_OverrideOptions = event.IsChecked();
+}
+
 void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 {
 	auto selection = mpKinematicModel->GetSelection();
@@ -689,31 +731,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	model = eKinematics::NONE;
 
 	bool useConfigFile = false;
-	double X_m = 0.0;
-	double Y_m = 0.0;
-	double Z_m = 0.0;
-
-	// Configuration File Defaults
-	double defaultVx_mmps = 0.0;
-	double defaultVy_mmps = 0.0;
-	double defaultVz_mmps = 0.0;
-	double defaultHeight_m = 0.0;
-	char defaultHeightAxis = 'Z';
-
-	double defaultPitch_deg = 0.0;
-	double defaultRoll_deg  = 0.0;
-	double defaultYaw_deg   = 0.0;
-	bool defaultRotateToSEU = true;
-
-	double defaultMinDistance_m = 0.0;
-	double defaultMaxDistance_m = 400.0;
-	double defaultMinAzimuth_deg = 0.0;
-	double defaultMaxAzimuth_deg = 360.0;
-	double defaultMinAltitude_deg = -25.0;
-	double defaultMaxAltitude_deg = 25.0;
-	
-	bool defaultAggregatePointCloud = true;
-	bool defaultSaveReducedPointCloud = false;
 
 
 	switch (mpKinematicModel->GetSelection())
@@ -726,13 +743,25 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		pConfigData->loadDefaults();
 
-		pConfigData->setDefaultValidRange_m(mMinimumDistance_m, mMaximumDistance_m);
-		pConfigData->setDefaultAzimuthWindow_deg(mMinimumAzimuth_deg, mMaximumAzimuth_deg);
-		pConfigData->setDefaultAltitudeWindow_deg(mMinimumAltitude_deg, mMaximumAltitude_deg);
+		if (mKM_CF_OverrideOrientation)
+		{
+			pConfigData->setDefaultOrientation(mSensorPitch_deg, mSensorRoll_deg, mSensorYaw_deg, mpRotateSensorToSEU->GetValue());
+		}
 
-		pConfigData->setDefaultAggregatePointCloud(mpAggregatePointCloud->GetValue());
-		pConfigData->setDefaultReducedPointCloud(mpSaveReducedPointCloud->GetValue());
+		if (mKM_CF_OverrideLimits)
+		{
+			pConfigData->setDefaultValidRange_m(mMinimumDistance_m, mMaximumDistance_m);
+			pConfigData->setDefaultAzimuthWindow_deg(mMinimumAzimuth_deg, mMaximumAzimuth_deg);
+			pConfigData->setDefaultAltitudeWindow_deg(mMinimumAltitude_deg, mMaximumAltitude_deg);
+		}
 
+		if (mKM_CF_OverrideOptions)
+		{
+			pConfigData->setDefaultAggregatePointCloud(mpAggregatePointCloud->GetValue());
+			pConfigData->setDefaultReducedPointCloud(mpSaveReducedPointCloud->GetValue());
+		}
+
+		pConfigData->loadKinematicModels();
 
 		break;
 	}
@@ -826,15 +855,15 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 					break;
 				case 1:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
-					km->setInitialPosition_m(mKM_CSO_Height_m, Y_m, Z_m);
+					km->setInitialPosition_m(mKM_CSO_Height_m, 0.0, 0.0);
 					break;
 				case 2:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
-					km->setInitialPosition_m(X_m, mKM_CSO_Height_m, Z_m);
+					km->setInitialPosition_m(0.0, mKM_CSO_Height_m, 0.0);
 					break;
 				case 3:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
-					km->setInitialPosition_m(X_m, Y_m, mKM_CSO_Height_m);
+					km->setInitialPosition_m(0.0, 0.0, mKM_CSO_Height_m);
 					break;
 				}
 
