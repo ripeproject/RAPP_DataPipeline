@@ -724,6 +724,16 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		pConfigData = new cConfigFileData(mConfigurationFilename.ToStdString());
 
+		pConfigData->loadDefaults();
+
+		pConfigData->setDefaultValidRange_m(mMinimumDistance_m, mMaximumDistance_m);
+		pConfigData->setDefaultAzimuthWindow_deg(mMinimumAzimuth_deg, mMaximumAzimuth_deg);
+		pConfigData->setDefaultAltitudeWindow_deg(mMinimumAltitude_deg, mMaximumAltitude_deg);
+
+		pConfigData->setDefaultAggregatePointCloud(mpAggregatePointCloud->GetValue());
+		pConfigData->setDefaultReducedPointCloud(mpSaveReducedPointCloud->GetValue());
+
+
 		break;
 	}
 	case 1:
@@ -789,6 +799,15 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		if (useConfigFile)
 		{
+			auto options = pConfigData->getOptions(in_file.path().filename().string());
+
+			fp->setValidRange_m(options.minDistance_m, options.maxDistance_m);
+			fp->setAzimuthWindow_deg(options.minAzimuth_deg, options.maxAzimuth_deg);
+			fp->setAltitudeWindow_deg(options.minAltitude_deg, options.maxAltitude_deg);
+
+			fp->saveAggregatePointCloud(options.aggregatePointCloud);
+			fp->saveReducedPointCloud(options.saveReducedPointCloud);
+
 			kinematics = pConfigData->getModel(in_file.path().filename().string());
 		}
 		else

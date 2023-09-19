@@ -13,10 +13,8 @@
 
 
 cConfigFileData::cConfigFileData(const std::string& filename)
+	: mConfigFilename(filename)
 {
-	if (filename.empty())
-		return;
-
 	load(filename);
 }
 
@@ -27,6 +25,50 @@ bool cConfigFileData::empty() const
 {
 	return mKinematicModels.empty();
 }
+
+void cConfigFileData::setDefaultValidRange_m(double minimumDistance_m, double maximumDistance_m)
+{
+	mDefaultOptions.minDistance_m = minimumDistance_m;
+	mDefaultOptions.maxDistance_m = maximumDistance_m;
+}
+
+void cConfigFileData::setDefaultAzimuthWindow_deg(double minimumAzimuth_deg, double maximumAzimuth_deg)
+{
+	mDefaultOptions.minAzimuth_deg = minimumAzimuth_deg;
+	mDefaultOptions.maxAzimuth_deg = maximumAzimuth_deg;
+}
+
+void cConfigFileData::setDefaultAltitudeWindow_deg(double minimumAltitude_deg, double maximumAltitude_deg)
+{
+	mDefaultOptions.minAltitude_deg = minimumAltitude_deg;
+	mDefaultOptions.maxAltitude_deg = maximumAltitude_deg;
+}
+
+void cConfigFileData::setDefaultAggregatePointCloud(bool aggregatedPointCloud)
+{
+	mDefaultOptions.aggregatePointCloud = aggregatedPointCloud;
+}
+
+void cConfigFileData::setDefaultReducedPointCloud(bool reducedPointCloud)
+{
+	mDefaultOptions.saveReducedPointCloud = reducedPointCloud;
+}
+
+sOptions_t cConfigFileData::getOptions(const std::string& experiment_filename)
+{
+	using namespace nStringUtils;
+
+	auto in = removeMeasurementTimestamp(experiment_filename);
+	auto filename = safeFilename(in.filename);
+
+	auto it = mOptions.find(filename);
+
+	if (it == mOptions.end())
+		return mDefaultOptions;
+
+	return it->second;
+}
+
 
 std::unique_ptr<cKinematics> cConfigFileData::getModel(const std::string& experiment_filename)
 {
@@ -44,16 +86,16 @@ std::unique_ptr<cKinematics> cConfigFileData::getModel(const std::string& experi
 }
 
 
-/*** Private Helper Methods ***/
-
-void cConfigFileData::load(const std::string& filename)
+bool cConfigFileData::loadDefaults()
 {
 	using namespace nStringUtils;
 
+	if (mConfigFilename.empty()) return false;
+
 	std::ifstream in;
-	in.open(filename);
+	in.open(mConfigFilename);
 	if (!in.is_open())
-		return;
+		return false;
 
 	nlohmann::json configDoc;
 	try
@@ -63,11 +105,11 @@ void cConfigFileData::load(const std::string& filename)
 	catch (const nlohmann::json::parse_error& e)
 	{
 		auto msg = e.what();
-		return;
+		return false;
 	}
 	catch (const std::exception& e)
 	{
-		return;
+		return false;
 	}
 
 	double default_X_m = 0.0;
@@ -86,7 +128,7 @@ void cConfigFileData::load(const std::string& filename)
 	double default_SensorYaw_deg = 270.0;
 	bool default_RotateToSEU = true;
 
-
+	/*** Load Defaults ***/
 
 	if (configDoc.contains("defaults"))
 	{
@@ -132,17 +174,150 @@ void cConfigFileData::load(const std::string& filename)
 				default_RotateToSEU = orientation["rotate to SEU"];
 		}
 
-/*
-		"sensor limit":
+		if (defaults.contains("sensor limits"))
 		{
-			"min distance (m)" : 1.0,
-			"max distance (m)" : 40.0,
-			"min azimuth (deg)" : 135.0,
-			"max azimuth (deg)" : 225.0,
-			"min altitude (deg)" : -25.0,
-			"max altitude (deg)" : 25.0
+			auto limits = defaults["sensor limits"];
+
+			if (limits.contains("min distance (m)"))
+				mDefaultOptions.maxDistance_m = limits["min distance (m)"];
+
+			if (limits.contains("max distance (m)"))
+				mDefaultOptions.maxDistance_m = limits["max distance (m)"];
+
+			if (limits.contains("min azimuth (deg)"))
+				mDefaultOptions.minAzimuth_deg = limits["min azimuth (deg)"];
+
+			if (limits.contains("max azimuth (deg)"))
+				mDefaultOptions.maxAzimuth_deg = limits["max azimuth (deg)"];
+
+			if (limits.contains("min altitude (deg)"))
+				mDefaultOptions.minAltitude_deg = limits["min altitude (deg)"];
+
+			if (limits.contains("max altitude (deg)"))
+				mDefaultOptions.maxAltitude_deg = limits["max altitude (deg)"];
 		}
-*/
+
+		/*
+				"options":
+				{
+					"aggregatePointCloud" : true,
+					"saveReducedPointCloud" : false
+				}
+		*/
+	}
+
+	return true;
+}
+
+
+void cConfigFileData::load(const std::string& filename)
+{
+	using namespace nStringUtils;
+
+	std::ifstream in;
+	in.open(filename);
+	if (!in.is_open())
+		return;
+
+	nlohmann::json configDoc;
+	try
+	{
+		in >> configDoc;
+	}
+	catch (const nlohmann::json::parse_error& e)
+	{
+		auto msg = e.what();
+		return;
+	}
+	catch (const std::exception& e)
+	{
+		return;
+	}
+
+	double default_X_m = 0.0;
+	double default_Y_m = 0.0;
+	double default_Z_m = 0.0;
+
+	double default_Vx_mmps = 0.0;
+	double default_Vy_mmps = 0.0;
+	double default_Vz_mmps = 0.0;
+
+	double default_Height_m = 0.0;
+	char default_HeightAxis = 'Z';
+
+	double default_SensorPitch_deg = -90.0;
+	double default_SensorRoll_deg = 0.0;
+	double default_SensorYaw_deg = 270.0;
+	bool default_RotateToSEU = true;
+
+	/*** Load Defaults ***/
+
+	if (configDoc.contains("defaults"))
+	{
+		auto defaults = configDoc["defaults"];
+
+		if (defaults.contains("dolly speeds"))
+		{
+			auto speeds = defaults["dolly speeds"];
+
+			if (speeds.contains("Vx (mm/s)"))
+				default_Vx_mmps = speeds["Vx (mm/s)"];
+
+			if (speeds.contains("Vy (mm/s)"))
+				default_Vy_mmps = speeds["Vy (mm/s)"];
+
+			if (speeds.contains("Vz (mm/s)"))
+				default_Vz_mmps = speeds["Vz (mm/s)"];
+		}
+
+		if (defaults.contains("dolly height"))
+		{
+			auto height = defaults["dolly height"];
+
+			default_Height_m = height["height (m)"];
+			std::string axis = height["height axis"];
+			default_HeightAxis = toupper(axis[0]);
+		}
+
+		if (defaults.contains("sensor orientation"))
+		{
+			auto orientation = defaults["sensor orientation"];
+
+			if (orientation.contains("pitch (deg)"))
+				default_SensorPitch_deg = orientation["pitch (deg)"];
+
+			if (orientation.contains("roll (deg)"))
+				default_SensorRoll_deg = orientation["roll (deg)"];
+
+			if (orientation.contains("yaw (deg)"))
+				default_SensorYaw_deg = orientation["yaw (deg)"];
+
+			if (orientation.contains("rotate to SEU"))
+				default_RotateToSEU = orientation["rotate to SEU"];
+		}
+
+		if (defaults.contains("sensor limits"))
+		{
+			auto limits = defaults["sensor limits"];
+
+			if (limits.contains("min distance (m)"))
+				mDefaultOptions.maxDistance_m = limits["min distance (m)"];
+
+			if (limits.contains("max distance (m)"))
+				mDefaultOptions.maxDistance_m = limits["max distance (m)"];
+
+			if (limits.contains("min azimuth (deg)"))
+				mDefaultOptions.minAzimuth_deg = limits["min azimuth (deg)"];
+
+			if (limits.contains("max azimuth (deg)"))
+				mDefaultOptions.maxAzimuth_deg = limits["max azimuth (deg)"];
+
+			if (limits.contains("min altitude (deg)"))
+				mDefaultOptions.minAltitude_deg = limits["min altitude (deg)"];
+
+			if (limits.contains("max altitude (deg)"))
+				mDefaultOptions.maxAltitude_deg = limits["max altitude (deg)"];
+		}
 
 /*
 		"options":
