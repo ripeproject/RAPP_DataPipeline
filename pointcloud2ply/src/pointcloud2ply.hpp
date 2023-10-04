@@ -10,7 +10,7 @@
 #include <string>
 #include <fstream>
 
-
+#define USE_FLOATS
 
 class cPointCloud2Ply : public cPointCloudParser, public cSpidercamParser
 {
@@ -48,20 +48,30 @@ private:
 
     uint32_t    mFrameCount = 0;
 
-    struct float3 { float x, y, z; };
-    struct float4 { float x, y, z, s; };
-    struct uint3 { uint16_t s, r, a; };
+#ifdef USE_FLOATS
+    typedef float range_t;
+    struct returns3 { float s, r, a; };
+#else
+    typedef uint32_t range_t;
+    struct returns3 { uint16_t s, r, a; };
+#endif
+
+
+    struct position3 { float x, y, z; };
+    struct position4 { float x, y, z, s; };
     struct color3 { uint8_t r, g, b; };
 
     color3 mColor;
 
-    std::vector<float4>   mPositions;
-    std::vector<color3>   mColors;
+    std::vector<position4>  mPositions;
+    std::vector<color3>     mColors;
 
-    std::vector<float3>   mVertices;
-    std::vector<uint32_t> mRanges;
-    std::vector<uint3>    mReturns;
-    std::vector<uint16_t> mFrameIDs;
+    std::vector<position3>  mVertices;
+
+    std::vector<range_t>    mRanges;
+
+    std::vector<returns3>   mReturns;
+    std::vector<uint16_t>   mFrameIDs;
 
     bool mResyncTimestamp = false;
 	uint64_t mStartTimestamp_ns = 0;

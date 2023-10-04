@@ -73,17 +73,17 @@ void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t time
 {
     auto cloud_data = pointCloud.data();
 
-    std::vector<float3>   vertices;
-    std::vector<uint32_t> ranges;
-    std::vector<uint3>    returns;
-    std::vector<uint16_t> frameIDs;
+    std::vector<position3>  vertices;
+    std::vector<range_t>    ranges;
+    std::vector<returns3>   returns;
+    std::vector<uint16_t>   frameIDs;
 
     for (const auto& point : cloud_data)
     {
         if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
             continue;
 
-        float3 xyz;
+        position3 xyz;
         xyz.x = point.X_m;
         xyz.y = point.Y_m;
         xyz.z = point.Z_m;
@@ -92,7 +92,7 @@ void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t time
 
         ranges.push_back(point.range_mm);
 
-        uint3 data;
+        returns3 data;
         data.a = point.nir;
         data.s = point.signal;
         data.r = point.reflectivity;
@@ -140,17 +140,17 @@ void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t times
 
     auto cloud_data = pointCloud.data();
 
-    std::vector<float3>   vertices;
-    std::vector<uint32_t> ranges;
-    std::vector<uint3>    returns;
-    std::vector<uint16_t> frameIDs;
+    std::vector<position3>  vertices;
+    std::vector<range_t>    ranges;
+    std::vector<returns3>   returns;
+    std::vector<uint16_t>   frameIDs;
 
     for (const auto& point : cloud_data)
     {
         if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
             continue;
 
-        float3 xyz;
+        position3 xyz;
         xyz.x = point.X_m;
         xyz.y = point.Y_m;
         xyz.z = point.Z_m;
@@ -159,7 +159,7 @@ void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t times
 
         ranges.push_back(point.range_mm);
 
-        uint3 data;
+        returns3 data;
         data.a = point.nir;
         data.s = point.signal;
         data.r = point.reflectivity;
@@ -193,16 +193,16 @@ void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud)
 {
     auto cloud_data = pointCloud.data();
 
-    std::vector<float3>   vertices;
-    std::vector<uint32_t> ranges;
-    std::vector<uint3>    returns;
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
 
     for (const auto& point : cloud_data)
     {
         if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
             continue;
 
-        float3 xyz;
+        position3 xyz;
         xyz.x = point.X_m;
         xyz.y = point.Y_m;
         xyz.z = point.Z_m;
@@ -211,7 +211,7 @@ void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud)
 
         ranges.push_back(point.range_mm);
 
-        uint3 data;
+        returns3 data;
         data.a = point.nir;
         data.s = point.signal;
         data.r = point.reflectivity;
@@ -243,7 +243,7 @@ void cPointCloud2Ply::onPosition(spidercam::sPosition_1_t pos)
 
     if (mSaveDollyPositions)
     {
-        float4 xyz;
+        position4 xyz;
         xyz.x = pos.X_mm / 1000.0;
         xyz.y = pos.Y_mm / 1000.0;
         xyz.z = pos.Z_mm / 1000.0;
@@ -314,11 +314,23 @@ void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
     ply_file.add_properties_to_element("vertex", { "x", "y", "z" },
         Type::FLOAT32, mVertices.size(), reinterpret_cast<uint8_t*>(mVertices.data()), Type::INVALID, 0);
 
+#ifdef USE_FLOATS
+
+    ply_file.add_properties_to_element("vertex", { "range_mm" },
+        Type::FLOAT32, mRanges.size(), reinterpret_cast<uint8_t*>(mRanges.data()), Type::INVALID, 0);
+
+    ply_file.add_properties_to_element("vertex", { "intensity", "reflectivity", "ambient_noise" },
+        Type::FLOAT32, mReturns.size(), reinterpret_cast<uint8_t*>(mReturns.data()), Type::INVALID, 0);
+
+#else
+
     ply_file.add_properties_to_element("vertex", { "range_mm" },
         Type::UINT32, mRanges.size(), reinterpret_cast<uint8_t*>(mRanges.data()), Type::INVALID, 0);
 
     ply_file.add_properties_to_element("vertex", { "intensity", "reflectivity", "ambient_noise" },
         Type::UINT16, mReturns.size(), reinterpret_cast<uint8_t*>(mReturns.data()), Type::INVALID, 0);
+
+#endif
 
     if (!mFrameIDs.empty())
     {
