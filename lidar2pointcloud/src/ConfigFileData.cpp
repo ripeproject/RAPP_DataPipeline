@@ -43,16 +43,46 @@ bool cConfigFileData::empty() const
 	return mKinematicModels.empty();
 }
 
+void cConfigFileData::setDefaultMinRange_m(double minimumDistance_m)
+{
+	mDefaultOptions.minDistance_m = minimumDistance_m;
+}
+
+void cConfigFileData::setDefaultMaxRange_m(double maximumDistance_m)
+{
+	mDefaultOptions.maxDistance_m = maximumDistance_m;
+}
+
 void cConfigFileData::setDefaultValidRange_m(double minimumDistance_m, double maximumDistance_m)
 {
 	mDefaultOptions.minDistance_m = minimumDistance_m;
 	mDefaultOptions.maxDistance_m = maximumDistance_m;
 }
 
+void cConfigFileData::setDefaultMinAzimuth_deg(double minimumAzimuth_deg)
+{
+	mDefaultOptions.minAzimuth_deg = minimumAzimuth_deg;
+}
+
+void cConfigFileData::setDefaultMaxAzimuth_deg(double maximumAzimuth_deg)
+{
+	mDefaultOptions.maxAzimuth_deg = maximumAzimuth_deg;
+}
+
 void cConfigFileData::setDefaultAzimuthWindow_deg(double minimumAzimuth_deg, double maximumAzimuth_deg)
 {
 	mDefaultOptions.minAzimuth_deg = minimumAzimuth_deg;
 	mDefaultOptions.maxAzimuth_deg = maximumAzimuth_deg;
+}
+
+void cConfigFileData::setDefaultMinAltitude_deg(double minimumAltitude_deg)
+{
+	mDefaultOptions.minAltitude_deg = minimumAltitude_deg;
+}
+
+void cConfigFileData::setDefaultMaxAltitude_deg(double maximumAltitude_deg)
+{
+	mDefaultOptions.maxAltitude_deg = maximumAltitude_deg;
 }
 
 void cConfigFileData::setDefaultAltitudeWindow_deg(double minimumAltitude_deg, double maximumAltitude_deg)
@@ -90,6 +120,21 @@ void cConfigFileData::setDefaultHeight_m(double height_m, eHeightAxis axis)
 {
 	mDefault_Height_m = height_m;
 	mDefault_HeightAxis = axis;
+}
+
+void cConfigFileData::setDefaultPitch(double pitch_deg)
+{
+	mDefault_SensorPitch_deg = pitch_deg;
+}
+
+void cConfigFileData::setDefaultRoll(double roll_deg)
+{
+	mDefault_SensorRoll_deg = roll_deg;
+}
+
+void cConfigFileData::setDefaultYaw(double yaw_deg)
+{
+	mDefault_SensorYaw_deg = yaw_deg;
 }
 
 void cConfigFileData::setDefaultOrientation(double pitch_deg, double roll_deg, double yaw_deg, bool rotateToSEU)

@@ -897,7 +897,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 			kinematics->rotateToSEU(mpRotateSensorToSEU->GetValue());
 			kinematics->setSensorOrientation(mSensorYaw_deg, mSensorPitch_deg, mSensorRoll_deg);
 		}
-		
+
 		if (!kinematics)
 		{
 			delete fp;

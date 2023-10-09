@@ -10,6 +10,8 @@
 #include "Kinematics_GPS.hpp"
 #include "Kinematics_SLAM.hpp"
 
+#include "ConfigFileData.hpp"
+
 #include "TextProgressBar.hpp"
 
 #include <lyra/lyra.hpp>
@@ -30,6 +32,24 @@ namespace
 {
 	int numFilesToProcess = 0;
 	cTextProgressBar progress_bar;
+
+	const double INVALID_VALUE = -10000.0;
+
+	const double DEFAULT_PITCH_DEG = 0.0;
+	const double DEFAULT_ROLL_DEG = 0.0;
+	const double DEFAULT_YAW_DEG = 0.0;
+
+	const double DEFAULT_MIN_DIST_M = 0.0;
+	const double DEFAULT_MAX_DIST_M = 1000.0;
+
+	const double DEFAULT_MIN_AZIMUTH_DEG = 0.0;
+	const double DEFAULT_MAX_AZIMUTH_DEG = 360.0;
+
+	const double DEFAULT_MIN_ALTITUDE_DEG = -90.0;
+	const double DEFAULT_MAX_ALTITUDE_DEG = 90.0;
+
+	const bool DEFAULT_AGGREGATE_POINTCLOUD = false;
+	const bool DEFAULT_SAVE_REDUCED_POINTCLOUD = false;
 }
 
 void console_message(const std::string& msg)
@@ -60,25 +80,27 @@ int main(int argc, char** argv)
 	using namespace nStringUtils;
 
 
-	double pitch_deg = 0.0;
-	double roll_deg = 0.0;
-	double yaw_deg = 0.0;
+	double pitch_deg = INVALID_VALUE;
+	double roll_deg = INVALID_VALUE;
+	double yaw_deg = INVALID_VALUE;
 
-	double min_dist_m = 0.0;
-	double max_dist_m = 1000.0;
+	double min_dist_m = INVALID_VALUE;
+	double max_dist_m = INVALID_VALUE;
 
-	double min_azimuth_deg = 0.0;
-	double max_azimuth_deg = 360.0;
+	double min_azimuth_deg = INVALID_VALUE;
+	double max_azimuth_deg = INVALID_VALUE;
 
-	double min_altitude_deg = -90.0;
-	double max_altitude_deg = 90.0;
+	double min_altitude_deg = INVALID_VALUE;
+	double max_altitude_deg = INVALID_VALUE;
 
-	bool aggregatePointCloud = false;
+	bool aggregatePointCloud = true;
 	bool saveReducedPointCloud = false;
+
 	std::string kinematics;
 	bool isFile = false;
 	bool showHelp = false;
 	std::string config_file;
+	cConfigFileData* pConfigData = nullptr;
 
 	int num_of_threads = 1;
 	std::string input_directory = current_path().string();
@@ -144,7 +166,6 @@ int main(int argc, char** argv)
 		std::cerr << cli << std::endl;
 		return 1;
 	}
-
 
 	const std::filesystem::path input{ input_directory };
 
@@ -224,37 +245,98 @@ int main(int argc, char** argv)
 	eKinematics model;
 	model = eKinematics::NONE;
 
-	double eastSpeed_mmps  = 0;
+	bool useConfigFile = false;
+
+	double eastSpeed_mmps = 0;
 	double northSpeed_mmps = 0;
-	double vertSpeed_mmps  = 0;
+	double vertSpeed_mmps = 0;
 
-	if (icontains(kinematics, "constant"))
+	if (!config_file.empty())
 	{
-		model = eKinematics::CONSTANT;
+		useConfigFile = true;
 
-		auto parameters = get_parameters(kinematics);
-		if (parameters.size() != 3)
+		pConfigData = new cConfigFileData(config_file);
+
+		if (!pConfigData->loadDefaults())
 		{
-			std::cout << cli << std::endl;
-			return 0;
+			std::cerr << "Could not load configuration file: ";
+			std::cerr << config_file;
+			return 1;
 		}
 
-		eastSpeed_mmps  = std::stod(parameters[0]);
-		northSpeed_mmps = std::stod(parameters[1]);
-		vertSpeed_mmps  = std::stod(parameters[2]);
+		if (pitch_deg != INVALID_VALUE)
+			pConfigData->setDefaultPitch(pitch_deg);
+
+		if (roll_deg != INVALID_VALUE)
+			pConfigData->setDefaultRoll(roll_deg);
+
+		if (yaw_deg != INVALID_VALUE)
+			pConfigData->setDefaultYaw(yaw_deg);
+
+		if (min_dist_m != INVALID_VALUE)
+			pConfigData->setDefaultMinRange_m(min_dist_m);
+
+		if (max_dist_m != INVALID_VALUE)
+			pConfigData->setDefaultMaxRange_m(max_dist_m);
+
+		if (min_azimuth_deg != INVALID_VALUE)
+			pConfigData->setDefaultMinAzimuth_deg(min_azimuth_deg);
+
+		if (max_azimuth_deg != INVALID_VALUE)
+			pConfigData->setDefaultMaxAzimuth_deg(max_azimuth_deg);
+
+		if (min_altitude_deg != INVALID_VALUE)
+			pConfigData->setDefaultMinAltitude_deg(min_altitude_deg);
+
+		if (max_altitude_deg != INVALID_VALUE)
+			pConfigData->setDefaultMaxAltitude_deg(max_altitude_deg);
+
+//		pConfigData->setDefaultAggregatePointCloud(mpAggregatePointCloud->GetValue());
+//		pConfigData->setDefaultReducedPointCloud(mpSaveReducedPointCloud->GetValue());
+
+		pConfigData->loadKinematicModels();
 	}
-	else if (iequal(kinematics, "slam"))
+	else
 	{
-		model = eKinematics::DOLLY;
+		if (icontains(kinematics, "constant"))
+		{
+			model = eKinematics::CONSTANT;
+
+			auto parameters = get_parameters(kinematics);
+			if (parameters.size() != 3)
+			{
+				std::cout << cli << std::endl;
+				return 0;
+			}
+
+			eastSpeed_mmps = std::stod(parameters[0]);
+			northSpeed_mmps = std::stod(parameters[1]);
+			vertSpeed_mmps = std::stod(parameters[2]);
+		}
+		else if (iequal(kinematics, "slam"))
+		{
+			model = eKinematics::DOLLY;
+		}
+		else if (iequal(kinematics, "dolly"))
+		{
+			model = eKinematics::DOLLY;
+		}
+		else if (iequal(kinematics, "gps"))
+		{
+			model = eKinematics::GPS;
+		}
 	}
-	else if (iequal(kinematics, "dolly"))
-	{
-		model = eKinematics::DOLLY;
-	}
-	else if (iequal(kinematics, "gps"))
-	{
-		model = eKinematics::GPS;
-	}
+
+	// Restore defaults if not set
+	if (pitch_deg == INVALID_VALUE)			pitch_deg = DEFAULT_PITCH_DEG;
+	if (roll_deg == INVALID_VALUE)			roll_deg = DEFAULT_ROLL_DEG;
+	if (yaw_deg == INVALID_VALUE)			yaw_deg = DEFAULT_YAW_DEG;
+	if (min_dist_m == INVALID_VALUE)		min_dist_m = DEFAULT_MIN_DIST_M;
+	if (max_dist_m == INVALID_VALUE)		max_dist_m = DEFAULT_MAX_DIST_M;
+	if (min_azimuth_deg == INVALID_VALUE)	min_azimuth_deg = DEFAULT_MIN_AZIMUTH_DEG;
+	if (max_azimuth_deg == INVALID_VALUE)	max_azimuth_deg = DEFAULT_MAX_AZIMUTH_DEG;
+	if (min_altitude_deg == INVALID_VALUE)	min_altitude_deg = DEFAULT_MIN_ALTITUDE_DEG;
+	if (max_altitude_deg == INVALID_VALUE)	max_altitude_deg = DEFAULT_MAX_ALTITUDE_DEG;
 
 	/*
 	 * Add all of the files to process to the thread pool
@@ -264,10 +346,10 @@ int main(int argc, char** argv)
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-		if (isFile)
-		{
-			out_file = std::filesystem::path{ output_directory };
-		}
+//		if (isFile)
+//		{
+//			out_file = std::filesystem::path{ output_directory };
+//		}
 
 		if (out_file.empty())
 		{
@@ -294,25 +376,48 @@ int main(int argc, char** argv)
 
 		std::unique_ptr<cKinematics> kinematics;
 
-		switch (model)
+		if (useConfigFile)
 		{
-		case eKinematics::CONSTANT:
-			kinematics = std::make_unique<cKinematics_Constant>(eastSpeed_mmps,
-				northSpeed_mmps, vertSpeed_mmps);
-			break;
-		case eKinematics::DOLLY:
-			kinematics = std::make_unique<cKinematics_Dolly>();
-			break;
-		case eKinematics::GPS:
-			kinematics = std::make_unique<cKinematics_GPS>();
-			break;
-		case eKinematics::SLAM:
-			kinematics = std::make_unique<cKinematics_SLAM>();
-			break;
+			auto options = pConfigData->getOptions(in_file.path().filename().string());
+
+			fp->setValidRange_m(options.minDistance_m, options.maxDistance_m);
+			fp->setAzimuthWindow_deg(options.minAzimuth_deg, options.maxAzimuth_deg);
+			fp->setAltitudeWindow_deg(options.minAltitude_deg, options.maxAltitude_deg);
+
+			fp->saveAggregatePointCloud(options.aggregatePointCloud);
+			fp->saveReducedPointCloud(options.saveReducedPointCloud);
+
+			kinematics = pConfigData->getModel(in_file.path().filename().string());
+		}
+		else
+		{
+			switch (model)
+			{
+			case eKinematics::CONSTANT:
+				kinematics = std::make_unique<cKinematics_Constant>(eastSpeed_mmps,
+					northSpeed_mmps, vertSpeed_mmps);
+				break;
+			case eKinematics::DOLLY:
+				kinematics = std::make_unique<cKinematics_Dolly>();
+				break;
+			case eKinematics::GPS:
+				kinematics = std::make_unique<cKinematics_GPS>();
+				break;
+			case eKinematics::SLAM:
+				kinematics = std::make_unique<cKinematics_SLAM>();
+				break;
+			}
+
+			kinematics->rotateToSEU(true);
+			kinematics->setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
 		}
 
-		kinematics->rotateToSEU(true);
-		kinematics->setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
+		if (!kinematics)
+		{
+			delete fp;
+			continue;
+		}
+
 		fp->setKinematicModel(std::move(kinematics));
 
 		pool.push_task(&cFileProcessor::process_file, fp);
@@ -323,7 +428,6 @@ int main(int argc, char** argv)
 	progress_bar.setMaxID(numFilesToProcess);
 
 	files_to_process.clear();
-
 	pool.wait_for_tasks();
 
 	for (auto file_processor : file_processors)

@@ -152,7 +152,9 @@ void cFileProcessor::run()
 
             auto file_pos = static_cast<double>(mFileReader.filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
-            update_file_progress(mID, static_cast<int>(file_pos));
+
+            if (static_cast<int>(file_pos) > 1)
+                update_file_progress(mID, static_cast<int>(file_pos));
         }
 
         mConverter->writeAndClearData();

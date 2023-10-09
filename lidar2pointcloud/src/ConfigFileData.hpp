@@ -48,8 +48,16 @@ public:
 
 	bool empty() const;
 
+	void setDefaultMinRange_m(double minimumDistance_m);
+	void setDefaultMaxRange_m(double maximumDistance_m);
 	void setDefaultValidRange_m(double minimumDistance_m, double maximumDistance_m);
+
+	void setDefaultMinAzimuth_deg(double minimumAzimuth_deg);
+	void setDefaultMaxAzimuth_deg(double maximumAzimuth_deg);
 	void setDefaultAzimuthWindow_deg(double minimumAzimuth_deg, double maximumAzimuth_deg);
+
+	void setDefaultMinAltitude_deg(double minimumAltitude_deg);
+	void setDefaultMaxAltitude_deg(double maximumAltitude_deg);
 	void setDefaultAltitudeWindow_deg(double minimumAltitude_deg, double maximumAltitude_deg);
 
 	void setDefaultAggregatePointCloud(bool aggregatedPointCloud);
@@ -59,6 +67,9 @@ public:
 	void setDefaultSpeeds_mmmps(double vx_mmps, double vy_mmps, double vz_mmps);
 	void setDefaultHeight_m(double height_m, eHeightAxis axis);
 
+	void setDefaultPitch(double pitch_deg);
+	void setDefaultRoll(double roll_deg);
+	void setDefaultYaw(double yaw_deg);
 	void setDefaultOrientation(double pitch_deg, double roll_deg, double yaw_deg, bool rotateToSEU);
 
 	sOptions_t getOptions(const std::string& experiment_filename);
