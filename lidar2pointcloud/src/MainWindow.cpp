@@ -39,6 +39,19 @@ void new_file_progress(const int id, std::string filename)
 	}
 }
 
+void update_file_progress(const int id, std::string prefix, const int progress_pct)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetPrefix(prefix);
+		event->SetProgress_pct(progress_pct);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
 void update_file_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
@@ -214,7 +227,7 @@ void cMainWindow::CreateControls()
 	mpComputeButton->Disable();
 	mpComputeButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCompute, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "");
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 150);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control

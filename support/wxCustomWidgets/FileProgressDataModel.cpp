@@ -24,6 +24,7 @@ std::size_t cFileProgressDataModel::Append(const wxString& text)
 
     mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
     mFilenameColValues.Add(text);
+    mPrefixColValues.Add("");
     mProgressColValues.Add(0);
     mResultColValues.Add("");
     RowAppended();
@@ -31,12 +32,28 @@ std::size_t cFileProgressDataModel::Append(const wxString& text)
     return row;
 }
 
-std::size_t cFileProgressDataModel::Append(const wxString& text, const wxString& result)
+std::size_t cFileProgressDataModel::Append(const wxString& text, const wxString& prefix)
 {
     auto row = mTimestampColValues.size();
 
     mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
     mFilenameColValues.Add(text);
+    mPrefixColValues.Add(prefix);
+    mProgressColValues.Add(0);
+    mResultColValues.Add("");
+
+    RowAppended();
+
+    return row;
+}
+
+std::size_t cFileProgressDataModel::Append(const wxString& text, const wxString& prefix, const wxString& result)
+{
+    auto row = mTimestampColValues.size();
+
+    mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
+    mFilenameColValues.Add(text);
+    mPrefixColValues.Add(prefix);
     mProgressColValues.Add(0);
     mResultColValues.Add(result);
 
@@ -58,6 +75,7 @@ void cFileProgressDataModel::DeleteItem(const wxDataViewItem& item)
         return;
 
     mFilenameColValues.RemoveAt(row);
+    mPrefixColValues.RemoveAt(row);
     mProgressColValues.RemoveAt(row);
     mResultColValues.RemoveAt(row);
     RowDeleted(row);
@@ -109,7 +127,7 @@ void cFileProgressDataModel::AddMany()
 
 unsigned int cFileProgressDataModel::GetColumnCount() const
 {
-    return 3;
+    return 4;
 }
 
 wxString cFileProgressDataModel::GetColumnType(unsigned int col) const
@@ -134,6 +152,12 @@ void cFileProgressDataModel::GetValueByRow(wxVariant& variant, unsigned int row,
     case columnFilename:
         if (row < mFilenameColValues.GetCount())
             variant = mFilenameColValues[row];
+
+        break;
+
+    case columnPrefix:
+        if (row < mPrefixColValues.GetCount())
+            variant = mPrefixColValues[row];
 
         break;
 
@@ -164,6 +188,10 @@ bool cFileProgressDataModel::SetValueByRow(const wxVariant& variant, unsigned in
 
     case columnFilename:
         mFilenameColValues[row] = variant.GetString();
+        break;
+
+    case columnPrefix:
+        mPrefixColValues[row] = variant.GetString();
         break;
 
     case columnProgress:

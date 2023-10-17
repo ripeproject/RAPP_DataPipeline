@@ -14,6 +14,7 @@
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, std::string prefix, const int progress_pct);
 extern void update_file_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id);
 
@@ -109,6 +110,8 @@ void cFileProcessor::run()
     {
         if (mConverter->requiresTelemetryPass())
         {
+            update_file_progress(mID, "Telemetry Pass", 0);
+
             mConverter->attachKinematicParsers(mFileReader);
 
             while (!mFileReader.eof())
@@ -119,6 +122,12 @@ void cFileProcessor::run()
                 }
 
                 mFileReader.processBlock();
+
+                auto file_pos = static_cast<double>(mFileReader.filePosition());
+                file_pos = 100.0 * (file_pos / mFileSize);
+
+                if (static_cast<int>(file_pos) > 1)
+                    update_file_progress(mID, static_cast<int>(file_pos));
             }
 
             mFileReader.gotoBeginning();
@@ -134,6 +143,8 @@ void cFileProcessor::run()
 	    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });
 	    mFileReader.attach(mConverter.get());
         mConverter.get()->attach(&mFileWriter);
+
+        update_file_progress(mID, "Compute Pass", 0);
 
         while (!mFileReader.eof())
         {

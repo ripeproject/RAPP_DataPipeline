@@ -282,8 +282,10 @@ void cKinematics_Dolly::transform(double time_us,
         }
     }
 
-    // Check for an end of pass event 
-    if (mDollyInfoIndex == mDollyPassIndex)
+    // Check for an end of pass event.
+    // Note: we use >= because it is possible for the dolly info index
+    // to jump passed the end of pass index
+    if (mDollyInfoIndex >= mDollyPassIndex)
     {
         ++mPassNumber;
 

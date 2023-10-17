@@ -18,6 +18,7 @@ public:
     {
         columnTimestamp,
         columnFilename,
+        columnPrefix,
         columnProgress,
         columnResult
     };
@@ -27,7 +28,8 @@ public:
     // helper methods to change the model
 
     std::size_t Append(const wxString &text);
-    std::size_t Append(const wxString& text, const wxString& result);
+    std::size_t Append(const wxString& text, const wxString& prefix);
+    std::size_t Append(const wxString& text, const wxString& prefix, const wxString& result);
 
     void DeleteItem( const wxDataViewItem &item );
     void DeleteItems( const wxDataViewItemArray &items );
@@ -47,6 +49,7 @@ public:
 private:
     wxArrayString mTimestampColValues;
     wxArrayString mFilenameColValues;
+    wxArrayString mPrefixColValues;
     wxArrayInt    mProgressColValues;
     wxArrayString mResultColValues;
 };
