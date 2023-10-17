@@ -63,6 +63,11 @@ void new_file_progress(const int id, std::string filename)
 	progress_bar.addProgressEntry(id, filename);
 }
 
+void update_file_progress(const int id, std::string prefix, const int progress_pct)
+{
+	progress_bar.updateProgressEntry(id, progress_pct);
+}
+
 void update_file_progress(const int id, const int progress_pct)
 {
 	progress_bar.updateProgressEntry(id, progress_pct);
