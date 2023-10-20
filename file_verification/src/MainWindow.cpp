@@ -192,8 +192,6 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 	mFailedDataDirectory = failed_dir.string();
 	mpFailedCtrl->SetValue(mFailedDataDirectory);
 
-	mpLogCtrl->Clear();
-
 	mpVerifyButton->Enable();
 }
 
