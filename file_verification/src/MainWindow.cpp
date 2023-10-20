@@ -187,7 +187,7 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 	mpSourceCtrl->SetValue(mSourceDataDirectory);
 
 	std::filesystem::path source_dir{ mSourceDataDirectory.ToStdString() };
-	auto failed_dir = source_dir / "failed";
+	auto failed_dir = source_dir / "failed_files";
 
 	mFailedDataDirectory = failed_dir.string();
 	mpFailedCtrl->SetValue(mFailedDataDirectory);

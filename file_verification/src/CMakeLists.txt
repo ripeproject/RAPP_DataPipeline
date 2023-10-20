@@ -76,7 +76,7 @@ if(wxWidgets_FOUND)
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
 	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
-	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresFileVerifier")
+	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresFileChecker")
 
 	target_compile_features(gui_app PRIVATE cxx_std_20)
 

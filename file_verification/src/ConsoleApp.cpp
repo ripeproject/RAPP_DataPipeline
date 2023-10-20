@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 	}
 
 	const std::filesystem::path input{ input_directory };
-	const std::filesystem::path failed = input / "failed";
+	const std::filesystem::path failed = input / "failed_files";
 
 	std::vector<directory_entry> ceres_files_to_check;
 	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
