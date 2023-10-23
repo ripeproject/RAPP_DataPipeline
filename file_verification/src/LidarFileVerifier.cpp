@@ -101,6 +101,8 @@ void cLidarFileVerifier::run()
         throw std::logic_error("No file is open for verification.");
     }
 
+    update_prefix_progress(mID, "Checking", 0);
+
     auto ouster = std::make_unique<v1::cOusterParser>();
     auto pvt = std::make_unique<v1::cPvtParser>();
 
@@ -143,7 +145,7 @@ void cLidarFileVerifier::run()
 
     mFileReader.close();
 
-    complete_file_progress(mID, "", "passed");
+    complete_file_progress(mID, "Complete", "passed");
 }
 
 //-----------------------------------------------------------------------------
@@ -157,7 +159,7 @@ void cLidarFileVerifier::moveFileToFailed()
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
 
-    complete_file_progress(mID, "", "failed");
+    complete_file_progress(mID, "Complete", "failed");
 
     ++g_num_failed_files;
 }

@@ -116,7 +116,7 @@ void cCeresFileVerifier::run()
 
     mFileReader.close();
 
-    complete_file_progress(mID, "", "passed");
+    complete_file_progress(mID, "Complete", "passed");
 }
 
 //-----------------------------------------------------------------------------
@@ -307,7 +307,7 @@ void cCeresFileVerifier::moveFileToFailed()
 
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
 
-    complete_file_progress(mID, "", "failed");
+    complete_file_progress(mID, "Complete", "failed");
 
     std::string msg = "Moving ";
     msg += mFileToCheck.string();
