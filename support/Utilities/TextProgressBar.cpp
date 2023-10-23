@@ -64,7 +64,7 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename, con
     if (mMaxID > 0)
         line = format("({}/{}): ", id + 1, mMaxID);
 
-    line += format("{:50s}  <{:10s}>   0% [", str, prefix);
+    line += format("{:50s}  <{:^10s}>   0% [", str, prefix);
 
     for (int i = 0; i < mProgressLength; ++i)
         line += mEmptyChar;
@@ -84,7 +84,7 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename, con
     if (mMaxID > 0)
         line = format("({}/{}): ", id + 1, mMaxID);
 
-    line += format("{:50s}  <{:10s}>   0% [", str, prefix);
+    line += format("{:50s}  <{:^10s}>   0% [", str, prefix);
 
     for (int i = 0; i < mProgressLength; ++i)
         line += mEmptyChar;
@@ -142,7 +142,7 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
     if (entry.prefix.empty())
         line += format("{:50s} {:3}% [", entry.filename, static_cast<int>(progress_pct));
     else
-        line += format("{:50s}  <{:10s}> {:3}% [", entry.filename, entry.prefix, static_cast<int>(progress_pct));
+        line += format("{:50s}  <{:^10s}> {:3}% [", entry.filename, entry.prefix, static_cast<int>(progress_pct));
 
     for (int i = 0; i < num_fill_char; ++i)
         line += mFullChar;
@@ -195,7 +195,7 @@ void cTextProgressBar::finishProgressEntry(int id)
     if (entry.prefix.empty())
         line += format("{:50s}      [", entry.filename);
     else
-        line += format("{:50s}   <{:10s}>  [", entry.filename, entry.prefix);
+        line += format("{0:50s}   <{1:^10s}>  [", entry.filename, entry.prefix);
 
     for (int i = 0; i < mProgressLength; ++i)
         line += mFullChar;

@@ -46,9 +46,9 @@ void update_progress(const int id, const int progress_pct)
 	progress_bar.updateProgressEntry(id, progress_pct);
 }
 
-void complete_file_progress(const int id, std::string filename, std::string suffix)
+void complete_file_progress(const int id, std::string prefix, std::string suffix)
 {
-	progress_bar.finishProgressEntry(id, filename, suffix);
+	progress_bar.finishProgressEntry(id, prefix, suffix);
 }
 
 

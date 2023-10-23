@@ -17,7 +17,7 @@ extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
 extern void update_progress(const int id, const int progress_pct);
-extern void complete_file_progress(const int id, std::string filename, std::string suffix);
+extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
 extern std::mutex g_failed_dir_mutex;
 
@@ -143,7 +143,7 @@ void cLidarFileVerifier::run()
 
     mFileReader.close();
 
-    complete_file_progress(mID, mFileToCheck.string(), "passed");
+    complete_file_progress(mID, "", "passed");
 }
 
 //-----------------------------------------------------------------------------
@@ -157,7 +157,7 @@ void cLidarFileVerifier::moveFileToFailed()
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
 
-    complete_file_progress(mID, mFileToCheck.string(), "failed");
+    complete_file_progress(mID, "", "failed");
 
     ++g_num_failed_files;
 }

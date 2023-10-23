@@ -17,7 +17,7 @@ extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
 extern void update_progress(const int id, const int progress_pct);
-extern void complete_file_progress(const int id, std::string filename, std::string suffix);
+extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
 std::mutex g_failed_dir_mutex;
 
@@ -116,7 +116,7 @@ void cCeresFileVerifier::run()
 
     mFileReader.close();
 
-    complete_file_progress(mID, mFileToCheck.string(), "passed");
+    complete_file_progress(mID, "", "passed");
 }
 
 //-----------------------------------------------------------------------------
@@ -307,7 +307,7 @@ void cCeresFileVerifier::moveFileToFailed()
 
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
 
-    complete_file_progress(mID, mFileToCheck.string(), "failed");
+    complete_file_progress(mID, "", "failed");
 
     std::string msg = "Moving ";
     msg += mFileToCheck.string();

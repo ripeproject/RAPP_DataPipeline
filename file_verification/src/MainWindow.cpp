@@ -62,16 +62,16 @@ void update_progress(const int id, const int progress_pct)
 	}
 }
 
-void complete_file_progress(const int id, std::string filename, std::string suffix)
+void complete_file_progress(const int id, std::string prefix, std::string suffix)
 {
 	if (g_pEventHandler)
 	{
 		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
 		event->SetFileProcessID(id);
 
-		if (!filename.empty())
+		if (!prefix.empty())
 		{
-			event->SetFileName(filename);
+			event->SetPrefix(prefix);
 		}
 
 		if (!suffix.empty())
