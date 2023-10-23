@@ -34,9 +34,9 @@ void cTextProgressBar::setLength(uint8_t length)
     mProgressLength = length;
 }
 
-void cTextProgressBar::addProgressEntry(int id, const std::string& prefix)
+void cTextProgressBar::addProgressEntry(int id, const std::string& filename)
 {
-    std::string str = nStringUtils::compactFilename(prefix, 50);
+    std::string str = nStringUtils::compactFilename(filename, 50);
     mProgressEntries[id] = { 0, str };
 
     std::string line;
@@ -54,17 +54,37 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& prefix)
     std::cout << line << std::flush;
 }
 
-void cTextProgressBar::addProgressEntry(int id, const std::string& prefix, const std::string& suffix)
+void cTextProgressBar::addProgressEntry(int id, const std::string& filename, const std::string& prefix)
 {
-    std::string str = nStringUtils::compactFilename(prefix, 50);
-    mProgressEntries[id] = { 0, str, suffix };
+    std::string str = nStringUtils::compactFilename(filename, 50);
+    mProgressEntries[id] = { 0, str, prefix };
 
     std::string line;
 
     if (mMaxID > 0)
         line = format("({}/{}): ", id + 1, mMaxID);
 
-    line += format("{:50s}   0% [", str);
+    line += format("{:50s}  <{:10s}>   0% [", str, prefix);
+
+    for (int i = 0; i < mProgressLength; ++i)
+        line += mEmptyChar;
+
+    line += "] ";
+
+    std::cout << line << std::flush;
+}
+
+void cTextProgressBar::addProgressEntry(int id, const std::string& filename, const std::string& prefix, const std::string& suffix)
+{
+    std::string str = nStringUtils::compactFilename(filename, 50);
+    mProgressEntries[id] = { 0, str, prefix, suffix };
+
+    std::string line;
+
+    if (mMaxID > 0)
+        line = format("({}/{}): ", id + 1, mMaxID);
+
+    line += format("{:50s}  <{:10s}>   0% [", str, prefix);
 
     for (int i = 0; i < mProgressLength; ++i)
         line += mEmptyChar;
@@ -78,7 +98,7 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& prefix, const
 void cTextProgressBar::updateProgressEntry(int id, const std::string& prefix, float progress_pct)
 {
     auto& entry = mProgressEntries[id];
-    entry.prefix = nStringUtils::compactFilename(prefix, 50);
+    entry.prefix = prefix;
 
     updateProgressEntry(id, progress_pct);
 }
@@ -86,7 +106,7 @@ void cTextProgressBar::updateProgressEntry(int id, const std::string& prefix, fl
 void cTextProgressBar::updateProgressEntry(int id, const std::string& prefix, const std::string& suffix, float progress_pct)
 {
     auto& entry = mProgressEntries[id];
-    entry.prefix = nStringUtils::compactFilename(prefix, 50);
+    entry.prefix = prefix;
     entry.suffix = suffix;
 
     updateProgressEntry(id, progress_pct);
@@ -119,7 +139,10 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
     if (mMaxID > 0)
         line += format("({}/{}): ", id + 1, mMaxID);
 
-    line += format("{:50s} {:3}% [", entry.prefix, static_cast<int>(progress_pct));
+    if (entry.prefix.empty())
+        line += format("{:50s} {:3}% [", entry.filename, static_cast<int>(progress_pct));
+    else
+        line += format("{:50s}  <{:10s}> {:3}% [", entry.filename, entry.prefix, static_cast<int>(progress_pct));
 
     for (int i = 0; i < num_fill_char; ++i)
         line += mFullChar;
@@ -146,7 +169,7 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
 void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix)
 {
     auto& entry = mProgressEntries[id];
-    entry.prefix = nStringUtils::compactFilename(prefix, 50);
+    entry.prefix = prefix;
 
     finishProgressEntry(id);
 }
@@ -154,7 +177,7 @@ void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix)
 void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix, const std::string& suffix)
 {
     auto& entry = mProgressEntries[id];
-    entry.prefix = nStringUtils::compactFilename(prefix, 50);
+    entry.prefix = prefix;
     entry.suffix = suffix;
 
     finishProgressEntry(id);
@@ -169,7 +192,10 @@ void cTextProgressBar::finishProgressEntry(int id)
     if (mMaxID > 0)
         line += format("({}/{}): ", id + 1, mMaxID);
 
-    line += format("{:50s}      [", entry.prefix);
+    if (entry.prefix.empty())
+        line += format("{:50s}      [", entry.filename);
+    else
+        line += format("{:50s}   <{:10s}>  [", entry.filename, entry.prefix);
 
     for (int i = 0; i < mProgressLength; ++i)
         line += mFullChar;

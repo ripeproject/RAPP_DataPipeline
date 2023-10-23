@@ -112,14 +112,16 @@ cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id,
 		result->SetMinWidth(prefixWidth);
 	}
 
-	auto progress = AppendProgressColumn("Progress", cFileProgressDataModel::columnProgress);
+	auto progress = AppendProgressColumn("Progress", cFileProgressDataModel::columnProgress, wxDATAVIEW_CELL_INERT, 400);
 	progress->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+	progress->SetResizeable(true);
 
 	if (!resultColumnLabel.empty() && (resultWidth > 0))
 	{
-		auto result = AppendTextColumn(resultColumnLabel, cFileProgressDataModel::columnResult, wxDATAVIEW_CELL_INERT, resultWidth);
+		auto result = AppendTextColumn(resultColumnLabel, cFileProgressDataModel::columnResult, wxDATAVIEW_CELL_INERT);
 		result->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
 		result->SetMinWidth(resultWidth);
+		result->SetWidth(resultWidth);
 	}
 
 	Bind(NEW_FILE_PROGRESS, &cFileProgressCtrl::OnNewFileProgress, this);

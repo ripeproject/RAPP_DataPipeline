@@ -16,8 +16,9 @@ public:
 	void setFillChars(char half_full, char full);
 	void setLength(uint8_t length);
 
-	void addProgressEntry(int id, const std::string& prefix);
-	void addProgressEntry(int id, const std::string& prefix, const std::string& suffix);
+	void addProgressEntry(int id, const std::string& filename);
+	void addProgressEntry(int id, const std::string& filename, const std::string& prefix);
+	void addProgressEntry(int id, const std::string& filename, const std::string& prefix, const std::string& suffix);
 
 	void updateProgressEntry(int id, const std::string& prefix, float progress_pct);
 	void updateProgressEntry(int id, const std::string& prefix, const std::string& suffix, float progress_pct);
@@ -39,6 +40,7 @@ private:
 	struct sLineInfo_t
 	{
 		int line_number = 0;
+		std::string filename;
 		std::string prefix;
 		std::string suffix;
 		int num_fill_char = 0;
