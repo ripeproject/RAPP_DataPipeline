@@ -542,7 +542,7 @@ void cMainWindow::OnSrcFileBrowse(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnSrcDirBrowse(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose input directory", "",
+	wxDirDialog dlg(NULL, "Choose input directory", mSourceData,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -558,7 +558,7 @@ void cMainWindow::OnSrcDirBrowse(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 {
-	wxDirDialog dlg(NULL, "Choose output directory", "",
+	wxDirDialog dlg(NULL, "Choose output directory", mDestinationData,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -923,6 +923,15 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	}
 
 	mpComputeButton->Disable();
+
+	if (numFilesToProcess > 1)
+	{
+		wxString msg = "Processing ";
+		msg += wxString::Format("%d", numFilesToProcess);
+		msg += " files from ";
+		msg += mSourceData;
+		wxLogMessage(msg);
+	}
 
 	startDataProcessing();
 }
