@@ -34,15 +34,15 @@ void new_file_progress(const int id, std::string filename)
 	}
 }
 
-void update_file_progress(const int id, std::string filename, const int progress_pct)
+void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
 		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
 		event->SetFileProcessID(id);
 
-		if (!filename.empty())
-			event->SetFileName(filename);
+		if (!prefix.empty())
+			event->SetPrefix(prefix);
 
 		event->SetProgress_pct(progress_pct);
 
@@ -50,7 +50,7 @@ void update_file_progress(const int id, std::string filename, const int progress
 	}
 }
 
-void update_file_progress(const int id, const int progress_pct)
+void update_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
@@ -130,7 +130,7 @@ void cMainWindow::CreateControls()
 	mpVerifyButton->Disable();
 	mpVerifyButton->Bind(wxEVT_BUTTON, &cMainWindow::OnVerify, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "", 0, "Result", 25);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 25, "Result", 25);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control

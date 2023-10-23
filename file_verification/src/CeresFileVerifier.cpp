@@ -15,8 +15,8 @@ extern std::atomic<uint32_t> g_num_failed_files;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
-extern void update_file_progress(const int id, std::string filename, const int progress_pct);
-extern void update_file_progress(const int id, const int progress_pct);
+extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
+extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id, std::string filename, std::string suffix);
 
 std::mutex g_failed_dir_mutex;
@@ -122,9 +122,7 @@ void cCeresFileVerifier::run()
 //-----------------------------------------------------------------------------
 bool cCeresFileVerifier::pass1()
 {
-    std::string msg = mFileToCheck.string();
-    msg += " [Pass1]";
-    update_file_progress(mID, msg, 0);
+    update_prefix_progress(mID, "Pass 1", 0);
 
     if (!mFileReader.isOpen())
     {
@@ -145,7 +143,7 @@ bool cCeresFileVerifier::pass1()
 
             auto file_pos = static_cast<double>(mFileReader.filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
-            update_file_progress(mID, static_cast<int>(file_pos));
+            update_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::crc_error& e)
@@ -230,9 +228,7 @@ bool cCeresFileVerifier::pass2()
 //    msg += mFileToCheck.string();
 //    msg += "...";
 //    console_message(msg);
-    std::string msg = mFileToCheck.string();
-    msg += " [Pass2]";
-    update_file_progress(mID, msg, 0);
+    update_prefix_progress(mID, "Pass 2", 0);
 
 
     if (!mFileReader.isOpen())
@@ -262,7 +258,7 @@ bool cCeresFileVerifier::pass2()
 
             auto file_pos = static_cast<double>(mFileReader.filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
-            update_file_progress(mID, static_cast<int>(file_pos));
+            update_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::invalid_data& e)
