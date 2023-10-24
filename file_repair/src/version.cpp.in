@@ -1,0 +1,27 @@
+
+#include "version.hpp"
+
+std::string getVersionString()
+{
+	return "@DATA_REPAIR_VERSION@";
+}
+
+unsigned int getMajorVersion()
+{
+	return @DATA_REPAIR_MAJOR@ +0;
+}
+
+unsigned int getMinorVersion()
+{
+	return @DATA_REPAIR_MINOR@ +0;
+}
+
+unsigned int getPatchVersion()
+{
+	return @DATA_REPAIR_PATCH@ +0;
+}
+
+unsigned int getTweakVersion()
+{
+	return @DATA_REPAIR_TWEAK@ +0;
+}
