@@ -51,6 +51,8 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename)
 
     line += "]";
 
+    mProgressEntries[id].max_length = line.size();
+
     std::cout << line << std::flush;
 }
 
@@ -69,7 +71,9 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename, con
     for (int i = 0; i < mProgressLength; ++i)
         line += mEmptyChar;
 
-    line += "] ";
+    line += "]";
+
+    mProgressEntries[id].max_length = line.size();
 
     std::cout << line << std::flush;
 }
@@ -90,6 +94,8 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename, con
         line += mEmptyChar;
 
     line += "] " + suffix;
+
+    mProgressEntries[id].max_length = line.size();
 
     std::cout << line << std::flush;
 }
@@ -163,6 +169,15 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
         line += " " + entry.suffix;
     }
 
+    if (line.size() > entry.max_length)
+    {
+        entry.max_length = line.size();
+    }
+    else if (line.size() < entry.max_length)
+    {
+        line += std::string(entry.max_length - line.size(), ' ');
+    }
+
     std::cout << line << std::flush;
 }
 
@@ -205,6 +220,11 @@ void cTextProgressBar::finishProgressEntry(int id)
     if (!entry.suffix.empty())
     {
         line += " " + entry.suffix;
+    }
+
+    if (line.size() < entry.max_length)
+    {
+        line += std::string(entry.max_length - line.size(), ' ');
     }
 
     std::cout << line << std::endl;

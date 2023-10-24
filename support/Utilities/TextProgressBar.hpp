@@ -45,6 +45,7 @@ private:
 		std::string suffix;
 		int num_fill_char = 0;
 		bool needs_half_fill = false;
+		int max_length = 0;
 	};
 
 	std::map<int, sLineInfo_t> mProgressEntries;
