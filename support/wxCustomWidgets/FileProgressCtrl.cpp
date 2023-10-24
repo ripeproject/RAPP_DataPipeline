@@ -90,9 +90,64 @@ cFileProgressCtrl::cFileProgressCtrl()
 }
 
 cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id,
-	const wxString& prefixColumnLabel, const int prefixWidth, const wxString& resultColumnLabel, const int resultWidth,
 	const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
 :
+	wxDataViewCtrl(parent, id, pos, size, style | wxDV_HORIZ_RULES | wxDV_VERT_RULES, validator, name)
+{
+	mpProgressModel = new cFileProgressDataModel();
+	AssociateModel(mpProgressModel.get());
+
+	auto timestamp = AppendTextColumn("Time", cFileProgressDataModel::columnTimestamp);
+	timestamp->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+
+	auto filename = AppendTextColumn("File Name", cFileProgressDataModel::columnFilename, wxDATAVIEW_CELL_INERT, 400);
+	filename->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+	filename->SetMinWidth(300);
+
+	auto progress = AppendProgressColumn("Progress", cFileProgressDataModel::columnProgress, wxDATAVIEW_CELL_INERT, 400);
+	progress->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+	progress->SetResizeable(true);
+
+	Bind(NEW_FILE_PROGRESS, &cFileProgressCtrl::OnNewFileProgress, this);
+	Bind(UPDATE_FILE_PROGRESS, &cFileProgressCtrl::OnUpdateFileProgress, this);
+	Bind(COMPLETE_FILE_PROGRESS, &cFileProgressCtrl::OnCompleteFileProgress, this);
+}
+
+cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxString& prefixColumnLabel, const int prefixWidth,
+	const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
+	:
+	wxDataViewCtrl(parent, id, pos, size, style | wxDV_HORIZ_RULES | wxDV_VERT_RULES, validator, name)
+{
+	mpProgressModel = new cFileProgressDataModel();
+	AssociateModel(mpProgressModel.get());
+
+	auto timestamp = AppendTextColumn("Time", cFileProgressDataModel::columnTimestamp);
+	timestamp->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+
+	auto filename = AppendTextColumn("File Name", cFileProgressDataModel::columnFilename, wxDATAVIEW_CELL_INERT, 400);
+	filename->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+	filename->SetMinWidth(300);
+
+	if (!prefixColumnLabel.empty() && (prefixWidth > 0))
+	{
+		auto result = AppendTextColumn(prefixColumnLabel, cFileProgressDataModel::columnPrefix, wxDATAVIEW_CELL_INERT, prefixWidth);
+		result->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+		result->SetMinWidth(prefixWidth);
+	}
+
+	auto progress = AppendProgressColumn("Progress", cFileProgressDataModel::columnProgress, wxDATAVIEW_CELL_INERT, 400);
+	progress->SetAlignment(wxALIGN_CENTER_HORIZONTAL);
+	progress->SetResizeable(true);
+
+	Bind(NEW_FILE_PROGRESS, &cFileProgressCtrl::OnNewFileProgress, this);
+	Bind(UPDATE_FILE_PROGRESS, &cFileProgressCtrl::OnUpdateFileProgress, this);
+	Bind(COMPLETE_FILE_PROGRESS, &cFileProgressCtrl::OnCompleteFileProgress, this);
+}
+
+cFileProgressCtrl::cFileProgressCtrl(wxWindow* parent, wxWindowID id,
+	const wxString& prefixColumnLabel, const int prefixWidth, const wxString& resultColumnLabel, const int resultWidth,
+	const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
+	:
 	wxDataViewCtrl(parent, id, pos, size, style | wxDV_HORIZ_RULES | wxDV_VERT_RULES, validator, name)
 {
 	mpProgressModel = new cFileProgressDataModel();

@@ -1,8 +1,6 @@
 
 #include "CeresFileVerifier.hpp"
 #include "ParserExceptions.hpp"
-//#include "OusterVerificationParser.hpp"
-//#include "AxisCommunicationsVerificationParser.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 

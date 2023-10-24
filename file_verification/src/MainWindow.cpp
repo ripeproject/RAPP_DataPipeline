@@ -130,7 +130,7 @@ void cMainWindow::CreateControls()
 	mpVerifyButton->Disable();
 	mpVerifyButton->Bind(wxEVT_BUTTON, &cMainWindow::OnVerify, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 25, "Result", 25);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 75, "Result", 25);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
