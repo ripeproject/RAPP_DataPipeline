@@ -83,7 +83,7 @@ void cCeresFileVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
-        mFileSize = mFileReader.size();
+        mFileSize = mFileReader.file_size();
 
         new_file_progress(mID, mFileToCheck.string());
 
@@ -103,7 +103,7 @@ void cCeresFileVerifier::run()
 
     mFileReader.open(mFileToCheck.string());
 
-    mFileSize = mFileReader.size();
+    mFileSize = mFileReader.file_size();
 
     if (!pass2())
     {
