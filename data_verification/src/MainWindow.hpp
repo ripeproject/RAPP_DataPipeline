@@ -33,6 +33,7 @@ public:
 
 protected:
 	void OnSourceDirectory(wxCommandEvent& event);
+	void OnInvalidDirectory(wxCommandEvent& event);
 	void OnVerify(wxCommandEvent& event);
 
 
@@ -47,7 +48,8 @@ private:
 	wxTextCtrl* mpSourceCtrl  = nullptr;
 	wxButton* mpSourceDirButton  = nullptr;
 
-	wxTextCtrl* mpFailedCtrl = nullptr;
+	wxTextCtrl* mpInvalidDataCtrl = nullptr;
+	wxButton* mpInvalidDataDirButton = nullptr;
 
 	wxButton* mpVerifyButton = nullptr;
 
@@ -60,7 +62,7 @@ private:
 	std::queue<cCeresDataVerifier*> mFileProcessors;
 
 	wxString mSourceDataDirectory;
-	wxString mFailedDataDirectory;
+	wxString mInvalidDataDirectory;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

@@ -18,6 +18,7 @@
 std::mutex g_console_mutex;
 
 std::atomic<uint32_t> g_num_failed_files = 0;
+std::atomic<uint32_t> g_num_invalid_files = 0;
 
 namespace
 {
@@ -36,19 +37,14 @@ void new_file_progress(const int id, std::string filename)
 	progress_bar.addProgressEntry(id, filename);
 }
 
-void update_file_progress(const int id, std::string filename, const int progress_pct)
-{
-	progress_bar.updateProgressEntry(id, filename, progress_pct);
-}
-
-void update_file_progress(const int id, const int progress_pct)
+void update_progress(const int id, const int progress_pct)
 {
 	progress_bar.updateProgressEntry(id, progress_pct);
 }
 
-void complete_file_progress(const int id, std::string filename, std::string suffix)
+void complete_file_progress(const int id, std::string suffix)
 {
-	progress_bar.finishProgressEntry(id, filename, suffix);
+	progress_bar.finishProgressEntry(id, suffix);
 }
 
 
@@ -144,8 +140,9 @@ int main(int argc, char** argv)
 	for (auto& file : lidar_files_to_check)
 	{
 		cLidarDataVerifier* dv = new cLidarDataVerifier(numFilesToProcess++, failed);
+		dv->setFileToCheck(file);
 
-		pool.push_task(&cLidarDataVerifier::process_file, dv, file);
+		pool.push_task(&cLidarDataVerifier::process_file, dv);
 
 		lidar_data_verifiers.push_back(dv);
 	}
@@ -164,6 +161,11 @@ int main(int argc, char** argv)
 		delete data_verifier;
 	}
 
-	return g_num_failed_files;
+	if (g_num_failed_files != 0)
+	{
+		std::cout << "Detected " << g_num_failed_files << " invalid files.  Please run FileChecker and FileRepair on this directory!" << std::endl;
+	}
+
+	return g_num_invalid_files;
 }
 

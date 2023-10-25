@@ -28,7 +28,7 @@ set(DATA_VERIFICATOR_COMMON_FILES
 add_executable(console_app)
 
 set_target_properties(console_app PROPERTIES LANGUAGE CXX)
-set_target_properties(console_app PROPERTIES OUTPUT_NAME "DataVerificator")
+set_target_properties(console_app PROPERTIES OUTPUT_NAME "DataChecker")
 
 target_compile_features(console_app PRIVATE cxx_std_20)
 
@@ -81,7 +81,7 @@ if(wxWidgets_FOUND)
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
 	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
-	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresDataVerifier")
+	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresDataChecker")
 
 	target_compile_features(gui_app PRIVATE cxx_std_20)
 

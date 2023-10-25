@@ -8,8 +8,12 @@
 #include <cbdf/BlockDataFile.hpp>
 
 #include <filesystem>
+#include <atomic>
 
 using namespace std::filesystem;
+
+std::atomic<uint32_t> g_num_failed_files = 0;
+std::atomic<uint32_t> g_num_invalid_files = 0;
 
 namespace
 {
@@ -33,23 +37,7 @@ void new_file_progress(const int id, std::string filename)
 	}
 }
 
-void update_file_progress(const int id, std::string filename, const int progress_pct)
-{
-	if (g_pEventHandler)
-	{
-		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
-		event->SetFileProcessID(id);
-
-		if (!filename.empty())
-			event->SetFileName(filename);
-
-		event->SetProgress_pct(progress_pct);
-
-		wxQueueEvent(g_pEventHandler, event);
-	}
-}
-
-void update_file_progress(const int id, const int progress_pct)
+void update_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
@@ -61,17 +49,12 @@ void update_file_progress(const int id, const int progress_pct)
 	}
 }
 
-void complete_file_progress(const int id, std::string filename, std::string suffix)
+void complete_file_progress(const int id, std::string suffix)
 {
 	if (g_pEventHandler)
 	{
 		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
 		event->SetFileProcessID(id);
-
-		if (!filename.empty())
-		{
-			event->SetFileName(filename);
-		}
 
 		if (!suffix.empty())
 		{
@@ -120,13 +103,16 @@ void cMainWindow::CreateControls()
 	mpSourceDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpSourceDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSourceDirectory, this);
 
-	mpFailedCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpInvalidDataCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+
+	mpInvalidDataDirButton = new wxButton(this, wxID_ANY, "Browse");
+	mpInvalidDataDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnInvalidDirectory, this);
 
 	mpVerifyButton = new wxButton(this, wxID_ANY, "Verify");
 	mpVerifyButton->Disable();
 	mpVerifyButton->Bind(wxEVT_BUTTON, &cMainWindow::OnVerify, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Result");
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "", 0, "Result", 75);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
@@ -150,7 +136,8 @@ void cMainWindow::CreateLayout()
 	grid_sizer->Add(mpSourceDirButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Failed Directory: "), 0, wxALIGN_CENTER_VERTICAL);
-	grid_sizer->Add(mpFailedCtrl, 1, wxEXPAND);
+	grid_sizer->Add(mpInvalidDataCtrl, 1, wxEXPAND);
+	grid_sizer->Add(mpInvalidDataDirButton, 0, wxALIGN_CENTER_VERTICAL);
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
@@ -172,7 +159,7 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", "",
+	wxDirDialog dlg(NULL, "Choose directory", mSourceDataDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -182,14 +169,24 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 	mpSourceCtrl->SetValue(mSourceDataDirectory);
 
 	std::filesystem::path source_dir{ mSourceDataDirectory.ToStdString() };
-	auto failed_dir = source_dir / "failed";
+	auto invalid_dir = source_dir / "invalid_data";
 
-	mFailedDataDirectory = failed_dir.string();
-	mpFailedCtrl->SetValue(mFailedDataDirectory);
-
-	mpLogCtrl->Clear();
+	mInvalidDataDirectory = invalid_dir.string();
+	mpInvalidDataCtrl->SetValue(mInvalidDataDirectory);
 
 	mpVerifyButton->Enable();
+}
+
+void cMainWindow::OnInvalidDirectory(wxCommandEvent& WXUNUSED(event))
+{
+	wxDirDialog dlg(NULL, "Choose directory", mInvalidDataDirectory,
+		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mInvalidDataDirectory = dlg.GetPath().ToStdString();
+	mpInvalidDataCtrl->SetValue(mInvalidDataDirectory);
 }
 
 void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
@@ -214,11 +211,11 @@ void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
 		return;
 	}
 
-	const std::filesystem::path failed_dir = mFailedDataDirectory.ToStdString();
+	const std::filesystem::path invalid_dir = mInvalidDataDirectory.ToStdString();
 	int numOfFiles = 0;
 	for (auto& file : files_to_verify)
 	{
-		cCeresDataVerifier* fp = new cCeresDataVerifier(numOfFiles++, failed_dir);
+		cCeresDataVerifier* fp = new cCeresDataVerifier(numOfFiles++, invalid_dir);
 
 		if (fp->setFileToCheck(file))
 		{
@@ -253,6 +250,9 @@ void cMainWindow::startDataProcessing()
 		wxLogError("Could not create the worker thread!");
 		return;
 	}
+
+	g_num_failed_files = 0;
+	g_num_invalid_files = 0;
 
 	GetThread()->Run();
 }
@@ -289,6 +289,15 @@ wxThread::ExitCode cMainWindow::Entry()
 	wxString msg = "Finished processing ";
 	msg += mSourceDataDirectory;
 	wxLogMessage(msg);
+
+	if (g_num_failed_files != 0)
+	{
+		wxString msg = "Detected ";
+		uint32_t l = g_num_failed_files;
+		msg += wxString::Format(wxT("%d"), l);
+		msg += " invalid files.  Please run FileChecker and FileRepair on this directory!";
+		wxLogMessage(msg);
+	}
 
 	return (wxThread::ExitCode) 0;
 }

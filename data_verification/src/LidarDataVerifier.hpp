@@ -12,18 +12,21 @@
 class cLidarDataVerifier 
 {
 public:
-	explicit cLidarDataVerifier(int id, std::filesystem::path failed_dir);
+	explicit cLidarDataVerifier(int id, std::filesystem::path invalid_dir);
+
 	cLidarDataVerifier(int id, std::filesystem::directory_entry file_to_check,
-		std::filesystem::path failed_dir);
+		std::filesystem::path invalid_dir);
+
     ~cLidarDataVerifier();
 
-	bool open(std::filesystem::directory_entry file_to_check);
+	bool setFileToCheck(std::filesystem::directory_entry file_to_check);
 
-	void process_file(std::filesystem::directory_entry file_to_check);
-	void run();
+	void process_file();
 
 protected:
-	void moveFileToFailed();
+	bool open(std::filesystem::path file_to_check);
+	void run();
+	void moveFileToInvalid();
 
 private:
 	const int mID;
@@ -31,7 +34,7 @@ private:
 	std::uintmax_t mFileSize;
 	v1::cBlockDataFileReader mFileReader;
 
-	std::filesystem::path mFailedDirectory;
+	std::filesystem::path mInvalidDirectory;
 	std::filesystem::path mFileToCheck;
 };
 
