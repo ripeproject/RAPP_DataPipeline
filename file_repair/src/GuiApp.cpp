@@ -19,11 +19,11 @@ std::atomic<uint32_t> g_num_failed_files = 0;
 // ----------------------------------------------------------------------------
 
 // Define a new application type
-class cCeresDataRepairApp : public wxApp
+class cCeresFileRepairApp : public wxApp
 {
 public:
-    cCeresDataRepairApp();
-    virtual ~cCeresDataRepairApp();
+    cCeresFileRepairApp();
+    virtual ~cCeresFileRepairApp();
 
     virtual bool OnInit() wxOVERRIDE;
 };
@@ -33,20 +33,20 @@ public:
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// The CeresConvert Application
+// The Ceres File Repair Application
 // ----------------------------------------------------------------------------
 
-cCeresDataRepairApp::cCeresDataRepairApp()
+cCeresFileRepairApp::cCeresFileRepairApp()
 {
-    SetAppDisplayName("Ceres Data Repair");
+    SetAppDisplayName("Ceres File Repair");
 }
 
-cCeresDataRepairApp::~cCeresDataRepairApp()
+cCeresFileRepairApp::~cCeresFileRepairApp()
 {
 }
 
 // `Main program' equivalent, creating windows and returning main app frame
-bool cCeresDataRepairApp::OnInit()
+bool cCeresFileRepairApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
@@ -65,5 +65,5 @@ bool cCeresDataRepairApp::OnInit()
 // the application object during program execution (it's better than using a
 // static object for many reasons) and also implements the accessor function
 // wxGetApp() which will return the reference of the right type
-// (i.e. cCeresDataRepairApp and not wxApp)
-wxIMPLEMENT_APP(cCeresDataRepairApp);
+// (i.e. cCeresFileRepairApp and not wxApp)
+wxIMPLEMENT_APP(cCeresFileRepairApp);

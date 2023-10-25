@@ -11,7 +11,10 @@
 class cFileProcessor
 {
 public:
-	cFileProcessor(int id, std::filesystem::path recovered_dir, std::filesystem::path repaired_dir);
+	cFileProcessor(int id, std::filesystem::path temp_dir,
+					std::filesystem::path partial_repaired_dir, 
+					std::filesystem::path fully_repaired_dir);
+
 	~cFileProcessor();
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
@@ -22,16 +25,19 @@ protected:
 	void run();
 
 private:
+	void moveToPartialRepaired();
+	void moveToFullyRepaired();
+
+private:
 	const int mID;
 
-	const std::filesystem::path mRecoveredDirectory;
-	std::filesystem::path mRecoveredFile;
+	const std::filesystem::path mTemporaryDirectory;
+	std::filesystem::path mTemporaryFile;
 
-	const std::filesystem::path mRepairedDirectory;
-	std::filesystem::path mRepairedFile;
+	const std::filesystem::path mPartialRepairedDirectory;
+	const std::filesystem::path mFullyRepairedDirectory;
 
 	std::filesystem::path mInputFile;
-	std::filesystem::path mOutputFile;
 
 	std::unique_ptr<cDataFileRecovery>	mDataFileRecovery;
 };

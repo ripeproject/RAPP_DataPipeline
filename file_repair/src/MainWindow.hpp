@@ -33,7 +33,8 @@ public:
 
 protected:
 	void OnFailedDirectory(wxCommandEvent& event);
-	void OnRepairDirectory(wxCommandEvent& event);
+	void OnPartialRepairDirectory(wxCommandEvent& event);
+	void OnFullRepairDirectory(wxCommandEvent& event);
 	void OnRepair(wxCommandEvent& event);
 
 
@@ -48,8 +49,11 @@ private:
 	wxTextCtrl* mpFailedCtrl  = nullptr;
 	wxButton* mpFailedDirButton  = nullptr;
 
-	wxTextCtrl* mpRepairCtrl = nullptr;
-	wxButton* mpRepairDirButton = nullptr;
+	wxTextCtrl* mpPartialRepairCtrl = nullptr;
+	wxButton* mpPartialRepairDirButton = nullptr;
+
+	wxTextCtrl* mpFullRepairCtrl = nullptr;
+	wxButton* mpFullRepairDirButton = nullptr;
 
 	wxButton* mpRepairButton = nullptr;
 
@@ -62,7 +66,8 @@ private:
 	std::queue<cFileProcessor*> mFileProcessors;
 
 	wxString mFailedDataDirectory;
-	wxString mRepairedDataDirectory;
+	wxString mPartialRepairedDataDirectory;
+	wxString mFullyRepairedDataDirectory;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

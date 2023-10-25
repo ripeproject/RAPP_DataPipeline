@@ -12,39 +12,39 @@
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
-extern void update_file_progress(const int id, std::string filename, const int progress_pct);
-extern void update_file_progress(const int id, const int progress_pct);
+extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
+extern void update_progress(const int id, const int progress_pct);
 
 
 //-----------------------------------------------------------------------------
-cDataFileRecovery::cDataFileRecovery(int id, std::filesystem::path recovery_dir)
+cDataFileRecovery::cDataFileRecovery(int id, std::filesystem::path temporary_dir)
     : mID(id)
 {
-    mRecoveryDirectory = recovery_dir;
+    mTemporaryDirectory = temporary_dir;
 }
 
 cDataFileRecovery::cDataFileRecovery(int id, std::filesystem::path file_to_recover,
-                                    std::filesystem::path recovery_dir)
+                                    std::filesystem::path temporary_dir)
     : mID(id)
 {
-    mRecoveryDirectory = recovery_dir;
+    mTemporaryDirectory = temporary_dir;
     mCurrentFile = file_to_recover;
 
-    mRecoveryFile = mRecoveryDirectory / mCurrentFile.filename();
+    mTemporaryFile = mTemporaryDirectory / mCurrentFile.filename();
 
-    if (std::filesystem::exists(mRecoveryFile))
+    if (std::filesystem::exists(mTemporaryFile))
     {
         throw std::logic_error("File already exists");
     }
 
-    mFileWriter.open(mRecoveryFile.string());
+    mFileWriter.open(mTemporaryFile.string());
 
     if (!cBlockDataFileRecovery::open(file_to_recover.string()))
     {
         throw std::logic_error(mCurrentFile.string());
     }
 
-    mFileSize = cBlockDataFileRecovery::size();
+    mOriginalFileSize = cBlockDataFileRecovery::file_size();
 }
 
 cDataFileRecovery::~cDataFileRecovery()
@@ -53,26 +53,26 @@ cDataFileRecovery::~cDataFileRecovery()
 }
 
 //-----------------------------------------------------------------------------
-std::filesystem::path cDataFileRecovery::recoveredFileName()
+std::filesystem::path cDataFileRecovery::tempFileName()
 {
-    return mRecoveryFile;
+    return mTemporaryFile;
 }
 
 //-----------------------------------------------------------------------------
 bool cDataFileRecovery::open(std::filesystem::path file_to_recover)
 {
     mCurrentFile = file_to_recover;
-    mRecoveryFile = mRecoveryDirectory / mCurrentFile.filename();
+    mTemporaryFile = mTemporaryDirectory / mCurrentFile.filename();
 
-    if (std::filesystem::exists(mRecoveryFile))
+    if (std::filesystem::exists(mTemporaryFile))
     {
         return false;
     }
 
-    mFileWriter.open(mRecoveryFile.string());
+    mFileWriter.open(mTemporaryFile.string());
     cBlockDataFileRecovery::open(file_to_recover.string());
 
-    mFileSize = cBlockDataFileRecovery::size();
+    mOriginalFileSize = cBlockDataFileRecovery::file_size();
 
     return mFileWriter.isOpen() && cBlockDataFileRecovery::isOpen();
 }
@@ -80,25 +80,13 @@ bool cDataFileRecovery::open(std::filesystem::path file_to_recover)
 //-----------------------------------------------------------------------------
 bool cDataFileRecovery::run()
 {
-//    std::string msg = "Recovering ";
-//    msg += mCurrentFile.string();
-//    msg += "...";
-//    console_message(msg);
-
-    std::string msg = mCurrentFile.string();
-    msg += " [Recovering]";
-    update_file_progress(mID, msg, 0);
+    update_prefix_progress(mID, "Recovering", 0);
 
     bool result = pass1();
 
-//    msg = "Verifing: ";
-//    msg += mRecoveryFile.string();
-//    msg += "...";
-//    console_message(msg);
+    mFileWriter.close();
 
-    msg = mCurrentFile.string();
-    msg += " [Verifing]";
-    update_file_progress(mID, msg, 0);
+    update_prefix_progress(mID, "Verifing", 0);
 
     if (!pass2())
     {
@@ -107,7 +95,8 @@ bool cDataFileRecovery::run()
 
     if (result)
     {
-        removeFailedFile();
+        result = (mRecoveredFileSize == mOriginalFileSize);
+//        removeFailedFile();
     }
 
     return result;
@@ -135,8 +124,8 @@ bool cDataFileRecovery::pass1()
             cBlockDataFileRecovery::processBlock();
 
             auto file_pos = static_cast<double>(cBlockDataFileRecovery::filePosition());
-            file_pos = 100.0 * (file_pos / mFileSize);
-            update_file_progress(mID, static_cast<int>(file_pos));
+            file_pos = 100.0 * (file_pos / mOriginalFileSize);
+            update_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::crc_error& e)
@@ -188,14 +177,16 @@ bool cDataFileRecovery::pass2()
 {
     cBlockDataFileReader fileReader;
 
-    fileReader.open(mRecoveryFile.string());
+    fileReader.open(mTemporaryFile.string());
 
     if (!fileReader.isOpen())
     {
         throw std::logic_error("No file is open for verification.");
     }
 
-    mFileSize = fileReader.size();
+    mRecoveredFileSize = fileReader.file_size();
+    auto file_pos = fileReader.filePosition();
+    auto block_size = fileReader.block_size();
 
     try
     {
@@ -209,14 +200,17 @@ bool cDataFileRecovery::pass2()
 
             fileReader.processBlock();
 
-            auto file_pos = static_cast<double>(fileReader.filePosition());
-            file_pos = 100.0 * (file_pos / mFileSize);
-            update_file_progress(mID, static_cast<int>(file_pos));
+            block_size = fileReader.block_size();
+
+            file_pos = fileReader.filePosition();
+            auto file_pct = static_cast<double>(file_pos);
+            file_pct = 100.0 * (file_pct / mRecoveredFileSize);
+            update_progress(mID, static_cast<int>(file_pct));
         }
     }
     catch (const bdf::crc_error& e)
     {
-        std::string msg = mRecoveryFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": ";
         msg += e.what();
         console_message(msg);
@@ -225,7 +219,7 @@ bool cDataFileRecovery::pass2()
     }
     catch (const bdf::formatting_error& e)
     {
-        std::string msg = mRecoveryFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": Formatting Error, ";
         msg += e.what();
         console_message(msg);
@@ -234,7 +228,7 @@ bool cDataFileRecovery::pass2()
     }
     catch (const bdf::stream_error& e)
     {
-        std::string msg = mRecoveryFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": Stream Error, ";
         msg += e.what();
         console_message(msg);
@@ -243,7 +237,7 @@ bool cDataFileRecovery::pass2()
     }
     catch (const bdf::io_error& e)
     {
-        std::string msg = mRecoveryFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": IO Error, ";
         msg += e.what();
         console_message(msg);
@@ -252,7 +246,7 @@ bool cDataFileRecovery::pass2()
     }
     catch (const std::runtime_error& e)
     {
-        std::string msg = mRecoveryFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": Runtime Error, ";
         msg += e.what();
         console_message(msg);
@@ -263,7 +257,7 @@ bool cDataFileRecovery::pass2()
     {
         if (!fileReader.eof())
         {
-            std::string msg = mRecoveryFile.filename().string();
+            std::string msg = mTemporaryFile.filename().string();
             msg += ": std::exception, ";
             msg += e.what();
             console_message(msg);
@@ -306,7 +300,7 @@ bool cDataFileRecovery::removeFailedFile()
 
     {
         auto src = std::filesystem::file_size(mCurrentFile);
-        auto dst = std::filesystem::file_size(mRecoveryFile);
+        auto dst = std::filesystem::file_size(mTemporaryFile);
         std::size_t diff = 0;
         if (dst > src)
             diff = dst - src;
@@ -320,6 +314,7 @@ bool cDataFileRecovery::removeFailedFile()
         }
     }
 
+//    std::filesystem::copy_file();
     return std::filesystem::remove(mCurrentFile);
 }
 

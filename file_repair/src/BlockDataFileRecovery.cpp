@@ -64,7 +64,7 @@ bool cBlockDataFileRecovery::processBlock()
         throw bdf::formatting_error("I/O error while processing block.");
     }
 
-    if (mByteSwapNeeded)
+    if (byteSwapNeeded())
     {
     }
 
@@ -129,7 +129,7 @@ bool cBlockDataFileRecovery::processBlock()
     }
 
 
-    if (mByteSwapNeeded)
+    if (byteSwapNeeded())
     {
     }
 

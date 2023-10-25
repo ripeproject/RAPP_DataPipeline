@@ -4,7 +4,7 @@
 
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
-#include "Resources/CeresDataRepair.xpm"
+#include "Resources/CeresFileRepair.xpm"
 #endif
 
 
@@ -44,12 +44,12 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Ceres Data Repair")
+	: wxFrame(NULL, wxID_ANY, "Ceres File Repair")
 {
 	mpMainWindow = new cMainWindow(this);
 
 	// set the frame icon
-	SetIcon(wxICON(CeresDataRepair));
+	SetIcon(wxICON(CeresFileRepair));
 
 #if wxUSE_MENUBAR
 	// create a menu bar
@@ -125,12 +125,12 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetCopyright(wxT("Copyright (c) 2022, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
-	info.SetIcon(wxICON(CeresDataRepair));
+	info.SetIcon(wxICON(CeresFileRepair));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the data_repair repository and source\n"
-		"distribution.This includes data_repair’s source code, the examples, and\n"
+		"This license applies to all files in the file_repair repository and source\n"
+		"distribution.  This includes file_repair’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
 		"Copyright(c) 2022, Carl R.Woese Institute for Genomic Biology\n"

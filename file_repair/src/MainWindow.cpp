@@ -33,15 +33,15 @@ void new_file_progress(const int id, std::string filename)
 	}
 }
 
-void update_file_progress(const int id, std::string filename, const int progress_pct)
+void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
 		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
 		event->SetFileProcessID(id);
 
-		if (!filename.empty())
-			event->SetFileName(filename);
+		if (!prefix.empty())
+			event->SetPrefix(prefix);
 
 		event->SetProgress_pct(progress_pct);
 
@@ -49,7 +49,7 @@ void update_file_progress(const int id, std::string filename, const int progress
 	}
 }
 
-void update_file_progress(const int id, const int progress_pct)
+void update_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
@@ -61,16 +61,16 @@ void update_file_progress(const int id, const int progress_pct)
 	}
 }
 
-void complete_file_progress(const int id, std::string filename, std::string suffix)
+void complete_file_progress(const int id, std::string prefix, std::string suffix)
 {
 	if (g_pEventHandler)
 	{
 		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
 		event->SetFileProcessID(id);
 
-		if (!filename.empty())
+		if (!prefix.empty())
 		{
-			event->SetFileName(filename);
+			event->SetPrefix(prefix);
 		}
 
 		if (!suffix.empty())
@@ -119,16 +119,21 @@ void cMainWindow::CreateControls()
 	mpFailedDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpFailedDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnFailedDirectory, this);
 
-	mpRepairCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpPartialRepairCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
 
-	mpRepairDirButton = new wxButton(this, wxID_ANY, "Browse");
-	mpRepairDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnRepairDirectory, this);
+	mpPartialRepairDirButton = new wxButton(this, wxID_ANY, "Browse");
+	mpPartialRepairDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnPartialRepairDirectory, this);
+
+	mpFullRepairCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+
+	mpFullRepairDirButton = new wxButton(this, wxID_ANY, "Browse");
+	mpFullRepairDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnFullRepairDirectory, this);
 
 	mpRepairButton = new wxButton(this, wxID_ANY, "Repair");
 	mpRepairButton->Disable();
 	mpRepairButton->Bind(wxEVT_BUTTON, &cMainWindow::OnRepair, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Result");
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 75, "Result", 25);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
@@ -151,9 +156,14 @@ void cMainWindow::CreateLayout()
 	grid_sizer->Add(mpFailedCtrl, 1, wxEXPAND);
 	grid_sizer->Add(mpFailedDirButton, 0, wxALIGN_CENTER_VERTICAL);
 
-	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Repaired Directory: "), 0, wxALIGN_CENTER_VERTICAL);
-	grid_sizer->Add(mpRepairCtrl, 1, wxEXPAND);
-	grid_sizer->Add(mpRepairDirButton, 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Partial Repaired Directory: "), 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpPartialRepairCtrl, 1, wxEXPAND);
+	grid_sizer->Add(mpPartialRepairDirButton, 0, wxALIGN_CENTER_VERTICAL);
+
+	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Fully Repaired Directory: "), 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpFullRepairCtrl, 1, wxEXPAND);
+	grid_sizer->Add(mpFullRepairDirButton, 0, wxALIGN_CENTER_VERTICAL);
+
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
@@ -185,23 +195,38 @@ void cMainWindow::OnFailedDirectory(wxCommandEvent& WXUNUSED(event))
 
 	std::filesystem::path failed_dir{ mFailedDataDirectory.ToStdString() };
 	auto base_dir = failed_dir.parent_path();
-	auto repair_dir = base_dir / "repaired";
+	std::filesystem::path partial_repaired_dir = base_dir / "partial_repaired_files";
+	std::filesystem::path fully_repaired_dir = base_dir / "fully_repaired_files";
 
-	mRepairedDataDirectory = repair_dir.string();
-	mpRepairCtrl->SetValue(mRepairedDataDirectory);
+	mPartialRepairedDataDirectory = partial_repaired_dir.string();
+	mpPartialRepairCtrl->SetValue(mPartialRepairedDataDirectory);
+
+	mFullyRepairedDataDirectory = fully_repaired_dir.string();
+	mpFullRepairCtrl->SetValue(mFullyRepairedDataDirectory);
 
 	mpRepairButton->Enable();
 }
 
-void cMainWindow::OnRepairDirectory(wxCommandEvent& WXUNUSED(event))
+void cMainWindow::OnPartialRepairDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", mRepairedDataDirectory, wxDD_DEFAULT_STYLE);
+	wxDirDialog dlg(NULL, "Choose directory", mPartialRepairedDataDirectory, wxDD_DEFAULT_STYLE);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
 
-	mRepairedDataDirectory = dlg.GetPath().ToStdString();
-	mpRepairCtrl->SetValue(mRepairedDataDirectory);
+	mPartialRepairedDataDirectory = dlg.GetPath().ToStdString();
+	mpPartialRepairCtrl->SetValue(mPartialRepairedDataDirectory);
+}
+
+void cMainWindow::OnFullRepairDirectory(wxCommandEvent& WXUNUSED(event))
+{
+	wxDirDialog dlg(NULL, "Choose directory", mFullyRepairedDataDirectory, wxDD_DEFAULT_STYLE);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mFullyRepairedDataDirectory = dlg.GetPath().ToStdString();
+	mpFullRepairCtrl->SetValue(mFullyRepairedDataDirectory);
 }
 
 void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
@@ -226,22 +251,19 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 		return;
 	}
 
-	const std::filesystem::path recovered_dir = failed_dir / "recovered";
-	if (!std::filesystem::exists(recovered_dir))
+	const std::filesystem::path temporary_dir = failed_dir / "tmp";
+	if (!std::filesystem::exists(temporary_dir))
 	{
-		std::filesystem::create_directory(recovered_dir);
+		std::filesystem::create_directory(temporary_dir);
 	}
 
-	const std::filesystem::path repaired_dir = mRepairedDataDirectory.ToStdString();
-	if (!std::filesystem::exists(repaired_dir))
-	{
-		std::filesystem::create_directory(repaired_dir);
-	}
+	const std::filesystem::path partial_repaired_dir = mPartialRepairedDataDirectory.ToStdString();
+	const std::filesystem::path fully_repaired_dir = mFullyRepairedDataDirectory.ToStdString();
 
 	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, recovered_dir, repaired_dir);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, temporary_dir, partial_repaired_dir, fully_repaired_dir);
 
 		if (fp->setFileToRepair(file))
 		{
