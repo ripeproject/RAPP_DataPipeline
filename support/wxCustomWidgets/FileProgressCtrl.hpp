@@ -64,11 +64,14 @@ class cFileProgressCtrl: public wxDataViewCtrl
 {
 public:
     cFileProgressCtrl();
+
     cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize,
         long style = 0, const wxValidator& validator = wxDefaultValidator, const wxString& name = wxDataViewCtrlNameStr);
+
     cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxString& prefixColumnLabel, const int prefixWidth,
         const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0,
         const wxValidator& validator = wxDefaultValidator, const wxString& name = wxDataViewCtrlNameStr);
+
     cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxString& prefixColumnLabel, const int prefixWidth = 0,
         const wxString& resultColumnLabel = "", const int resultWidth = 0,
         const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0,

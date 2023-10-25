@@ -181,10 +181,10 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
     std::cout << line << std::flush;
 }
 
-void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix)
+void cTextProgressBar::finishProgressEntry(int id, const std::string& suffix)
 {
     auto& entry = mProgressEntries[id];
-    entry.prefix = prefix;
+    entry.suffix = suffix;
 
     finishProgressEntry(id);
 }

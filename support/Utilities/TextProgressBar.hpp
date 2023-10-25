@@ -20,12 +20,12 @@ public:
 	void addProgressEntry(int id, const std::string& filename, const std::string& prefix);
 	void addProgressEntry(int id, const std::string& filename, const std::string& prefix, const std::string& suffix);
 
+	void updateProgressEntry(int id, float progress_pct);
 	void updateProgressEntry(int id, const std::string& prefix, float progress_pct);
 	void updateProgressEntry(int id, const std::string& prefix, const std::string& suffix, float progress_pct);
-	void updateProgressEntry(int id, float progress_pct);
 
 	void finishProgressEntry(int id);
-	void finishProgressEntry(int id, const std::string& prefix);
+	void finishProgressEntry(int id, const std::string& suffix);
 	void finishProgressEntry(int id, const std::string& prefix, const std::string& suffix);
 
 private:
