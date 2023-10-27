@@ -72,8 +72,8 @@ public:
         const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0,
         const wxValidator& validator = wxDefaultValidator, const wxString& name = wxDataViewCtrlNameStr);
 
-    cFileProgressCtrl(wxWindow* parent, wxWindowID id, const wxString& prefixColumnLabel, const int prefixWidth = 0,
-        const wxString& resultColumnLabel = "", const int resultWidth = 0,
+    cFileProgressCtrl(wxWindow* parent, wxWindowID id, 
+        const wxString& prefixColumnLabel, const int prefixWidth, const wxString& resultColumnLabel, const int resultWidth,
         const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0,
         const wxValidator& validator = wxDefaultValidator, const wxString& name = wxDataViewCtrlNameStr);
 
