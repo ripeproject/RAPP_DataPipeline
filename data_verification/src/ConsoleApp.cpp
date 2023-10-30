@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 	}
 
 	const std::filesystem::path input{ input_directory };
-	const std::filesystem::path failed = input / "failed";
+	const std::filesystem::path invalid_dir = input / "invalid_data";
 
 	std::vector<directory_entry> ceres_files_to_check;
 	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
 
 	for (auto& file : ceres_files_to_check)
 	{
-		cCeresDataVerifier* dv = new cCeresDataVerifier(numFilesToProcess++, failed);
+		cCeresDataVerifier* dv = new cCeresDataVerifier(numFilesToProcess++, invalid_dir);
 		dv->setFileToCheck(file);
 
 		pool.push_task(&cCeresDataVerifier::process_file, dv);
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 
 	for (auto& file : lidar_files_to_check)
 	{
-		cLidarDataVerifier* dv = new cLidarDataVerifier(numFilesToProcess++, failed);
+		cLidarDataVerifier* dv = new cLidarDataVerifier(numFilesToProcess++, invalid_dir);
 		dv->setFileToCheck(file);
 
 		pool.push_task(&cLidarDataVerifier::process_file, dv);
