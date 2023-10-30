@@ -161,6 +161,11 @@ int main(int argc, char** argv)
 		delete file_processor;
 	}
 
+	if (std::filesystem::is_empty(temporary_dir))
+	{
+		std::filesystem::remove(temporary_dir);
+	}
+
 	return 0;
 }
 

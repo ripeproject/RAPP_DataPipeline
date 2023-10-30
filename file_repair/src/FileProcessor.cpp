@@ -105,8 +105,7 @@ void cFileProcessor::moveToPartialRepaired()
 
     std::filesystem::path out_file = mPartialRepairedDirectory / mInputFile.filename();
 
-    std::filesystem::copy_file(mTemporaryFile, out_file);
-    std::filesystem::remove(mTemporaryFile);
+    std::filesystem::rename(mTemporaryFile, out_file);
 }
 
 void cFileProcessor::moveToFullyRepaired()
@@ -115,7 +114,6 @@ void cFileProcessor::moveToFullyRepaired()
 
     std::filesystem::path out_file = mFullyRepairedDirectory / mInputFile.filename();
 
-    std::filesystem::copy_file(mTemporaryFile, out_file);
-    std::filesystem::remove(mTemporaryFile);
+    std::filesystem::rename(mTemporaryFile, out_file);
 }
 

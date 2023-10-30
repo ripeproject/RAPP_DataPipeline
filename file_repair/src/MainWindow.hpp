@@ -13,6 +13,7 @@
 #include <cbdf/BlockDataFile.hpp>
 
 #include <queue>
+#include <filesystem>
 
 // Forward Declarations
 class cFileProcessor;
@@ -68,6 +69,8 @@ private:
 	wxString mFailedDataDirectory;
 	wxString mPartialRepairedDataDirectory;
 	wxString mFullyRepairedDataDirectory;
+
+	std::filesystem::path mTemporaryDir;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

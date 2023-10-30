@@ -7,8 +7,6 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
-#include <filesystem>
-
 using namespace std::filesystem;
 
 namespace
@@ -251,10 +249,10 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 		return;
 	}
 
-	const std::filesystem::path temporary_dir = failed_dir / "tmp";
-	if (!std::filesystem::exists(temporary_dir))
+	mTemporaryDir = failed_dir / "tmp";
+	if (!std::filesystem::exists(mTemporaryDir))
 	{
-		std::filesystem::create_directory(temporary_dir);
+		std::filesystem::create_directory(mTemporaryDir);
 	}
 
 	const std::filesystem::path partial_repaired_dir = mPartialRepairedDataDirectory.ToStdString();
@@ -263,7 +261,7 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, temporary_dir, partial_repaired_dir, fully_repaired_dir);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, mTemporaryDir, partial_repaired_dir, fully_repaired_dir);
 
 		if (fp->setFileToRepair(file))
 		{
@@ -334,6 +332,11 @@ wxThread::ExitCode cMainWindow::Entry()
 	wxString msg = "Finished processing ";
 	msg += mFailedDataDirectory;
 	wxLogMessage(msg);
+
+	if (std::filesystem::is_empty(mTemporaryDir))
+	{
+		std::filesystem::remove(mTemporaryDir);
+	}
 
 	return (wxThread::ExitCode) 0;
 }
