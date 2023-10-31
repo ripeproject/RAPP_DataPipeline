@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 		("The number of threads to use for repairing data files.")
 		.optional()
 		| lyra::arg(input_directory, "input directory")
-		("The path to input directory for repairing of ceres data.");
+		("The path to input directory for repairing of ceres data files.");
 
 	auto result = cli.parse({argc, argv});
 
@@ -87,16 +87,9 @@ int main(int argc, char** argv)
 	}
 
 	const std::filesystem::path input{ input_directory };
-	const std::filesystem::path failed_dir = input / "failed_files";
-
-	if (!std::filesystem::exists(failed_dir))
-	{
-		// If the failed directory does not exists, we are done!
-		return 0;
-	}
 
 	std::vector<directory_entry> files_to_repair;
-	for (auto const& dir_entry : std::filesystem::directory_iterator{ failed_dir })
+	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 	{
 		if (!dir_entry.is_regular_file())
 			continue;
@@ -109,11 +102,11 @@ int main(int argc, char** argv)
 
 	if (files_to_repair.empty())
 	{
-		// No files to repair!
+		std::cerr << "No files to repair!" << std::endl;
 		return 0;
 	}
 
-	const std::filesystem::path temporary_dir = failed_dir / "tmp";
+	const std::filesystem::path temporary_dir = input / "tmp";
 	if (!std::filesystem::exists(temporary_dir))
 	{
 		std::filesystem::create_directory(temporary_dir);
