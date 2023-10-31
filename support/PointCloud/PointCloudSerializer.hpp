@@ -20,8 +20,16 @@ namespace pointcloud
 class cPointCloudID;
 
 class cReducedPointCloudByFrame;
+class cReducedPointCloudByFrame_FrameId;
+class cReducedPointCloudByFrame_SensorInfo;
+
 class cSensorPointCloudByFrame;
+class cSensorPointCloudByFrame_FrameId;
+class cSensorPointCloudByFrame_SensorInfo;
+
 class cPointCloud;
+class cPointCloud_FrameId;
+class cPointCloud_SensorInfo;
 
 
 class cPointCloudSerializer : public cBlockSerializer
@@ -34,9 +42,18 @@ public:
 	void write(const pointcloud::eCOORDINATE_SYSTEM in);
 	void write(const pointcloud::eKINEMATIC_MODEL in);
 	void write(const pointcloud::imu_data_t& in);
-	void write(const cReducedPointCloudByFrame& in);
-	void write(const cSensorPointCloudByFrame& in);
+
 	void write(const cPointCloud& in);
+	void write(const cPointCloud_FrameId& in);
+	void write(const cPointCloud_SensorInfo& in);
+
+	void write(const cReducedPointCloudByFrame& in);
+	void write(const cReducedPointCloudByFrame_FrameId& in);
+	void write(const cReducedPointCloudByFrame_SensorInfo& in);
+
+	void write(const cSensorPointCloudByFrame& in);
+	void write(const cSensorPointCloudByFrame_FrameId& in);
+	void write(const cSensorPointCloudByFrame_SensorInfo& in);
 
 	void writeSensorAngles(double pitch_deg, double roll_deg, double yaw_deg);
 	void writeKinematicSpeed(double vx_mps, double vy_mps, double vz_mps);
