@@ -50,7 +50,7 @@ bool cFileProcessor::open(std::filesystem::path out)
     mConverter->setOutputPath(outFile);
 
     mFileReader.open(mInputFile.string());
-    mFileSize = mFileReader.size();
+    mFileSize = mFileReader.file_size();
 
     return mFileReader.isOpen();
 }

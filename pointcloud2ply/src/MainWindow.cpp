@@ -109,7 +109,7 @@ void cMainWindow::CreateControls()
 	mpExportButton->Disable();
 	mpExportButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExport, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "");
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control

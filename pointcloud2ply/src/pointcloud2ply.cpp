@@ -69,7 +69,7 @@ void cPointCloud2Ply::onDimensions(double x_min_m, double x_max_m,
 
 void cPointCloud2Ply::onImuData(pointcloud::imu_data_t data) {}
 
-void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
+void cPointCloud2Ply::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
 {
     auto cloud_data = pointCloud.data();
 
@@ -110,15 +110,8 @@ void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t time
     {
         std::filesystem::path filename = mOutputPath;
 
-        std::string ext;
-
-        if (mIndividualPlyFiles)
-        {
-           ext = std::to_string(mFrameCount);
-           ext += ".";
-        }
-
-        ext += "ply";
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
 
         filename.replace_extension(ext);
 
@@ -128,7 +121,125 @@ void cPointCloud2Ply::onReducedPointCloudByFrame(uint16_t frameID, uint64_t time
     ++mFrameCount;
 }
 
-void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
+void cPointCloud2Ply::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePointcloud(filename);
+    }
+
+    ++mFrameCount;
+}
+
+void cPointCloud2Ply::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+    std::vector<pixel_loc> pixel_locs;
+    std::vector<beam_loc>  beam_locs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+
+        pixel_loc ploc;
+        ploc.chn = point.chnNum;
+        ploc.pixel = point.pixelNum;
+        pixel_locs.push_back(ploc);
+
+        beam_loc bloc;
+        bloc.theta = point.theta_rad;
+        bloc.phi = point.phi_rad;
+        beam_locs.push_back(bloc);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+    mPixelLocations.insert(mPixelLocations.end(), pixel_locs.begin(), pixel_locs.end());
+    mBeamLocations.insert(mBeamLocations.end(), beam_locs.begin(), beam_locs.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePointcloud(filename);
+    }
+
+    ++mFrameCount;
+}
+
+void cPointCloud2Ply::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
 {
     if (mResyncTimestamp)
     {
@@ -189,6 +300,124 @@ void cPointCloud2Ply::onSensorPointCloudByFrame(uint16_t frameID, uint64_t times
     ++mFrameCount;
 }
 
+void cPointCloud2Ply::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePointcloud(filename);
+    }
+
+    ++mFrameCount;
+}
+
+void cPointCloud2Ply::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+    std::vector<pixel_loc> pixel_locs;
+    std::vector<beam_loc>  beam_locs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+
+        pixel_loc ploc;
+        ploc.chn = point.chnNum;
+        ploc.pixel = point.pixelNum;
+        pixel_locs.push_back(ploc);
+
+        beam_loc bloc;
+        bloc.theta = point.theta_rad;
+        bloc.phi = point.phi_rad;
+        beam_locs.push_back(bloc);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+    mPixelLocations.insert(mPixelLocations.end(), pixel_locs.begin(), pixel_locs.end());
+    mBeamLocations.insert(mBeamLocations.end(), beam_locs.begin(), beam_locs.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePointcloud(filename);
+    }
+
+    ++mFrameCount;
+}
+
 void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud)
 {
     auto cloud_data = pointCloud.data();
@@ -221,6 +450,124 @@ void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud)
     mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
     mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
     mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePointcloud(filename);
+    }
+
+    ++mFrameCount;
+}
+
+void cPointCloud2Ply::onPointCloudData(cPointCloud_FrameId pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+
+    if (mIndividualPlyFiles)
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = std::to_string(mFrameCount);
+        ext += ".ply";
+
+        filename.replace_extension(ext);
+
+        writePointcloud(filename);
+    }
+
+    ++mFrameCount;
+}
+
+void cPointCloud2Ply::onPointCloudData(cPointCloud_SensorInfo pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+    std::vector<pixel_loc> pixel_locs;
+    std::vector<beam_loc>  beam_locs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+
+        pixel_loc ploc;
+        ploc.chn   = point.chnNum;
+        ploc.pixel = point.pixelNum;
+        pixel_locs.push_back(ploc);
+
+        beam_loc bloc;
+        bloc.theta = point.theta_rad;
+        bloc.phi   = point.phi_rad;
+        beam_locs.push_back(bloc);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+    mPixelLocations.insert(mPixelLocations.end(), pixel_locs.begin(), pixel_locs.end());
+    mBeamLocations.insert(mBeamLocations.end(), beam_locs.begin(), beam_locs.end());
 
     if (mIndividualPlyFiles)
     {
@@ -338,6 +685,24 @@ void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
             Type::UINT16, mFrameIDs.size(), reinterpret_cast<uint8_t*>(mFrameIDs.data()), Type::INVALID, 0);
     }
 
+    if (!mPixelLocations.empty())
+    {
+        ply_file.add_properties_to_element("vertex", { "channel, pixel" },
+            Type::UINT16, mPixelLocations.size(), reinterpret_cast<uint8_t*>(mPixelLocations.data()), Type::INVALID, 0);
+    }
+
+    if (!mBeamLocations.empty())
+    {
+#ifdef USE_FLOATS
+        ply_file.add_properties_to_element("vertex", { "theta_rad, phi_rad" },
+            Type::FLOAT32, mBeamLocations.size(), reinterpret_cast<uint8_t*>(mBeamLocations.data()), Type::INVALID, 0);
+#else
+        ply_file.add_properties_to_element("vertex", { "theta_rad, phi_rad" },
+            Type::FLOAT64, mBeamLocations.size(), reinterpret_cast<uint8_t*>(mBeamLocations.data()), Type::INVALID, 0);
+#endif
+    }
+
+
 #ifdef USE_BINARY
     // Write a binary file
     ply_file.write(outstream_binary, true);
@@ -350,5 +715,7 @@ void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
     mRanges.clear();
     mReturns.clear();
     mFrameIDs.clear();
+    mPixelLocations.clear();
+    mBeamLocations.clear();
 }
 
