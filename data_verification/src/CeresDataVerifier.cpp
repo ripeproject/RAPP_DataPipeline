@@ -137,7 +137,8 @@ void cCeresDataVerifier::run()
         console_message(msg);
 
         mFileReader.close();
-        ++g_num_invalid_files;
+
+        moveFileToInvalid();
 
         complete_file_progress(mID, "Data Invalid");
 
@@ -187,15 +188,6 @@ void cCeresDataVerifier::moveFileToInvalid()
     ::create_directory(mInvalidDirectory);
 
     std::filesystem::path dest = mInvalidDirectory / mFileToCheck.filename();
-
-    complete_file_progress(mID, "Invalid Data");
-
-    std::string msg = "Moving ";
-    msg += mFileToCheck.string();
-    msg += " to ";
-    msg += dest.string();
-    console_message(msg);
-
     std::filesystem::rename(mFileToCheck, dest);
 
     ++g_num_invalid_files;
