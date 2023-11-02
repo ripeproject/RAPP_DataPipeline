@@ -16,13 +16,30 @@ extern std::atomic<uint32_t> g_num_failed_files;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
-extern void update_file_progress(const int id, std::string filename, const int progress_pct);
-extern void update_file_progress(const int id, const int progress_pct);
-extern void complete_file_progress(const int id, std::string filename, std::string suffix);
+extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
 
-cFileProcessor::cFileProcessor(int id, std::filesystem::path recovered_dir, std::filesystem::path repaired_dir)
-    : mID(id), mRecoveredDirectory(recovered_dir), mRepairedDirectory(repaired_dir)
+std::mutex g_dir_mutex;
+
+namespace
+{
+    void create_directory(std::filesystem::path failed_dir)
+    {
+        std::lock_guard<std::mutex> guard(g_dir_mutex);
+
+        if (!std::filesystem::exists(failed_dir))
+        {
+            std::filesystem::create_directory(failed_dir);
+        }
+    }
+}
+
+
+cFileProcessor::cFileProcessor(int id, std::filesystem::path temp_dir, 
+                                        std::filesystem::path failed_dir,
+                                        std::filesystem::path repaired_dir)
+:
+    mID(id), mTemporaryDirectory(temp_dir), mFailedDirectory(failed_dir), mRepairedDirectory(repaired_dir)
 {
 }
 
@@ -34,7 +51,7 @@ bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_re
 {
     if (file_to_repair.exists())
     {
-        mInputFile = file_to_repair.path();
+        mFileToRepair = file_to_repair.path();
         return true;
     }
 
@@ -43,15 +60,13 @@ bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_re
 
 void cFileProcessor::process_file()
 {
-    mDataFileRecovery = std::make_unique<cDataFileRecovery>(mID, mRecoveredDirectory);
-    
-    if (mDataFileRecovery->open(mInputFile))
+    mDataRepair = std::make_unique<cDataRepair>(mID, mTemporaryDirectory);
+
+    if (mDataRepair->open(mFileToRepair))
     {
-        new_file_progress(mID, mInputFile.string());
+        mTemporaryFile = mDataRepair->tempFileName();
 
-        mRecoveredFile = mDataFileRecovery->recoveredFileName();
-
-        mDataRepair = std::make_unique<cDataRepair>(mID, mRepairedDirectory);
+        new_file_progress(mID, mFileToRepair.string());
 
         run();
     }
@@ -59,23 +74,65 @@ void cFileProcessor::process_file()
 
 void cFileProcessor::run()
 {
-    // Try to recover the data file
-    if (!mDataFileRecovery->run())
-    {
-        complete_file_progress(mID, mInputFile.string(), "incomplete");
+    auto result = mDataRepair->pass1();
 
-        std::string msg = "Warning: the file ";
-        msg += mInputFile.filename().string();
-        msg += " could not be completely recovered!";
-        console_message(msg);
+    if (result == cDataRepair::eResult::INVALID_FILE)
+    {
+        mDataRepair->deleteTemporaryFile();
+
+        ::create_directory(mFailedDirectory);
+
+        std::filesystem::path dest = mFailedDirectory / mFileToRepair.filename();
+        std::filesystem::rename(mFileToRepair, dest);
 
         ++g_num_failed_files;
+
+        complete_file_progress(mID, "Complete", "Failed");
+
+        return;
+    }
+    else if (result == cDataRepair::eResult::INVALID_DATA)
+    {
+        mDataRepair->deleteTemporaryFile();
+
+        complete_file_progress(mID, "Complete", "Invalid Data");
+
+        return;
     }
 
-    if (mDataRepair->open(mRecoveredFile))
+    // Validate the repaired file...
+    result = mDataRepair->pass2();
+
+    if (result == cDataRepair::eResult::INVALID_FILE)
     {
-        mDataRepair->run();
-        complete_file_progress(mID, mInputFile.string(), "recovered");
+        // This should not happen at this point!
+        mDataRepair->deleteTemporaryFile();
+
+        ::create_directory(mFailedDirectory);
+
+        std::filesystem::path dest = mFailedDirectory / mFileToRepair.filename();
+        std::filesystem::rename(mFileToRepair, dest);
+
+        ++g_num_failed_files;
+
+        complete_file_progress(mID, "Complete", "Failed");
+
+        return;
     }
+    else if (result == cDataRepair::eResult::INVALID_DATA)
+    {
+        mDataRepair->deleteTemporaryFile();
+
+        complete_file_progress(mID, "Complete", "Invalid Data");
+
+        return;
+    }
+
+    ::create_directory(mRepairedDirectory);
+
+    std::filesystem::path dest = mRepairedDirectory / mTemporaryFile.filename();
+    std::filesystem::rename(mTemporaryFile, dest);
+
+    complete_file_progress(mID, "Complete", "Fixed");
 }
 

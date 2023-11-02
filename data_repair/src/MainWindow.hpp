@@ -13,6 +13,8 @@
 #include <cbdf/BlockDataFile.hpp>
 
 #include <queue>
+#include <filesystem>
+
 
 // Forward Declarations
 class cFileProcessor;
@@ -32,6 +34,8 @@ public:
 	// event handlers (these functions should _not_ be virtual)
 
 protected:
+	void OnSourceDirectory(wxCommandEvent& event);
+	void OnRepairDirectory(wxCommandEvent& event);
 	void OnFailedDirectory(wxCommandEvent& event);
 	void OnRepair(wxCommandEvent& event);
 
@@ -44,10 +48,14 @@ private:
 	void stopDataProcessing();
 
 private:
-	wxTextCtrl* mpFailedCtrl  = nullptr;
-	wxButton* mpFailedDirButton  = nullptr;
+	wxTextCtrl* mpSourceCtrl  = nullptr;
+	wxButton* mpSourceDirButton  = nullptr;
 
 	wxTextCtrl* mpRepairCtrl = nullptr;
+	wxButton* mpRepairDirButton = nullptr;
+
+	wxTextCtrl* mpFailedCtrl = nullptr;
+	wxButton* mpFailedDirButton = nullptr;
 
 	wxButton* mpRepairButton = nullptr;
 
@@ -59,8 +67,11 @@ private:
 	wxEvtHandler* mpHandler = nullptr;
 	std::queue<cFileProcessor*> mFileProcessors;
 
+	wxString mSourceDataDirectory;
 	wxString mFailedDataDirectory;
 	wxString mRepairedDataDirectory;
+
+	std::filesystem::path mTemporaryDir;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

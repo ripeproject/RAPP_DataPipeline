@@ -15,29 +15,32 @@
 class cDataRepair
 {
 public:
-	explicit cDataRepair(int id, std::filesystem::path repaired_dir);
+	enum class eResult { VALID, INVALID_DATA, INVALID_FILE };
+
+public:
+	explicit cDataRepair(int id, std::filesystem::path temporary_dir);
 
     cDataRepair(int id, std::filesystem::path file_to_repair,
-				std::filesystem::path repaired_dir);
+				std::filesystem::path temporary_dir);
 
     ~cDataRepair();
 
+	std::filesystem::path tempFileName();
+
 	bool open(std::filesystem::path file_to_repair);
 
-	void run();
-
-protected:
 	// Repair data in the recovered file if possible
-	bool pass1();
+	eResult pass1();
 
 	// Validate the repaired file
-	bool pass2();
+	eResult pass2();
+
+	void deleteTemporaryFile();
 
 private:
     void processBlock(const cBlockID& id);
     void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len);
 
-	bool removeRecoveryFile();
 	bool moveRepairedFile();
 
 private:
@@ -48,9 +51,9 @@ private:
 	cBlockDataFileReader mFileReader;
 	cBlockDataFileWriter mFileWriter;
 	
-	std::filesystem::path mRepairedDirectory;
+	std::filesystem::path mTemporaryDirectory;
 	std::filesystem::path mCurrentFile;
-	std::filesystem::path mRepairedFile;
+	std::filesystem::path mTemporaryFile;
 
 	std::unique_ptr<cOusterRepairParser> mOusterRepairParser;
 };

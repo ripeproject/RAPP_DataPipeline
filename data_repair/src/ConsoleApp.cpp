@@ -36,19 +36,19 @@ void new_file_progress(const int id, std::string filename)
 	progress_bar.addProgressEntry(id, filename);
 }
 
-void update_file_progress(const int id, std::string filename, const int progress_pct)
+void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
 {
-	progress_bar.updateProgressEntry(id, filename, progress_pct);
+	progress_bar.updateProgressEntry(id, prefix, progress_pct);
 }
 
-void update_file_progress(const int id, const int progress_pct)
+void update_progress(const int id, const int progress_pct)
 {
 	progress_bar.updateProgressEntry(id, progress_pct);
 }
 
-void complete_file_progress(const int id, std::string filename, std::string suffix)
+void complete_file_progress(const int id, std::string prefix, std::string suffix)
 {
-	progress_bar.finishProgressEntry(id, filename, suffix);
+	progress_bar.finishProgressEntry(id, prefix, suffix);
 }
 
 
@@ -87,16 +87,9 @@ int main(int argc, char** argv)
 	}
 
 	const std::filesystem::path input{ input_directory };
-	const std::filesystem::path failed_dir = input / "failed";
-
-	if (!std::filesystem::exists(failed_dir))
-	{
-		// If the failed directory does not exists, we are done!
-		return 0;
-	}
 
 	std::vector<directory_entry> files_to_repair;
-	for (auto const& dir_entry : std::filesystem::directory_iterator{ failed_dir })
+	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 	{
 		if (!dir_entry.is_regular_file())
 			continue;
@@ -113,17 +106,14 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	const std::filesystem::path recovered_dir = failed_dir / "recovered";
-	if (!std::filesystem::exists(recovered_dir))
+	const std::filesystem::path temporary_dir = input / "tmp";
+	if (!std::filesystem::exists(temporary_dir))
 	{
-		std::filesystem::create_directory(recovered_dir);
+		std::filesystem::create_directory(temporary_dir);
 	}
 
-	const std::filesystem::path repaired_dir = input / "repaired";
-	if (!std::filesystem::exists(repaired_dir))
-	{
-		std::filesystem::create_directory(repaired_dir);
-	}
+	const std::filesystem::path failed_dir = input / "failed_files";
+	const std::filesystem::path repaired_dir = input / "repaired_data_files";
 
 	int max_threads = std::thread::hardware_concurrency();
 
@@ -144,7 +134,7 @@ int main(int argc, char** argv)
 	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, recovered_dir, repaired_dir);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, temporary_dir, failed_dir, repaired_dir);
 		
 		if (fp->setFileToRepair(file))
 		{
@@ -161,6 +151,11 @@ int main(int argc, char** argv)
 	for (auto file_processor : file_processors)
 	{
 		delete file_processor;
+	}
+
+	if (std::filesystem::is_empty(temporary_dir))
+	{
+		std::filesystem::remove(temporary_dir);
 	}
 
 	return 0;

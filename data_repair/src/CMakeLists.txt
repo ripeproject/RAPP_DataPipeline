@@ -17,12 +17,6 @@ set(DATA_REPAIR_COMMON_FILES
 	DataRepair.hpp
 	DataRepair.cpp
 
-	BlockDataFileRecovery.hpp
-	BlockDataFileRecovery.cpp
-
-	DataFileRecovery.hpp
-	DataFileRecovery.cpp
-
 	FileProcessor.hpp
 	FileProcessor.cpp
 )

@@ -9,38 +9,41 @@
 #include <stdexcept>
 
 
+extern std::atomic<uint32_t> g_num_failed_files;
+
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
-extern void update_file_progress(const int id, std::string filename, const int progress_pct);
-extern void update_file_progress(const int id, const int progress_pct);
+extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
+extern void update_progress(const int id, const int progress_pct);
+extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
 
 //-----------------------------------------------------------------------------
-cDataRepair::cDataRepair(int id, std::filesystem::path repaired_dir)
+cDataRepair::cDataRepair(int id, std::filesystem::path temporary_dir)
     : mID(id)
 {
-    mRepairedDirectory = repaired_dir;
+    mTemporaryDirectory = temporary_dir;
 
     mOusterRepairParser = std::make_unique<cOusterRepairParser>();
 }
 
 cDataRepair::cDataRepair(int id, std::filesystem::path file_to_repair,
-                        std::filesystem::path repaired_dir)
-    : cDataRepair(id, repaired_dir)
+                        std::filesystem::path temporary_dir)
+    : cDataRepair(id, temporary_dir)
 {
     mCurrentFile = file_to_repair;
 
-    mRepairedFile = mRepairedDirectory / mCurrentFile.filename();
+    mTemporaryFile = mTemporaryDirectory / mCurrentFile.filename();
 
-    if (std::filesystem::exists(mRepairedFile))
+    if (std::filesystem::exists(mTemporaryFile))
     {
         throw std::logic_error("File already exists");
     }
 
     mFileReader.open(mCurrentFile.string());
-    mFileWriter.open(mRepairedFile.string());
+    mFileWriter.open(mTemporaryFile.string());
 
-    mFileSize = mFileReader.size();
+    mFileSize = mFileReader.file_size();
 
     if (!mFileReader.isOpen() || !mFileWriter.isOpen())
     {
@@ -54,37 +57,35 @@ cDataRepair::~cDataRepair()
     mFileWriter.close();
 }
 
+//-----------------------------------------------------------------------------
+std::filesystem::path cDataRepair::tempFileName()
+{
+    return mTemporaryFile;
+}
 
 //-----------------------------------------------------------------------------
 bool cDataRepair::open(std::filesystem::path file_to_repair)
 {
     mCurrentFile = file_to_repair;
-    mRepairedFile = mRepairedDirectory / mCurrentFile.filename();
+    mTemporaryFile = mTemporaryDirectory / mCurrentFile.filename();
 
-    if (std::filesystem::exists(mRepairedFile))
+    if (std::filesystem::exists(mTemporaryFile))
     {
         return false;
     }
 
-    mFileWriter.open(mRepairedFile.string());
+    mFileWriter.open(mTemporaryFile.string());
     mFileReader.open(mCurrentFile.string());
 
-    mFileSize = mFileReader.size();
+    mFileSize = mFileReader.file_size();
 
     return mFileWriter.isOpen() && mFileReader.isOpen();
 }
 
 //-----------------------------------------------------------------------------
-void cDataRepair::run()
+cDataRepair::eResult cDataRepair::pass1()
 {
-//    std::string msg = "Repairing data in ";
-//    msg += mCurrentFile.string();
-//    msg += "...";
-//    console_message(msg);
-
-    std::string msg = mCurrentFile.string();
-    msg += " [Repair]";
-    update_file_progress(mID, msg, 0);
+    update_prefix_progress(mID, "Repairing", 0);
 
     mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
     mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len) { this->processBlock(id, buf, len); });
@@ -92,34 +93,6 @@ void cDataRepair::run()
     mFileReader.attach(mOusterRepairParser.get());
     mOusterRepairParser->attach(&mFileWriter);
 
-    bool result = pass1();
-
-    mFileReader.close();
-    mFileWriter.close();
-
-    if (result)
-    {
-        removeRecoveryFile();
-    }
-
-//    msg = "Verifing: ";
-//    msg += mRepairedFile.string();
-//    msg += "...";
-//    console_message(msg);
-
-    msg = mRepairedFile.string();
-    msg += " [Verifing]";
-    update_file_progress(mID, msg, 0);
-
-    if (pass2())
-    {
-        moveRepairedFile();
-    }
-}
-
-//-----------------------------------------------------------------------------
-bool cDataRepair::pass1()
-{
     try
     {
         while (!mFileReader.eof())
@@ -128,14 +101,14 @@ bool cDataRepair::pass1()
             {
                 mFileReader.close();
                 mFileWriter.close();
-                return false;
+                return eResult::INVALID_FILE;
             }
 
             mFileReader.processBlock();
 
             auto file_pos = static_cast<double>(mFileReader.filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
-            update_file_progress(mID, static_cast<int>(file_pos));
+            update_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::invalid_data& e)
@@ -144,7 +117,11 @@ bool cDataRepair::pass1()
         msg += ": Invalid data, ";
         msg += e.what();
         console_message(msg);
-        return false;
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_DATA;
     }
     catch (const bdf::stream_error& e)
     {
@@ -152,7 +129,11 @@ bool cDataRepair::pass1()
         msg += ": Stream Error, ";
         msg += e.what();
         console_message(msg);
-        return false;
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_FILE;
     }
     catch (const bdf::crc_error& e)
     {
@@ -160,7 +141,11 @@ bool cDataRepair::pass1()
         msg += ": CRC Error, ";
         msg += e.what();
         console_message(msg);
-        return false;
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_FILE;
     }
     catch (const bdf::unexpected_eof& e)
     {
@@ -168,7 +153,11 @@ bool cDataRepair::pass1()
         msg += ": Unexpected EOF, ";
         msg += e.what();
         console_message(msg);
-        return false;
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
@@ -178,26 +167,35 @@ bool cDataRepair::pass1()
             msg += ": Failed due to ";
             msg += e.what();
             console_message(msg);
-            return false;
+
+            mFileReader.close();
+            mFileWriter.close();
+
+            return eResult::INVALID_FILE;
         }
     }
 
-    return true;
+    mFileReader.close();
+    mFileWriter.close();
+
+    return eResult::VALID;
 }
 
 //-----------------------------------------------------------------------------
-bool cDataRepair::pass2()
+cDataRepair::eResult cDataRepair::pass2()
 {
+    update_prefix_progress(mID, "Verifing", 0);
+
     cBlockDataFileReader fileReader;
 
-    fileReader.open(mRepairedFile.string());
+    fileReader.open(mTemporaryFile.string());
 
     if (!fileReader.isOpen())
     {
         throw std::logic_error("No file is open for verification.");
     }
 
-    mFileSize = fileReader.size();
+    mFileSize = fileReader.file_size();
 
     try
     {
@@ -206,86 +204,86 @@ bool cDataRepair::pass2()
             if (fileReader.fail())
             {
                 fileReader.close();
-                return true;
+                return eResult::INVALID_FILE;
             }
 
             fileReader.processBlock();
 
             auto file_pos = static_cast<double>(fileReader.filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
-            update_file_progress(mID, static_cast<int>(file_pos));
+            update_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const bdf::invalid_data& e)
     {
-        std::string msg = mRepairedFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": Invalid Data, ";
         msg += e.what();
         console_message(msg);
 
-        return false;
+        return eResult::INVALID_DATA;
     }
     catch (const bdf::crc_error& e)
     {
-        std::string msg = mRepairedFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": ";
         msg += e.what();
         console_message(msg);
 
-        return false;
+        return eResult::INVALID_FILE;
     }
     catch (const bdf::formatting_error& e)
     {
-        std::string msg = mRepairedFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": Formatting Error, ";
         msg += e.what();
         console_message(msg);
 
-        return false;
+        return eResult::INVALID_FILE;
     }
     catch (const bdf::stream_error& e)
     {
-        std::string msg = mRepairedFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": Stream Error, ";
         msg += e.what();
         console_message(msg);
 
-        return false;
+        return eResult::INVALID_FILE;
     }
     catch (const bdf::io_error& e)
     {
-        std::string msg = mRepairedFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": IO Error, ";
         msg += e.what();
         console_message(msg);
 
-        return false;
+        return eResult::INVALID_FILE;
     }
     catch (const std::runtime_error& e)
     {
-        std::string msg = mRepairedFile.filename().string();
+        std::string msg = mTemporaryFile.filename().string();
         msg += ": Runtime Error, ";
         msg += e.what();
         console_message(msg);
 
-        return false;
+        return eResult::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
         if (!fileReader.eof())
         {
-            std::string msg = mRepairedFile.filename().string();
+            std::string msg = mTemporaryFile.filename().string();
             msg += ": std::exception, ";
             msg += e.what();
             console_message(msg);
 
-            return false;
+            return eResult::INVALID_FILE;
         }
     }
 
     fileReader.close();
 
-    return true;
+    return eResult::VALID;
 }
 
 void cDataRepair::processBlock(const cBlockID& id)
@@ -299,7 +297,7 @@ void cDataRepair::processBlock(const cBlockID& id, const std::byte* buf, std::si
 }
 
 //-----------------------------------------------------------------------------
-bool cDataRepair::removeRecoveryFile()
+void cDataRepair::deleteTemporaryFile()
 {
     if (mFileReader.isOpen())
         mFileReader.close();
@@ -307,25 +305,26 @@ bool cDataRepair::removeRecoveryFile()
     if (mFileWriter.isOpen())
         mFileWriter.close();
 
-    return std::filesystem::remove(mCurrentFile);
+    std::filesystem::remove(mTemporaryFile);
 }
+
 
 //-----------------------------------------------------------------------------
 bool cDataRepair::moveRepairedFile()
 {
     // Move the fully repaired data file back into the main data
     // directory.
-    auto dataDirectory = mRepairedDirectory.parent_path();
+    auto dataDirectory = mTemporaryFile.parent_path();
 
     if (!std::filesystem::exists(dataDirectory))
         return false;
 
-    std::filesystem::path dest = dataDirectory / mRepairedFile.filename();
+    std::filesystem::path dest = dataDirectory / mTemporaryFile.filename();
 
     if (std::filesystem::exists(dest))
         return false;
 
-    std::filesystem::rename(mRepairedFile, dest);
+    std::filesystem::rename(mTemporaryFile, dest);
 
     return true;
 }

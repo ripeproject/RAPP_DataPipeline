@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "DataFileRecovery.hpp"
 #include "DataRepair.hpp"
 
 #include <filesystem>
@@ -12,7 +11,10 @@
 class cFileProcessor
 {
 public:
-	cFileProcessor(int id, std::filesystem::path recovered_dir, std::filesystem::path repaired_dir);
+	cFileProcessor(int id, std::filesystem::path temp_dir,
+		std::filesystem::path failed_dir,
+		std::filesystem::path repaired_dir);
+
 	~cFileProcessor();
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
@@ -25,15 +27,13 @@ protected:
 private:
 	const int mID;
 
-	const std::filesystem::path mRecoveredDirectory;
-	std::filesystem::path mRecoveredFile;
+	const std::filesystem::path mTemporaryDirectory;
+	std::filesystem::path mTemporaryFile;
 
 	const std::filesystem::path mRepairedDirectory;
-	std::filesystem::path mRepairedFile;
+	const std::filesystem::path mFailedDirectory;
 
-	std::filesystem::path mInputFile;
-	std::filesystem::path mOutputFile;
+	std::filesystem::path mFileToRepair;
 
-	std::unique_ptr<cDataFileRecovery>	mDataFileRecovery;
 	std::unique_ptr<cDataRepair>		mDataRepair;
 };
