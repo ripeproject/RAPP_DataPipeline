@@ -54,7 +54,7 @@ void cKinematics_Constant::writeHeader(cPointCloudSerializer& serializer)
 
 //-----------------------------------------------------------------------------
 void cKinematics_Constant::transform(double time_us,
-    ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud)
+    ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
 {
     double time_sec = time_us * US_TO_SEC;
     double x_m = mX_Offset_m + mVx_mps * time_sec;

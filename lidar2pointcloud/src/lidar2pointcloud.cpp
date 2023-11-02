@@ -27,12 +27,41 @@ namespace
 
 	constexpr double g_mps2 = 9.80665;
 
+	double wrap_pi_to_neg_pi(double angle_rad)
+	{
+		constexpr double neg_pi = -1.0 * std::numbers::pi;
+		constexpr double two_pi = 2.0 * std::numbers::pi;
+
+		while (angle_rad < neg_pi)
+			angle_rad += two_pi;
+
+		while (angle_rad > std::numbers::pi)
+			angle_rad -= two_pi;
+
+		return angle_rad;
+	}
+
+	double wrap_zero_to_two_pi(double angle_rad)
+	{
+		constexpr double two_pi = 2.0 * std::numbers::pi;
+
+		while (angle_rad < 0)
+			angle_rad += two_pi;
+
+		while (angle_rad > two_pi)
+			angle_rad -= two_pi;
+
+		return angle_rad;
+	}
+
 	/** Lookup table of beam directions and offsets. */
 	struct sXYZ_Lut_t
 	{
 		std::vector<bool>	  exclude;
 		std::vector<sPoint_t> direction;
 		std::vector<sPoint_t> offset;
+		std::vector<double>	  theta_rad;
+		std::vector<double>	  phi_rad;
 	};
 
 	template<typename T1, typename T2>
@@ -153,13 +182,18 @@ namespace
 		lut.exclude.resize(w * h);
 		lut.direction.resize(w * h);
 		lut.offset.resize(w * h);
+		lut.theta_rad.resize(w * h);
+		lut.phi_rad.resize(w * h);
 
 		auto n = encoder_rad.size();
 		for (size_t i = 0; i < n; ++i)
 		{
 			double encoder  = encoder_rad[i];
-			double altitude = altitude_rad[i];
 			double azimuth  = azimuth_rad[i];
+			double altitude = altitude_rad[i];
+
+			lut.theta_rad[i] = wrap_zero_to_two_pi(encoder + azimuth);
+			lut.phi_rad[i]   = wrap_pi_to_neg_pi(altitude);
 
 			if (((min_encoder_rad < encoder) && (encoder < max_encoder_rad))
 				&& ((min_altitude_rad < altitude) && (altitude < max_altitude_rad)))
@@ -194,26 +228,6 @@ namespace
 
 		// offsets due to beam origin
 		lut.offset *= lidar_origin_to_beam_origin_mm;
-
-/*
-		auto altitude_cos = cos(altitude_rad);
-		auto x = cos(encoder_rad + azimuth_rad) * altitude_cos;
-		auto y = sin(encoder_rad + azimuth_rad) * altitude_cos;
-		auto z = sin(altitude_rad);
-
-		// unit vectors for each pixel
-		lut.direction.resize(w * h);
-		set_x(lut.direction, x);
-		set_y(lut.direction, y);
-		set_z(lut.direction, z);
-
-		// offsets due to beam origin
-		lut.offset.resize(w * h);
-		set_x(lut.offset, cos(encoder_rad) - x);
-		set_y(lut.offset, sin(encoder_rad) - y);
-		set_z(lut.offset, -z);
-		lut.offset *= lidar_origin_to_beam_origin_mm;
-*/
 
 		// apply the supplied transform
 		auto rot = transform.rotation();
@@ -280,12 +294,17 @@ void cLidar2PointCloud::saveReducedPointCloud(bool reducePointCloud)
 	mSaveReducedPointCloud = reducePointCloud;
 }
 
+void cLidar2PointCloud::setSaveOptions(eSaveOptions options)
+{
+	mSaveOption = options;
+}
+
 void cLidar2PointCloud::setKinematicModel(std::unique_ptr<cKinematics> model)
 {
 	mKinematic.reset(model.release());
 }
 
-const cKinematics* cLidar2PointCloud::getcKinematicModel() const
+const cKinematics* cLidar2PointCloud::getKinematicModel() const
 {
 	return mKinematic.get();
 }
@@ -355,7 +374,27 @@ void cLidar2PointCloud::writeAndClearData()
 		mPointCloud.minY(), mPointCloud.maxY(),
 		mPointCloud.minZ(), mPointCloud.maxZ());
 
-	write(mPointCloud);
+	switch (mSaveOption)
+	{
+	case eSaveOptions::BASIC:
+	{
+		cPointCloud pc = mPointCloud;
+		write(pc);
+		break;
+	}
+	case eSaveOptions::FRAME_ID:
+	{
+		cPointCloud_FrameId pc = mPointCloud;
+		write(pc);
+		break;
+	}
+	default:
+	case eSaveOptions::SENSOR_INFO:
+	{
+		write(mPointCloud);
+		break;
+	}
+	}
 	mPointCloud.clear();
 }
 
@@ -371,6 +410,8 @@ void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
 	mExcludePoint = xyz.exclude;
     mUnitVectors = xyz.direction;
     mOffsets = xyz.offset;
+	mTheta_rad = xyz.theta_rad;
+	mPhi_rad = xyz.phi_rad;
 
 	write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_ENU);
 }
@@ -403,7 +444,7 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
     //auto lidar_data = destagger(data, mPixelShiftByRow);
     auto lidar_data = ouster::to_matrix_row_major(data.data());
 
-	pointcloud::sCloudPoint_t point;
+	pointcloud::sCloudPoint_SensorInfo_t point;
 
     for (int c = 0; c < columns_per_frame; ++c)
     {
@@ -451,6 +492,11 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
             point.signal = column[p].signal;
             point.reflectivity = column[p].reflectivity;
             point.nir = column[p].nir;
+			point.frameID = frameID;
+			point.chnNum = c;
+			point.pixelNum = p;
+			point.theta_rad = mTheta_rad[i];
+			point.phi_rad = mPhi_rad[i];
 
             mCloud.set(p, c, point);
         }

@@ -96,7 +96,8 @@ cMainFrame::cMainFrame()
 
 	auto size = GetBestSize();
 	size.IncBy(50);
-	size.SetHeight(450);
+	size.SetWidth(1000);
+	//	size.SetHeight(450);
 	SetMinSize(size);
 
 	Centre();

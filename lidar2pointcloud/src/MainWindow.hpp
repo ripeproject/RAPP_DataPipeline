@@ -181,8 +181,14 @@ private:
 	/*** Options ***/
 	wxStaticBoxSizer* mpOptions = nullptr;
 
-	wxCheckBox* mpAggregatePointCloud = nullptr;
-	wxCheckBox* mpSaveReducedPointCloud = nullptr;
+	wxRadioButton* mpAggregatePointCloud = nullptr;
+	wxRadioButton* mpSaveReducedPointCloud = nullptr;
+
+	wxStaticBoxSizer* mpSaveOptions = nullptr;
+
+	wxRadioButton* mpSaveBasic		= nullptr;
+	wxRadioButton* mpSaveFrameID	= nullptr;
+	wxRadioButton* mpSaveSensorInfo	= nullptr;
 
 	wxButton* mpComputeButton = nullptr;
 

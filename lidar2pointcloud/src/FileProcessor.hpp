@@ -70,6 +70,8 @@ public:
 	 */
 	void saveReducedPointCloud(bool reducePointCloud);
 
+	void setSaveOptions(cLidar2PointCloud::eSaveOptions options);
+
 	/**
 	 * Set the kinematic type to apply to the pointcloud data.
 	 */

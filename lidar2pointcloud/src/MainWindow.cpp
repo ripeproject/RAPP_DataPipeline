@@ -39,7 +39,7 @@ void new_file_progress(const int id, std::string filename)
 	}
 }
 
-void update_file_progress(const int id, std::string prefix, const int progress_pct)
+void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
@@ -52,7 +52,7 @@ void update_file_progress(const int id, std::string prefix, const int progress_p
 	}
 }
 
-void update_file_progress(const int id, const int progress_pct)
+void update_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
@@ -218,10 +218,15 @@ void cMainWindow::CreateControls()
 	mpMaximumAltitude_deg = new wxTextCtrl(this, wxID_ANY, "25.0");
 	mpMaximumAltitude_deg->SetValidator(mMaximumAltitude_val);
 
-	mpAggregatePointCloud = new wxCheckBox(this, wxID_ANY, "Aggregate Point Cloud");
+	mpAggregatePointCloud = new wxRadioButton(this, wxID_ANY, "Aggregate Point Cloud", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	mpAggregatePointCloud->SetValue(true);
 
-	mpSaveReducedPointCloud = new wxCheckBox(this, wxID_ANY, "Save Reduced Point Cloud");
+	mpSaveReducedPointCloud = new wxRadioButton(this, wxID_ANY, "Save Reduced Point Cloud");
+
+	mpSaveBasic = new wxRadioButton(this, wxID_ANY, "Basic (Smallest File Size)", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	mpSaveFrameID = new wxRadioButton(this, wxID_ANY, "With Frame ID");
+	mpSaveSensorInfo = new wxRadioButton(this, wxID_ANY, "With Sensor Info (Largest File Size)");
+
 
 	mpComputeButton = new wxButton(this, wxID_ANY, "Compute Point Cloud");
 	mpComputeButton->Disable();
@@ -322,7 +327,7 @@ void cMainWindow::createConfigFileLayout()
 	wxBoxSizer* file_sz = new wxBoxSizer(wxHORIZONTAL);
 	file_sz->AddSpacer(5);
 
-	file_sz->Add(mpLoadCfgFile, 1);
+	file_sz->Add(mpLoadCfgFile, 1, wxEXPAND);
 	file_sz->AddSpacer(5);
 	file_sz->Add(mpLoadCfgButton);
 
@@ -331,10 +336,10 @@ void cMainWindow::createConfigFileLayout()
 	sizer->AddSpacer(10);
 
 	sizer->Add(mpKM_CF_OverrideOrientation, 1);
-	sizer->AddSpacer(5);
+	sizer->AddSpacer(2);
 
 	sizer->Add(mpKM_CF_OverrideLimits, 1);
-	sizer->AddSpacer(5);
+	sizer->AddSpacer(2);
 
 	sizer->Add(mpKM_CF_OverrideOptions,1);
 
@@ -467,7 +472,7 @@ void cMainWindow::CreateLayout()
 		mpSensorOrientation->Add(soi_sz, wxSizerFlags().Proportion(0).Expand());
 		sizer->Add(mpSensorOrientation, wxSizerFlags().Proportion(1).Expand());
 
-		topsizer->Add(sizer, wxSizerFlags().Proportion(1).Expand());
+		topsizer->Add(sizer, wxSizerFlags().Proportion(0).Expand());
 	}
 
 	topsizer->AddSpacer(5);
@@ -500,11 +505,30 @@ void cMainWindow::CreateLayout()
 
 	topsizer->AddSpacer(5);
 
-	mpOptions = new wxStaticBoxSizer(wxHORIZONTAL, this, "Options");
-	mpOptions->Add(mpAggregatePointCloud, wxSizerFlags().Proportion(1).Expand());
-	mpOptions->AddSpacer(10);
-	mpOptions->Add(mpSaveReducedPointCloud, wxSizerFlags().Proportion(1).Expand());
-	topsizer->Add(mpOptions, wxSizerFlags().Proportion(0).Expand());
+	{
+		wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+
+		mpOptions = new wxStaticBoxSizer(wxVERTICAL, this, "Options");
+		mpOptions->AddSpacer(5);
+		mpOptions->Add(mpAggregatePointCloud, wxSizerFlags().Proportion(0).Expand());
+		mpOptions->AddSpacer(5);
+		mpOptions->Add(mpSaveReducedPointCloud, wxSizerFlags().Proportion(0).Expand());
+		mpOptions->AddSpacer(20);
+		sizer->Add(mpOptions, wxSizerFlags().Proportion(1).FixedMinSize());
+
+		sizer->AddSpacer(10);
+
+		mpSaveOptions = new wxStaticBoxSizer(wxVERTICAL, this, "Save Options");
+		mpSaveOptions->AddSpacer(5);
+		mpSaveOptions->Add(mpSaveBasic, wxSizerFlags().Proportion(0).Expand());
+		mpSaveOptions->AddSpacer(5);
+		mpSaveOptions->Add(mpSaveFrameID, wxSizerFlags().Proportion(0).Expand());
+		mpSaveOptions->AddSpacer(5);
+		mpSaveOptions->Add(mpSaveSensorInfo, wxSizerFlags().Proportion(0).Expand());
+		sizer->Add(mpSaveOptions, wxSizerFlags().Proportion(1));
+
+		topsizer->Add(sizer, wxSizerFlags().Proportion(0).Expand());
+	}
 
 	topsizer->AddSpacer(10);
 	topsizer->Add(mpComputeButton, wxSizerFlags().Proportion(0).Expand());
@@ -653,6 +677,9 @@ void cMainWindow::OnModelChange(wxCommandEvent& WXUNUSED(event))
 	}
 
 	mpKinematicOptions->Layout();
+
+	SetMinSize(GetSize());
+	Fit();
 }
 
 void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
@@ -674,6 +701,16 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	mpSensorYaw_deg->TransferDataFromWindow();
 	mpSensorPitch_deg->TransferDataFromWindow();
 	mpSensorRoll_deg->TransferDataFromWindow();
+
+	cLidar2PointCloud::eSaveOptions save_options = cLidar2PointCloud::eSaveOptions::BASIC;
+	if (mpSaveFrameID->GetValue())
+	{
+		save_options = cLidar2PointCloud::eSaveOptions::FRAME_ID;
+	}
+	else if (mpSaveSensorInfo->GetValue())
+	{
+		save_options = cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
+	}
 
 	std::string input_directory = mSourceData.ToStdString();
 	std::string output_directory = mDestinationData.ToStdString();
@@ -836,6 +873,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		fp->saveAggregatePointCloud(mpAggregatePointCloud->GetValue());
 		fp->saveReducedPointCloud(mpSaveReducedPointCloud->GetValue());
+
+		fp->setSaveOptions(save_options);
 
 		std::unique_ptr<cKinematics> kinematics;
 

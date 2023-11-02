@@ -205,7 +205,7 @@ void cKinematics_Dolly::telemetryPassComplete()
 
 //-----------------------------------------------------------------------------
 void cKinematics_Dolly::transform(double time_us,
-    ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud)
+    ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
 {
     if (mDollyInfo.empty())
     {

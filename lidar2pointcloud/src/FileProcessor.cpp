@@ -14,8 +14,8 @@
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
-extern void update_file_progress(const int id, std::string prefix, const int progress_pct);
-extern void update_file_progress(const int id, const int progress_pct);
+extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
+extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id);
 
 
@@ -59,6 +59,11 @@ void cFileProcessor::saveReducedPointCloud(bool reducePointCloud)
     mConverter->saveReducedPointCloud(reducePointCloud);
 }
 
+void cFileProcessor::setSaveOptions(cLidar2PointCloud::eSaveOptions options)
+{
+    mConverter->setSaveOptions(options);
+}
+
 /**
  * Set the kinematic type to apply to the pointcloud data.
  */
@@ -77,7 +82,7 @@ bool cFileProcessor::open()
     mFileWriter.open(mOutputFile.string());
     mFileReader.open(mInputFile.string());
 
-    mFileSize = mFileReader.size();
+    mFileSize = mFileReader.file_size();
 
     return mFileWriter.isOpen() && mFileReader.isOpen();
 }
@@ -110,7 +115,7 @@ void cFileProcessor::run()
     {
         if (mConverter->requiresTelemetryPass())
         {
-            update_file_progress(mID, "Telemetry Pass", 0);
+            update_prefix_progress(mID, "Telemetry Pass", 0);
 
             mConverter->attachKinematicParsers(mFileReader);
 
@@ -127,7 +132,7 @@ void cFileProcessor::run()
                 file_pos = 100.0 * (file_pos / mFileSize);
 
                 if (static_cast<int>(file_pos) > 1)
-                    update_file_progress(mID, static_cast<int>(file_pos));
+                    update_progress(mID, static_cast<int>(file_pos));
             }
 
             mFileReader.gotoBeginning();
@@ -144,7 +149,7 @@ void cFileProcessor::run()
 	    mFileReader.attach(mConverter.get());
         mConverter.get()->attach(&mFileWriter);
 
-        update_file_progress(mID, "Compute Pass", 0);
+        update_prefix_progress(mID, "Compute Pass", 0);
 
         while (!mFileReader.eof())
         {
@@ -165,7 +170,7 @@ void cFileProcessor::run()
             file_pos = 100.0 * (file_pos / mFileSize);
 
             if (static_cast<int>(file_pos) > 1)
-                update_file_progress(mID, static_cast<int>(file_pos));
+                update_progress(mID, static_cast<int>(file_pos));
         }
 
         mConverter->writeAndClearData();

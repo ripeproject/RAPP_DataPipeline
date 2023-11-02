@@ -90,7 +90,7 @@ public:
 	void rotate(pointcloud::sCloudPoint_t& p);
 
 	virtual void transform(double time_us,
-		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) = 0;
+		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud) = 0;
 
 	void setDebugFileName(const std::string& filename);
 
@@ -137,5 +137,5 @@ public:
 	void detachTransformSerializers(cBlockDataFileWriter& file) override {};
 
 	void transform(double time_us,
-		ouster::matrix_col_major<pointcloud::sCloudPoint_t>& cloud) override {};
+		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud) override {};
 };

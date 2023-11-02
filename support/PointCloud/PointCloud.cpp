@@ -20,96 +20,52 @@
  // Reduced Point Cloud By Frame
  /////////////////////////////////////////////////////////////////////////////////////
 
-cReducedPointCloudByFrame::cReducedPointCloudByFrame()
-    : mFrameID(0), mTimestamp_ns(0)
-{}
-
-void cReducedPointCloudByFrame::frameID(uint16_t id)
+cReducedPointCloudByFrame::cReducedPointCloudByFrame(const cReducedPointCloudByFrame_FrameId& pc)
 {
-    mFrameID = id;
-}
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
 
-void cReducedPointCloudByFrame::timestamp_ns(uint64_t ts)
-{
-    mTimestamp_ns = ts;
-}
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
 
-void cReducedPointCloudByFrame::resize(std::size_t num_of_points)
-{
-	mCloud.resize(num_of_points);
-}
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
 
-void cReducedPointCloudByFrame::set(std::size_t point, const pointcloud::sCloudPoint_t& cloudPoint)
-{
-	if (point < mCloud.size())
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
 	{
-
-		if (mHasPoints)
-		{
-			if (cloudPoint.X_m < mMinX)
-				mMinX = cloudPoint.X_m;
-
-			if (cloudPoint.X_m > mMaxX)
-				mMaxX = cloudPoint.X_m;
-
-			if (cloudPoint.Y_m < mMinY)
-				mMinY = cloudPoint.Y_m;
-
-			if (cloudPoint.Y_m > mMaxY)
-				mMaxY = cloudPoint.Y_m;
-
-			if (cloudPoint.Z_m < mMinZ)
-				mMinZ = cloudPoint.Z_m;
-
-			if (cloudPoint.Z_m > mMaxZ)
-				mMaxZ = cloudPoint.Z_m;
-		}
-		else
-		{
-			mHasPoints = true;
-			mMinX = mMaxX = cloudPoint.X_m;
-			mMinY = mMaxY = cloudPoint.Y_m;
-			mMinZ = mMaxZ = cloudPoint.Z_m;
-		}
-
-		mCloud[point] = cloudPoint;
+		mCloud[i] = data[i];
 	}
 }
 
-void cReducedPointCloudByFrame::addPoint(const pointcloud::sCloudPoint_t& cloudPoint)
+cReducedPointCloudByFrame::cReducedPointCloudByFrame(const cReducedPointCloudByFrame_SensorInfo& pc)
 {
-    if ((cloudPoint.X_m == 0.0) && (cloudPoint.Y_m == 0.0) && (cloudPoint.Z_m == 0.0))
-        return;
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
 
-	if (mHasPoints)
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
+
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
+
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
 	{
-		if (cloudPoint.X_m < mMinX)
-			mMinX = cloudPoint.X_m;
-
-		if (cloudPoint.X_m > mMaxX)
-			mMaxX = cloudPoint.X_m;
-
-		if (cloudPoint.Y_m < mMinY)
-			mMinY = cloudPoint.Y_m;
-
-		if (cloudPoint.Y_m > mMaxY)
-			mMaxY = cloudPoint.Y_m;
-
-		if (cloudPoint.Z_m < mMinZ)
-			mMinZ = cloudPoint.Z_m;
-
-		if (cloudPoint.Z_m > mMaxZ)
-			mMaxZ = cloudPoint.Z_m;
+		mCloud[i] = data[i];
 	}
-	else
-	{
-		mHasPoints = true;
-		mMinX = mMaxX = cloudPoint.X_m;
-		mMinY = mMaxY = cloudPoint.Y_m;
-		mMinZ = mMaxZ = cloudPoint.Z_m;
-	}
-
-    mCloud.push_back(cloudPoint);
 }
 
 
@@ -117,96 +73,54 @@ void cReducedPointCloudByFrame::addPoint(const pointcloud::sCloudPoint_t& cloudP
 // Reduced Point Cloud By Frame with Frame ID info
 /////////////////////////////////////////////////////////////////////////////////////
 
-cReducedPointCloudByFrame_FrameId::cReducedPointCloudByFrame_FrameId()
-	: mFrameID(0), mTimestamp_ns(0)
-{}
-
-void cReducedPointCloudByFrame_FrameId::frameID(uint16_t id)
+cReducedPointCloudByFrame_FrameId::cReducedPointCloudByFrame_FrameId(const cReducedPointCloudByFrame_SensorInfo& pc)
 {
-	mFrameID = id;
-}
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
 
-void cReducedPointCloudByFrame_FrameId::timestamp_ns(uint64_t ts)
-{
-	mTimestamp_ns = ts;
-}
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
 
-void cReducedPointCloudByFrame_FrameId::resize(std::size_t num_of_points)
-{
-	mCloud.resize(num_of_points);
-}
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
 
-void cReducedPointCloudByFrame_FrameId::set(std::size_t point, const pointcloud::sCloudPoint_FrameID_t& cloudPoint)
-{
-	if (point < mCloud.size())
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
 	{
-
-		if (mHasPoints)
-		{
-			if (cloudPoint.X_m < mMinX)
-				mMinX = cloudPoint.X_m;
-
-			if (cloudPoint.X_m > mMaxX)
-				mMaxX = cloudPoint.X_m;
-
-			if (cloudPoint.Y_m < mMinY)
-				mMinY = cloudPoint.Y_m;
-
-			if (cloudPoint.Y_m > mMaxY)
-				mMaxY = cloudPoint.Y_m;
-
-			if (cloudPoint.Z_m < mMinZ)
-				mMinZ = cloudPoint.Z_m;
-
-			if (cloudPoint.Z_m > mMaxZ)
-				mMaxZ = cloudPoint.Z_m;
-		}
-		else
-		{
-			mHasPoints = true;
-			mMinX = mMaxX = cloudPoint.X_m;
-			mMinY = mMaxY = cloudPoint.Y_m;
-			mMinZ = mMaxZ = cloudPoint.Z_m;
-		}
-
-		mCloud[point] = cloudPoint;
+		mCloud[i] = data[i];
 	}
 }
 
-void cReducedPointCloudByFrame_FrameId::addPoint(const pointcloud::sCloudPoint_FrameID_t& cloudPoint)
+cReducedPointCloudByFrame_FrameId& cReducedPointCloudByFrame_FrameId::operator=(const cReducedPointCloudByFrame_SensorInfo& pc)
 {
-	if ((cloudPoint.X_m == 0.0) && (cloudPoint.Y_m == 0.0) && (cloudPoint.Z_m == 0.0))
-		return;
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
 
-	if (mHasPoints)
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
+
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
+
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
 	{
-		if (cloudPoint.X_m < mMinX)
-			mMinX = cloudPoint.X_m;
-
-		if (cloudPoint.X_m > mMaxX)
-			mMaxX = cloudPoint.X_m;
-
-		if (cloudPoint.Y_m < mMinY)
-			mMinY = cloudPoint.Y_m;
-
-		if (cloudPoint.Y_m > mMaxY)
-			mMaxY = cloudPoint.Y_m;
-
-		if (cloudPoint.Z_m < mMinZ)
-			mMinZ = cloudPoint.Z_m;
-
-		if (cloudPoint.Z_m > mMaxZ)
-			mMaxZ = cloudPoint.Z_m;
-	}
-	else
-	{
-		mHasPoints = true;
-		mMinX = mMaxX = cloudPoint.X_m;
-		mMinY = mMaxY = cloudPoint.Y_m;
-		mMinZ = mMaxZ = cloudPoint.Z_m;
+		mCloud[i] = data[i];
 	}
 
-	mCloud.push_back(cloudPoint);
+	return *this;
 }
 
 
@@ -214,102 +128,59 @@ void cReducedPointCloudByFrame_FrameId::addPoint(const pointcloud::sCloudPoint_F
  // Reduced Point Cloud By Frame with Frame ID and Sensor Info
  /////////////////////////////////////////////////////////////////////////////////////
 
-cReducedPointCloudByFrame_SensorInfo::cReducedPointCloudByFrame_SensorInfo()
-	: mFrameID(0), mTimestamp_ns(0)
-{}
-
-void cReducedPointCloudByFrame_SensorInfo::frameID(uint16_t id)
-{
-	mFrameID = id;
-}
-
-void cReducedPointCloudByFrame_SensorInfo::timestamp_ns(uint64_t ts)
-{
-	mTimestamp_ns = ts;
-}
-
-void cReducedPointCloudByFrame_SensorInfo::resize(std::size_t num_of_points)
-{
-	mCloud.resize(num_of_points);
-}
-
-void cReducedPointCloudByFrame_SensorInfo::set(std::size_t point, const pointcloud::sCloudPoint_SensorInfo_t& cloudPoint)
-{
-	if (point < mCloud.size())
-	{
-
-		if (mHasPoints)
-		{
-			if (cloudPoint.X_m < mMinX)
-				mMinX = cloudPoint.X_m;
-
-			if (cloudPoint.X_m > mMaxX)
-				mMaxX = cloudPoint.X_m;
-
-			if (cloudPoint.Y_m < mMinY)
-				mMinY = cloudPoint.Y_m;
-
-			if (cloudPoint.Y_m > mMaxY)
-				mMaxY = cloudPoint.Y_m;
-
-			if (cloudPoint.Z_m < mMinZ)
-				mMinZ = cloudPoint.Z_m;
-
-			if (cloudPoint.Z_m > mMaxZ)
-				mMaxZ = cloudPoint.Z_m;
-		}
-		else
-		{
-			mHasPoints = true;
-			mMinX = mMaxX = cloudPoint.X_m;
-			mMinY = mMaxY = cloudPoint.Y_m;
-			mMinZ = mMaxZ = cloudPoint.Z_m;
-		}
-
-		mCloud[point] = cloudPoint;
-	}
-}
-
-void cReducedPointCloudByFrame_SensorInfo::addPoint(const pointcloud::sCloudPoint_SensorInfo_t& cloudPoint)
-{
-	if ((cloudPoint.X_m == 0.0) && (cloudPoint.Y_m == 0.0) && (cloudPoint.Z_m == 0.0))
-		return;
-
-	if (mHasPoints)
-	{
-		if (cloudPoint.X_m < mMinX)
-			mMinX = cloudPoint.X_m;
-
-		if (cloudPoint.X_m > mMaxX)
-			mMaxX = cloudPoint.X_m;
-
-		if (cloudPoint.Y_m < mMinY)
-			mMinY = cloudPoint.Y_m;
-
-		if (cloudPoint.Y_m > mMaxY)
-			mMaxY = cloudPoint.Y_m;
-
-		if (cloudPoint.Z_m < mMinZ)
-			mMinZ = cloudPoint.Z_m;
-
-		if (cloudPoint.Z_m > mMaxZ)
-			mMaxZ = cloudPoint.Z_m;
-	}
-	else
-	{
-		mHasPoints = true;
-		mMinX = mMaxX = cloudPoint.X_m;
-		mMinY = mMaxY = cloudPoint.Y_m;
-		mMinZ = mMaxZ = cloudPoint.Z_m;
-	}
-
-	mCloud.push_back(cloudPoint);
-}
 
 
  /////////////////////////////////////////////////////////////////////////////////////
  //  Point Cloud Data
  /////////////////////////////////////////////////////////////////////////////////////
+
+cPointCloud::cPointCloud(const cPointCloud_FrameId& pc)
+{
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
+
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
+
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
+
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
+	{
+		mCloud[i] = data[i];
+	}
+}
+
+cPointCloud::cPointCloud(const cPointCloud_SensorInfo& pc)
+{
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
+
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
+
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
+
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
+	{
+		mCloud[i] = data[i];
+	}
+}
 
 void cPointCloud::resize(std::size_t num_of_points)
 {
@@ -392,6 +263,30 @@ void cPointCloud::addPoint(const pointcloud::sCloudPoint_t& cloudPoint)
  /////////////////////////////////////////////////////////////////////////////////////
  // Point Cloud with Frame ID info
  /////////////////////////////////////////////////////////////////////////////////////
+
+cPointCloud_FrameId::cPointCloud_FrameId(const cPointCloud_SensorInfo& pc)
+{
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
+
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
+
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
+
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
+	{
+		mCloud[i] = data[i];
+	}
+}
 
 void cPointCloud_FrameId::resize(std::size_t num_of_points)
 {
