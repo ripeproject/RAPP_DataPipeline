@@ -69,6 +69,7 @@ void complete_file_progress(const int id)
 	if (g_pEventHandler)
 	{
 		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
+		event->SetProgress_pct(100);
 		wxQueueEvent(g_pEventHandler, event);
 	}
 }
@@ -222,6 +223,7 @@ void cMainWindow::CreateControls()
 	mpAggregatePointCloud->SetValue(true);
 
 	mpSaveReducedPointCloud = new wxRadioButton(this, wxID_ANY, "Save Reduced Point Cloud");
+	mpSaveSensorPointCloud = new wxRadioButton(this, wxID_ANY, "Save Sensor Point Cloud");
 
 	mpSaveBasic = new wxRadioButton(this, wxID_ANY, "Basic (Smallest File Size)", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	mpSaveFrameID = new wxRadioButton(this, wxID_ANY, "With Frame ID");
@@ -513,7 +515,8 @@ void cMainWindow::CreateLayout()
 		mpOptions->Add(mpAggregatePointCloud, wxSizerFlags().Proportion(0).Expand());
 		mpOptions->AddSpacer(5);
 		mpOptions->Add(mpSaveReducedPointCloud, wxSizerFlags().Proportion(0).Expand());
-		mpOptions->AddSpacer(20);
+		mpOptions->AddSpacer(5);
+		mpOptions->Add(mpSaveSensorPointCloud, wxSizerFlags().Proportion(0).Expand());
 		sizer->Add(mpOptions, wxSizerFlags().Proportion(1).FixedMinSize());
 
 		sizer->AddSpacer(10);
@@ -550,7 +553,7 @@ void cMainWindow::CreateLayout()
 
 void cMainWindow::OnSrcFileBrowse(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), "", "",
+	wxFileDialog dlg(this, _("Open file"), "", mSourceData,
 		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -702,14 +705,28 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	mpSensorPitch_deg->TransferDataFromWindow();
 	mpSensorRoll_deg->TransferDataFromWindow();
 
-	cLidar2PointCloud::eSaveOptions save_options = cLidar2PointCloud::eSaveOptions::BASIC;
+	cLidar2PointCloud::eOutputOptions output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
+	if (mpAggregatePointCloud->GetValue())
+	{
+		output_option = cLidar2PointCloud::eOutputOptions::AGGREGATE;
+	}
+	else if (mpSaveReducedPointCloud->GetValue())
+	{
+		output_option = cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
+	}
+	else if (mpSaveSensorPointCloud->GetValue())
+	{
+		output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
+	}
+
+	cLidar2PointCloud::eSaveOptions save_option = cLidar2PointCloud::eSaveOptions::BASIC;
 	if (mpSaveFrameID->GetValue())
 	{
-		save_options = cLidar2PointCloud::eSaveOptions::FRAME_ID;
+		save_option = cLidar2PointCloud::eSaveOptions::FRAME_ID;
 	}
 	else if (mpSaveSensorInfo->GetValue())
 	{
-		save_options = cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
+		save_option = cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
 	}
 
 	std::string input_directory = mSourceData.ToStdString();
@@ -871,10 +888,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		fp->setAzimuthWindow_deg(mMinimumAzimuth_deg, mMaximumAzimuth_deg);
 		fp->setAltitudeWindow_deg(mMinimumAltitude_deg, mMaximumAltitude_deg);
 
-		fp->saveAggregatePointCloud(mpAggregatePointCloud->GetValue());
-		fp->saveReducedPointCloud(mpSaveReducedPointCloud->GetValue());
-
-		fp->setSaveOptions(save_options);
+		fp->setOutputOption(output_option);
+		fp->setSaveOption(save_option);
 
 		std::unique_ptr<cKinematics> kinematics;
 
@@ -885,9 +900,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 			fp->setValidRange_m(options.minDistance_m, options.maxDistance_m);
 			fp->setAzimuthWindow_deg(options.minAzimuth_deg, options.maxAzimuth_deg);
 			fp->setAltitudeWindow_deg(options.minAltitude_deg, options.maxAltitude_deg);
-
-			fp->saveAggregatePointCloud(options.aggregatePointCloud);
-			fp->saveReducedPointCloud(options.saveReducedPointCloud);
 
 			kinematics = pConfigData->getModel(in_file.path().filename().string());
 		}

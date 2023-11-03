@@ -245,6 +245,50 @@ namespace
 		return lut;
 	}
 
+	template<class OUTPUT>
+	OUTPUT createReducedPointCloud(uint16_t frameID, uint64_t timestamp_ns,
+		std::size_t columns_per_frame, std::size_t pixels_per_column,
+		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
+	{
+		OUTPUT pc;
+		pc.frameID(frameID);
+		pc.timestamp_ns(timestamp_ns);
+
+		for (int c = 0; c < columns_per_frame; ++c)
+		{
+			auto column = cloud.column(c);
+			for (int p = 0; p < pixels_per_column; ++p)
+			{
+				auto point = column[p];
+				pc.addPoint(point);
+			}
+		}
+
+		return pc;
+	}
+
+	template<class OUTPUT>
+	OUTPUT createSensorPointCloud(uint16_t frameID, uint64_t timestamp_ns,
+		std::size_t columns_per_frame, std::size_t pixels_per_column,
+		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
+	{
+		OUTPUT pc;
+		pc.frameID(frameID);
+		pc.timestamp_ns(timestamp_ns);
+		pc.resize(cloud.num_rows(), cloud.num_columns());
+
+		for (int c = 0; c < columns_per_frame; ++c)
+		{
+			auto column = cloud.column(c);
+			for (int p = 0; p < pixels_per_column; ++p)
+			{
+				auto point = column[p];
+				pc.set(c, p, point);
+			}
+		}
+
+		return pc;
+	}
 }
 
 
@@ -263,7 +307,7 @@ void cLidar2PointCloud::setAzimuthWindow_deg(double min_azimuth_deg, double max_
 // M a i n   C l a s s
 ///////////////////////////////////////////////////////////////////////////////
 
-cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(1024)
+cLidar2PointCloud::cLidar2PointCloud() : cPointCloudSerializer(16 * 1024)
 {
 	mKinematic = std::make_unique<cKinematics_None>();
 }
@@ -284,19 +328,14 @@ void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double ma
 	mMaxAltitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
 }
 
-void cLidar2PointCloud::saveAggregatePointCloud(bool aggregatePointCloud)
+void cLidar2PointCloud::setOutputOption(eOutputOptions option)
 {
-	mAggregatePointCloud = aggregatePointCloud;
+	mOutputOptions = option;
 }
 
-void cLidar2PointCloud::saveReducedPointCloud(bool reducePointCloud)
+void cLidar2PointCloud::setSaveOption(eSaveOptions option)
 {
-	mSaveReducedPointCloud = reducePointCloud;
-}
-
-void cLidar2PointCloud::setSaveOptions(eSaveOptions options)
-{
-	mSaveOption = options;
+	mSaveOption = option;
 }
 
 void cLidar2PointCloud::setKinematicModel(std::unique_ptr<cKinematics> model)
@@ -504,67 +543,148 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 
 	mKinematic->transform(time_us, mCloud);
 
-	if (mAggregatePointCloud)
+	switch (mOutputOptions)
 	{
-		for (int c = 0; c < columns_per_frame; ++c)
+		case eOutputOptions::AGGREGATE:
 		{
-			auto column = mCloud.column(c);
-			for (int p = 0; p < pixels_per_column; ++p)
+			for (int c = 0; c < columns_per_frame; ++c)
 			{
-				auto point = column[p];
+				auto column = mCloud.column(c);
+				for (int p = 0; p < pixels_per_column; ++p)
+				{
+					auto point = column[p];
 
-				mPointCloud.addPoint(point);
+					mPointCloud.addPoint(point);
+				}
 			}
-		}
 
-		if (mKinematic->atEndOfPass())
+			if (mKinematic->atEndOfPass())
+			{
+				writeAndClearData();
+			}
+
+			break;
+		}
+		case eOutputOptions::REDUCED_SINGLE_FRAMES:
 		{
-			writeAndClearData();
+			writeReducedPointCloud(frameID, timestamp_ns, columns_per_frame, pixels_per_column);
+			break;
+		}
+		default:
+		case eOutputOptions::SENSOR_SINGLE_FRAMES:
+		{
+			writeSensorPointCloud(frameID, timestamp_ns, columns_per_frame, pixels_per_column);
+			break;
 		}
 	}
-	else if (mSaveReducedPointCloud)
+}
+
+void cLidar2PointCloud::writeReducedPointCloud(uint16_t frameID, uint64_t timestamp_ns,
+												std::size_t columns_per_frame, std::size_t pixels_per_column)
+{
+	if (mCloud.empty()) return;
+
+	switch (mSaveOption)
 	{
-		cReducedPointCloudByFrame pc;
-		pc.frameID(frameID);
-		pc.timestamp_ns(timestamp_ns);
-
-		for (int c = 0; c < columns_per_frame; ++c)
+		case eSaveOptions::BASIC:
 		{
-			auto column = mCloud.column(c);
-			for (int p = 0; p < pixels_per_column; ++p)
-			{
-				auto point = column[p];
-				pc.addPoint(point);
-			}
+			auto pc = createReducedPointCloud<cReducedPointCloudByFrame>(frameID, timestamp_ns,
+				columns_per_frame, pixels_per_column, mCloud);
+
+			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+				pc.maxY(), pc.minZ(), pc.maxZ());
+
+			write(pc);
+			break;
 		}
+		case eSaveOptions::FRAME_ID:
+		{
+			auto pc = createReducedPointCloud<cReducedPointCloudByFrame_FrameId>(frameID, timestamp_ns,
+				columns_per_frame, pixels_per_column, mCloud);
 
-		writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-			pc.maxY(), pc.minZ(), pc.maxZ());
+			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+				pc.maxY(), pc.minZ(), pc.maxZ());
 
-		write(pc);
+			write(pc);
+			break;
+		}
+		default:
+		case eSaveOptions::SENSOR_INFO:
+		{
+			auto pc = createReducedPointCloud<cReducedPointCloudByFrame_SensorInfo>(frameID, timestamp_ns,
+				columns_per_frame, pixels_per_column, mCloud);
+
+			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+				pc.maxY(), pc.minZ(), pc.maxZ());
+
+			write(pc);
+			break;
+		}
 	}
-	else
+
+/*
+	cReducedPointCloudByFrame pc;
+	pc.frameID(frameID);
+	pc.timestamp_ns(timestamp_ns);
+
+	for (int c = 0; c < columns_per_frame; ++c)
 	{
-		cSensorPointCloudByFrame pc;
-		pc.frameID(frameID);
-		pc.timestamp_ns(timestamp_ns);
-		pc.resize(mCloud.num_rows(), mCloud.num_columns());
-
-		for (int c = 0; c < columns_per_frame; ++c)
+		auto column = mCloud.column(c);
+		for (int p = 0; p < pixels_per_column; ++p)
 		{
-			auto column = mCloud.column(c);
-			for (int p = 0; p < pixels_per_column; ++p)
-			{
-				auto point = column[p];
-				pc.set(c, p, point);
-			}
+			auto point = column[p];
+			pc.addPoint(point);
 		}
-
-		writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-			pc.maxY(), pc.minZ(), pc.maxZ());
-
-		write(pc);
 	}
+*/
+
+	mCloud.clear();
+}
+
+void cLidar2PointCloud::writeSensorPointCloud(uint16_t frameID, uint64_t timestamp_ns,
+												std::size_t columns_per_frame, std::size_t pixels_per_column)
+{
+	if (mCloud.empty()) return;
+
+	switch (mSaveOption)
+	{
+		case eSaveOptions::BASIC:
+		{
+			auto pc = createSensorPointCloud<cSensorPointCloudByFrame>(frameID, timestamp_ns,
+				columns_per_frame, pixels_per_column, mCloud);
+
+			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+				pc.maxY(), pc.minZ(), pc.maxZ());
+
+			write(pc);
+			break;
+		}
+		case eSaveOptions::FRAME_ID:
+		{
+			auto pc = createSensorPointCloud<cSensorPointCloudByFrame_FrameId>(frameID, timestamp_ns,
+				columns_per_frame, pixels_per_column, mCloud);
+
+			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+				pc.maxY(), pc.minZ(), pc.maxZ());
+
+			write(pc);
+			break;
+		}
+		default:
+		case eSaveOptions::SENSOR_INFO:
+		{
+			auto pc = createSensorPointCloud<cSensorPointCloudByFrame_SensorInfo>(frameID, timestamp_ns,
+				columns_per_frame, pixels_per_column, mCloud);
+
+			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
+				pc.maxY(), pc.minZ(), pc.maxZ());
+
+			write(pc);
+			break;
+		}
+	}
+
+	mCloud.clear();
 }
 
 void cLidar2PointCloud::onConfigParam(ouster::config_param_2_t config_param) {}

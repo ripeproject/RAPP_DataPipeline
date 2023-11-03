@@ -376,8 +376,8 @@ int main(int argc, char** argv)
 		fp->setAzimuthWindow_deg(min_azimuth_deg, max_azimuth_deg);
 		fp->setAltitudeWindow_deg(min_altitude_deg, max_altitude_deg);
 
-		fp->saveAggregatePointCloud(aggregatePointCloud);
-		fp->saveReducedPointCloud(saveReducedPointCloud);
+//BAF		fp->saveAggregatePointCloud(aggregatePointCloud);
+//BAF		fp->saveReducedPointCloud(saveReducedPointCloud);
 
 		std::unique_ptr<cKinematics> kinematics;
 
@@ -389,8 +389,8 @@ int main(int argc, char** argv)
 			fp->setAzimuthWindow_deg(options.minAzimuth_deg, options.maxAzimuth_deg);
 			fp->setAltitudeWindow_deg(options.minAltitude_deg, options.maxAltitude_deg);
 
-			fp->saveAggregatePointCloud(options.aggregatePointCloud);
-			fp->saveReducedPointCloud(options.saveReducedPointCloud);
+//BAF			fp->saveAggregatePointCloud(options.aggregatePointCloud);
+//BAF			fp->saveReducedPointCloud(options.saveReducedPointCloud);
 
 			kinematics = pConfigData->getModel(in_file.path().filename().string());
 		}

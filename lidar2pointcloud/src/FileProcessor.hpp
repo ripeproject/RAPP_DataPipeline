@@ -55,22 +55,8 @@ public:
 	 */
 	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
 
-	/**
-	 * Save aggregate point cloud
-	 *
-	 * An aggregate point cloud is where all of the individual point clouds generated
-	 * by the individual lidar scan are combined into one point cloud.
-	 */
-	void saveAggregatePointCloud(bool aggregatePointCloud);
-
-	/**
-	 * Save reduced point cloud
-	 *
-	 * If true, all points that are outside of some bound are not stored in the data file.
-	 */
-	void saveReducedPointCloud(bool reducePointCloud);
-
-	void setSaveOptions(cLidar2PointCloud::eSaveOptions options);
+	void setOutputOption(cLidar2PointCloud::eOutputOptions option);
+	void setSaveOption(cLidar2PointCloud::eSaveOptions option);
 
 	/**
 	 * Set the kinematic type to apply to the pointcloud data.

@@ -83,22 +83,7 @@ public:
 	 *							stored in the same order as the lidar returns.
 	 */
 	enum class eOutputOptions { AGGREGATE, REDUCED_SINGLE_FRAMES, SENSOR_SINGLE_FRAMES };
-	void setOutputOptions(eOutputOptions options);
-
-	/**
-	 * Save aggregate point cloud
-	 *
-	 * An aggregate point cloud is where all of the individual point clouds generated
-	 * by the individual lidar scan are combined into one point cloud.
-	 */
-	void saveAggregatePointCloud(bool aggregatePointCloud);
-
-	/**
-	 * Save reduced point cloud
-	 *
-	 * If true, all points that are outside of some bound are not stored in the data file.
-	 */
-	void saveReducedPointCloud(bool reducePointCloud);
+	void setOutputOption(eOutputOptions option);
 
 	/**
 	 * Set the "save options" for writing out point cloud data.
@@ -108,7 +93,7 @@ public:
 	 * SENSOR_INFO:	Save point cloud with frame id and sensor information
 	 */
 	enum class eSaveOptions { BASIC, FRAME_ID, SENSOR_INFO };
-	void setSaveOptions(eSaveOptions options);
+	void setSaveOption(eSaveOptions option);
 
 	/**
 	 * Set the kinematic type to apply to the pointcloud data.
@@ -149,6 +134,12 @@ public:
 	void writeAndClearData();
 
 private:
+	void writeReducedPointCloud(uint16_t frameID, uint64_t timestamp_ns, 
+								std::size_t columns_per_frame, std::size_t pixels_per_column);
+	void writeSensorPointCloud(uint16_t frameID, uint64_t timestamp_ns,
+								std::size_t columns_per_frame, std::size_t pixels_per_column);
+
+private:
 	void onConfigParam(ouster::config_param_2_t config_param) override;
 	void onSensorInfo(ouster::sensor_info_2_t sensor_info) override;
 	void onTimestamp(ouster::timestamp_2_t timestamp) override;
@@ -181,9 +172,8 @@ private:
 	double mMinAltitude_rad = -std::numbers::pi;
 	double mMaxAltitude_rad = +std::numbers::pi;
 
-	bool mAggregatePointCloud = false;
-	bool mSaveReducedPointCloud = false;
-	eSaveOptions mSaveOption = eSaveOptions::BASIC;
+	eOutputOptions	mOutputOptions = eOutputOptions::AGGREGATE;
+	eSaveOptions	mSaveOption = eSaveOptions::BASIC;
 
 private:
 	std::optional<ouster::beam_intrinsics_2_t>   mBeamIntrinsics;

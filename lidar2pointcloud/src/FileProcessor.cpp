@@ -49,19 +49,14 @@ void cFileProcessor::setAltitudeWindow_deg(double min_altitude_deg, double max_a
     mConverter->setAltitudeWindow_deg(min_altitude_deg, max_altitude_deg);
 }
 
-void cFileProcessor::saveAggregatePointCloud(bool aggregatePointCloud)
+void cFileProcessor::setOutputOption(cLidar2PointCloud::eOutputOptions options)
 {
-    mConverter->saveAggregatePointCloud(aggregatePointCloud);
+    mConverter->setOutputOption(options);
 }
 
-void cFileProcessor::saveReducedPointCloud(bool reducePointCloud)
+void cFileProcessor::setSaveOption(cLidar2PointCloud::eSaveOptions options)
 {
-    mConverter->saveReducedPointCloud(reducePointCloud);
-}
-
-void cFileProcessor::setSaveOptions(cLidar2PointCloud::eSaveOptions options)
-{
-    mConverter->setSaveOptions(options);
+    mConverter->setSaveOption(options);
 }
 
 /**

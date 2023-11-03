@@ -183,6 +183,7 @@ private:
 
 	wxRadioButton* mpAggregatePointCloud = nullptr;
 	wxRadioButton* mpSaveReducedPointCloud = nullptr;
+	wxRadioButton* mpSaveSensorPointCloud = nullptr;
 
 	wxStaticBoxSizer* mpSaveOptions = nullptr;
 
