@@ -37,6 +37,10 @@ public:
     const vCloud_t& data() const { return mCloud; }
 
 protected:
+	template<class POINT2>
+	void assign(const cBasePointCloud<POINT2>& pc);
+
+protected:
 	bool mHasPoints = false;
 
 	double mMinX = 0.0;
@@ -241,9 +245,10 @@ public:
 
 	void resize(std::size_t num_of_points);
 
-	void set(std::size_t point, const POINT& cloudPoint);
-
 	void addPoint(const POINT& cloudPoint);
+
+	// Should only be used by the parser!
+	void set(std::size_t point, const POINT& cloudPoint);
 
 private:
 	uint16_t mFrameID = 0;
@@ -382,6 +387,32 @@ double cBasePointCloud<POINT>::minZ() const { return mMinZ; }
 
 template<class POINT>
 double cBasePointCloud<POINT>::maxZ() const { return mMaxZ; }
+
+template<class POINT>
+template<class POINT2>
+void cBasePointCloud<POINT>::assign(const cBasePointCloud<POINT2>& pc)
+{
+	mMinX = pc.minX();
+	mMaxX = pc.maxX();
+
+	mMinY = pc.minY();
+	mMaxY = pc.maxY();
+
+	mMinZ = pc.minZ();
+	mMaxZ = pc.maxZ();
+
+	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
+		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+
+	auto n = pc.size();
+	mCloud.resize(n);
+
+	auto& data = pc.data();
+	for (std::size_t i = 0; i < n; ++i)
+	{
+		mCloud[i] = data[i];
+	}
+}
 
 
 /******************************************************************************

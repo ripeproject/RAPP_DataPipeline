@@ -22,50 +22,26 @@
 
 cReducedPointCloudByFrame::cReducedPointCloudByFrame(const cReducedPointCloudByFrame_FrameId& pc)
 {
-	mMinX = pc.minX();
-	mMaxX = pc.maxX();
-
-	mMinY = pc.minY();
-	mMaxY = pc.maxY();
-
-	mMinZ = pc.minZ();
-	mMaxZ = pc.maxZ();
-
-	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
-		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
-
-	auto n = pc.size();
-	mCloud.resize(n);
-
-	auto& data = pc.data();
-	for (std::size_t i = 0; i < n; ++i)
-	{
-		mCloud[i] = data[i];
-	}
+	assign(pc);
 }
 
 cReducedPointCloudByFrame::cReducedPointCloudByFrame(const cReducedPointCloudByFrame_SensorInfo& pc)
 {
-	mMinX = pc.minX();
-	mMaxX = pc.maxX();
+	assign(pc);
+}
 
-	mMinY = pc.minY();
-	mMaxY = pc.maxY();
+cReducedPointCloudByFrame& cReducedPointCloudByFrame::operator=(const cReducedPointCloudByFrame_FrameId& pc)
+{
+	assign(pc);
 
-	mMinZ = pc.minZ();
-	mMaxZ = pc.maxZ();
+	return *this;
+}
 
-	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
-		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+cReducedPointCloudByFrame& cReducedPointCloudByFrame::operator=(const cReducedPointCloudByFrame_SensorInfo& pc)
+{
+	assign(pc);
 
-	auto n = pc.size();
-	mCloud.resize(n);
-
-	auto& data = pc.data();
-	for (std::size_t i = 0; i < n; ++i)
-	{
-		mCloud[i] = data[i];
-	}
+	return *this;
 }
 
 
@@ -75,50 +51,12 @@ cReducedPointCloudByFrame::cReducedPointCloudByFrame(const cReducedPointCloudByF
 
 cReducedPointCloudByFrame_FrameId::cReducedPointCloudByFrame_FrameId(const cReducedPointCloudByFrame_SensorInfo& pc)
 {
-	mMinX = pc.minX();
-	mMaxX = pc.maxX();
-
-	mMinY = pc.minY();
-	mMaxY = pc.maxY();
-
-	mMinZ = pc.minZ();
-	mMaxZ = pc.maxZ();
-
-	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
-		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
-
-	auto n = pc.size();
-	mCloud.resize(n);
-
-	auto& data = pc.data();
-	for (std::size_t i = 0; i < n; ++i)
-	{
-		mCloud[i] = data[i];
-	}
+	assign(pc);
 }
 
 cReducedPointCloudByFrame_FrameId& cReducedPointCloudByFrame_FrameId::operator=(const cReducedPointCloudByFrame_SensorInfo& pc)
 {
-	mMinX = pc.minX();
-	mMaxX = pc.maxX();
-
-	mMinY = pc.minY();
-	mMaxY = pc.maxY();
-
-	mMinZ = pc.minZ();
-	mMaxZ = pc.maxZ();
-
-	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
-		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
-
-	auto n = pc.size();
-	mCloud.resize(n);
-
-	auto& data = pc.data();
-	for (std::size_t i = 0; i < n; ++i)
-	{
-		mCloud[i] = data[i];
-	}
+	assign(pc);
 
 	return *this;
 }
@@ -136,50 +74,26 @@ cReducedPointCloudByFrame_FrameId& cReducedPointCloudByFrame_FrameId::operator=(
 
 cPointCloud::cPointCloud(const cPointCloud_FrameId& pc)
 {
-	mMinX = pc.minX();
-	mMaxX = pc.maxX();
-
-	mMinY = pc.minY();
-	mMaxY = pc.maxY();
-
-	mMinZ = pc.minZ();
-	mMaxZ = pc.maxZ();
-
-	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
-		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
-
-	auto n = pc.size();
-	mCloud.resize(n);
-
-	auto& data = pc.data();
-	for (std::size_t i = 0; i < n; ++i)
-	{
-		mCloud[i] = data[i];
-	}
+	assign(pc);
 }
 
 cPointCloud::cPointCloud(const cPointCloud_SensorInfo& pc)
 {
-	mMinX = pc.minX();
-	mMaxX = pc.maxX();
+	assign(pc);
+}
 
-	mMinY = pc.minY();
-	mMaxY = pc.maxY();
+cPointCloud& cPointCloud::operator=(const cPointCloud_FrameId& pc)
+{
+	assign(pc);
 
-	mMinZ = pc.minZ();
-	mMaxZ = pc.maxZ();
+	return *this;
+}
 
-	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
-		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
+cPointCloud& cPointCloud::operator=(const cPointCloud_SensorInfo& pc)
+{
+	assign(pc);
 
-	auto n = pc.size();
-	mCloud.resize(n);
-
-	auto& data = pc.data();
-	for (std::size_t i = 0; i < n; ++i)
-	{
-		mCloud[i] = data[i];
-	}
+	return *this;
 }
 
 void cPointCloud::resize(std::size_t num_of_points)
@@ -266,26 +180,14 @@ void cPointCloud::addPoint(const pointcloud::sCloudPoint_t& cloudPoint)
 
 cPointCloud_FrameId::cPointCloud_FrameId(const cPointCloud_SensorInfo& pc)
 {
-	mMinX = pc.minX();
-	mMaxX = pc.maxX();
+	assign(pc);
+}
 
-	mMinY = pc.minY();
-	mMaxY = pc.maxY();
+cPointCloud_FrameId& cPointCloud_FrameId::operator=(const cPointCloud_SensorInfo& pc)
+{
+	assign(pc);
 
-	mMinZ = pc.minZ();
-	mMaxZ = pc.maxZ();
-
-	mHasPoints = (mMinX != 0.0) || (mMaxX != 0.0) || (mMinY != 0.0) || (mMaxY != 0.0)
-		|| (mMinZ != 0.0) || (mMaxZ != 0.0);
-
-	auto n = pc.size();
-	mCloud.resize(n);
-
-	auto& data = pc.data();
-	for (std::size_t i = 0; i < n; ++i)
-	{
-		mCloud[i] = data[i];
-	}
+	return *this;
 }
 
 void cPointCloud_FrameId::resize(std::size_t num_of_points)

@@ -131,7 +131,7 @@ void cPointCloudSerializer::write(const cPointCloud_FrameId& in)
     uint64_t num_points = data.size();
 
     auto old_size = mDataBuffer.capacity();
-    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_t);
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_FrameID_t);
 
     mDataBuffer.capacity(needed_size);
 
@@ -170,7 +170,7 @@ void cPointCloudSerializer::write(const cPointCloud_SensorInfo& in)
     uint64_t num_points = data.size();
 
     auto old_size = mDataBuffer.capacity();
-    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_t);
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_SensorInfo_t);
 
     mDataBuffer.capacity(needed_size);
 
@@ -260,12 +260,17 @@ void cPointCloudSerializer::write(const cReducedPointCloudByFrame& in)
 
     mDataBuffer.clear();
 
-    mDataBuffer.put<uint16_t>(in.frameID());
-    mDataBuffer.put<uint64_t>(in.timestamp_ns());
-
     auto& data = in.data();
 
     uint32_t num_points = data.size();
+
+    auto old_size = mDataBuffer.capacity();
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_t);
+
+    mDataBuffer.capacity(needed_size);
+
+    mDataBuffer.put<uint16_t>(in.frameID());
+    mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
     mDataBuffer << num_points;
 
@@ -294,12 +299,17 @@ void cPointCloudSerializer::write(const cReducedPointCloudByFrame_FrameId& in)
 
     mDataBuffer.clear();
 
-    mDataBuffer.put<uint16_t>(in.frameID());
-    mDataBuffer.put<uint64_t>(in.timestamp_ns());
-
     auto& data = in.data();
 
     uint32_t num_points = data.size();
+
+    auto old_size = mDataBuffer.capacity();
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_FrameID_t);
+
+    mDataBuffer.capacity(needed_size);
+
+    mDataBuffer.put<uint16_t>(in.frameID());
+    mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
     mDataBuffer << num_points;
 
@@ -329,12 +339,17 @@ void cPointCloudSerializer::write(const cReducedPointCloudByFrame_SensorInfo& in
 
     mDataBuffer.clear();
 
-    mDataBuffer.put<uint16_t>(in.frameID());
-    mDataBuffer.put<uint64_t>(in.timestamp_ns());
-
     auto& data = in.data();
 
     uint32_t num_points = data.size();
+
+    auto old_size = mDataBuffer.capacity();
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_SensorInfo_t);
+
+    mDataBuffer.capacity(needed_size);
+
+    mDataBuffer.put<uint16_t>(in.frameID());
+    mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
     mDataBuffer << num_points;
 
@@ -369,13 +384,21 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame& in)
 
     mDataBuffer.clear();
 
+    auto& data = in.data();
+
+    uint32_t num_points = data.size();
+
+    auto old_size = mDataBuffer.capacity();
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_t);
+
+    mDataBuffer.capacity(needed_size);
+
     mDataBuffer.put<uint16_t>(in.frameID());
     mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
     mDataBuffer.put<uint32_t>(in.channelsPerColumn());
     mDataBuffer.put<uint32_t>(in.columnsPerFrame());
 
-    auto& data = in.data();
     for (uint32_t n = 0; n < data.size(); ++n)
     {
         auto point = data[n];
@@ -401,13 +424,21 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame_FrameId& in)
 
     mDataBuffer.clear();
 
+    auto& data = in.data();
+
+    uint32_t num_points = data.size();
+
+    auto old_size = mDataBuffer.capacity();
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_FrameID_t);
+
+    mDataBuffer.capacity(needed_size);
+
     mDataBuffer.put<uint16_t>(in.frameID());
     mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
     mDataBuffer.put<uint32_t>(in.channelsPerColumn());
     mDataBuffer.put<uint32_t>(in.columnsPerFrame());
 
-    auto& data = in.data();
     for (uint32_t n = 0; n < data.size(); ++n)
     {
         auto point = data[n];
@@ -434,13 +465,21 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame_SensorInfo& in)
 
     mDataBuffer.clear();
 
+    auto& data = in.data();
+
+    uint32_t num_points = data.size();
+
+    auto old_size = mDataBuffer.capacity();
+    cDataBuffer::size_type needed_size = 128 + num_points * sizeof(pointcloud::sCloudPoint_SensorInfo_t);
+
+    mDataBuffer.capacity(needed_size);
+
     mDataBuffer.put<uint16_t>(in.frameID());
     mDataBuffer.put<uint64_t>(in.timestamp_ns());
 
     mDataBuffer.put<uint32_t>(in.channelsPerColumn());
     mDataBuffer.put<uint32_t>(in.columnsPerFrame());
 
-    auto& data = in.data();
     for (uint32_t n = 0; n < data.size(); ++n)
     {
         auto point = data[n];
