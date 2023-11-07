@@ -1024,6 +1024,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		if (!kinematics)
 		{
 			delete fp;
+			--numFilesToProcess;
 			continue;
 		}
 
