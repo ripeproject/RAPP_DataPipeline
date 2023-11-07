@@ -48,8 +48,49 @@ namespace
 	const double DEFAULT_MIN_ALTITUDE_DEG = -90.0;
 	const double DEFAULT_MAX_ALTITUDE_DEG = 90.0;
 
-	const bool DEFAULT_AGGREGATE_POINTCLOUD = false;
-	const bool DEFAULT_SAVE_REDUCED_POINTCLOUD = false;
+	cLidar2PointCloud::eOutputOptions convert(nConfigFileData::eOutputOptions option)
+	{
+		if (option == nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES)
+			return cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
+
+		if (option == nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES)
+			return cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
+
+		return cLidar2PointCloud::eOutputOptions::AGGREGATE;
+	}
+
+	cLidar2PointCloud::eSaveOptions convert(nConfigFileData::eSaveOptions option)
+	{
+		if (option == nConfigFileData::eSaveOptions::FRAME_ID)
+			return cLidar2PointCloud::eSaveOptions::FRAME_ID;
+
+		if (option == nConfigFileData::eSaveOptions::SENSOR_INFO)
+			return cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
+
+		return cLidar2PointCloud::eSaveOptions::BASIC;
+	}
+
+	nConfigFileData::eOutputOptions convert(cLidar2PointCloud::eOutputOptions option)
+	{
+		if (option == cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES)
+			return nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES;
+
+		if (option == cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES)
+			return nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES;
+
+		return nConfigFileData::eOutputOptions::AGGREGATE;
+	}
+
+	nConfigFileData::eSaveOptions convert(cLidar2PointCloud::eSaveOptions option)
+	{
+		if (option == cLidar2PointCloud::eSaveOptions::FRAME_ID)
+			return nConfigFileData::eSaveOptions::FRAME_ID;
+
+		if (option == cLidar2PointCloud::eSaveOptions::SENSOR_INFO)
+			return nConfigFileData::eSaveOptions::SENSOR_INFO;
+
+		return nConfigFileData::eSaveOptions::BASIC;
+	}
 }
 
 void console_message(const std::string& msg)
@@ -98,9 +139,6 @@ int main(int argc, char** argv)
 	double min_altitude_deg = INVALID_VALUE;
 	double max_altitude_deg = INVALID_VALUE;
 
-	bool aggregatePointCloud = true;
-	bool saveReducedPointCloud = false;
-
 	std::string kinematics;
 	bool isFile = false;
 	bool showHelp = false;
@@ -121,9 +159,6 @@ int main(int argc, char** argv)
 		| lyra::opt(isFile)
 		["-f"]["--file"]
 		("Operate on a single file instead of directory.")
-		| lyra::opt(aggregatePointCloud)
-		["-a"]["--aggregate"]
-		("Aggregate lidar data into a single pointcloud.")
 		| lyra::opt(kinematics, "kinematics type")
 		["-k"]["--kinematic"]
 		("Specify the type of kinematics to apply to the pointcloud data.")
@@ -142,9 +177,6 @@ int main(int argc, char** argv)
 		| lyra::opt(max_dist_m, "max distance (m)")
 		["-x"]["--max_distance_m"]
 		("The maximum distance of the lidar return to use in meters.")
-		| lyra::opt(saveReducedPointCloud)
-		["-s"]["--space"]
-		("Save a reduced pointcloud.  Points outside min/max distances are not stored.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")

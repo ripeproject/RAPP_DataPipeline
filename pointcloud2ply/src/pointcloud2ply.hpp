@@ -61,17 +61,18 @@ private:
     typedef float range_t;
     struct returns3 { float s, r, a; };
     struct beam_loc { float theta, phi; };
+    struct pixel_loc { float chn, pixel; };
 #else
     typedef uint32_t range_t;
     struct returns3 { uint16_t s, r, a; };
     struct beam_loc { double theta, phi; };
+    struct pixel_loc { uint16_t chn, pixel; };
 #endif
 
 
     struct position3 { float x, y, z; };
     struct position4 { float x, y, z, s; };
     struct color3 { uint8_t r, g, b; };
-    struct pixel_loc { uint16_t chn, pixel; };
 
     color3 mColor;
 
@@ -83,7 +84,12 @@ private:
     std::vector<range_t>    mRanges;
 
     std::vector<returns3>   mReturns;
+
+#ifdef USE_FLOATS
+    std::vector<float>      mFrameIDs;
+#else
     std::vector<uint16_t>   mFrameIDs;
+#endif
 
     std::vector<pixel_loc>  mPixelLocations;
     std::vector<beam_loc>   mBeamLocations;

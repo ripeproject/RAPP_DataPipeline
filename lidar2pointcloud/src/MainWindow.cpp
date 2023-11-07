@@ -19,6 +19,50 @@
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
+
+	cLidar2PointCloud::eOutputOptions convert(nConfigFileData::eOutputOptions option)
+	{
+		if (option == nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES)
+			return cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
+
+		if (option == nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES)
+			return cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
+
+		return cLidar2PointCloud::eOutputOptions::AGGREGATE;
+	}
+
+	cLidar2PointCloud::eSaveOptions convert(nConfigFileData::eSaveOptions option)
+	{
+		if (option == nConfigFileData::eSaveOptions::FRAME_ID)
+			return cLidar2PointCloud::eSaveOptions::FRAME_ID;
+
+		if (option == nConfigFileData::eSaveOptions::SENSOR_INFO)
+			return cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
+
+		return cLidar2PointCloud::eSaveOptions::BASIC;
+	}
+
+	nConfigFileData::eOutputOptions convert(cLidar2PointCloud::eOutputOptions option)
+	{
+		if (option == cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES)
+			return nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES;
+
+		if (option == cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES)
+			return nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES;
+
+		return nConfigFileData::eOutputOptions::AGGREGATE;
+	}
+
+	nConfigFileData::eSaveOptions convert(cLidar2PointCloud::eSaveOptions option)
+	{
+		if (option == cLidar2PointCloud::eSaveOptions::FRAME_ID)
+			return nConfigFileData::eSaveOptions::FRAME_ID;
+
+		if (option == cLidar2PointCloud::eSaveOptions::SENSOR_INFO)
+			return nConfigFileData::eSaveOptions::SENSOR_INFO;
+
+		return nConfigFileData::eSaveOptions::BASIC;
+	}
 }
 
 void console_message(const std::string& msg)
@@ -553,7 +597,10 @@ void cMainWindow::CreateLayout()
 
 void cMainWindow::OnSrcFileBrowse(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), "", mSourceData,
+	std::filesystem::path fname = mSourceData.ToStdString();
+	auto fpath = fname.parent_path();
+
+	wxFileDialog dlg(this, _("Open file"), wxString(fpath.string()), wxString(fname.filename().string()),
 		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -808,7 +855,16 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		pConfigData = new cConfigFileData(mConfigurationFilename.ToStdString());
 
-		pConfigData->loadDefaults();
+		try
+		{
+			pConfigData->loadDefaults();
+		}
+		catch (const std::exception& e)
+		{
+			wxString msg = e.what();
+			wxLogMessage(msg);
+			return;
+		}
 
 		if (mKM_CF_OverrideOrientation)
 		{
@@ -824,8 +880,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		if (mKM_CF_OverrideOptions)
 		{
-			pConfigData->setDefaultAggregatePointCloud(mpAggregatePointCloud->GetValue());
-			pConfigData->setDefaultReducedPointCloud(mpSaveReducedPointCloud->GetValue());
+			pConfigData->setDefaultOutputOption(convert(output_option));
+			pConfigData->setDefaultSaveOption(convert(save_option));
 		}
 
 		pConfigData->loadKinematicModels();
@@ -900,6 +956,9 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 			fp->setValidRange_m(options.minDistance_m, options.maxDistance_m);
 			fp->setAzimuthWindow_deg(options.minAzimuth_deg, options.maxAzimuth_deg);
 			fp->setAltitudeWindow_deg(options.minAltitude_deg, options.maxAltitude_deg);
+
+			fp->setOutputOption(convert(options.outputOption));
+			fp->setSaveOption(convert(options.saveOption));
 
 			kinematics = pConfigData->getModel(in_file.path().filename().string());
 		}

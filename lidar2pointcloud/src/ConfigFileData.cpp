@@ -10,23 +10,24 @@
 #include <nlohmann/json.hpp>
 
 #include <fstream>
+#include <stdexcept>
 
 
 namespace
 {
-	eHeightAxis to_HeightAxis(char axis)
+	nConfigFileData::eHeightAxis to_HeightAxis(char axis)
 	{
 		switch (toupper(axis))
 		{
 		case 'X':
-			return eHeightAxis::X;
+			return nConfigFileData::eHeightAxis::X;
 		case 'Y':
-			return eHeightAxis::Y;
+			return nConfigFileData::eHeightAxis::Y;
 		case 'Z':
-			return eHeightAxis::Z;
+			return nConfigFileData::eHeightAxis::Z;
 		}
 
-		return eHeightAxis::Z;
+		return nConfigFileData::eHeightAxis::Z;
 	}
 }
 
@@ -91,16 +92,15 @@ void cConfigFileData::setDefaultAltitudeWindow_deg(double minimumAltitude_deg, d
 	mDefaultOptions.maxAltitude_deg = maximumAltitude_deg;
 }
 
-void cConfigFileData::setDefaultAggregatePointCloud(bool aggregatedPointCloud)
+void cConfigFileData::setDefaultOutputOption(nConfigFileData::eOutputOptions option)
 {
-	mDefaultOptions.aggregatePointCloud = aggregatedPointCloud;
+	mDefaultOptions.outputOption = option;
 }
 
-void cConfigFileData::setDefaultReducedPointCloud(bool reducedPointCloud)
+void cConfigFileData::setDefaultSaveOption(nConfigFileData::eSaveOptions option)
 {
-	mDefaultOptions.saveReducedPointCloud = reducedPointCloud;
+	mDefaultOptions.saveOption = option;
 }
-
 
 void cConfigFileData::setDefaultInitialPosition_m(double x_m, double y_m, double z_m)
 {
@@ -116,7 +116,7 @@ void cConfigFileData::setDefaultSpeeds_mmmps(double vx_mmps, double vy_mmps, dou
 	mDefault_Vz_mmps = vz_mmps;
 }
 
-void cConfigFileData::setDefaultHeight_m(double height_m, eHeightAxis axis)
+void cConfigFileData::setDefaultHeight_m(double height_m, nConfigFileData::eHeightAxis axis)
 {
 	mDefault_Height_m = height_m;
 	mDefault_HeightAxis = axis;
@@ -146,7 +146,7 @@ void cConfigFileData::setDefaultOrientation(double pitch_deg, double roll_deg, d
 }
 
 
-sOptions_t cConfigFileData::getOptions(const std::string& experiment_filename)
+nConfigFileData::sOptions_t cConfigFileData::getOptions(const std::string& experiment_filename)
 {
 	using namespace nStringUtils;
 
@@ -277,11 +277,41 @@ bool cConfigFileData::loadDefaults()
 		{
 			auto options = defaults["options"];
 
-			if (options.contains("aggregatePointCloud"))
-				mDefaultOptions.aggregatePointCloud = options["aggregatePointCloud"];
+			if (options.contains("output"))
+			{
+				std::string output = options["output"];
+				if (output == "aggregate")
+					mDefaultOptions.outputOption = nConfigFileData::eOutputOptions::AGGREGATE;
+				else if (output == "reduced")
+					mDefaultOptions.outputOption = nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES;
+				else if (output == "sensor")
+					mDefaultOptions.outputOption = nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES;
+				else
+				{
+					std::string msg = "Unknown output option: ";
+					msg += output;
+					msg += ", valid options are aggregate, reduced, and sensor.";
+					throw std::logic_error(msg);
+				}
+			}
 
-			if (options.contains("saveReducedPointCloud"))
-				mDefaultOptions.saveReducedPointCloud = options["saveReducedPointCloud"];
+			if (options.contains("save"))
+			{
+				std::string save = options["save"];
+				if (save == "basic")
+					mDefaultOptions.saveOption = nConfigFileData::eSaveOptions::BASIC;
+				else if (save == "frame_id")
+					mDefaultOptions.saveOption = nConfigFileData::eSaveOptions::FRAME_ID;
+				else if (save == "sensor_info")
+					mDefaultOptions.saveOption = nConfigFileData::eSaveOptions::SENSOR_INFO;
+				else
+				{
+					std::string msg = "Unknown save option: ";
+					msg += save;
+					msg += ", valid options are basic, frame_id, and sensor_info.";
+					throw std::logic_error(msg);
+				}
+			}
 		}
 	}
 
@@ -393,15 +423,15 @@ bool cConfigFileData::loadKinematicModels()
 
 				switch (heightAxis)
 				{
-				case eHeightAxis::X:
+				case nConfigFileData::eHeightAxis::X:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
 					km->setInitialPosition_m(height_m, Y_m, Z_m);
 					break;
-				case eHeightAxis::Y:
+				case nConfigFileData::eHeightAxis::Y:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
 					km->setInitialPosition_m(X_m, height_m, Z_m);
 					break;
-				case eHeightAxis::Z:
+				case nConfigFileData::eHeightAxis::Z:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
 					km->setInitialPosition_m(X_m, Y_m, height_m);
 					break;

@@ -681,23 +681,33 @@ void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
 
     if (!mFrameIDs.empty())
     {
+#ifdef USE_FLOATS
+        ply_file.add_properties_to_element("vertex", { "frame_id" },
+            Type::FLOAT32, mFrameIDs.size(), reinterpret_cast<uint8_t*>(mFrameIDs.data()), Type::INVALID, 0);
+#else
         ply_file.add_properties_to_element("vertex", { "frame_id" },
             Type::UINT16, mFrameIDs.size(), reinterpret_cast<uint8_t*>(mFrameIDs.data()), Type::INVALID, 0);
+#endif
     }
 
     if (!mPixelLocations.empty())
     {
-        ply_file.add_properties_to_element("vertex", { "channel, pixel" },
+#ifdef USE_FLOATS
+        ply_file.add_properties_to_element("vertex", { "channel", "pixel" },
+            Type::FLOAT32, mPixelLocations.size(), reinterpret_cast<uint8_t*>(mPixelLocations.data()), Type::INVALID, 0);
+#else
+        ply_file.add_properties_to_element("vertex", { "channel", "pixel" },
             Type::UINT16, mPixelLocations.size(), reinterpret_cast<uint8_t*>(mPixelLocations.data()), Type::INVALID, 0);
+#endif
     }
 
     if (!mBeamLocations.empty())
     {
 #ifdef USE_FLOATS
-        ply_file.add_properties_to_element("vertex", { "theta_rad, phi_rad" },
+        ply_file.add_properties_to_element("vertex", { "theta_rad", "phi_rad" },
             Type::FLOAT32, mBeamLocations.size(), reinterpret_cast<uint8_t*>(mBeamLocations.data()), Type::INVALID, 0);
 #else
-        ply_file.add_properties_to_element("vertex", { "theta_rad, phi_rad" },
+        ply_file.add_properties_to_element("vertex", { "theta_rad", "phi_rad" },
             Type::FLOAT64, mBeamLocations.size(), reinterpret_cast<uint8_t*>(mBeamLocations.data()), Type::INVALID, 0);
 #endif
     }
