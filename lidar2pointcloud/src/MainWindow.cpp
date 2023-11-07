@@ -377,7 +377,7 @@ void cMainWindow::createConfigFileLayout()
 	file_sz->AddSpacer(5);
 	file_sz->Add(mpLoadCfgButton);
 
-	sizer->Add(file_sz, 1);
+	sizer->Add(file_sz, 1, wxEXPAND);
 
 	sizer->AddSpacer(10);
 
