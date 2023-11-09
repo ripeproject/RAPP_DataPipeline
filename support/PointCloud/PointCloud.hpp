@@ -20,6 +20,9 @@ public:
 	cBasePointCloud();
     virtual ~cBasePointCloud() = default;
 
+	cBasePointCloud<POINT>& operator=(const cBasePointCloud<pointcloud::sCloudPoint_FrameID_t>& pc);
+	cBasePointCloud<POINT>& operator=(const cBasePointCloud<pointcloud::sCloudPoint_SensorInfo_t>& pc);
+
     void clear();
 
     bool empty() const;
@@ -354,6 +357,20 @@ cBasePointCloud<POINT>::cBasePointCloud()
 }
 
 template<class POINT>
+cBasePointCloud<POINT>& cBasePointCloud<POINT>::operator=(const cBasePointCloud<pointcloud::sCloudPoint_FrameID_t>& pc)
+{
+	assign(pc);
+	return *this;
+}
+
+template<class POINT>
+cBasePointCloud<POINT>& cBasePointCloud<POINT>::operator=(const cBasePointCloud<pointcloud::sCloudPoint_SensorInfo_t>& pc)
+{
+	assign(pc);
+	return *this;
+}
+
+template<class POINT>
 void cBasePointCloud<POINT>::clear()
 {
 	mCloud.clear();
@@ -453,7 +470,7 @@ std::size_t cPointCloudByFrame<POINT>::view::size() const
 }
 
 template<class POINT>
-cPointCloudByFrame<POINT>::view::const_reference cPointCloudByFrame<POINT>::view::operator[](std::size_t i) const
+typename cPointCloudByFrame<POINT>::view::const_reference cPointCloudByFrame<POINT>::view::operator[](std::size_t i) const
 {
 	return *(mpStart + i * mStride);
 }
@@ -481,19 +498,19 @@ std::size_t cPointCloudByFrame<POINT>::span::size() const
 }
 
 template<class POINT>
-cPointCloudByFrame<POINT>::span::const_reference cPointCloudByFrame<POINT>::span::operator[](std::size_t i) const
+typename cPointCloudByFrame<POINT>::span::const_reference cPointCloudByFrame<POINT>::span::operator[](std::size_t i) const
 {
 	return *(mpStart + i * mStride);
 }
 
 template<class POINT>
-cPointCloudByFrame<POINT>::span::reference cPointCloudByFrame<POINT>::span::operator[](std::size_t i)
+typename cPointCloudByFrame<POINT>::span::reference cPointCloudByFrame<POINT>::span::operator[](std::size_t i)
 {
 	return *(mpStart + i * mStride);
 }
 
 template<class POINT>
-cPointCloudByFrame<POINT>::view cPointCloudByFrame<POINT>::span::to_view() const
+typename cPointCloudByFrame<POINT>::view cPointCloudByFrame<POINT>::span::to_view() const
 {
 	return view(mpStart, mpLast, mStride);
 }
@@ -654,14 +671,14 @@ void cPointCloudByFrame<POINT>::resize(std::uint16_t pixels_per_column, uint16_t
 }
 
 template<class POINT>
-cPointCloudByFrame<POINT>::view cPointCloudByFrame<POINT>::channels(uint16_t column) const
+typename cPointCloudByFrame<POINT>::view cPointCloudByFrame<POINT>::channels(uint16_t column) const
 {
 	return view(&cBasePointCloud<POINT>::mCloud[column * mNumOfChannelsPerColumn],
 		&cBasePointCloud<POINT>::mCloud[(column + 1) * mNumOfChannelsPerColumn - 1], 1);
 }
 
 template<class POINT>
-cPointCloudByFrame<POINT>::span cPointCloudByFrame<POINT>::channels(uint16_t column)
+typename cPointCloudByFrame<POINT>::span cPointCloudByFrame<POINT>::channels(uint16_t column)
 {
 	return span(&cBasePointCloud<POINT>::mCloud[column * mNumOfChannelsPerColumn],
 		&cBasePointCloud<POINT>::mCloud[(column + 1) * mNumOfChannelsPerColumn - 1], 1);
