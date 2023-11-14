@@ -246,12 +246,20 @@ bool cKinematics_Dolly::transform(double time_us,
         return false;
     }
 
-    double speed_mps = sqrt(info.vx_mps * info.vx_mps + info.vy_mps * info.vy_mps + info.vz_mps * info.vz_mps);
+    double horizontal_speed_mps = sqrt(info.vx_mps * info.vx_mps + info.vy_mps * info.vy_mps);
 
-    if (speed_mps < 0.01)
+    if (horizontal_speed_mps < 0.01)
     {
         return false;
     }
+
+    double vertical_speed_mps = std::abs(info.vz_mps);
+
+    if (vertical_speed_mps > 0.1)
+    {
+        return false;
+    }
+
 
     double dtime_sec = (time_us - info.timestamp_us) * US_TO_SEC;
 
@@ -388,18 +396,19 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
         info.pitchRate_dps = dp / dt;
         info.rollRate_dps  = dr / dt;
 
-        double speed_mps = sqrt(previous.vx_mps * previous.vx_mps + previous.vy_mps* previous.vy_mps + previous.vz_mps * previous.vz_mps);
+        double horizontal_speed_mps = sqrt(previous.vx_mps * previous.vx_mps + previous.vy_mps* previous.vy_mps);
 
-        if (speed_mps < 0.01)
+        if (horizontal_speed_mps < 0.01)
         {
             info.valid = false;
         }
 
-//        if (std::abs(info.pitchRate_dps) > 5.0)
-//        {
-//            int x = 5;
-//            ++x;
-//        }
+        double vertical_speed_mps = std::abs(previous.vz_mps);
+
+        if (vertical_speed_mps > 0.1)
+        {
+            info.valid = false;
+        }
     }
 
     info.x_m = position.X_mm * MM_TO_M;
