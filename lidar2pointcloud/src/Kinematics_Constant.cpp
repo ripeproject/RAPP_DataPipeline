@@ -53,7 +53,7 @@ void cKinematics_Constant::writeHeader(cPointCloudSerializer& serializer)
 }
 
 //-----------------------------------------------------------------------------
-void cKinematics_Constant::transform(double time_us,
+bool cKinematics_Constant::transform(double time_us,
     ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
 {
     double time_sec = time_us * US_TO_SEC;
@@ -94,6 +94,8 @@ void cKinematics_Constant::transform(double time_us,
             cloud.set(r, c, point);
         }
     }
+
+    return true;
 }
 
 

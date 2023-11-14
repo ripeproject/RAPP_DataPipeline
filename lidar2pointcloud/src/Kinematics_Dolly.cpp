@@ -204,7 +204,7 @@ void cKinematics_Dolly::telemetryPassComplete()
 }
 
 //-----------------------------------------------------------------------------
-void cKinematics_Dolly::transform(double time_us,
+bool cKinematics_Dolly::transform(double time_us,
     ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
 {
     if (mDollyInfo.empty())
@@ -241,6 +241,18 @@ void cKinematics_Dolly::transform(double time_us,
 
     sSensorInfo_t info = mDollyInfo[mDollyInfoIndex];
 
+    if (!info.valid)
+    {
+        return false;
+    }
+
+    double speed_mps = sqrt(info.vx_mps * info.vx_mps + info.vy_mps * info.vy_mps + info.vz_mps * info.vz_mps);
+
+    if (speed_mps < 0.01)
+    {
+        return false;
+    }
+
     double dtime_sec = (time_us - info.timestamp_us) * US_TO_SEC;
 
     double pitch_deg = mInitPitch_deg + mOffsetPitch_deg + info.pitchRate_dps * dtime_sec;
@@ -272,7 +284,9 @@ void cKinematics_Dolly::transform(double time_us,
                 continue;
 
             if (rotateToSEU())
+            {
                 rotate(point);
+            }
 
             point.X_m += mSouthPos_m;
             point.Y_m += mEastPos_m;
@@ -296,6 +310,8 @@ void cKinematics_Dolly::transform(double time_us,
 
         mAtEndOfPass = true;
     }
+
+    return true;
 }
 
 void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
@@ -305,13 +321,29 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
 
     sSensorInfo_t info;
 
+    info.valid = true;
+
     double pitch_deg = 0.0;
     double roll_deg = 0.0;
 
     if (!mUseAverageOrientation)
     {
-        pitch_deg = mPitchSum / mImuCount;
-        roll_deg = mRollSum / mImuCount;
+        if (mImuCount == 0)
+        {
+            info.valid = false;
+
+            if (!mDollyInfo.empty())
+            {
+                auto& previous = mDollyInfo.back();
+                pitch_deg = previous.pitch_deg;
+                roll_deg = previous.roll_deg;
+            }
+        }
+        else
+        {
+            pitch_deg = mPitchSum / mImuCount;
+            roll_deg = mRollSum / mImuCount;
+        }
     }
 
     if (mDollyInfo.empty())
@@ -353,8 +385,21 @@ void cKinematics_Dolly::onPosition(spidercam::sPosition_1_t position)
         previous.vy_mps = dy / dt;
         previous.vz_mps = dz / dt;
 
-        previous.pitchRate_dps = dp / dt;
-        previous.rollRate_dps  = dr / dt;
+        info.pitchRate_dps = dp / dt;
+        info.rollRate_dps  = dr / dt;
+
+        double speed_mps = sqrt(previous.vx_mps * previous.vx_mps + previous.vy_mps* previous.vy_mps + previous.vz_mps * previous.vz_mps);
+
+        if (speed_mps < 0.01)
+        {
+            info.valid = false;
+        }
+
+//        if (std::abs(info.pitchRate_dps) > 5.0)
+//        {
+//            int x = 5;
+//            ++x;
+//        }
     }
 
     info.x_m = position.X_mm * MM_TO_M;

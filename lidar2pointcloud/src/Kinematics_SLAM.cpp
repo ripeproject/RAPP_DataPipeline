@@ -41,10 +41,10 @@ void cKinematics_SLAM::detachTransformSerializers(cBlockDataFileWriter& file)
 }
 
 //-----------------------------------------------------------------------------
-void cKinematics_SLAM::transform(double time_us,
+bool cKinematics_SLAM::transform(double time_us,
     ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
 {
-
+    return false;
 }
 
 

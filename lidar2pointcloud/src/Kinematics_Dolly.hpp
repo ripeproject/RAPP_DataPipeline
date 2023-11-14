@@ -55,7 +55,7 @@ public:
 	/*
 	 * Transform the point cloud coordinated based on kinematic model
 	 */
-	void transform(double time_us,
+	bool transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud) override;
 
 protected:
@@ -157,6 +157,7 @@ private:
 	 */
 	struct sSensorInfo_t
 	{
+		bool valid = false;
 		double timestamp_us = 0.0;
 		double x_m = 0.0;
 		double y_m = 0.0;

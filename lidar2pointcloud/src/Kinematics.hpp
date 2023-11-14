@@ -89,7 +89,7 @@ public:
 	void rotate(double& x, double& y, double& z);
 	void rotate(pointcloud::sCloudPoint_t& p);
 
-	virtual void transform(double time_us,
+	virtual bool transform(double time_us,
 		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud) = 0;
 
 	void setDebugFileName(const std::string& filename);
@@ -98,13 +98,13 @@ protected:
 	uint32_t mNumPasses = 0;
 	bool	 mAtEndOfPass = false;
 
+private:
 	/*
 	 * The rotation needed to convert sensor orientation
 	 * to the spidercam South\East\Up coordination system
 	 */
 	ouster::cRotationMatrix<double> mSensorToSEU;
 
-private:
 	bool   mRotateSensorData = false;
 
 private:
@@ -136,6 +136,9 @@ public:
 	void attachTransformSerializers(cBlockDataFileWriter& file) override {};
 	void detachTransformSerializers(cBlockDataFileWriter& file) override {};
 
-	void transform(double time_us,
-		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud) override {};
+	bool transform(double time_us,
+		ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud) override 
+	{
+		return true;
+	};
 };

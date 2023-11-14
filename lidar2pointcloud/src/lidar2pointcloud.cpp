@@ -16,6 +16,8 @@
 
 using namespace ouster;
 
+extern void console_message(const std::string& msg);
+
 namespace
 {
 	/** Unit of range from sensor packet, in meters. */
@@ -409,9 +411,9 @@ void cLidar2PointCloud::writeAndClearData()
 {
 	if (mPointCloud.empty()) return;
 
-	writeDimensions(mPointCloud.minX(), mPointCloud.maxX(),
-		mPointCloud.minY(), mPointCloud.maxY(),
-		mPointCloud.minZ(), mPointCloud.maxZ());
+	writeDimensions(mPointCloud.minX_m(), mPointCloud.maxX_m(),
+		mPointCloud.minY_m(), mPointCloud.maxY_m(),
+		mPointCloud.minZ_m(), mPointCloud.maxZ_m());
 
 	switch (mSaveOption)
 	{
@@ -541,12 +543,20 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
         }
     }
 
-	mKinematic->transform(time_us, mCloud);
+	if (!mKinematic->transform(time_us, mCloud))
+	{
+		return;
+	}
 
 	switch (mOutputOptions)
 	{
 		case eOutputOptions::AGGREGATE:
 		{
+			if (mKinematic->atEndOfPass())
+			{
+				writeAndClearData();
+			}
+
 			for (int c = 0; c < columns_per_frame; ++c)
 			{
 				auto column = mCloud.column(c);
@@ -556,11 +566,6 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 
 					mPointCloud.addPoint(point);
 				}
-			}
-
-			if (mKinematic->atEndOfPass())
-			{
-				writeAndClearData();
 			}
 
 			break;
@@ -591,8 +596,8 @@ void cLidar2PointCloud::writeReducedPointCloud(uint16_t frameID, uint64_t timest
 			auto pc = createReducedPointCloud<cReducedPointCloudByFrame>(frameID, timestamp_ns,
 				columns_per_frame, pixels_per_column, mCloud);
 
-			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-				pc.maxY(), pc.minZ(), pc.maxZ());
+			writeDimensions(pc.minX_m(), pc.maxX_m(), pc.minY_m(),
+				pc.maxY_m(), pc.minZ_m(), pc.maxZ_m());
 
 			write(pc);
 			break;
@@ -602,8 +607,8 @@ void cLidar2PointCloud::writeReducedPointCloud(uint16_t frameID, uint64_t timest
 			auto pc = createReducedPointCloud<cReducedPointCloudByFrame_FrameId>(frameID, timestamp_ns,
 				columns_per_frame, pixels_per_column, mCloud);
 
-			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-				pc.maxY(), pc.minZ(), pc.maxZ());
+			writeDimensions(pc.minX_m(), pc.maxX_m(), pc.minY_m(),
+				pc.maxY_m(), pc.minZ_m(), pc.maxZ_m());
 
 			write(pc);
 			break;
@@ -614,29 +619,13 @@ void cLidar2PointCloud::writeReducedPointCloud(uint16_t frameID, uint64_t timest
 			auto pc = createReducedPointCloud<cReducedPointCloudByFrame_SensorInfo>(frameID, timestamp_ns,
 				columns_per_frame, pixels_per_column, mCloud);
 
-			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-				pc.maxY(), pc.minZ(), pc.maxZ());
+			writeDimensions(pc.minX_m(), pc.maxX_m(), pc.minY_m(),
+				pc.maxY_m(), pc.minZ_m(), pc.maxZ_m());
 
 			write(pc);
 			break;
 		}
 	}
-
-/*
-	cReducedPointCloudByFrame pc;
-	pc.frameID(frameID);
-	pc.timestamp_ns(timestamp_ns);
-
-	for (int c = 0; c < columns_per_frame; ++c)
-	{
-		auto column = mCloud.column(c);
-		for (int p = 0; p < pixels_per_column; ++p)
-		{
-			auto point = column[p];
-			pc.addPoint(point);
-		}
-	}
-*/
 
 	mCloud.clear();
 }
@@ -653,8 +642,8 @@ void cLidar2PointCloud::writeSensorPointCloud(uint16_t frameID, uint64_t timesta
 			auto pc = createSensorPointCloud<cSensorPointCloudByFrame>(frameID, timestamp_ns,
 				columns_per_frame, pixels_per_column, mCloud);
 
-			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-				pc.maxY(), pc.minZ(), pc.maxZ());
+			writeDimensions(pc.minX_m(), pc.maxX_m(), pc.minY_m(),
+				pc.maxY_m(), pc.minZ_m(), pc.maxZ_m());
 
 			write(pc);
 			break;
@@ -664,8 +653,8 @@ void cLidar2PointCloud::writeSensorPointCloud(uint16_t frameID, uint64_t timesta
 			auto pc = createSensorPointCloud<cSensorPointCloudByFrame_FrameId>(frameID, timestamp_ns,
 				columns_per_frame, pixels_per_column, mCloud);
 
-			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-				pc.maxY(), pc.minZ(), pc.maxZ());
+			writeDimensions(pc.minX_m(), pc.maxX_m(), pc.minY_m(),
+				pc.maxY_m(), pc.minZ_m(), pc.maxZ_m());
 
 			write(pc);
 			break;
@@ -676,8 +665,8 @@ void cLidar2PointCloud::writeSensorPointCloud(uint16_t frameID, uint64_t timesta
 			auto pc = createSensorPointCloud<cSensorPointCloudByFrame_SensorInfo>(frameID, timestamp_ns,
 				columns_per_frame, pixels_per_column, mCloud);
 
-			writeDimensions(pc.minX(), pc.maxX(), pc.minY(),
-				pc.maxY(), pc.minZ(), pc.maxZ());
+			writeDimensions(pc.minX_m(), pc.maxX_m(), pc.minY_m(),
+				pc.maxY_m(), pc.minZ_m(), pc.maxZ_m());
 
 			write(pc);
 			break;

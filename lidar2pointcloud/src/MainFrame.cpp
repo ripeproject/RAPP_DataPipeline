@@ -99,14 +99,14 @@ cMainFrame::cMainFrame()
 	size.IncBy(50);
 	size.SetWidth(1000);
 
-	auto width = wxDisplay().GetGeometry().GetWidth();
-	auto height = wxDisplay().GetGeometry().GetHeight();
+	auto width = (wxDisplay().GetGeometry().GetWidth() * 3) / 4;
+	auto height = (wxDisplay().GetGeometry().GetHeight() * 3) / 4;
 
 	if (size.GetHeight() > height)
-		size.SetHeight(height - 30);
+		size.SetHeight(height);
 
 	if (size.GetWidth() > width)
-		size.SetWidth(width - 30);
+		size.SetWidth(width);
 
 	SetMinSize(size);
 

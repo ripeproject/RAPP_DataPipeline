@@ -44,10 +44,10 @@ void cKinematics_GPS::detachTransformSerializers(cBlockDataFileWriter& file)
 }
 
 //-----------------------------------------------------------------------------
-void cKinematics_GPS::transform(double time_us,
+bool cKinematics_GPS::transform(double time_us,
     ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t>& cloud)
 {
-
+    return false;
 }
 
 

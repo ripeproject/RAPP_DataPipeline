@@ -12,6 +12,7 @@
 
 using namespace pointcloud;
 
+
 cPointCloudSerializer::cPointCloudSerializer()
 :
     cBlockSerializer(), mBlockID(new cPointCloudID())
@@ -102,6 +103,7 @@ void cPointCloudSerializer::write(const cPointCloud& in)
     for (uint64_t n = 0; n < num_points; ++n)
     {
         auto point = data[n];
+
         mDataBuffer << point.X_m;
         mDataBuffer << point.Y_m;
         mDataBuffer << point.Z_m;
