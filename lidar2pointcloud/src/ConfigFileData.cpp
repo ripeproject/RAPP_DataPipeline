@@ -393,14 +393,14 @@ bool cConfigFileData::loadKinematicModels()
 				{
 					auto pos = experiment["start position"];
 
-					if (experiment.contains("x (m)"))
-						X_m = experiment["x (m)"];
+					if (pos.contains("x (m)"))
+						X_m = pos["x (m)"];
 
-					if (experiment.contains("y (m)"))
-						Y_m = experiment["y (m)"];
+					if (pos.contains("y (m)"))
+						Y_m = pos["y (m)"];
 
-					if (experiment.contains("z (m)"))
-						Z_m = experiment["z (m)"];
+					if (pos.contains("z (m)"))
+						Z_m = pos["z (m)"];
 				}
 
 				if (experiment.contains("Vx (mm/s)"))
