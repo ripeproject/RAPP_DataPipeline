@@ -383,11 +383,6 @@ int main(int argc, char** argv)
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-//		if (isFile)
-//		{
-//			out_file = std::filesystem::path{ output_directory };
-//		}
-
 		if (out_file.empty())
 		{
 			std::string out_filename = fe.filename;
@@ -421,8 +416,33 @@ int main(int argc, char** argv)
 			fp->setAzimuthWindow_deg(options.minAzimuth_deg, options.maxAzimuth_deg);
 			fp->setAltitudeWindow_deg(options.minAltitude_deg, options.maxAltitude_deg);
 
-//BAF			fp->saveAggregatePointCloud(options.aggregatePointCloud);
-//BAF			fp->saveReducedPointCloud(options.saveReducedPointCloud);
+			cLidar2PointCloud::eOutputOptions output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
+			if (options.outputOption == nConfigFileData::eOutputOptions::AGGREGATE)
+			{
+				output_option = cLidar2PointCloud::eOutputOptions::AGGREGATE;
+			}
+			else if (options.outputOption == nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES)
+			{
+				output_option = cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
+			}
+			else if (options.outputOption == nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES)
+			{
+				output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
+			}
+
+			fp->setOutputOption(output_option);
+
+			cLidar2PointCloud::eSaveOptions save_option = cLidar2PointCloud::eSaveOptions::BASIC;
+			if (options.saveOption == nConfigFileData::eSaveOptions::FRAME_ID)
+			{
+				save_option = cLidar2PointCloud::eSaveOptions::FRAME_ID;
+			}
+			else if (options.saveOption == nConfigFileData::eSaveOptions::SENSOR_INFO)
+			{
+				save_option = cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
+			}
+
+			fp->setSaveOption(save_option);
 
 			kinematics = pConfigData->getModel(in_file.path().filename().string());
 		}
@@ -451,6 +471,7 @@ int main(int argc, char** argv)
 
 		if (!kinematics)
 		{
+			--numFilesToProcess;
 			delete fp;
 			continue;
 		}
