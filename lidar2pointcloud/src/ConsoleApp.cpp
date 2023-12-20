@@ -493,6 +493,15 @@ int main(int argc, char** argv)
 		delete file_processor;
 	}
 
+	if (output_dir.exists() && (numFilesToProcess == 0))
+	{
+		if (std::filesystem::remove(output_dir))
+		{
+			std::cout << "The empty directory " << output_dir << " was removed." << std::endl;
+		}
+	}
+
+
 	return 0;
 }
 
