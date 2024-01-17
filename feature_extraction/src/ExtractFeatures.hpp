@@ -32,9 +32,18 @@ private:
         double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
 
     void onImuData(pointcloud::imu_data_t data) override;
-    void onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
-    void onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
+
+    void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
+    void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud) override;
+    void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud) override;
+
+    void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
+    void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud) override;
+    void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud) override;
+
     void onPointCloudData(cPointCloud pointCloud) override;
+    void onPointCloudData(cPointCloud_FrameId pointCloud) override;
+    void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
 
     void writePlyFile(std::filesystem::path filename);
     void writePlaneFile(std::filesystem::path filename, const std::vector<PLANE>& planes, double scale);

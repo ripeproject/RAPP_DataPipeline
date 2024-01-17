@@ -48,7 +48,7 @@ void cExtractFeatures::onDimensions(double x_min_m, double x_max_m,
 
 void cExtractFeatures::onImuData(pointcloud::imu_data_t data) {}
 
-void cExtractFeatures::onReducedPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
+void cExtractFeatures::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
 {
     auto cloud_data = pointCloud.data();
 
@@ -107,7 +107,13 @@ void cExtractFeatures::onReducedPointCloudByFrame(uint16_t frameID, uint64_t tim
     ++mFrameCount;
 }
 
-void cExtractFeatures::onSensorPointCloudByFrame(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
+void cExtractFeatures::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
+{}
+
+void cExtractFeatures::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
+{}
+
+void cExtractFeatures::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
 {
     auto cloud_data = pointCloud.data();
 
@@ -195,6 +201,12 @@ void cExtractFeatures::onSensorPointCloudByFrame(uint16_t frameID, uint64_t time
     ++mFrameCount;
 }
 
+void cExtractFeatures::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
+{}
+
+void cExtractFeatures::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
+{}
+
 void cExtractFeatures::onPointCloudData(cPointCloud pointCloud)
 {
     auto cloud_data = pointCloud.data();
@@ -242,6 +254,12 @@ void cExtractFeatures::onPointCloudData(cPointCloud pointCloud)
 
     ++mFrameCount;
 }
+
+void cExtractFeatures::onPointCloudData(cPointCloud_FrameId pointCloud)
+{}
+
+void cExtractFeatures::onPointCloudData(cPointCloud_SensorInfo pointCloud)
+{}
 
 void cExtractFeatures::writePlyFile(std::filesystem::path filename)
 {
