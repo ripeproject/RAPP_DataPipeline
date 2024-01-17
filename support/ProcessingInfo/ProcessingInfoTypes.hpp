@@ -10,6 +10,7 @@ namespace processing_info
     {
         UNKNOWN,
         POINT_CLOUD_GENERATION,
+        FLAT_POINT_CLOUD_GENERATION,
         PLOT_SPLITTING
     };
 
