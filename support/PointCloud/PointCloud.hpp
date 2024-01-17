@@ -39,7 +39,10 @@ public:
 	double minZ_m() const;
 	double maxZ_m() const;
 
+	void setExtents(double minX_m, double maxX_m, double minY_m, double maxY_m, double minZ_m, double maxZ_m);
+
 	POINT operator[](int) const;
+	POINT& operator[](int);
 
     const vCloud_t& data() const { return mCloud; }
 
@@ -410,7 +413,24 @@ template<class POINT>
 double cBasePointCloud<POINT>::maxZ_m() const { return mMaxZ_m; }
 
 template<class POINT>
+void cBasePointCloud<POINT>::setExtents(double minX_m, double maxX_m, double minY_m, double maxY_m, double minZ_m, double maxZ_m)
+{
+	mMinX_m = minX_m;
+	mMaxX_m = maxX_m;
+	mMinY_m = minY_m;
+	mMaxY_m = maxY_m;
+	mMinZ_m = minZ_m;
+	mMaxZ_m = maxZ_m;
+}
+
+template<class POINT>
 POINT cBasePointCloud<POINT>::operator[](int i) const
+{
+	return mCloud[i];
+}
+
+template<class POINT>
+POINT& cBasePointCloud<POINT>::operator[](int i)
 {
 	return mCloud[i];
 }
