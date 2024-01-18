@@ -118,6 +118,8 @@ void cFileProcessor::run()
         console_message(msg);
     }
 
+    mConverter->close();
+
     complete_file_progress(mID);
 }
 

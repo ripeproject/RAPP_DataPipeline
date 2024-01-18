@@ -62,6 +62,9 @@ int main(int argc, char** argv)
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
 		("Show usage information.")
+		| lyra::opt(cPointCloud2Ply::mUseBinaryFormat)
+		["-b"]["--binary"]
+		("Save using a binary format (default is ASCII).")
 		| lyra::opt(isFile)
 		["-f"]["--file"]
 		("Operate on a single file instead of directory.")

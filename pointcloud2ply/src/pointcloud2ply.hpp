@@ -17,12 +17,15 @@ class cPointCloud2Ply : public cPointCloudParser, public cSpidercamParser
 public:
     static bool mIndividualPlyFiles;
     static bool mSaveDollyPositions;
+    static bool mUseBinaryFormat;
 
 public:
 	cPointCloud2Ply();
 	~cPointCloud2Ply();
 
     void setOutputPath(std::filesystem::path out);
+
+    void close();
 
 private:
     void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;

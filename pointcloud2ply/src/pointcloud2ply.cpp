@@ -11,7 +11,7 @@
 
 bool cPointCloud2Ply::mIndividualPlyFiles = false;
 bool cPointCloud2Ply::mSaveDollyPositions = false;
-
+bool cPointCloud2Ply::mUseBinaryFormat    = false;
 
 cPointCloud2Ply::cPointCloud2Ply() : cPointCloudParser()
 {
@@ -37,6 +37,38 @@ cPointCloud2Ply::~cPointCloud2Ply()
 
         filename += ext;
 //        filename.replace_extension(ext);
+
+        writePointcloud(filename);
+    }
+
+
+    if (!mPositions.empty())
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext = ".position.ply";
+
+        filename.replace_extension(ext);
+
+        writePosition(filename);
+    }
+}
+
+void cPointCloud2Ply::close()
+{
+    if (!mVertices.empty())
+    {
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext;
+
+        if (mIndividualPlyFiles)
+            ext += std::to_string(mFrameCount);
+
+        ext += ".ply";
+
+        filename += ext;
+        //        filename.replace_extension(ext);
 
         writePointcloud(filename);
     }
@@ -605,19 +637,19 @@ void cPointCloud2Ply::writePosition(std::filesystem::path filename)
 {
     using namespace tinyply;
 
-#ifdef USE_BINARY
-    std::filebuf binary_buffer;
-    binary_buffer.open(filename, std::ios::out | std::ios::binary);
-    std::ostream outstream_binary(&binary_buffer);
-    if (outstream_binary.fail())
+    std::filebuf file_buffer;
+
+    if (mUseBinaryFormat)
+    {
+        file_buffer.open(filename, std::ios::out | std::ios::binary);
+    }
+    else
+    {
+        file_buffer.open(filename, std::ios::out);
+    }
+
+    if (!file_buffer.is_open())
         throw std::runtime_error("failed to open " + filename.string());
-#else
-    std::filebuf fb_ascii;
-    fb_ascii.open(filename, std::ios::out);
-    std::ostream outstream_ascii(&fb_ascii);
-    if (outstream_ascii.fail())
-        throw std::runtime_error("failed to open " + filename.string());
-#endif
 
     PlyFile ply_file;
 
@@ -627,13 +659,24 @@ void cPointCloud2Ply::writePosition(std::filesystem::path filename)
     ply_file.add_properties_to_element("vertex", { "red", "green", "blue" },
         Type::UINT8, mColors.size(), reinterpret_cast<uint8_t*>(mColors.data()), Type::INVALID, 0);
 
-#ifdef USE_BINARY
-    // Write a binary file
-    ply_file.write(outstream_binary, true);
-#else
-    // Write an ASCII file
-    ply_file.write(outstream_ascii, false);
-#endif
+    if (mUseBinaryFormat)
+    {
+        std::ostream outstream_binary(&file_buffer);
+        if (outstream_binary.fail())
+            throw std::runtime_error("failed to open " + filename.string());
+
+        // Write a binary file
+        ply_file.write(outstream_binary, true);
+    }
+    else
+    {
+        std::ostream outstream_ascii(&file_buffer);
+        if (outstream_ascii.fail())
+            throw std::runtime_error("failed to open " + filename.string());
+
+        // Write an ASCII file
+        ply_file.write(outstream_ascii, false);
+    }
 
     mPositions.clear();
 }
@@ -642,19 +685,19 @@ void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
 {
     using namespace tinyply;
 
-#ifdef USE_BINARY
-    std::filebuf binary_buffer;
-    binary_buffer.open(filename, std::ios::out | std::ios::binary);
-    std::ostream outstream_binary(&binary_buffer);
-    if (outstream_binary.fail())
+    std::filebuf file_buffer;
+
+    if (mUseBinaryFormat)
+    {
+        file_buffer.open(filename, std::ios::out | std::ios::binary);
+    }
+    else
+    {
+        file_buffer.open(filename, std::ios::out);
+    }
+
+    if (!file_buffer.is_open())
         throw std::runtime_error("failed to open " + filename.string());
-#else
-    std::filebuf fb_ascii;
-    fb_ascii.open(filename, std::ios::out);
-    std::ostream outstream_ascii(&fb_ascii);
-    if (outstream_ascii.fail()) 
-        throw std::runtime_error("failed to open " + filename.string());
-#endif
 
     PlyFile ply_file;
 
@@ -713,13 +756,24 @@ void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
     }
 
 
-#ifdef USE_BINARY
-    // Write a binary file
-    ply_file.write(outstream_binary, true);
-#else
-    // Write an ASCII file
-    ply_file.write(outstream_ascii, false);
-#endif
+    if (mUseBinaryFormat)
+    {
+        std::ostream outstream_binary(&file_buffer);
+        if (outstream_binary.fail())
+            throw std::runtime_error("failed to open " + filename.string());
+
+        // Write a binary file
+        ply_file.write(outstream_binary, true);
+    }
+    else
+    {
+        std::ostream outstream_ascii(&file_buffer);
+        if (outstream_ascii.fail())
+            throw std::runtime_error("failed to open " + filename.string());
+
+        // Write an ASCII file
+        ply_file.write(outstream_ascii, false);
+    }
 
     mVertices.clear();
     mRanges.clear();
