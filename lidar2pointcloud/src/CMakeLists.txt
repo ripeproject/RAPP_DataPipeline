@@ -61,6 +61,7 @@ target_link_libraries(console_app PRIVATE pointcloud_io)
 target_link_libraries(console_app PRIVATE processing_info)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
+target_link_libraries(console_app PRIVATE fmt::fmt)
 
 
 #

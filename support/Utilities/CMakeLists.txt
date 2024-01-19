@@ -68,7 +68,7 @@ endif()
 # We need a C and C++ compiler, so make sure project() test for it.
 #project(pointcloud LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Turn off any compiler extensions

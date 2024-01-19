@@ -3,14 +3,20 @@
 
 #include "StringUtils.hpp"
 
-#include <fmt/core.h>
+#define USE_FMT
+
+#ifdef USE_FMT
+    #include <fmt/format.h>
+    
+    using namespace fmt;
+#else
+    #include <format>
+#endif
 
 #include <iostream>
 #include <cmath>
 
-
 using namespace std;
-using namespace fmt;
 
 
 void cTextProgressBar::clear()

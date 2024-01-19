@@ -93,7 +93,7 @@ SET(LIDAR_2_POINTCLOUD_VERSION "${LIDAR_2_POINTCLOUD_MAJOR}.${LIDAR_2_POINTCLOUD
 project(lidar2pointcloud VERSION "${LIDAR_2_POINTCLOUD_VERSION}" LANGUAGES C CXX)
 
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Turn off any compiler extensions
@@ -155,6 +155,7 @@ find_package(Catch2 QUIET)
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(wxWidgets QUIET COMPONENTS core base aui)
+find_package(fmt REQUIRED)
 
 
 # Find and include my libraries for data collection
