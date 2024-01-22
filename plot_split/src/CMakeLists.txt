@@ -34,10 +34,19 @@ PRIVATE
 )
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE "../support/PointCloud")
+target_include_directories(console_app PRIVATE "../support/ProcessingInfo")
+target_include_directories(console_app PRIVATE "../support/StringUtils")
+target_include_directories(console_app PRIVATE "../support/Utilities")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE nlohmann_json)
+target_link_libraries(console_app PRIVATE pointcloud_io)
+target_link_libraries(console_app PRIVATE processing_info)
+target_link_libraries(console_app PRIVATE string_utils)
+target_link_libraries(console_app PRIVATE utilities)
+target_link_libraries(console_app PRIVATE fmt::fmt)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

@@ -3,6 +3,10 @@
 
 #include "FileProcessor.hpp"
 
+#include "ConfigFileData.hpp"
+
+#include "TextProgressBar.hpp"
+
 #include <lyra/lyra.hpp>
 
 #include <filesystem>
@@ -36,10 +40,16 @@ int main(int argc, char** argv)
 	using namespace std::filesystem;
 
 	bool showHelp = false;
+	std::string config_file;
+	cConfigFileData* pConfigData = nullptr;
 
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
 		("Show usage information.")
+		| lyra::opt(config_file, "configuration")
+		["-c"]["--config"]
+		("Configuration file to set the options in generating the point cloud data.")
+		.optional()
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")

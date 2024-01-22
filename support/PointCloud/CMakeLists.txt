@@ -53,6 +53,10 @@ cmake_policy(SET CMP0091 NEW)
 SET(CMAKE_WARN_DEPRECATED 1)
 
 
+# Find and include my libraries for data collection
+find_package(CBDF REQUIRED cbdf) # info) # ctrl sensors)
+
+
 #******************************************************************************
 # PROJECT OPTIONS
 #******************************************************************************
