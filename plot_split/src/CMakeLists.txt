@@ -8,6 +8,9 @@ set(PLOT_SPLIT_COMMON_FILES
 	PlotBoundaries.hpp
 	PlotBoundaries.cpp
 
+	ConfigFileData.hpp
+	ConfigFileData.cpp
+
 	FileProcessor.hpp
 	FileProcessor.cpp
 )
