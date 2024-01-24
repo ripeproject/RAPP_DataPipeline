@@ -235,6 +235,22 @@ void cPointCloudSerializer::writeKinematicSpeed(double vx_mps, double vy_mps, do
     writeBlock(*mBlockID, mDataBuffer);
 }
 
+void cPointCloudSerializer::writeSensorRotationalSpeeds(double pitch_dps, double roll_dps, double yaw_dps)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::SENSOR_ROTATIONAL_SPEEDS);
+
+    mDataBuffer.clear();
+    mDataBuffer << pitch_dps;
+    mDataBuffer << roll_dps;
+    mDataBuffer << yaw_dps;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing sensor rotation speed data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
 void cPointCloudSerializer::writeDimensions(double x_min_m, double x_max_m,
     double y_min_m, double y_max_m, double z_min_m, double z_max_m)
 {

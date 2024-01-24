@@ -57,6 +57,7 @@ public:
 
 	void writeSensorAngles(double pitch_deg, double roll_deg, double yaw_deg);
 	void writeKinematicSpeed(double vx_mps, double vy_mps, double vz_mps);
+	void writeSensorRotationalSpeeds(double pitch_dps, double roll_dps, double yaw_dps);
 	void writeDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m, double z_min_m, double z_max_m);
 

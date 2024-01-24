@@ -21,6 +21,7 @@ namespace pointcloud
         DOLLY,
         GPS,
         SLAM,
+        CONSTANT_SENSOR_ROTATION,
     };
 
     struct imu_data_t
