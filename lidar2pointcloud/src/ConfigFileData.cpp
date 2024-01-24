@@ -3,6 +3,7 @@
 #include "StringUtils.hpp"
 
 #include "Kinematics_Constant.hpp"
+#include "Kinematics_Constant_SensorRotation.hpp"
 #include "Kinematics_Dolly.hpp"
 #include "Kinematics_GPS.hpp"
 #include "Kinematics_SLAM.hpp"
@@ -352,6 +353,10 @@ bool cConfigFileData::loadKinematicModels()
 		{
 			std::string name = safeFilename(experiment["experiment_name"]);
 			std::string model = experiment["kinematic model"];
+			std::string debugFileName;
+
+			if (experiment.contains("debug filename"))
+				debugFileName = experiment["debug filename"];
 
 			double sensorPitch_deg = mDefault_SensorPitch_deg;
 			double sensorRoll_deg = mDefault_SensorRoll_deg;
@@ -377,7 +382,6 @@ bool cConfigFileData::loadKinematicModels()
 
 			if (model == "constant")
 			{
-
 				double X_m = mDefault_X_m;
 				double Y_m = mDefault_Y_m;
 				double Z_m = mDefault_Z_m;
@@ -440,8 +444,168 @@ bool cConfigFileData::loadKinematicModels()
 				km->rotateToSEU(rotateToSEU);
 				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
 
-				mKinematicModels[name] = std::move(km);
+				if (!debugFileName.empty())
+					km->setDebugFileName(debugFileName);
 
+				mKinematicModels[name] = std::move(km);
+			}
+			else if (model == "constant with sensor rotation")
+			{
+				double X_m = mDefault_X_m;
+				double Y_m = mDefault_Y_m;
+				double Z_m = mDefault_Z_m;
+
+				double Vx_mmps = mDefault_Vx_mmps;
+				double Vy_mmps = mDefault_Vy_mmps;
+				double Vz_mmps = mDefault_Vz_mmps;
+
+				double height_m = mDefault_Height_m;
+				auto heightAxis = mDefault_HeightAxis;
+
+				if (experiment.contains("start position"))
+				{
+					auto pos = experiment["start position"];
+
+					if (pos.contains("x (m)"))
+						X_m = pos["x (m)"];
+
+					if (pos.contains("y (m)"))
+						Y_m = pos["y (m)"];
+
+					if (pos.contains("z (m)"))
+						Z_m = pos["z (m)"];
+				}
+
+				if (experiment.contains("Vx (mm/s)"))
+					Vx_mmps = experiment["Vx (mm/s)"];
+
+				if (experiment.contains("Vy (mm/s)"))
+					Vy_mmps = experiment["Vy (mm/s)"];
+
+				if (experiment.contains("Vz (mm/s)"))
+					Vz_mmps = experiment["Vz (mm/s)"];
+
+				if (experiment.contains("sensor start orientation"))
+				{
+					auto orientation = experiment["sensor start orientation"];
+
+					if (orientation.contains("pitch (deg)"))
+						sensorPitch_deg = orientation["pitch (deg)"];
+
+					if (orientation.contains("roll (deg)"))
+						sensorRoll_deg = orientation["roll (deg)"];
+
+					if (orientation.contains("yaw (deg)"))
+						sensorYaw_deg = orientation["yaw (deg)"];
+
+					rotateToSEU = true;
+				}
+
+				double finalPitch_deg = sensorPitch_deg;
+				double finalRoll_deg = sensorRoll_deg;
+				double finalYaw_deg = sensorYaw_deg;
+
+				if (experiment.contains("sensor final orientation"))
+				{
+					auto orientation = experiment["sensor final orientation"];
+
+					if (orientation.contains("pitch (deg)"))
+						finalPitch_deg = orientation["pitch (deg)"];
+
+					if (orientation.contains("roll (deg)"))
+						finalRoll_deg = orientation["roll (deg)"];
+
+					if (orientation.contains("yaw (deg)"))
+						finalYaw_deg = orientation["yaw (deg)"];
+
+					rotateToSEU = true;
+				}
+
+				auto km = std::make_unique<cKinematics_Constant_SensorRotation>(Vx_mmps, Vy_mmps, Vz_mmps);
+
+				if (experiment.contains("height (m)"))
+				{
+					height_m = experiment["height (m)"];
+					std::string axis = experiment["height axis"];
+					heightAxis = to_HeightAxis(axis[0]);
+				}
+
+				switch (heightAxis)
+				{
+				case nConfigFileData::eHeightAxis::X:
+					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
+					km->setInitialPosition_m(height_m, Y_m, Z_m);
+					break;
+				case nConfigFileData::eHeightAxis::Y:
+					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
+					km->setInitialPosition_m(X_m, height_m, Z_m);
+					break;
+				case nConfigFileData::eHeightAxis::Z:
+					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
+					km->setInitialPosition_m(X_m, Y_m, height_m);
+					break;
+				}
+
+				km->setInitialOrientation_deg(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
+				km->setFinalOrientation_deg(finalYaw_deg, finalPitch_deg, finalRoll_deg);
+
+				if (experiment.contains("sensor orientations"))
+				{
+					double pitch_deg	= sensorPitch_deg;
+					double roll_deg		= sensorRoll_deg;
+					double yaw_deg		= sensorYaw_deg;
+
+					auto orientations = experiment["sensor orientations"];
+
+					for (auto orientation : orientations)
+					{
+						double time_sec = orientation["time (sec)"];
+
+						if (orientation.contains("pitch (deg)"))
+							pitch_deg = orientation["pitch (deg)"];
+
+						if (orientation.contains("roll (deg)"))
+							roll_deg = orientation["roll (deg)"];
+
+						if (orientation.contains("yaw (deg)"))
+							yaw_deg = orientation["yaw (deg)"];
+
+						km->addOrientationPoint(time_sec, yaw_deg, pitch_deg, roll_deg);
+					}
+
+					rotateToSEU = true;
+				}
+
+
+				if (experiment.contains("sensor rotational rates"))
+				{
+					auto rates = experiment["sensor rotational rates"];
+
+					double pitchRate_dps = 0.0;
+					double rollRate_dps = 0.0;
+					double yawRate_dps = 0.0;
+
+					if (rates.contains("pitch rate (dps)"))
+						pitchRate_dps = rates["pitch rate (dps)"];
+
+					if (rates.contains("roll rate (dps)"))
+						rollRate_dps = rates["roll rate (dps)"];
+
+					if (rates.contains("yaw rate (dps)"))
+						yawRate_dps = rates["yaw rate (dps)"];
+
+					rotateToSEU = true;
+
+					km->setRotationalRates_deg(yawRate_dps, pitchRate_dps, rollRate_dps);
+				}
+
+				km->rotateToSEU(rotateToSEU);
+				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
+
+				if (!debugFileName.empty())
+					km->setDebugFileName(debugFileName);
+
+				mKinematicModels[name] = std::move(km);
 			}
 			else if (model == "dolly")
 			{
@@ -454,6 +618,9 @@ bool cConfigFileData::loadKinematicModels()
 				km->rotateToSEU(rotateToSEU);
 				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
 
+				if (!debugFileName.empty())
+					km->setDebugFileName(debugFileName);
+
 				mKinematicModels[name] = std::move(km);
 			}
 			else if (model == "gps")
@@ -463,6 +630,9 @@ bool cConfigFileData::loadKinematicModels()
 				km->rotateToSEU(rotateToSEU);
 				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
 
+				if (!debugFileName.empty())
+					km->setDebugFileName(debugFileName);
+
 				mKinematicModels[name] = std::move(km);
 			}
 			else if (model == "slam")
@@ -471,6 +641,9 @@ bool cConfigFileData::loadKinematicModels()
 
 				km->rotateToSEU(rotateToSEU);
 				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
+
+				if (!debugFileName.empty())
+					km->setDebugFileName(debugFileName);
 
 				mKinematicModels[name] = std::move(km);
 			}

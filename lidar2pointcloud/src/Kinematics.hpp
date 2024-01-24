@@ -6,6 +6,7 @@
 #include <ouster/simple_blas.h>
 
 #include <stdexcept>
+#include <fstream>
 
 
 // Forward Declarations
@@ -113,7 +114,9 @@ private:
 	double mYaw_deg = 0.0;
 
 protected:
-	std::string mDebugFilename;
+	bool			mDebugActive = false;
+	std::string		mDebugFilename;
+	std::ofstream	mDebugFile;
 };
 
 

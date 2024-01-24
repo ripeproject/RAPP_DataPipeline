@@ -102,5 +102,11 @@ void cKinematics::rotate(pointcloud::sCloudPoint_t& p)
 void cKinematics::setDebugFileName(const std::string& filename)
 {
 	mDebugFilename = filename;
+
+	if (!mDebugFilename.empty())
+	{
+		mDebugFile.open(mDebugFilename);
+		mDebugActive = mDebugFile.is_open();
+	}
 }
 

@@ -8,6 +8,8 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	Kinematics.cpp
 	Kinematics_Constant.hpp
 	Kinematics_Constant.cpp
+	Kinematics_Constant_SensorRotation.hpp
+	Kinematics_Constant_SensorRotation.cpp
 	Kinematics_Dolly.hpp
 	Kinematics_Dolly.cpp
 	Kinematics_GPS.hpp

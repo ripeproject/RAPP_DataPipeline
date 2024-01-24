@@ -15,6 +15,8 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
+#include <memory>
+
 
 namespace
 {
@@ -737,7 +739,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	using namespace std::filesystem;
 	using namespace nStringUtils;
 
-	cConfigFileData* pConfigData = nullptr;
+	std::unique_ptr<cConfigFileData> pConfigData;
 
 	mpMinimumDistance_m->TransferDataFromWindow();
 	mpMaximumDistance_m->TransferDataFromWindow();
@@ -853,7 +855,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	{
 		useConfigFile = true;
 
-		pConfigData = new cConfigFileData(mConfigurationFilename.ToStdString());
+		pConfigData = std::make_unique<cConfigFileData>(mConfigurationFilename.ToStdString());
 
 		try
 		{

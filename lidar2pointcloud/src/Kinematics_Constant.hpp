@@ -21,6 +21,11 @@ public:
 //	void setY_Offset_m(double offset_m);
 //	void setZ_Offset_m(double offset_m);
 
+	double Vx_mps() const;
+	double Vy_mps() const;
+	double Vz_mps() const;
+
+
 	void writeHeader(cPointCloudSerializer& serializer) override;
 
 	/*
@@ -63,6 +68,10 @@ private:
 	uint64_t mStartTimestamp_ns = 0;
 };
 
+
+inline double cKinematics_Constant::Vx_mps() const { return mVx_mps; }
+inline double cKinematics_Constant::Vy_mps() const { return mVy_mps; }
+inline double cKinematics_Constant::Vz_mps() const { return mVz_mps; }
 
 inline bool cKinematics_Constant::requiresTelemetryPass() { return false; }
 inline void cKinematics_Constant::telemetryPassComplete() {};
