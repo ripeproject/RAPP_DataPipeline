@@ -1,0 +1,27 @@
+
+#include "version.hpp"
+
+std::string getVersionString()
+{
+	return "@ceres_info_VERSION@";
+}
+
+unsigned int getMajorVersion()
+{
+	return @ceres_info_VERSION_MAJOR@ +0;
+}
+
+unsigned int getMinorVersion()
+{
+	return @ceres_info_VERSION_MINOR@ +0;
+}
+
+unsigned int getPatchVersion()
+{
+	return @ceres_info_VERSION_PATCH@ +0;
+}
+
+unsigned int getTweakVersion()
+{
+	return @ceres_info_VERSION_TWEAK@ +0;
+}

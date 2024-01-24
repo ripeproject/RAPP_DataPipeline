@@ -1,0 +1,557 @@
+
+#include "FieldTopography.hpp"
+
+#include <dlib/optimization.h>
+
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/search/kdtree.h> // for KdTree
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
+
+#include <pcl/io/vtk_io.h>
+
+#include <vtkDelaunay2D.h>
+#include <vtkDoubleArray.h>
+#include <vtkTable.h>
+#include <vtkTableToPolyData.h>
+
+#include "Constants.hpp"
+
+void test(const std::vector<rfm::rappPoint_t>& ground_points)
+{
+	// Load input file into a PointCloud<T> with an appropriate type
+	auto point_cloud = new pcl::PointCloud<pcl::PointXYZ>;
+
+	for( const auto& ground_point : ground_points)
+	{
+		pcl::PointXYZ point;
+		point.x = ground_point.x_mm;
+		point.y = ground_point.y_mm;
+		point.z = ground_point.z_mm;
+
+		point_cloud->push_back(point);
+	}
+
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(point_cloud);
+	//* the data should be available in cloud
+
+	// Normal estimation*
+	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+	tree->setInputCloud(cloud);
+	n.setInputCloud(cloud);
+	n.setSearchMethod(tree);
+	n.setKSearch(20);
+	n.compute(*normals);
+	//* normals should not contain the point normals + surface curvatures
+
+	// Concatenate the XYZ and normal fields*
+	pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
+	pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
+	//* cloud_with_normals = cloud + normals
+
+	// Create search tree*
+	pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
+	tree2->setInputCloud(cloud_with_normals);
+
+	// Initialize objects
+	pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+	pcl::PolygonMesh triangles;
+
+	// Set the maximum distance between connected points (maximum edge length)
+	gp3.setSearchRadius(3000);
+
+	// Set typical values for the parameters
+	gp3.setMu(2.5);
+	gp3.setMaximumNearestNeighbors(100);
+	gp3.setMaximumSurfaceAngle(M_PI / 4); // 45 degrees
+	gp3.setMinimumAngle(M_PI / 18); // 10 degrees
+	gp3.setMaximumAngle(2 * M_PI / 3); // 120 degrees
+	gp3.setNormalConsistency(false);
+
+	// Get result
+	gp3.setInputCloud(cloud_with_normals);
+	gp3.setSearchMethod(tree2);
+	gp3.reconstruct(triangles);
+
+	// Additional vertex information
+	std::vector<int> parts = gp3.getPartIDs();
+	std::vector<int> states = gp3.getPointStates();
+
+	pcl::io::saveVTKFile("mesh.vtk", triangles);
+}
+
+
+
+std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>& ground_points)
+{
+    vtkDoubleArray* x = vtkDoubleArray::New();
+    vtkDoubleArray* y = vtkDoubleArray::New();
+    vtkDoubleArray* z = vtkDoubleArray::New();
+
+    for (const auto& ground_point : ground_points)
+    {
+        x->InsertNextTuple1(ground_point.x_mm);
+        y->InsertNextTuple1(ground_point.y_mm);
+        z->InsertNextTuple1(ground_point.z_mm);
+    }
+
+    vtkNew<vtkTable> table;
+    table->AddColumn(x);
+    table->AddColumn(y);
+    table->AddColumn(z);
+
+    // Convert to a table view of the data
+    vtkNew<vtkTableToPolyData> tablePoints;
+    tablePoints->SetInputData(table);
+    tablePoints->SetXColumnIndex(0);
+    tablePoints->SetYColumnIndex(1);
+    tablePoints->SetZColumnIndex(2);
+    tablePoints->Update();
+
+    // Triangulate the grid points.
+    vtkNew<vtkDelaunay2D> delaunay;
+    delaunay->SetInputData(tablePoints->GetOutput());
+    delaunay->Update();
+    vtkSmartPointer<vtkPolyData> mesh = delaunay->GetOutput();
+
+    std::vector<cRappTriangle> data;
+
+    auto m = mesh->GetNumberOfCells();
+    vtkIdList* pts = vtkIdList::New();
+    for (vtkIdType i = 0; i < m; ++i)
+    {
+        mesh->GetCellPoints(i, pts);
+        auto p1_id = pts->GetId(0);
+        auto p2_id = pts->GetId(1);
+        auto p3_id = pts->GetId(2);
+
+        double d_mm = (ground_points[p1_id].x_mm - ground_points[p2_id].x_mm) * (ground_points[p1_id].x_mm - ground_points[p2_id].x_mm);
+        d_mm += (ground_points[p1_id].y_mm - ground_points[p2_id].y_mm) * (ground_points[p1_id].y_mm - ground_points[p2_id].y_mm);
+        d_mm = sqrt(d_mm);
+
+        if (d_mm > 10000)
+        {
+            continue;
+        }
+
+        d_mm = (ground_points[p1_id].x_mm - ground_points[p3_id].x_mm) * (ground_points[p1_id].x_mm - ground_points[p3_id].x_mm);
+        d_mm += (ground_points[p1_id].y_mm - ground_points[p3_id].y_mm) * (ground_points[p1_id].y_mm - ground_points[p3_id].y_mm);
+        d_mm = sqrt(d_mm);
+
+        if (d_mm > 10000)
+        {
+            continue;
+        }
+
+        d_mm = (ground_points[p3_id].x_mm - ground_points[p2_id].x_mm) * (ground_points[p3_id].x_mm - ground_points[p2_id].x_mm);
+        d_mm += (ground_points[p3_id].y_mm - ground_points[p2_id].y_mm) * (ground_points[p3_id].y_mm - ground_points[p2_id].y_mm);
+        d_mm = sqrt(d_mm);
+
+        if (d_mm > 10000)
+        {
+            continue;
+        }
+
+        data.emplace_back(ground_points[p1_id], ground_points[p2_id], ground_points[p3_id]);
+    }
+
+    pts->Delete();
+
+    return std::move(data);
+}
+
+typedef dlib::matrix<double, 4, 1> input_vector;
+typedef dlib::matrix<double, 2, 1> parameter_vector;
+typedef dlib::matrix<double, 1, 1> pitch_vector;
+typedef dlib::matrix<double, 1, 1> roll_vector;
+
+double groundheight_pitch_roll(
+    const input_vector& input,
+    const parameter_vector& params
+)
+{
+    const double pitch_rad = params(0) * nConstants::DEG_TO_RAD;
+    const double roll_rad = params(1) * nConstants::DEG_TO_RAD;
+
+    const double x = input(0);
+    const double y = input(1);
+    const double z = input(2);
+    const double h = input(3);
+
+    Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd yawAngle(0, Eigen::Vector3d::UnitZ());
+    Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
+
+    Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
+    Eigen::Matrix3d rotationMatrix = q.matrix();
+
+    const auto& rZ = rotationMatrix.col(2);
+
+    double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+
+    const double temp = c - h;
+
+    return temp * temp;
+}
+
+double groundheight_pitch(
+    const input_vector& input,
+    const pitch_vector& params
+)
+{
+    const double pitch_rad = params(0) * nConstants::DEG_TO_RAD;
+
+    const double x = input(0);
+    const double y = input(1);
+    const double z = input(2);
+    const double h = input(3);
+
+    Eigen::AngleAxisd rollAngle(0, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd yawAngle(0, Eigen::Vector3d::UnitZ());
+    Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
+
+    Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
+    Eigen::Matrix3d rotationMatrix = q.matrix();
+
+    const auto& rZ = rotationMatrix.col(2);
+
+    double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+
+    const double temp = c - h;
+
+    return temp * temp;
+}
+
+double groundheight_roll(
+    const input_vector& input,
+    const roll_vector& params
+)
+{
+    const double roll_rad = params(0) * nConstants::DEG_TO_RAD;
+
+    const double x = input(0);
+    const double y = input(1);
+    const double z = input(2);
+    const double h = input(3);
+
+    Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd yawAngle(0, Eigen::Vector3d::UnitZ());
+    Eigen::AngleAxisd pitchAngle(0, Eigen::Vector3d::UnitY());
+
+    Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
+    Eigen::Matrix3d rotationMatrix = q.matrix();
+
+    const auto& rZ = rotationMatrix.col(2);
+
+    double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+
+    const double temp = c - h;
+
+    return temp * temp;
+}
+
+// This function is the "residual" for a least squares problem.   It takes an input/output
+// pair and compares it to the output of our model and returns the amount of error.  The idea
+// is to find the set of parameters which makes the residual small on all the data pairs.
+double residual_pitch_roll(
+    const std::pair<input_vector, double>& data,
+    const parameter_vector& params
+)
+{
+    return groundheight_pitch_roll(data.first, params) - data.second;
+}
+
+double residual_pitch(
+    const std::pair<input_vector, double>& data,
+    const pitch_vector& params
+)
+{
+    return groundheight_pitch(data.first, params) - data.second;
+}
+
+double residual_roll(
+    const std::pair<input_vector, double>& data,
+    const roll_vector& params
+)
+{
+    return groundheight_roll(data.first, params) - data.second;
+}
+
+
+sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc)
+{
+    using namespace dlib;
+
+    parameter_vector angles;
+    angles = 1;
+
+    std::vector<std::pair<input_vector, double>> samples;
+
+    input_vector input;
+
+    auto centroid = pc.centroid();
+
+    for (auto& point : pc)
+    {
+        input(0) = point.x_mm - centroid.x_mm;
+        input(1) = point.y_mm - centroid.y_mm;
+        input(2) = point.z_mm - centroid.z_mm;
+        input(3) = point.h_mm - centroid.z_mm;
+
+        // Note: we only use the absolute value function because we want
+        // a large residue on the first pass to force the fitting routine
+        const double output = std::abs(point.z_mm - point.h_mm);
+
+        // save the pair
+        samples.push_back(std::make_pair(input, output));
+    }
+
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50)/*.be_verbose() */ ,
+        residual_pitch_roll,
+        derivative(residual_pitch_roll),
+        samples,
+        angles);
+
+    sPitchAndRoll_t result;
+
+    result.pitch_deg = angles(0);
+    result.roll_deg = angles(1);
+    result.R = sqrt(R2);
+
+    return result;
+}
+
+
+sPitch_t fitPointCloudPitchToGroundMesh_deg(const cRappPointCloud& pc)
+{
+    using namespace dlib;
+
+    pitch_vector pitch;
+    pitch = 1;
+
+    std::vector<std::pair<input_vector, double>> samples;
+
+    input_vector input;
+
+    auto centroid = pc.centroid();
+
+    for (auto& point : pc)
+    {
+        input(0) = point.x_mm - centroid.x_mm;
+        input(1) = point.y_mm - centroid.y_mm;
+        input(2) = point.z_mm - centroid.z_mm;
+        input(3) = point.h_mm - centroid.z_mm;
+
+        // Note: we only use the absolute value function because we want
+        // a large residue on the first pass to force the fitting routine
+        const double output = std::abs(point.z_mm - point.h_mm);
+
+        // save the pair
+        samples.push_back(std::make_pair(input, output));
+    }
+
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50).be_verbose(),
+        residual_pitch,
+        derivative(residual_pitch),
+        samples,
+        pitch);
+
+    sPitch_t result;
+
+    result.pitch_deg = pitch(0);
+    result.R = sqrt(R2);
+
+    return result;
+}
+
+
+sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc)
+{
+    using namespace dlib;
+
+    roll_vector roll;
+    roll = 1;
+
+    std::vector<std::pair<input_vector, double>> samples;
+
+    input_vector input;
+
+    auto centroid = pc.centroid();
+
+    for (auto& point : pc)
+    {
+        input(0) = point.x_mm - centroid.x_mm;
+        input(1) = point.y_mm - centroid.y_mm;
+        input(2) = point.z_mm - centroid.z_mm;
+        input(3) = point.h_mm - centroid.z_mm;
+
+        // Note: we only use the absolute value function because we want
+        // a large residue on the first pass to force the fitting routine
+        const double output = std::abs(point.z_mm - point.h_mm);
+
+        // save the pair
+        samples.push_back(std::make_pair(input, output));
+    }
+
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50).be_verbose(),
+        residual_roll,
+        derivative(residual_roll),
+        samples,
+        roll);
+
+    sRoll_t result;
+
+    result.roll_deg = roll(0);
+    result.R = sqrt(R2);
+
+    return result;
+}
+
+double computePcToGroundMeshDistance_mm(const cRappPointCloud& pc)
+{
+    double offset = 0;
+    unsigned long long num = 0;
+
+    for (auto& point : pc)
+    {
+        if (point.h_mm == rfm::INVALID_HEIGHT)
+            continue;
+
+        offset += (point.h_mm - point.z_mm);
+        ++num;
+    }
+
+    if (num > 0)
+        offset /= num;
+
+    return offset;
+}
+
+double computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threashold_pct)
+{
+    auto data = pc.data();
+
+    int32_t z_threashold = static_cast<int32_t>((pc.maxZ_mm() - pc.minZ_mm()) * (threashold_pct / 100.0) + pc.minZ_mm());
+
+    std::sort(data.begin(), data.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
+        {
+            if (a.z_mm < b.z_mm) return true;
+
+            return false;
+        });
+
+    double offset = 0;
+    unsigned long long num = 0;
+
+    for (auto& point : data)
+    {
+        if (point.h_mm == rfm::INVALID_HEIGHT)
+            continue;
+
+        if (point.z_mm > z_threashold)
+            break;
+
+        offset += (point.h_mm - point.z_mm);
+        ++num;
+    }
+
+    if (num > 0)
+        offset /= num;
+
+    return offset;
+}
+
+rfm::sCentroid_t computeCentroid(const cRappPointCloud::vCloud_t& data)
+{
+    auto n = data.size();
+
+    double sum_x = 0.0;
+    double sum_y = 0.0;
+    double sum_z = 0.0;
+
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        auto point = data[i];
+
+        auto x = point.x_mm;
+        auto y = point.y_mm;
+        auto z = point.z_mm;
+
+        sum_x += x;
+        sum_y += y;
+        sum_z += z;
+    }
+
+    double x_mm = sum_x / n;
+    double y_mm = sum_y / n;
+    double z_mm = sum_z / n;
+
+    return { x_mm , y_mm, z_mm };
+}
+
+sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc)
+{
+    cRappPointCloud::vCloud_t data;
+
+    auto dx = (pc.maxX_mm() - pc.minX_mm()) / 100;
+    auto dy = (pc.maxY_mm() - pc.minY_mm()) / 100;
+
+    auto x_start = pc.minX_mm() + dx / 2;
+    auto y_start = pc.minY_mm() + dy / 2;
+
+    auto x_end = pc.maxX_mm();
+    auto y_end = pc.maxY_mm();
+
+    for (auto y = y_start; y < y_end; y += dy)
+    {
+        for (auto x = x_start; x < x_end; x += dx)
+        {
+            auto p = pc.getPoint(x, y, 100);
+
+            if ((p.z_mm == rfm::INVALID_HEIGHT) || (p.h_mm == rfm::INVALID_HEIGHT))
+            {
+                continue;
+            }
+
+            data.push_back(p);
+        }
+    }
+
+    // Compute the centroid of all of the points...
+    rfm::sCentroid_t centroid = computeCentroid(data);
+
+    cRappPointCloud temp(centroid, data);
+
+    return fitPointCloudToGroundMesh(temp);
+}
+
+sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, double threashold_pct)
+{
+    auto data = pc.data();
+
+    int32_t z_threashold = static_cast<int32_t>((pc.maxZ_mm() - pc.minZ_mm()) * (threashold_pct / 100.0) + pc.minZ_mm());
+
+    std::sort(data.begin(), data.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
+        {
+            if (a.z_mm < b.z_mm) return true;
+
+            return false;
+        });
+
+    auto end_it = std::remove_if(data.begin(), data.end(), [z_threashold](rfm::rappPoint2_t a)
+        {
+            return (a.z_mm > z_threashold) || (a.h_mm == rfm::INVALID_HEIGHT);
+        });
+
+    data.erase(end_it, data.end());
+
+    // Compute the centroid of all of the points...
+    rfm::sCentroid_t centroid = computeCentroid(data);
+
+    cRappPointCloud temp(centroid, data);
+
+    return fitPointCloudToGroundMesh(temp);
+}
