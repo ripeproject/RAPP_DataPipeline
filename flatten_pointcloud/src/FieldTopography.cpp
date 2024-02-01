@@ -16,7 +16,15 @@
 #include <vtkTable.h>
 #include <vtkTableToPolyData.h>
 
+#include <array>
+
 #include "Constants.hpp"
+
+namespace
+{
+    constexpr std::size_t MIN_SET_OF_POINTS = 10;
+}
+
 
 void test(const std::vector<rfm::rappPoint_t>& ground_points)
 {
@@ -84,7 +92,7 @@ void test(const std::vector<rfm::rappPoint_t>& ground_points)
 }
 
 
-
+//-----------------------------------------------------------------------------
 std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>& ground_points)
 {
     vtkDoubleArray* x = vtkDoubleArray::New();
@@ -163,6 +171,7 @@ std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>
     return std::move(data);
 }
 
+//-----------------------------------------------------------------------------
 typedef dlib::matrix<double, 4, 1> input_vector;
 typedef dlib::matrix<double, 2, 1> parameter_vector;
 typedef dlib::matrix<double, 1, 1> pitch_vector;
@@ -197,6 +206,7 @@ double groundheight_pitch_roll(
     return temp * temp;
 }
 
+//-----------------------------------------------------------------------------
 double groundheight_pitch(
     const input_vector& input,
     const pitch_vector& params
@@ -225,6 +235,7 @@ double groundheight_pitch(
     return temp * temp;
 }
 
+//-----------------------------------------------------------------------------
 double groundheight_roll(
     const input_vector& input,
     const roll_vector& params
@@ -264,6 +275,7 @@ double residual_pitch_roll(
     return groundheight_pitch_roll(data.first, params) - data.second;
 }
 
+//-----------------------------------------------------------------------------
 double residual_pitch(
     const std::pair<input_vector, double>& data,
     const pitch_vector& params
@@ -272,6 +284,7 @@ double residual_pitch(
     return groundheight_pitch(data.first, params) - data.second;
 }
 
+//-----------------------------------------------------------------------------
 double residual_roll(
     const std::pair<input_vector, double>& data,
     const roll_vector& params
@@ -281,6 +294,7 @@ double residual_roll(
 }
 
 
+//-----------------------------------------------------------------------------
 sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc)
 {
     using namespace dlib;
@@ -320,6 +334,7 @@ sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc)
     result.pitch_deg = angles(0);
     result.roll_deg = angles(1);
     result.R = sqrt(R2);
+    result.valid = true;
 
     return result;
 }
@@ -363,11 +378,13 @@ sPitch_t fitPointCloudPitchToGroundMesh_deg(const cRappPointCloud& pc)
 
     result.pitch_deg = pitch(0);
     result.R = sqrt(R2);
+    result.valid = true;
 
     return result;
 }
 
 
+//-----------------------------------------------------------------------------
 sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc)
 {
     using namespace dlib;
@@ -406,11 +423,13 @@ sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc)
 
     result.roll_deg = roll(0);
     result.R = sqrt(R2);
+    result.valid = true;
 
     return result;
 }
 
-double computePcToGroundMeshDistance_mm(const cRappPointCloud& pc)
+//-----------------------------------------------------------------------------
+sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc)
 {
     double offset = 0;
     unsigned long long num = 0;
@@ -424,13 +443,16 @@ double computePcToGroundMeshDistance_mm(const cRappPointCloud& pc)
         ++num;
     }
 
-    if (num > 0)
-        offset /= num;
+    if (num < MIN_SET_OF_POINTS)
+        return sOffset_t();
 
-    return offset;
+    offset /= num;
+
+    return { offset, true };
 }
 
-double computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threashold_pct)
+//-----------------------------------------------------------------------------
+sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threashold_pct)
 {
     auto data = pc.data();
 
@@ -458,12 +480,15 @@ double computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threas
         ++num;
     }
 
-    if (num > 0)
-        offset /= num;
+    if (num < MIN_SET_OF_POINTS)
+        return sOffset_t();
 
-    return offset;
+    offset /= num;
+
+    return { offset, true };
 }
 
+//-----------------------------------------------------------------------------
 rfm::sCentroid_t computeCentroid(const cRappPointCloud::vCloud_t& data)
 {
     auto n = data.size();
@@ -492,6 +517,7 @@ rfm::sCentroid_t computeCentroid(const cRappPointCloud::vCloud_t& data)
     return { x_mm , y_mm, z_mm };
 }
 
+//-----------------------------------------------------------------------------
 sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc)
 {
     cRappPointCloud::vCloud_t data;
@@ -520,6 +546,9 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc)
         }
     }
 
+    if (data.size() < MIN_SET_OF_POINTS)
+        return sPitchAndRoll_t();
+
     // Compute the centroid of all of the points...
     rfm::sCentroid_t centroid = computeCentroid(data);
 
@@ -528,6 +557,7 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc)
     return fitPointCloudToGroundMesh(temp);
 }
 
+//-----------------------------------------------------------------------------
 sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, double threashold_pct)
 {
     auto data = pc.data();
@@ -548,6 +578,9 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, dou
 
     data.erase(end_it, data.end());
 
+    if (data.size() < MIN_SET_OF_POINTS)
+        return sPitchAndRoll_t();
+
     // Compute the centroid of all of the points...
     rfm::sCentroid_t centroid = computeCentroid(data);
 
@@ -555,3 +588,196 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, dou
 
     return fitPointCloudToGroundMesh(temp);
 }
+
+//-----------------------------------------------------------------------------
+sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, double threashold_pct)
+{
+    const int NUM_X_GRIDS = 10;
+    const int NUM_Y_GRIDS = 10;
+
+    std::array<cRappPointCloud::vCloud_t, NUM_X_GRIDS* NUM_Y_GRIDS> grid_data;
+
+    std::array<int, NUM_X_GRIDS> x_bounds;
+    std::array<int, NUM_Y_GRIDS> y_bounds;
+
+    auto dx = (pc.maxX_mm() - pc.minX_mm()) / NUM_X_GRIDS;
+    auto dy = (pc.maxY_mm() - pc.minY_mm()) / NUM_Y_GRIDS;
+
+    for (int i = 0; i < NUM_X_GRIDS; ++i)
+    {
+        x_bounds[i] = pc.minX_mm() + i * dx;
+    }
+
+    for (int i = 0; i < NUM_Y_GRIDS; ++i)
+    {
+        y_bounds[i] = pc.minY_mm() + i * dy;
+    }
+
+    // Split the point cloud into grid data
+    for (auto point : pc)
+    {
+        int i = 0;
+        for (; i < NUM_X_GRIDS; ++i)
+        {
+            if (point.x_mm < x_bounds[i])
+            {
+                break;
+            }
+        }
+        --i;
+
+        int j = 0;
+        for (; j < NUM_Y_GRIDS; ++j)
+        {
+            if (point.y_mm < y_bounds[j])
+            {
+                break;
+            }
+        }
+        --j;
+
+        int n = i * NUM_Y_GRIDS + j;
+
+        grid_data[n].push_back(point);
+    }
+
+
+    double offset = 0;
+    unsigned long long num = 0;
+
+    // Use the bottom most points ( < threashold_pct) in each grid block to compute offset
+    for (auto block : grid_data)
+    {
+        int minZ_mm = std::numeric_limits<int>::max();
+        int maxZ_mm = std::numeric_limits<int>::min();
+
+        for (auto& point : block)
+        {
+            minZ_mm = std::min(minZ_mm, point.z_mm);
+            maxZ_mm = std::max(maxZ_mm, point.z_mm);
+        }
+
+        int32_t z_threashold = static_cast<int32_t>((maxZ_mm - minZ_mm) * (threashold_pct / 100.0) + minZ_mm);
+
+        std::sort(block.begin(), block.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
+            {
+                if (a.z_mm < b.z_mm) return true;
+
+                return false;
+            });
+
+        for (auto& point : block)
+        {
+            if (point.h_mm == rfm::INVALID_HEIGHT)
+                continue;
+
+            if (point.z_mm > z_threashold)
+                break;
+
+            offset += (point.h_mm - point.z_mm);
+            ++num;
+        }
+    }
+
+    if (num < MIN_SET_OF_POINTS)
+        return sOffset_t();
+
+    offset /= num;
+
+    return { offset,true };
+}
+
+//-----------------------------------------------------------------------------
+sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud& pc, double threashold_pct)
+{
+    const int NUM_X_GRIDS = 10;
+    const int NUM_Y_GRIDS = 10;
+
+    std::array<cRappPointCloud::vCloud_t, NUM_X_GRIDS * NUM_Y_GRIDS> grid_data;
+
+    std::array<int, NUM_X_GRIDS> x_bounds;
+    std::array<int, NUM_Y_GRIDS> y_bounds;
+
+    auto dx = (pc.maxX_mm() - pc.minX_mm()) / NUM_X_GRIDS;
+    auto dy = (pc.maxY_mm() - pc.minY_mm()) / NUM_Y_GRIDS;
+
+    for (int i = 0; i < NUM_X_GRIDS; ++i)
+    {
+        x_bounds[i] = pc.minX_mm() + i * dx;
+    }
+
+    for (int i = 0; i < NUM_Y_GRIDS; ++i)
+    {
+        y_bounds[i] = pc.minY_mm() + i * dy;
+    }
+
+    for (auto point : pc)
+    {
+        int i = 0;
+        for (; i < NUM_X_GRIDS; ++i)
+        {
+            if (point.x_mm < x_bounds[i])
+            {
+                break;
+            }
+        }
+        --i;
+
+        int j = 0;
+        for (; j < NUM_Y_GRIDS; ++j)
+        {
+            if (point.y_mm < y_bounds[j])
+            {
+                break;
+            }
+        }
+        --j;
+
+        int n = i * NUM_Y_GRIDS + j;
+
+        grid_data[n].push_back(point);
+    }
+
+    cRappPointCloud::vCloud_t data;
+
+    for (auto block : grid_data)
+    {
+        int minZ_mm = std::numeric_limits<int>::max();
+        int maxZ_mm = std::numeric_limits<int>::min();
+
+        for (auto& point : block)
+        {
+            minZ_mm = std::min(minZ_mm, point.z_mm);
+            maxZ_mm = std::max(maxZ_mm, point.z_mm);
+        }
+
+        int32_t z_threashold = static_cast<int32_t>((maxZ_mm - minZ_mm) * (threashold_pct / 100.0) + minZ_mm);
+
+        std::sort(block.begin(), block.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
+            {
+                if (a.z_mm < b.z_mm) return true;
+
+                return false;
+            });
+
+        auto end_it = std::remove_if(block.begin(), block.end(), [z_threashold](rfm::rappPoint2_t a)
+            {
+                return (a.z_mm > z_threashold) || (a.h_mm == rfm::INVALID_HEIGHT);
+            });
+
+        block.erase(end_it, block.end());
+
+        data.insert(data.end(), block.begin(), block.end());
+    }
+
+    if (data.size() < MIN_SET_OF_POINTS)
+        return sPitchAndRoll_t();
+
+    // Compute the centroid of all of the points...
+    rfm::sCentroid_t centroid = computeCentroid(data);
+
+    cRappPointCloud temp(centroid, data);
+
+    return fitPointCloudToGroundMesh(temp);
+}
+

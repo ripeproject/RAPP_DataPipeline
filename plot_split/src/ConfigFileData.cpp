@@ -8,7 +8,6 @@
 #include <fstream>
 #include <stdexcept>
 
-C:\ripe\RAPP_DataPipeline\plot_split\support\StringUtils\StringUtils.hpp
 namespace
 {
 }
@@ -23,6 +22,7 @@ cConfigFileData::~cConfigFileData()
 
 bool cConfigFileData::empty() const
 {
+	return false;
 }
 
 bool cConfigFileData::loadDefaults()
@@ -53,6 +53,7 @@ bool cConfigFileData::loadDefaults()
 
 	/*** Load Defaults ***/
 
+/*
 	if (configDoc.contains("defaults"))
 	{
 		auto defaults = configDoc["defaults"];
@@ -161,6 +162,7 @@ bool cConfigFileData::loadDefaults()
 			}
 		}
 	}
+*/
 
 	return true;
 }

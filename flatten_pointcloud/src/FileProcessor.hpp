@@ -58,8 +58,10 @@ private:
 private:
 	void flattenPointCloud();
 
-	void translatePcToGroundMesh(double threashold_pct);
-	void rotatePcToGroundMesh(double threashold_pct);
+//	void translatePcToGroundMesh(double threashold_pct);
+	void translatePcToGroundMeshUsingGrid(double threashold_pct);
+//	void rotatePcToGroundMesh(double threashold_pct);
+	void rotatePcToGroundMeshUsingGrid(double threashold_pct);
 
 private:
 	const int mID;

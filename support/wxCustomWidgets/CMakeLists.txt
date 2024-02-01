@@ -80,7 +80,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #******************************************************************************
 
 # Find all the packages needed by this code
-find_package(wxWidgets REQUIRED COMPONENTS core base)
+find_package(wxWidgets REQUIRED COMPONENTS core base adv)
 
 #******************************************************************************
 # GENERATE THE wxCustomWidgets
@@ -109,6 +109,8 @@ target_include_directories(wxCustomWidgets PRIVATE ${CMAKE_INSTALL_PREFIX}/inclu
 target_include_directories(wxCustomWidgets PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 target_link_libraries(wxCustomWidgets PRIVATE ${wxWidgets_LIBRARIES})
+
+#message(STATUS "wxWidgets_LIBRARIES=${wxWidgets_LIBRARIES}")
 
 
 #

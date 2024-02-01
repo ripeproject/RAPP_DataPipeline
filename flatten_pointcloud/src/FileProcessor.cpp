@@ -337,90 +337,95 @@ void cFileProcessor::onPointCloudData(cPointCloud_SensorInfo pointCloud)
 //-----------------------------------------------------------------------------
 void cFileProcessor::flattenPointCloud()
 {
-    std::size_t i = 0;
-    std::size_t n = mPointCloud.size();
-    int last_pct = 0;
+    const int NUM_STEPS = 8;
 
-    // First, for each point in the point cloud, find the corresponding ground point
+    update_prefix_progress(mID, "Flattening Point Cloud   ", 0);
 
-    update_prefix_progress(mID, "Filling Ground Points    ", 0);
+    // 1) for each point in the point cloud, find the corresponding ground point
     for (auto& point : mPointCloud)
     {
-        ++i;
-
-        int pos_pct = static_cast<int>((100.0 * i) / n);
-
-        if (pos_pct > last_pct)
-        {
-            update_progress(mID, pos_pct);
-            last_pct = pos_pct;
-        }
-
         double h = getMeshHeight_mm(point.x_mm, point.y_mm);
         point.h_mm = h;
     }
+    update_progress(mID, (100.0 * 1)/ NUM_STEPS);
 
-    // Second, use lower 5% of the point cloud to translate the cloud to the ground
-    translatePcToGroundMesh(5.0);
+    // 2) use lower 1% of the point cloud to translate the cloud to the ground
+    translatePcToGroundMeshUsingGrid(1.0);
+    update_progress(mID, (100.0 * 2) / NUM_STEPS);
 
-    // Third, use lower 5% of the point cloud to rotate the cloud to match the ground
-    rotatePcToGroundMesh(5.0);
+    // 3) use lower 1% of the point cloud to rotate the cloud to match the ground
+    rotatePcToGroundMeshUsingGrid(1.0);
+    update_progress(mID, (100.0 * 3) / NUM_STEPS);
 
-    // Fourth, use lower 5% of the point cloud to translate the cloud to the ground
-    translatePcToGroundMesh(5.0);
+    // 4) use lower 1% of the point cloud to translate the cloud to the ground
+    translatePcToGroundMeshUsingGrid(1.0);
+    update_progress(mID,(100.0 * 4) / NUM_STEPS);
 
-    // Fifth, use lower 5% of the point cloud to rotate the cloud to match the ground
-    rotatePcToGroundMesh(5.0);
-
-    // Fourth, use lower 5% of the point cloud to translate the cloud to the ground
-    translatePcToGroundMesh(50.0);
-
-    // Sixth, adjust each point so that the height is AGL
-    i = 0;
-    n = mPointCloud.size();
-    last_pct = 0;
-
-    update_prefix_progress(mID, "Flattening Point Cloud   ", 0);
+    // 5) adjust each point so that the height is AGL
     for (auto& point : mPointCloud)
     {
-        ++i;
-
-        int pos_pct = static_cast<int>((100.0 * i) / n);
-
-        if (pos_pct > last_pct)
-        {
-            update_progress(mID, pos_pct);
-            last_pct = pos_pct;
-        }
-
         if (point.h_mm == rfm::INVALID_HEIGHT)
             continue;
 
         point.z_mm -= point.h_mm;
+        point.h_mm = 0;
     }
+    update_progress(mID, (100.0 * 5) / NUM_STEPS);
+
+    // 6) use lower 1% of the point cloud to rotate the cloud to match the ground
+    rotatePcToGroundMeshUsingGrid(1.0);
+    update_progress(mID, (100.0 * 6) / NUM_STEPS);
+
+    // 7) use lower 1% of the point cloud to translate the cloud to the ground
+    translatePcToGroundMeshUsingGrid(1.0);
+    update_progress(mID, (100.0 * 7) / NUM_STEPS);
 
     update_prefix_progress(mID, "Scanning...              ", static_cast<int>(mFilePos));
 }
 
 //-----------------------------------------------------------------------------
+/*
 void cFileProcessor::translatePcToGroundMesh(double threashold_pct)
 {
-    update_prefix_progress(mID, "Translating Point Cloud  ", 0);
+    auto result = computePcToGroundMeshDistance_mm(mPointCloud, threashold_pct);
 
-    double offset = computePcToGroundMeshDistance_mm(mPointCloud, threashold_pct);
+    if (!result.valid)
+        result = computePcToGroundMeshDistance_mm(mPointCloud, 2.0 * threashold_pct);
 
-    update_progress(mID, 50);
+    mPointCloud.translate(0, 0, result.offset_mm);
+}
+*/
+//-----------------------------------------------------------------------------
+void cFileProcessor::translatePcToGroundMeshUsingGrid(double threashold_pct)
+{
+    auto result = computePcToGroundMeshDistanceUsingGrid_mm(mPointCloud, threashold_pct);
 
-    mPointCloud.translate(0, 0, offset);
+    if (!result.valid)
+        result = computePcToGroundMeshDistanceUsingGrid_mm(mPointCloud, 2.0 * threashold_pct);
 
-    update_progress(mID, 100);
+    mPointCloud.translate(0, 0, result.offset_mm);
 }
 
 //-----------------------------------------------------------------------------
+/*
 void cFileProcessor::rotatePcToGroundMesh(double threashold_pct)
 {
-    update_prefix_progress(mID, "Rotating Point Cloud     ", 0);
     auto angles = computePcToGroundMeshRotation_deg(mPointCloud, threashold_pct);
+
+    if (!angles.valid)
+        angles = computePcToGroundMeshRotation_deg(mPointCloud, 2.0 * threashold_pct);
+
+    mPointCloud.rotate(0, angles.pitch_deg, angles.roll_deg);
+}
+*/
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::rotatePcToGroundMeshUsingGrid(double threashold_pct)
+{
+    auto angles = computePcToGroundMeshRotationUsingGrid_deg(mPointCloud, threashold_pct);
+
+    if (!angles.valid)
+        angles = computePcToGroundMeshRotationUsingGrid_deg(mPointCloud, 2.0 * threashold_pct);
 
     mPointCloud.rotate(0, angles.pitch_deg, angles.roll_deg);
 }
