@@ -105,6 +105,14 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	if (!std::filesystem::exists(input_directory))
+	{
+		if (isFile)
+			std::cerr << "Input file " << ground_data << " does not exists." << std::endl;
+		else
+			std::cerr << "Input directory " << input_directory << " does not exists." << std::endl;
+		return 1;
+	}
 
 	// Bail out if we can't load the ground data
 	if (!std::filesystem::exists(ground_data))
