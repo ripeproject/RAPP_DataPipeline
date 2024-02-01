@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 	if (!std::filesystem::exists(input_directory))
 	{
 		if (isFile)
-			std::cerr << "Input file " << ground_data << " does not exists." << std::endl;
+			std::cerr << "Input file " << input_directory << " does not exists." << std::endl;
 		else
 			std::cerr << "Input directory " << input_directory << " does not exists." << std::endl;
 		return 1;
