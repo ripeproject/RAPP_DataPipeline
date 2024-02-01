@@ -98,6 +98,15 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	if (!std::filesystem::exists(input_directory))
+	{
+		if (isFile)
+			std::cerr << "Input file " << input_directory << " does not exists." << std::endl;
+		else
+			std::cerr << "Input directory " << input_directory << " does not exists." << std::endl;
+		return 1;
+	}
+
 
 	const std::filesystem::path input{ input_directory };
 
