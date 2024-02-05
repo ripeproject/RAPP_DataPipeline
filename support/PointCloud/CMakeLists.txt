@@ -91,6 +91,7 @@ target_compile_features(pointcloud_io PRIVATE cxx_std_20)
 target_sources(pointcloud_io
 PUBLIC
 	PointCloudTypes.hpp
+	PointCloudUtils.hpp
 	PointCloud.hpp
 	PointCloudParser.hpp
 	PointCloudSerializer.hpp
@@ -101,6 +102,7 @@ PRIVATE
 	PointCloudBlockId.cpp
 
 	PointCloudDataIdentifiers.hpp
+	PointCloudUtils.cpp
 	PointCloud.cpp
 	PointCloudParser.cpp
 	PointCloudSerializer.cpp

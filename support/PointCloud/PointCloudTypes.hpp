@@ -3,9 +3,29 @@
 
 #include <cstdint>
 #include <vector>
+#include <array>
 
 namespace pointcloud
 {
+    struct sPoint3D_t;
+
+    struct sPoint2D_t
+    {
+        double X_m = 0.0;
+        double Y_m = 0.0;
+
+        sPoint2D_t() {}
+        explicit sPoint2D_t(const sPoint3D_t& p);
+        const sPoint2D_t& operator=(const sPoint3D_t& p);
+    };
+
+    struct sPoint3D_t
+    {
+        double X_m = 0.0;
+        double Y_m = 0.0;
+        double Z_m = 0.0;
+    };
+
     enum class eCOORDINATE_SYSTEM : uint8_t
     {
         UNKNOWN,
@@ -51,19 +71,14 @@ namespace pointcloud
     //
     // The basic struct of point cloud data.
     //
-    struct sCloudPoint_t
+    struct sCloudPoint_t : public sPoint3D_t
     {
-        double X_m = 0.0;
-        double Y_m = 0.0;
-        double Z_m = 0.0;
         uint32_t range_mm = 0;
         uint16_t signal = 0;
         uint16_t reflectivity = 0;
         uint16_t nir = 0;
 
-        sCloudPoint_t() : X_m(0), Y_m(0), Z_m(0),
-            range_mm(0), signal(0), reflectivity(0), nir(0)
-        {}
+        sCloudPoint_t() {}
     };
 
     //
@@ -88,5 +103,23 @@ namespace pointcloud
 
         sCloudPoint_SensorInfo_t() {}
     };
+
+    //
+    // A bounding box data struct used in various utilities.
+    //
+    struct sBoundingBox_t
+    {
+        std::array<sPoint2D_t, 4> points;
+    };
 }
 
+
+inline pointcloud::sPoint2D_t::sPoint2D_t(const pointcloud::sPoint3D_t& p) : X_m(p.X_m), Y_m(p.Y_m)
+{}
+
+inline const pointcloud::sPoint2D_t& pointcloud::sPoint2D_t::operator=(const pointcloud::sPoint3D_t& p)
+{
+    X_m = p.X_m;
+    Y_m = p.Y_m;
+    return *this;
+}
