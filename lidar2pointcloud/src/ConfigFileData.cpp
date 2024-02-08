@@ -382,9 +382,9 @@ bool cConfigFileData::loadKinematicModels()
 
 			if (model == "constant")
 			{
-				double X_m = mDefault_X_m;
-				double Y_m = mDefault_Y_m;
-				double Z_m = mDefault_Z_m;
+				double initialX_m = mDefault_X_m;
+				double initialY_m = mDefault_Y_m;
+				double initialZ_m = mDefault_Z_m;
 
 				double Vx_mmps = mDefault_Vx_mmps;
 				double Vy_mmps = mDefault_Vy_mmps;
@@ -398,13 +398,34 @@ bool cConfigFileData::loadKinematicModels()
 					auto pos = experiment["start position"];
 
 					if (pos.contains("x (m)"))
-						X_m = pos["x (m)"];
+						initialX_m = pos["x (m)"];
 
 					if (pos.contains("y (m)"))
-						Y_m = pos["y (m)"];
+						initialY_m = pos["y (m)"];
 
 					if (pos.contains("z (m)"))
-						Z_m = pos["z (m)"];
+						initialZ_m = pos["z (m)"];
+				}
+
+				bool hasEndPosition = false;
+				double finalX_m = initialX_m;
+				double finalY_m = initialY_m;
+				double finalZ_m = initialZ_m;
+
+				if (experiment.contains("end position"))
+				{
+					auto pos = experiment["end position"];
+
+					hasEndPosition = true;
+
+					if (pos.contains("x (m)"))
+						finalX_m = pos["x (m)"];
+
+					if (pos.contains("y (m)"))
+						finalY_m = pos["y (m)"];
+
+					if (pos.contains("z (m)"))
+						finalZ_m = pos["z (m)"];
 				}
 
 				if (experiment.contains("Vx (mm/s)"))
@@ -429,15 +450,24 @@ bool cConfigFileData::loadKinematicModels()
 				{
 				case nConfigFileData::eHeightAxis::X:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
-					km->setInitialPosition_m(height_m, Y_m, Z_m);
+					km->setInitialPosition_m(height_m, initialY_m, initialZ_m);
+
+					if (hasEndPosition)
+						km->setFinalPosition_m(height_m, finalY_m, finalZ_m);
 					break;
 				case nConfigFileData::eHeightAxis::Y:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
-					km->setInitialPosition_m(X_m, height_m, Z_m);
+					km->setInitialPosition_m(initialX_m, height_m, initialZ_m);
+
+					if (hasEndPosition)
+						km->setFinalPosition_m(finalX_m, height_m, finalZ_m);
 					break;
 				case nConfigFileData::eHeightAxis::Z:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
-					km->setInitialPosition_m(X_m, Y_m, height_m);
+					km->setInitialPosition_m(initialX_m, initialY_m, height_m);
+
+					if (hasEndPosition)
+						km->setFinalPosition_m(finalX_m, finalY_m, height_m);
 					break;
 				}
 
@@ -451,9 +481,9 @@ bool cConfigFileData::loadKinematicModels()
 			}
 			else if (model == "constant with sensor rotation")
 			{
-				double X_m = mDefault_X_m;
-				double Y_m = mDefault_Y_m;
-				double Z_m = mDefault_Z_m;
+				double initialX_m = mDefault_X_m;
+				double initialY_m = mDefault_Y_m;
+				double initialZ_m = mDefault_Z_m;
 
 				double Vx_mmps = mDefault_Vx_mmps;
 				double Vy_mmps = mDefault_Vy_mmps;
@@ -467,13 +497,34 @@ bool cConfigFileData::loadKinematicModels()
 					auto pos = experiment["start position"];
 
 					if (pos.contains("x (m)"))
-						X_m = pos["x (m)"];
+						initialX_m = pos["x (m)"];
 
 					if (pos.contains("y (m)"))
-						Y_m = pos["y (m)"];
+						initialY_m = pos["y (m)"];
 
 					if (pos.contains("z (m)"))
-						Z_m = pos["z (m)"];
+						initialZ_m = pos["z (m)"];
+				}
+
+				bool hasEndPosition = false;
+				double finalX_m = initialX_m;
+				double finalY_m = initialY_m;
+				double finalZ_m = initialZ_m;
+
+				if (experiment.contains("end position"))
+				{
+					auto pos = experiment["end position"];
+
+					hasEndPosition = true;
+
+					if (pos.contains("x (m)"))
+						finalX_m = pos["x (m)"];
+
+					if (pos.contains("y (m)"))
+						finalY_m = pos["y (m)"];
+
+					if (pos.contains("z (m)"))
+						finalZ_m = pos["z (m)"];
 				}
 
 				if (experiment.contains("Vx (mm/s)"))
@@ -534,15 +585,24 @@ bool cConfigFileData::loadKinematicModels()
 				{
 				case nConfigFileData::eHeightAxis::X:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
-					km->setInitialPosition_m(height_m, Y_m, Z_m);
+					km->setInitialPosition_m(height_m, initialY_m, initialZ_m);
+
+					if (hasEndPosition)
+						km->setFinalPosition_m(height_m, finalY_m, finalZ_m);
 					break;
 				case nConfigFileData::eHeightAxis::Y:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
-					km->setInitialPosition_m(X_m, height_m, Z_m);
+					km->setInitialPosition_m(initialX_m, height_m, initialZ_m);
+
+					if (hasEndPosition)
+						km->setFinalPosition_m(finalX_m, height_m, finalZ_m);
 					break;
 				case nConfigFileData::eHeightAxis::Z:
 					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
-					km->setInitialPosition_m(X_m, Y_m, height_m);
+					km->setInitialPosition_m(initialX_m, initialY_m, height_m);
+
+					if (hasEndPosition)
+						km->setFinalPosition_m(finalX_m, finalY_m, height_m);
 					break;
 				}
 

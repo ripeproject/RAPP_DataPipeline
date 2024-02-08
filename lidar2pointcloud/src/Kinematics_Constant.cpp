@@ -28,6 +28,30 @@ void cKinematics_Constant::setInitialPosition_m(double x_m, double y_m, double z
     mZ_Offset_m = z_m;
 }
 
+void cKinematics_Constant::setFinalPosition_m(double x_m, double y_m, double z_m)
+{
+    double dX = mFinal_X_m - mX_Offset_m;
+
+    if (dX < 0.1)
+        mCheckX = LESS;
+    if (dX > 0.1)
+        mCheckX = GREATER;
+
+    double dY = mFinal_Y_m - mY_Offset_m;
+
+    if (dY < 0.1)
+        mCheckY = LESS;
+    if (dY > 0.1)
+        mCheckY = GREATER;
+
+    double dZ = mFinal_Z_m - mZ_Offset_m;
+
+    if (dZ < 0.1)
+        mCheckZ = LESS;
+    if (dZ > 0.1)
+        mCheckZ = GREATER;
+}
+
 /*
 void cKinematics_Constant::setX_Offset_m(double offset_m)
 {
@@ -60,6 +84,21 @@ bool cKinematics_Constant::transform(double time_us,
     double x_m = mX_Offset_m + mVx_mps * time_sec;
     double y_m = mY_Offset_m + mVy_mps * time_sec;
     double z_m = mZ_Offset_m + mVz_mps * time_sec;
+
+    if (mCheckX == LESS)
+        return x_m < mFinal_X_m;
+    else if (mCheckX == GREATER)
+        return x_m > mFinal_X_m;
+
+    if (mCheckY == LESS)
+        return y_m < mFinal_Y_m;
+    else if (mCheckY == GREATER)
+        return y_m > mFinal_Y_m;
+
+    if (mCheckZ == LESS)
+        return z_m < mFinal_Z_m;
+    else if (mCheckZ == GREATER)
+        return z_m > mFinal_Z_m;
 
     auto cols = cloud.num_columns();
     auto rows = cloud.num_rows();

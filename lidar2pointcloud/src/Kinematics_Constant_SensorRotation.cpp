@@ -161,20 +161,9 @@ bool cKinematics_Constant_SensorRotation::transform(double time_us,
     }
     else
     {
-//        if (mHaveRotationalRates)
-        {
-            pitch_deg   += mPitchRate_dps * time_sec;
-            roll_deg    += mRollRate_dps * time_sec;
-            yaw_deg     += mYawRate_dps * time_sec;
-        }
-        //else
-        //{
-        //    double time2 = time_sec * time_sec;
-
-        //    pitch_deg += 0.5 * mPitchAccel_dps2 * time2;
-        //    roll_deg += 0.5 * mRollAccel_dps2 * time2;
-        //    yaw_deg += 0.5 * mYawAccel_dps2 * time2;
-        //}
+        pitch_deg   += mPitchRate_dps * time_sec;
+        roll_deg    += mRollRate_dps * time_sec;
+        yaw_deg     += mYawRate_dps * time_sec;
     }
 
     setSensorOrientation(yaw_deg, pitch_deg, roll_deg);

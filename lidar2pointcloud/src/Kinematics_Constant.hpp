@@ -16,6 +16,7 @@ public:
 	void setHeightAxis(eHEIGHT_AXIS axis);
 
 	void setInitialPosition_m(double x_m, double y_m, double z_m);
+	void setFinalPosition_m(double x_m, double y_m, double z_m);
 
 //	void setX_Offset_m(double offset_m);
 //	void setY_Offset_m(double offset_m);
@@ -58,6 +59,15 @@ private:
 	double mX_Offset_m = 0.0;
 	double mY_Offset_m = 0.0;
 	double mZ_Offset_m = 0.0;
+
+	enum eCheckAxis {NO, GREATER, LESS};
+	eCheckAxis mCheckX = NO;
+	eCheckAxis mCheckY = NO;
+	eCheckAxis mCheckZ = NO;
+
+	double mFinal_X_m = 0.0;
+	double mFinal_Y_m = 0.0;
+	double mFinal_Z_m = 0.0;
 
 	eHEIGHT_AXIS mHeightAxis = eHEIGHT_AXIS::NONE;
 
