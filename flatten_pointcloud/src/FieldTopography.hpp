@@ -51,11 +51,11 @@ struct sRoll_t
 sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc);
 
 sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc);
-sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threashold_pct);
+sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threshold_pct);
 
 sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc);
-sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, double threashold_pct);
+sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, double threshold_pct);
 
-sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, double threashold_pct);
-sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud& pc, double threashold_pct);
+sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, double threshold_pct);
+sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud& pc, double threshold_pct);
 

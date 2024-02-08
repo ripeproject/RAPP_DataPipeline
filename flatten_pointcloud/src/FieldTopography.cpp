@@ -23,6 +23,15 @@
 namespace
 {
     constexpr std::size_t MIN_SET_OF_POINTS = 10;
+
+    template<typename T>
+    T threshold(T min, T max, double level_pct)
+    {
+        if (level_pct > 100.0) return max;
+        if (level_pct < 0.0) return min;
+
+        return static_cast<T>((max - min) * (level_pct / 100.0)) + min;
+    }
 }
 
 
@@ -173,14 +182,13 @@ std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>
 
 //-----------------------------------------------------------------------------
 typedef dlib::matrix<double, 4, 1> input_vector;
+typedef dlib::matrix<double, 3, 1> input_three_variables;
 typedef dlib::matrix<double, 2, 1> parameter_vector;
 typedef dlib::matrix<double, 1, 1> pitch_vector;
 typedef dlib::matrix<double, 1, 1> roll_vector;
 
-double groundheight_pitch_roll(
-    const input_vector& input,
-    const parameter_vector& params
-)
+
+double groundheight_pitch_roll(const input_three_variables& input, const parameter_vector& params)
 {
     const double pitch_rad = params(0) * nConstants::DEG_TO_RAD;
     const double roll_rad = params(1) * nConstants::DEG_TO_RAD;
@@ -188,7 +196,6 @@ double groundheight_pitch_roll(
     const double x = input(0);
     const double y = input(1);
     const double z = input(2);
-    const double h = input(3);
 
     Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
     Eigen::AngleAxisd yawAngle(0, Eigen::Vector3d::UnitZ());
@@ -199,25 +206,20 @@ double groundheight_pitch_roll(
 
     const auto& rZ = rotationMatrix.col(2);
 
-    double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+    double h = x * rZ[0] + y * rZ[1] + z * rZ[2];
 
-    const double temp = c - h;
-
-    return temp * temp;
+    return h;
 }
 
+
 //-----------------------------------------------------------------------------
-double groundheight_pitch(
-    const input_vector& input,
-    const pitch_vector& params
-)
+double groundheight_pitch(const input_three_variables& input, const pitch_vector& params)
 {
     const double pitch_rad = params(0) * nConstants::DEG_TO_RAD;
 
     const double x = input(0);
     const double y = input(1);
     const double z = input(2);
-    const double h = input(3);
 
     Eigen::AngleAxisd rollAngle(0, Eigen::Vector3d::UnitX());
     Eigen::AngleAxisd yawAngle(0, Eigen::Vector3d::UnitZ());
@@ -228,25 +230,19 @@ double groundheight_pitch(
 
     const auto& rZ = rotationMatrix.col(2);
 
-    double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+    double h = x * rZ[0] + y * rZ[1] + z * rZ[2];
 
-    const double temp = c - h;
-
-    return temp * temp;
+    return h;
 }
 
 //-----------------------------------------------------------------------------
-double groundheight_roll(
-    const input_vector& input,
-    const roll_vector& params
-)
+double groundheight_roll(const input_three_variables& input, const roll_vector& params)
 {
     const double roll_rad = params(0) * nConstants::DEG_TO_RAD;
 
     const double x = input(0);
     const double y = input(1);
     const double z = input(2);
-    const double h = input(3);
 
     Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
     Eigen::AngleAxisd yawAngle(0, Eigen::Vector3d::UnitZ());
@@ -257,27 +253,27 @@ double groundheight_roll(
 
     const auto& rZ = rotationMatrix.col(2);
 
-    double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+    double h = x * rZ[0] + y * rZ[1] + z * rZ[2];
 
-    const double temp = c - h;
-
-    return temp * temp;
+    return h;
 }
 
 // This function is the "residual" for a least squares problem.   It takes an input/output
 // pair and compares it to the output of our model and returns the amount of error.  The idea
 // is to find the set of parameters which makes the residual small on all the data pairs.
+
 double residual_pitch_roll(
-    const std::pair<input_vector, double>& data,
+    const std::pair<input_three_variables, double>& data,
     const parameter_vector& params
 )
 {
     return groundheight_pitch_roll(data.first, params) - data.second;
 }
 
+
 //-----------------------------------------------------------------------------
 double residual_pitch(
-    const std::pair<input_vector, double>& data,
+    const std::pair<input_three_variables, double>& data,
     const pitch_vector& params
 )
 {
@@ -286,7 +282,7 @@ double residual_pitch(
 
 //-----------------------------------------------------------------------------
 double residual_roll(
-    const std::pair<input_vector, double>& data,
+    const std::pair<input_three_variables, double>& data,
     const roll_vector& params
 )
 {
@@ -302,9 +298,9 @@ sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc)
     parameter_vector angles;
     angles = 1;
 
-    std::vector<std::pair<input_vector, double>> samples;
+    std::vector<std::pair<input_three_variables, double>> samples;
 
-    input_vector input;
+    input_three_variables input;
 
     auto centroid = pc.centroid();
 
@@ -313,17 +309,15 @@ sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc)
         input(0) = point.x_mm - centroid.x_mm;
         input(1) = point.y_mm - centroid.y_mm;
         input(2) = point.z_mm - centroid.z_mm;
-        input(3) = point.h_mm - centroid.z_mm;
 
-        // Note: we only use the absolute value function because we want
-        // a large residue on the first pass to force the fitting routine
-        const double output = std::abs(point.z_mm - point.h_mm);
+        // Output is the target value we are fitting for
+        const double output = point.h_mm - centroid.z_mm;
 
         // save the pair
         samples.push_back(std::make_pair(input, output));
     }
 
-    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50)/*.be_verbose() */ ,
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50)/*.be_verbose() */,
         residual_pitch_roll,
         derivative(residual_pitch_roll),
         samples,
@@ -340,6 +334,7 @@ sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc)
 }
 
 
+//-----------------------------------------------------------------------------
 sPitch_t fitPointCloudPitchToGroundMesh_deg(const cRappPointCloud& pc)
 {
     using namespace dlib;
@@ -347,9 +342,9 @@ sPitch_t fitPointCloudPitchToGroundMesh_deg(const cRappPointCloud& pc)
     pitch_vector pitch;
     pitch = 1;
 
-    std::vector<std::pair<input_vector, double>> samples;
+    std::vector<std::pair<input_three_variables, double>> samples;
 
-    input_vector input;
+    input_three_variables input;
 
     auto centroid = pc.centroid();
 
@@ -358,17 +353,15 @@ sPitch_t fitPointCloudPitchToGroundMesh_deg(const cRappPointCloud& pc)
         input(0) = point.x_mm - centroid.x_mm;
         input(1) = point.y_mm - centroid.y_mm;
         input(2) = point.z_mm - centroid.z_mm;
-        input(3) = point.h_mm - centroid.z_mm;
 
-        // Note: we only use the absolute value function because we want
-        // a large residue on the first pass to force the fitting routine
-        const double output = std::abs(point.z_mm - point.h_mm);
+        // Output is the target value we are fitting for
+        const double output = point.h_mm - centroid.z_mm;
 
         // save the pair
         samples.push_back(std::make_pair(input, output));
     }
 
-    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50).be_verbose(),
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50)/*.be_verbose()*/,
         residual_pitch,
         derivative(residual_pitch),
         samples,
@@ -392,9 +385,9 @@ sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc)
     roll_vector roll;
     roll = 1;
 
-    std::vector<std::pair<input_vector, double>> samples;
+    std::vector<std::pair<input_three_variables, double>> samples;
 
-    input_vector input;
+    input_three_variables input;
 
     auto centroid = pc.centroid();
 
@@ -403,17 +396,15 @@ sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc)
         input(0) = point.x_mm - centroid.x_mm;
         input(1) = point.y_mm - centroid.y_mm;
         input(2) = point.z_mm - centroid.z_mm;
-        input(3) = point.h_mm - centroid.z_mm;
 
-        // Note: we only use the absolute value function because we want
-        // a large residue on the first pass to force the fitting routine
-        const double output = std::abs(point.z_mm - point.h_mm);
+        // Output is the target value we are fitting for
+        const double output = point.h_mm - centroid.z_mm;
 
         // save the pair
         samples.push_back(std::make_pair(input, output));
     }
 
-    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50).be_verbose(),
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50)/*.be_verbose()*/,
         residual_roll,
         derivative(residual_roll),
         samples,
@@ -452,11 +443,11 @@ sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc)
 }
 
 //-----------------------------------------------------------------------------
-sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threashold_pct)
+sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threshold_pct)
 {
     auto data = pc.data();
 
-    int32_t z_threashold = static_cast<int32_t>((pc.maxZ_mm() - pc.minZ_mm()) * (threashold_pct / 100.0) + pc.minZ_mm());
+    int32_t z_threshold = threshold(pc.minZ_mm(), pc.maxZ_mm(), threshold_pct);
 
     std::sort(data.begin(), data.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
         {
@@ -473,7 +464,7 @@ sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double thr
         if (point.h_mm == rfm::INVALID_HEIGHT)
             continue;
 
-        if (point.z_mm > z_threashold)
+        if (point.z_mm > z_threshold)
             break;
 
         offset += (point.h_mm - point.z_mm);
@@ -558,22 +549,15 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc)
 }
 
 //-----------------------------------------------------------------------------
-sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, double threashold_pct)
+sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, double threshold_pct)
 {
     auto data = pc.data();
 
-    int32_t z_threashold = static_cast<int32_t>((pc.maxZ_mm() - pc.minZ_mm()) * (threashold_pct / 100.0) + pc.minZ_mm());
+    int32_t z_threshold = threshold(pc.minZ_mm(), pc.maxZ_mm(), threshold_pct);
 
-    std::sort(data.begin(), data.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
+    auto end_it = std::remove_if(data.begin(), data.end(), [z_threshold](rfm::rappPoint2_t a)
         {
-            if (a.z_mm < b.z_mm) return true;
-
-            return false;
-        });
-
-    auto end_it = std::remove_if(data.begin(), data.end(), [z_threashold](rfm::rappPoint2_t a)
-        {
-            return (a.z_mm > z_threashold) || (a.h_mm == rfm::INVALID_HEIGHT);
+            return (a.z_mm > z_threshold) || (a.h_mm == rfm::INVALID_HEIGHT);
         });
 
     data.erase(end_it, data.end());
@@ -590,7 +574,7 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, dou
 }
 
 //-----------------------------------------------------------------------------
-sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, double threashold_pct)
+sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, double threshold_pct)
 {
     const int NUM_X_GRIDS = 10;
     const int NUM_Y_GRIDS = 10;
@@ -657,7 +641,7 @@ sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, d
             maxZ_mm = std::max(maxZ_mm, point.z_mm);
         }
 
-        int32_t z_threashold = static_cast<int32_t>((maxZ_mm - minZ_mm) * (threashold_pct / 100.0) + minZ_mm);
+        int32_t z_threshold = threshold(minZ_mm, maxZ_mm, threshold_pct);
 
         std::sort(block.begin(), block.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
             {
@@ -671,7 +655,7 @@ sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, d
             if (point.h_mm == rfm::INVALID_HEIGHT)
                 continue;
 
-            if (point.z_mm > z_threashold)
+            if (point.z_mm > z_threshold)
                 break;
 
             offset += (point.h_mm - point.z_mm);
@@ -688,7 +672,7 @@ sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, d
 }
 
 //-----------------------------------------------------------------------------
-sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud& pc, double threashold_pct)
+sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud& pc, double threshold_pct)
 {
     const int NUM_X_GRIDS = 10;
     const int NUM_Y_GRIDS = 10;
@@ -751,18 +735,11 @@ sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud
             maxZ_mm = std::max(maxZ_mm, point.z_mm);
         }
 
-        int32_t z_threashold = static_cast<int32_t>((maxZ_mm - minZ_mm) * (threashold_pct / 100.0) + minZ_mm);
+        int32_t z_threshold = threshold(minZ_mm, maxZ_mm, threshold_pct);
 
-        std::sort(block.begin(), block.end(), [](rfm::rappPoint2_t a, rfm::rappPoint2_t b)
+        auto end_it = std::remove_if(block.begin(), block.end(), [z_threshold](rfm::rappPoint2_t a)
             {
-                if (a.z_mm < b.z_mm) return true;
-
-                return false;
-            });
-
-        auto end_it = std::remove_if(block.begin(), block.end(), [z_threashold](rfm::rappPoint2_t a)
-            {
-                return (a.z_mm > z_threashold) || (a.h_mm == rfm::INVALID_HEIGHT);
+                return (a.z_mm > z_threshold) || (a.h_mm == rfm::INVALID_HEIGHT);
             });
 
         block.erase(end_it, block.end());
