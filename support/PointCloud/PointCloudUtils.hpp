@@ -96,7 +96,6 @@ std::vector<POINT> pointcloud::trim_outside(const std::vector<POINT>& pc, pointc
 }
 
 
-
 template<typename POINT>
 std::vector<POINT> pointcloud::sliceAtGivenX(std::vector<POINT> pc, double x_mm, double tolerance_mm)
 {
@@ -104,10 +103,10 @@ std::vector<POINT> pointcloud::sliceAtGivenX(std::vector<POINT> pc, double x_mm,
 	if (pc.empty())
 		return result;
 
-	std::sort(pc.begin(), pc.end(), [](POINT a, POINT b) { return a.x_mm < b.x_mm; });
+//	std::sort(pc.begin(), pc.end(), [](POINT a, POINT b) { return a.x_mm < b.x_mm; });
 
 	double x_min = x_mm - tolerance_mm;
-	double x_max = x_mm - tolerance_mm;
+	double x_max = x_mm + tolerance_mm;
 
 	std::copy_if(pc.begin(), pc.end(), std::back_inserter(result), [x_min, x_max](POINT a)
 		{ return (x_min < a.x_mm) && (a.x_mm < x_max); });
