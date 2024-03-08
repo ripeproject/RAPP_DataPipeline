@@ -1,6 +1,13 @@
 
 #include "PlotBoundaries.hpp"
 
+#include "StringUtils.hpp"
+
+#include <nlohmann/json.hpp>
+
+#include <fstream>
+#include <stdexcept>
+
 
 cPlotBoundary::cPlotBoundary()
 {}
@@ -67,3 +74,41 @@ cPlotBoundaries::~cPlotBoundaries()
 {
 }
 
+void cPlotBoundaries::clear()
+{
+	mPlotBoundaries.clear();
+}
+
+bool cPlotBoundaries::empty() const
+{
+	return mPlotBoundaries.empty();
+}
+
+bool cPlotBoundaries::load(const std::string& filename)
+{
+	std::ifstream in;
+	in.open(filename);
+	if (!in.is_open())
+		return false;
+
+	nlohmann::json configDoc;
+	try
+	{
+		in >> configDoc;
+	}
+	catch (const nlohmann::json::parse_error& e)
+	{
+		auto msg = e.what();
+		return false;
+	}
+	catch (const std::exception& e)
+	{
+		return false;
+	}
+
+	if (configDoc.contains("scans"))
+	{
+		auto scans = configDoc["scans"];
+	}
+
+}

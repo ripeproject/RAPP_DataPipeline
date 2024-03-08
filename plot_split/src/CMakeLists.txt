@@ -100,13 +100,18 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE "../support/PointCloud")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
+	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
 	target_link_libraries(gui_app PRIVATE nlohmann_json)
+	target_link_libraries(gui_app PRIVATE pointcloud_io)
+	target_link_libraries(gui_app PRIVATE string_utils)
+	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

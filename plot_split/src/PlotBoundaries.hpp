@@ -3,6 +3,7 @@
 
 #include <utility>
 #include <vector>
+#include <string>
 
 
 class cPlotBoundary
@@ -25,6 +26,8 @@ public:
 	bool inPlot(double southPos_m, double eastPos_m) const;
 
 protected:
+	std::string mPlotName;
+
 	double mEastBoundary_m = 0.0;
 	double mWestBoundary_m = 0.0;
 
@@ -38,6 +41,11 @@ class cPlotBoundaries
 public:
 	cPlotBoundaries();
 	virtual ~cPlotBoundaries();
+
+	void clear();
+	bool empty() const;
+
+	bool load(const std::string& filename);
 
 protected:
 	std::vector<cPlotBoundary> mPlotBoundaries;

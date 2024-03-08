@@ -8,6 +8,8 @@
 	#include <wx/wx.h>
 #endif
 
+#include "../wxCustomWidgets/FileProgressCtrl.hpp"
+
 #include <cbdf/BlockDataFile.hpp>
 
 // Define a new frame type: this is going to be our main frame
@@ -27,7 +29,7 @@ protected:
 	void OnValidateSrc(wxFocusEvent& event);
 	void OnSrcBrowse(wxCommandEvent& event);
 	void OnDstBrowse(wxCommandEvent& event);
-
+	void OnCfgBrowse(wxCommandEvent& event);
 
 private:
 	void startDataProcessing();
@@ -42,7 +44,12 @@ private:
 	wxTextCtrl* mpLoadDstFile = nullptr;
 	wxButton* mpLoadDstButton = nullptr;
 
-	wxButton* mpConvertButton = nullptr;
+	wxTextCtrl* mpLoadConfigFile = nullptr;
+	wxButton* mpLoadConfigButton = nullptr;
+
+	wxButton* mpSplitButton = nullptr;
+
+	cFileProgressCtrl* mpProgressCtrl = nullptr;
 
 	wxTextCtrl* mpLogCtrl = nullptr;
 	wxLog* mpOriginalLog = nullptr;
