@@ -19,6 +19,15 @@ namespace nMathUtils
 	double wrap_neg_180_to_180(double angle_deg);
 
 	template<typename T>
+	T bound(T value, T lower_bound, T upper_bound)
+	{
+		if (value > upper_bound) return upper_bound;
+		if (value < lower_bound) return lower_bound;
+
+		return value;
+	}
+
+	template<typename T>
 	T threshold(T min, T max, double level_pct)
 	{
 		if (level_pct > 100.0) return max;
