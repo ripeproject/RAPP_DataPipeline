@@ -5,6 +5,8 @@ set(PLOT_SPLIT_COMMON_FILES
 
 	ParserExceptions.hpp
 
+	datatypes.hpp
+
 	PlotBoundaries.hpp
 	PlotBoundaries.cpp
 
@@ -38,6 +40,8 @@ target_include_directories(console_app PRIVATE "../support/PointCloud")
 target_include_directories(console_app PRIVATE "../support/ProcessingInfo")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/Utilities")
+target_include_directories(console_app PRIVATE "../support/MathUtils")
+target_include_directories(console_app PRIVATE "../support/common")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
@@ -46,6 +50,7 @@ target_link_libraries(console_app PRIVATE pointcloud_io)
 target_link_libraries(console_app PRIVATE processing_info)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
+target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE fmt::fmt)
 
 #
@@ -103,6 +108,8 @@ if(wxWidgets_FOUND)
 	target_include_directories(gui_app PRIVATE "../support/PointCloud")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
+	target_include_directories(gui_app PRIVATE "../support/MathUtils")
+	target_include_directories(gui_app PRIVATE "../support/common")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
@@ -111,6 +118,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE nlohmann_json)
 	target_link_libraries(gui_app PRIVATE pointcloud_io)
 	target_link_libraries(gui_app PRIVATE string_utils)
+	target_link_libraries(gui_app PRIVATE math_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 
 	#
