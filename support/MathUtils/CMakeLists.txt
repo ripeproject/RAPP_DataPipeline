@@ -94,9 +94,7 @@ PRIVATE
 
 target_include_directories(math_utils PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
-target_include_directories(math_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
-
-#target_link_libraries(string_utils PRIVATE cbdf::cbdf)
+target_include_directories(pointcloud_io PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
