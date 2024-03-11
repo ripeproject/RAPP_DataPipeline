@@ -13,12 +13,6 @@
 class cPlotBoundary
 {
 public:
-	cPlotBoundary(const std::string& name, rfm::rappPoint2D_t p1,
-		rfm::rappPoint2D_t p2, rfm::rappPoint2D_t p3, rfm::rappPoint2D_t p4);
-
-	cPlotBoundary(const std::string& name, 
-		const std::array<rfm::rappPoint2D_t, 4>& points);
-
 	~cPlotBoundary() = default;
 
 	const std::string& getPlotName() const;
@@ -37,11 +31,18 @@ public:
 	bool inPlot(rfm::rappPoint2D_t point) const;
 	bool inPlot(rfm::rappPoint_t point) const;
 
+protected:
+	cPlotBoundary();
+
+	bool load(const nlohmann::json& plot_info);
+
 private:
 	void initialize(std::array<rfm::rappPoint2D_t, 4> points);
 
 protected:
 	std::string mPlotName;
+	std::string mEvent;
+	std::string mEventDescription;
 
 	std::int32_t mEastBoundary_mm = 0;
 	std::int32_t mWestBoundary_mm = 0;
@@ -65,6 +66,8 @@ protected:
 	rfm::rappPoint2D_t mNorthWestCorner;
 	rfm::rappPoint2D_t mSouthEastCorner;
 	rfm::rappPoint2D_t mSouthWestCorner;
+
+	friend class cPlotBoundaries;
 };
 
 
@@ -72,7 +75,7 @@ class cPlotBoundaries
 {
 public:
 	cPlotBoundaries();
-	virtual ~cPlotBoundaries();
+	~cPlotBoundaries();
 
 	void clear();
 	bool empty() const;
@@ -93,5 +96,5 @@ protected:
 	double mNorthBoundary_m = 0.0;
 	double mSouthBoundary_m = 0.0;
 
-	std::vector<cPlotBoundary> mPlotBoundaries;
+	std::vector<cPlotBoundary*> mPlotBoundaries;
 };

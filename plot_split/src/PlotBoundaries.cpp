@@ -11,21 +11,50 @@
 #include <stdexcept>
 
 
-cPlotBoundary::cPlotBoundary(const std::string& name, rfm::rappPoint2D_t p1,
-	rfm::rappPoint2D_t p2, rfm::rappPoint2D_t p3, rfm::rappPoint2D_t p4)
-	:
-	mPlotName(name)
-{
-	std::array<rfm::rappPoint2D_t, 4> points = { p1, p2, p3, p4 };
-	initialize(points);
-}
+cPlotBoundary::cPlotBoundary()
+{}
 
-cPlotBoundary::cPlotBoundary(const std::string& name,
-	const std::array<rfm::rappPoint2D_t, 4>& points)
-	:
-	mPlotName(name)
+bool cPlotBoundary::load(const nlohmann::json& plot_info)
 {
+	mPlotName = plot_info["name"];
+
+	if (plot_info.contains("event"))
+		mEvent = plot_info["event"];
+
+	auto corners = plot_info["corners"];
+
+	if (corners.size() != 4)
+	{
+		return false;
+	}
+
+	std::array<rfm::rappPoint2D_t, 4> points;
+
+	int i = 0;
+	for (auto corner : corners)
+	{
+		rfm::rappPoint2D_t p;
+
+		if (corner.contains("x (m)"))
+		{
+			p.x_mm = corner["x (m)"].get<double>() * nConstants::M_TO_MM;
+		}
+		else
+			p.x_mm = corner["x (mm)"];
+
+		if (corner.contains("y (m)"))
+		{
+			p.y_mm = corner["y (m)"].get<double>() * nConstants::M_TO_MM;
+		}
+		else
+			p.y_mm = corner["y (mm)"];
+
+		points[i++] = p;
+	}
+
 	initialize(points);
+
+	return true;
 }
 
 void cPlotBoundary::initialize(std::array<rfm::rappPoint2D_t, 4> points)
@@ -176,15 +205,21 @@ bool cPlotBoundary::inPlot(rfm::rappPoint_t point) const
 
 
 cPlotBoundaries::cPlotBoundaries()
-{
-}
+{}
 
 cPlotBoundaries::~cPlotBoundaries()
 {
+	for (auto plot : mPlotBoundaries)
+		delete plot;
+
+	mPlotBoundaries.clear();
 }
 
 void cPlotBoundaries::clear()
 {
+	for (auto plot : mPlotBoundaries)
+		delete plot;
+
 	mPlotBoundaries.clear();
 }
 
@@ -222,63 +257,33 @@ bool cPlotBoundaries::load(const nlohmann::json& plot_info)
 	auto plots = plot_info["plots"];
 	for (auto plot : plots)
 	{
-		std::string name = plot["name"];
+		cPlotBoundary* pPlot = new cPlotBoundary();
 
-		auto corners = plot["corners"];
-
-		if (corners.size() != 4)
-		{
-			return false;
-		}
-
-		std::array<rfm::rappPoint2D_t, 4> points;
-
-		int i = 0;
-		for (auto corner : corners)
-		{
-			rfm::rappPoint2D_t p;
-
-			if (corner.contains("x (m)"))
-			{
-				p.x_mm = corner["x (m)"].get<double>() * nConstants::M_TO_MM;
-			}
-			else
-				p.x_mm = corner["x (mm)"];
-
-			if (corner.contains("y (m)"))
-			{
-				p.y_mm = corner["y (m)"].get<double>() * nConstants::M_TO_MM;
-			}
-			else
-				p.y_mm = corner["y (mm)"];
-
-			points[i++] = p;
-		}
-
-		mPlotBoundaries.emplace_back(name, points);
+		if (pPlot->load(plot))
+			mPlotBoundaries.push_back(pPlot);
 	}
 
 	if (mPlotBoundaries.empty())
 		return false;
 
-	mEastBoundary_m = mPlotBoundaries[0].getEastBoundary_m();
-	mWestBoundary_m = mPlotBoundaries[0].getWestBoundary_m();
-	mNorthBoundary_m = mPlotBoundaries[0].getNorthBoundary_m();
-	mSouthBoundary_m = mPlotBoundaries[0].getSouthBoundary_m();
+	mEastBoundary_m = mPlotBoundaries[0]->getEastBoundary_m();
+	mWestBoundary_m = mPlotBoundaries[0]->getWestBoundary_m();
+	mNorthBoundary_m = mPlotBoundaries[0]->getNorthBoundary_m();
+	mSouthBoundary_m = mPlotBoundaries[0]->getSouthBoundary_m();
 
 	for (int i = 1; i < mPlotBoundaries.size(); ++i)
 	{
-		if (mPlotBoundaries[i].getNorthBoundary_m() < mNorthBoundary_m)
-			mNorthBoundary_m = mPlotBoundaries[i].getNorthBoundary_m();
+		if (mPlotBoundaries[i]->getNorthBoundary_m() < mNorthBoundary_m)
+			mNorthBoundary_m = mPlotBoundaries[i]->getNorthBoundary_m();
 
-		if (mPlotBoundaries[i].getWestBoundary_m() < mWestBoundary_m)
-			mWestBoundary_m = mPlotBoundaries[i].getWestBoundary_m();
+		if (mPlotBoundaries[i]->getWestBoundary_m() < mWestBoundary_m)
+			mWestBoundary_m = mPlotBoundaries[i]->getWestBoundary_m();
 
-		if (mPlotBoundaries[i].getSouthBoundary_m() > mSouthBoundary_m)
-			mSouthBoundary_m = mPlotBoundaries[i].getSouthBoundary_m();
+		if (mPlotBoundaries[i]->getSouthBoundary_m() > mSouthBoundary_m)
+			mSouthBoundary_m = mPlotBoundaries[i]->getSouthBoundary_m();
 
-		if (mPlotBoundaries[i].getEastBoundary_m() > mEastBoundary_m)
-			mEastBoundary_m = mPlotBoundaries[i].getEastBoundary_m();
+		if (mPlotBoundaries[i]->getEastBoundary_m() > mEastBoundary_m)
+			mEastBoundary_m = mPlotBoundaries[i]->getEastBoundary_m();
 	}
 
 	return true;
