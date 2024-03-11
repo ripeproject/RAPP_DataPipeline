@@ -1,6 +1,7 @@
 
 #include "MainWindow.hpp"
 
+#include "ConfigFileData.hpp"
 #include "PlotBoundaries.hpp"
 
 #include <wx/aui/framemanager.h>
@@ -209,9 +210,10 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 	std::string config_file = dlg.GetPath().ToStdString();
 	mpLoadConfigFile->SetValue(config_file);
 
-	std::unique_ptr<cPlotBoundaries> pBoundaries = std::make_unique<cPlotBoundaries>();
+	
+	std::unique_ptr<cConfigFileData> pBoundaries = std::make_unique<cConfigFileData>(config_file);
 
-	pBoundaries->load(config_file);
+	pBoundaries->load();
 }
 
 /*

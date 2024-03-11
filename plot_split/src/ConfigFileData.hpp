@@ -27,5 +27,5 @@ private:
 	std::string mConfigFilename;
 
 
-	std::map<std::string, cPlotBoundaries> mPlots;
+	std::map<std::string, const cPlotBoundaries*> mPlots;
 };

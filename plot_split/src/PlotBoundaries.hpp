@@ -13,8 +13,15 @@
 class cPlotBoundary
 {
 public:
-	cPlotBoundary();
-	virtual ~cPlotBoundary();
+	cPlotBoundary(const std::string& name, rfm::rappPoint2D_t p1,
+		rfm::rappPoint2D_t p2, rfm::rappPoint2D_t p3, rfm::rappPoint2D_t p4);
+
+	cPlotBoundary(const std::string& name, 
+		const std::array<rfm::rappPoint2D_t, 4>& points);
+
+	~cPlotBoundary() = default;
+
+	const std::string& getPlotName() const;
 
 	rfm::rappPoint2D_t getNorthEastCorner() const;
 	rfm::rappPoint2D_t getNorthWestCorner() const;
@@ -30,14 +37,29 @@ public:
 	bool inPlot(rfm::rappPoint2D_t point) const;
 	bool inPlot(rfm::rappPoint_t point) const;
 
+private:
+	void initialize(std::array<rfm::rappPoint2D_t, 4> points);
+
 protected:
 	std::string mPlotName;
 
-	double mEastBoundary_mm = 0.0;
-	double mWestBoundary_mm = 0.0;
+	std::int32_t mEastBoundary_mm = 0;
+	std::int32_t mWestBoundary_mm = 0;
 
-	double mNorthBoundary_mm = 0.0;
-	double mSouthBoundary_mm = 0.0;
+	std::int32_t mNorthBoundary_mm = 0;
+	std::int32_t mSouthBoundary_mm = 0;
+
+	struct sLine_t
+	{
+		double m = 0.0;
+		double b = 0.0;
+	};
+
+	sLine_t mNorthSide;
+	sLine_t mSouthSide;
+
+	sLine_t mWestSide;
+	sLine_t mEastSide;
 
 	rfm::rappPoint2D_t mNorthEastCorner;
 	rfm::rappPoint2D_t mNorthWestCorner;
