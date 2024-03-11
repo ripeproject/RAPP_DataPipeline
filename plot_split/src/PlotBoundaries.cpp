@@ -1,11 +1,11 @@
 
 #include "PlotBoundaries.hpp"
 
+#include "Constants.hpp"
 #include "StringUtils.hpp"
 
 #include <nlohmann/json.hpp>
 
-#include <fstream>
 #include <stdexcept>
 
 
@@ -15,54 +15,64 @@ cPlotBoundary::cPlotBoundary()
 cPlotBoundary::~cPlotBoundary()
 {}
 
-std::pair<double, double> cPlotBoundary::getNorthEastCorner()
+rfm::rappPoint2D_t cPlotBoundary::getNorthEastCorner() const
 {
-	return std::make_pair(mNorthBoundary_m, mEastBoundary_m);
+	return mNorthEastCorner;
 }
 
-std::pair<double, double> cPlotBoundary::getNorthWestCorner()
+rfm::rappPoint2D_t cPlotBoundary::getNorthWestCorner() const
 {
-	return std::make_pair(mNorthBoundary_m, mWestBoundary_m);
+	return mNorthWestCorner;
 }
 
-std::pair<double, double> cPlotBoundary::getSouthEastCorner()
+rfm::rappPoint2D_t cPlotBoundary::getSouthEastCorner() const
 {
-	return std::make_pair(mSouthBoundary_m, mEastBoundary_m);
+	return mSouthEastCorner;
 }
 
-std::pair<double, double> cPlotBoundary::getSouthWestCorner()
+rfm::rappPoint2D_t cPlotBoundary::getSouthWestCorner() const
 {
-	return std::make_pair(mSouthBoundary_m, mWestBoundary_m);
+	return mSouthWestCorner;
 }
 
-double cPlotBoundary::getEastBoundary_m() 
+double cPlotBoundary::getEastBoundary_m() const
 {
-	return mEastBoundary_m;
-}
-double cPlotBoundary::getWestBoundary_m() 
-{
-	return mWestBoundary_m;
+	return mEastBoundary_mm * nConstants::MM_TO_M;
 }
 
-double cPlotBoundary::getNorthBoundary_m()
+double cPlotBoundary::getWestBoundary_m() const
 {
-	return mNorthBoundary_m;
+	return mWestBoundary_mm * nConstants::MM_TO_M;
 }
 
-double cPlotBoundary::getSouthBoundary_m()
+double cPlotBoundary::getNorthBoundary_m() const
 {
-	return mSouthBoundary_m;
+	return mNorthBoundary_mm * nConstants::MM_TO_M;
 }
 
-bool cPlotBoundary::inPlot(double southPos_m, double eastPos_m) const
+double cPlotBoundary::getSouthBoundary_m() const
 {
-	if ((southPos_m > mSouthBoundary_m) || (southPos_m < mNorthBoundary_m))
+	return mSouthBoundary_mm * nConstants::MM_TO_M;
+}
+
+bool cPlotBoundary::inPlot(rfm::rappPoint2D_t point) const
+{
+	if ((point.x_mm < mNorthBoundary_mm) || (point.x_mm > mSouthBoundary_mm))
 		return false;
 
-	if ((eastPos_m > mEastBoundary_m) || (eastPos_m < mWestBoundary_m))
+	if ((point.y_mm > mEastBoundary_mm) || (point.y_mm < mWestBoundary_mm))
 		return false;
 
 	return true;
+}
+
+bool cPlotBoundary::inPlot(rfm::rappPoint_t point) const
+{
+	rfm::rappPoint2D_t p;
+	p.x_mm = point.x_mm;
+	p.y_mm = point.y_mm;
+
+	return inPlot(p);
 }
 
 
@@ -84,31 +94,31 @@ bool cPlotBoundaries::empty() const
 	return mPlotBoundaries.empty();
 }
 
-bool cPlotBoundaries::load(const std::string& filename)
+double cPlotBoundaries::getEastBoundary_m()
 {
-	std::ifstream in;
-	in.open(filename);
-	if (!in.is_open())
-		return false;
+	return mEastBoundary_m;
+}
+double cPlotBoundaries::getWestBoundary_m()
+{
+	return mWestBoundary_m;
+}
 
-	nlohmann::json configDoc;
-	try
+double cPlotBoundaries::getNorthBoundary_m()
+{
+	return mNorthBoundary_m;
+}
+
+double cPlotBoundaries::getSouthBoundary_m()
+{
+	return mSouthBoundary_m;
+}
+
+bool cPlotBoundaries::load(const nlohmann::json& plot_info)
+{
+	if (plot_info.contains("scans"))
 	{
-		in >> configDoc;
-	}
-	catch (const nlohmann::json::parse_error& e)
-	{
-		auto msg = e.what();
-		return false;
-	}
-	catch (const std::exception& e)
-	{
-		return false;
+		auto scans = plot_info["scans"];
 	}
 
-	if (configDoc.contains("scans"))
-	{
-		auto scans = configDoc["scans"];
-	}
-
+	return true;
 }

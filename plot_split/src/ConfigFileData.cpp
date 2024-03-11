@@ -22,10 +22,10 @@ cConfigFileData::~cConfigFileData()
 
 bool cConfigFileData::empty() const
 {
-	return false;
+	return mPlots.empty();
 }
 
-bool cConfigFileData::loadDefaults()
+bool cConfigFileData::load()
 {
 	using namespace nStringUtils;
 
