@@ -16,10 +16,21 @@ cPlotBoundary::cPlotBoundary()
 
 bool cPlotBoundary::load(const nlohmann::json& plot_info)
 {
-	mPlotName = plot_info["name"];
+	mPlotNumber = plot_info["number"];
+
+	if (plot_info.contains("name"))
+		mPlotName = plot_info["name"];
+	else
+	{
+		mPlotName = "Plot ";
+		mPlotName += std::to_string(mPlotNumber);
+	}
 
 	if (plot_info.contains("event"))
 		mEvent = plot_info["event"];
+
+	if (plot_info.contains("event_description"))
+		mEventDescription = plot_info["event_description"];
 
 	auto corners = plot_info["corners"];
 
@@ -114,9 +125,24 @@ void cPlotBoundary::initialize(std::array<rfm::rappPoint2D_t, 4> points)
 	}
 }
 
+int32_t cPlotBoundary::getPlotNumber() const
+{
+	return mPlotNumber;
+}
+
 const std::string& cPlotBoundary::getPlotName() const
 {
 	return mPlotName;
+}
+
+const std::string& cPlotBoundary::getEvent() const
+{
+	return mEvent;
+}
+
+const std::string& cPlotBoundary::getEventDescription() const
+{
+	return mEventDescription;
 }
 
 rfm::rappPoint2D_t cPlotBoundary::getNorthEastCorner() const
@@ -157,6 +183,19 @@ double cPlotBoundary::getNorthBoundary_m() const
 double cPlotBoundary::getSouthBoundary_m() const
 {
 	return mSouthBoundary_mm * nConstants::MM_TO_M;
+}
+
+
+pointcloud::sBoundingBox_t cPlotBoundary::getBoundingBox() const
+{
+	pointcloud::sBoundingBox_t box;
+
+	box.points[0] = { getNorthBoundary_m(), getWestBoundary_m()};
+	box.points[1] = { getSouthBoundary_m(), getWestBoundary_m()};
+	box.points[2] = { getSouthBoundary_m(), getEastBoundary_m()};
+	box.points[3] = { getNorthBoundary_m(), getEastBoundary_m()};
+
+	return box;
 }
 
 bool cPlotBoundary::inPlot(rfm::rappPoint2D_t point) const
@@ -228,6 +267,16 @@ bool cPlotBoundaries::empty() const
 	return mPlotBoundaries.empty();
 }
 
+std::size_t cPlotBoundaries::size() const
+{
+	return mPlotBoundaries.size();
+}
+
+const std::vector<cPlotBoundary*>& cPlotBoundaries::getPlots() const
+{
+	return mPlotBoundaries;
+}
+
 double cPlotBoundaries::getEastBoundary_m()
 {
 	return mEastBoundary_m;
@@ -245,6 +294,18 @@ double cPlotBoundaries::getNorthBoundary_m()
 double cPlotBoundaries::getSouthBoundary_m()
 {
 	return mSouthBoundary_m;
+}
+
+pointcloud::sBoundingBox_t cPlotBoundaries::getBoundingBox() const
+{
+	pointcloud::sBoundingBox_t box;
+
+	box.points[0] = { mNorthBoundary_m, mWestBoundary_m };
+	box.points[1] = { mSouthBoundary_m, mWestBoundary_m };
+	box.points[2] = { mSouthBoundary_m, mEastBoundary_m };
+	box.points[3] = { mNorthBoundary_m, mEastBoundary_m };
+
+	return box;
 }
 
 bool cPlotBoundaries::load(const nlohmann::json& plot_info)

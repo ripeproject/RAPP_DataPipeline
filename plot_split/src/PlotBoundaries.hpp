@@ -3,19 +3,24 @@
 
 #include "datatypes.hpp"
 
+#include "PointCloudTypes.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <utility>
 #include <vector>
 #include <string>
+#include <memory>
 
 
 class cPlotBoundary
 {
 public:
-	~cPlotBoundary() = default;
+	int32_t getPlotNumber() const;
 
 	const std::string& getPlotName() const;
+	const std::string& getEvent() const;
+	const std::string& getEventDescription() const;
 
 	rfm::rappPoint2D_t getNorthEastCorner() const;
 	rfm::rappPoint2D_t getNorthWestCorner() const;
@@ -28,11 +33,14 @@ public:
 	double getNorthBoundary_m() const;
 	double getSouthBoundary_m() const;
 
+	pointcloud::sBoundingBox_t getBoundingBox() const;
+
 	bool inPlot(rfm::rappPoint2D_t point) const;
 	bool inPlot(rfm::rappPoint_t point) const;
 
 protected:
 	cPlotBoundary();
+	~cPlotBoundary() = default;
 
 	bool load(const nlohmann::json& plot_info);
 
@@ -40,6 +48,7 @@ private:
 	void initialize(std::array<rfm::rappPoint2D_t, 4> points);
 
 protected:
+	int32_t		mPlotNumber = 0;
 	std::string mPlotName;
 	std::string mEvent;
 	std::string mEventDescription;
@@ -80,11 +89,16 @@ public:
 	void clear();
 	bool empty() const;
 
+	std::size_t size() const;
+	const std::vector<cPlotBoundary*>& getPlots() const;
+
 	double getEastBoundary_m();
 	double getWestBoundary_m();
 
 	double getNorthBoundary_m();
 	double getSouthBoundary_m();
+
+	pointcloud::sBoundingBox_t getBoundingBox() const;
 
 	bool load(const nlohmann::json& plot_info);
 
