@@ -6,6 +6,7 @@
 #include <wx/aui/auibook.h>
 #include <wx/aboutdlg.h>
 #include <wx/thread.h>
+#include <wx/display.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -96,8 +97,18 @@ cMainFrame::cMainFrame()
 	SetBackgroundStyle(wxBG_STYLE_SYSTEM);
 
 	auto size = GetBestSize();
-	size.IncBy(50);
+	size.IncBy(350);
 	size.SetHeight(450);
+
+	auto width = (wxDisplay().GetGeometry().GetWidth() * 3) / 4;
+	auto height = (wxDisplay().GetGeometry().GetHeight() * 3) / 4;
+
+	if (size.GetHeight() > height)
+		size.SetHeight(height);
+
+	if (size.GetWidth() > width)
+		size.SetWidth(width);
+
 	SetMinSize(size);
 
 	Centre();

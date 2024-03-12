@@ -15,11 +15,11 @@
 // ----------------------------------------------------------------------------
 
 // Define a new application type
-class cCeresConvertApp : public wxApp
+class cPlotSplitApp : public wxApp
 {
 public:
-    cCeresConvertApp();
-    virtual ~cCeresConvertApp();
+    cPlotSplitApp();
+    virtual ~cPlotSplitApp();
 
     virtual bool OnInit() wxOVERRIDE;
 };
@@ -29,20 +29,20 @@ public:
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// The CeresConvert Application
+// The Plot Split Application
 // ----------------------------------------------------------------------------
 
-cCeresConvertApp::cCeresConvertApp()
+cPlotSplitApp::cPlotSplitApp()
 {
     SetAppDisplayName("Plot Split");
 }
 
-cCeresConvertApp::~cCeresConvertApp()
+cPlotSplitApp::~cPlotSplitApp()
 {
 }
 
 // `Main program' equivalent, creating windows and returning main app frame
-bool cCeresConvertApp::OnInit()
+bool cPlotSplitApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
@@ -62,4 +62,4 @@ bool cCeresConvertApp::OnInit()
 // static object for many reasons) and also implements the accessor function
 // wxGetApp() which will return the reference of the right type
 // (i.e. cCeresInfoApp and not wxApp)
-wxIMPLEMENT_APP(cCeresConvertApp);
+wxIMPLEMENT_APP(cPlotSplitApp);

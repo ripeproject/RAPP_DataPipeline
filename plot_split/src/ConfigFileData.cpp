@@ -19,17 +19,17 @@ cConfigFileData::cConfigFileData(const std::string& filename)
 
 cConfigFileData::~cConfigFileData()
 {
-	for (auto plot : mPlots)
-	{
-		delete plot.second;
-	}
-
 	mPlots.clear();
 }
 
 bool cConfigFileData::empty() const
 {
 	return mPlots.empty();
+}
+
+bool cConfigFileData::savePlysFiles() const
+{
+	return mSavePlyFiles;
 }
 
 bool cConfigFileData::load()
@@ -58,20 +58,53 @@ bool cConfigFileData::load()
 		return false;
 	}
 
+	if (configDoc.contains("options"))
+	{
+		auto options = configDoc["options"];
+
+		mSavePlyFiles = options["create_plys"];
+	}
+
 	auto scans = configDoc["scans"];
 	for (auto scan : scans)
 	{
 		std::string name = scan["experiment_name"];
+		auto filename = safeFilename(name);
 
-		cPlotBoundaries* plots = new cPlotBoundaries();
+		std::shared_ptr<cPlotBoundaries> plots = std::make_shared<cPlotBoundaries>();
 
 		plots->load(scan);
 
-		mPlots.insert(std::make_pair(name, plots));
+		mPlots.insert(std::make_pair(filename, plots));
 	}
 
 	return true;
 }
 
+bool cConfigFileData::hasPlotInfo(const std::string& scan_name) const
+{
+	using namespace nStringUtils;
 
+	auto measurement_name = removeProcessedTimestamp(scan_name);
+	auto in = removeMeasurementTimestamp(measurement_name.filename);
+	auto filename = safeFilename(in.filename);
+
+	return mPlots.contains(filename);
+}
+
+std::shared_ptr<cPlotBoundaries> cConfigFileData::getPlotInfo(const std::string& scan_name) const
+{
+	using namespace nStringUtils;
+
+	auto measurement_name = removeProcessedTimestamp(scan_name);
+	auto in = removeMeasurementTimestamp(measurement_name.filename);
+	auto filename = safeFilename(in.filename);
+
+	auto it = mPlots.find(filename);
+
+	if (it == mPlots.end())
+		return std::shared_ptr<cPlotBoundaries>();
+
+	return it->second;
+}
 

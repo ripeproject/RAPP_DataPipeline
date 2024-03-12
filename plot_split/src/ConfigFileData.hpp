@@ -23,9 +23,16 @@ public:
 
 	bool empty() const;
 
+	bool savePlysFiles() const;
+
+	bool hasPlotInfo(const std::string& scan_name) const;
+
+	std::shared_ptr<cPlotBoundaries> getPlotInfo(const std::string& scan_name) const;
+
 private:
 	std::string mConfigFilename;
 
+	bool mSavePlyFiles = false;
 
-	std::map<std::string, const cPlotBoundaries*> mPlots;
+	std::map<std::string, std::shared_ptr<cPlotBoundaries>> mPlots;
 };

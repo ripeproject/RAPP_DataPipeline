@@ -7,6 +7,9 @@ set(PLOT_SPLIT_COMMON_FILES
 
 	datatypes.hpp
 
+	RappPointCloud.hpp
+	RappPointCloud.cpp
+
 	PlotBoundaries.hpp
 	PlotBoundaries.cpp
 

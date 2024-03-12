@@ -1,7 +1,8 @@
 
 #include "MainWindow.hpp"
 
-#include "ConfigFileData.hpp"
+#include "FileProcessor.hpp"
+#include "StringUtils.hpp"
 #include "PlotBoundaries.hpp"
 
 #include <wx/aui/framemanager.h>
@@ -10,6 +11,11 @@
 #include <wx/thread.h>
 
 #include <cbdf/BlockDataFile.hpp>
+
+#include <filesystem>
+#include <memory>
+
+using namespace std::filesystem;
 
 
 namespace
@@ -35,12 +41,25 @@ void new_file_progress(const int id, std::string filename)
 	}
 }
 
-void update_file_progress(const int id, const int progress_pct)
+void update_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
 		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
 		event->SetFileProcessID(id);
+		event->SetProgress_pct(progress_pct);
+
+		wxQueueEvent(g_pEventHandler, event);
+	}
+}
+
+void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetPrefix(prefix);
 		event->SetProgress_pct(progress_pct);
 
 		wxQueueEvent(g_pEventHandler, event);
@@ -98,13 +117,13 @@ cMainWindow::~cMainWindow()
 
 void cMainWindow::CreateControls()
 {
-	mpLoadSrcFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, wxTextValidator(wxFILTER_ALPHANUMERIC));
-	mpLoadSrcFile->Bind(wxEVT_KILL_FOCUS, &cMainWindow::OnValidateSrc, this);
+	mpSrcDirTextCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), 0, wxTextValidator(wxFILTER_ALPHANUMERIC));
+	mpSrcDirTextCtrl->Bind(wxEVT_KILL_FOCUS, &cMainWindow::OnValidateSrc, this);
 
 	mpLoadSrcButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadSrcButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSrcBrowse, this);
 
-	mpLoadDstFile = new wxTextCtrl(this, wxID_ANY);
+	mpLoadDstDir = new wxTextCtrl(this, wxID_ANY);
 	mpLoadDstButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadDstButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDstBrowse, this);
 
@@ -113,6 +132,8 @@ void cMainWindow::CreateControls()
 	mpLoadConfigButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgBrowse, this);
 
 	mpSplitButton = new wxButton(this, wxID_ANY, "Split");
+	mpSplitButton->Disable();
+	mpSplitButton->Bind(wxEVT_BUTTON, &cMainWindow::OnPlotSplit, this);
 
 	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
 	g_pEventHandler = mpProgressCtrl;
@@ -134,11 +155,11 @@ void cMainWindow::CreateLayout()
 	grid_sizer->AddGrowableCol(1, 1);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Source: "), 0, wxALIGN_CENTER_VERTICAL);
-	grid_sizer->Add(mpLoadSrcFile, 1, wxEXPAND);
+	grid_sizer->Add(mpSrcDirTextCtrl, 1, wxEXPAND);
 	grid_sizer->Add(mpLoadSrcButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Destination: "), 0, wxALIGN_CENTER_VERTICAL);
-	grid_sizer->Add(mpLoadDstFile, 1, wxEXPAND);
+	grid_sizer->Add(mpLoadDstDir, 1, wxEXPAND);
 	grid_sizer->Add(mpLoadDstButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Config File: "), 0, wxALIGN_CENTER_VERTICAL);
@@ -171,32 +192,31 @@ void cMainWindow::OnValidateSrc(wxFocusEvent& event)
 
 void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 {
-//	wxFileSelector("Choose input directory");
-
-	wxDirDialog dlg(NULL, "Choose input directory", "",
+	wxDirDialog dlg(NULL, "Choose source directory", "",
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	dlg.ShowModal();
 
-/*
-	wxFileDialog
-		openFileDialog(this, _("Open directory/file"), "", "",
-			"Lidar files (*.lidar_data)|*.lidar_data", wxFD_OPEN); // | wxFD_FILE_MUST_EXIST);
+	mSrcDirectory = dlg.GetPath().ToStdString();
+	mpSrcDirTextCtrl->SetValue(mSrcDirectory);
 
-	if (openFileDialog.ShowModal() == wxID_CANCEL)
-		return;     // the user changed their mind...
-
-//	stopDataProcessing();
-
-	mFilename = openFileDialog.GetPath().ToStdString();
-
-//	startDataProcessing();
-*/
+	if ((mConfigData && !mConfigData->empty()) && (!mDstDirectory.IsEmpty()))
+		mpSplitButton->Enable();
 }
 
 void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 {
+	wxDirDialog dlg(NULL, "Choose Destination Directory", "",
+		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mDstDirectory = dlg.GetPath().ToStdString();
+	mpLoadDstDir->SetValue(mDstDirectory);
+
+	if ((mConfigData && !mConfigData->empty()) && (!mSrcDirectory.IsEmpty()))
+		mpSplitButton->Enable();
 }
 
 void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
@@ -210,15 +230,93 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 	std::string config_file = dlg.GetPath().ToStdString();
 	mpLoadConfigFile->SetValue(config_file);
 
-	
-	std::unique_ptr<cConfigFileData> pBoundaries = std::make_unique<cConfigFileData>(config_file);
+	mConfigData = std::make_unique<cConfigFileData>(config_file);
 
-	pBoundaries->load();
+	if (!mConfigData->load())
+	{
+		return;
+	}
+
+	if (!mDstDirectory.IsEmpty() && !mSrcDirectory.IsEmpty())
+		mpSplitButton->Enable();
 }
 
-/*
-void cMainFrame::startDataProcessing()
+void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 {
+	using namespace nStringUtils;
+
+	const std::filesystem::path input{ mSrcDirectory.ToStdString() };
+
+	std::vector<directory_entry> files_to_process;
+
+	/*
+	 * Create list of files to process
+	 */
+	{
+		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
+		{
+			if (!dir_entry.is_regular_file())
+				continue;
+
+			auto ext = dir_entry.path().extension();
+			if (ext != ".ceres")
+				continue;
+
+			if (!isCeresFile(dir_entry.path().string()))
+				continue;
+
+			files_to_process.push_back(dir_entry);
+		}
+	}
+
+	if (files_to_process.empty())
+	{
+		// No files to process!
+		return;
+	}
+
+	/*
+	 * Add all of the files to process
+	 */
+	int numFilesToProcess = 0;
+	for (auto& in_file : files_to_process)
+	{
+		std::filesystem::path out_file;
+		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
+
+		if (out_file.empty())
+		{
+			std::string out_filename = fe.filename;
+			out_file = mDstDirectory.ToStdString();
+			out_file /= addProcessedTimestamp(out_filename);
+
+			if (!fe.extension.empty())
+			{
+				out_file.replace_extension(fe.extension);
+			}
+		}
+
+		if (!mConfigData->hasPlotInfo(in_file.path().filename().string()))
+			continue;
+
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+
+		fp->setPlotInfo(mConfigData->getPlotInfo(in_file.path().filename().string()));
+
+		mFileProcessors.push(fp);
+	}
+
+	startDataProcessing();
+}
+
+void cMainWindow::startDataProcessing()
+{
+	auto* pThread = GetThread();
+	if (pThread && pThread->IsRunning())
+	{
+		return;
+	}
+
 	// Now we can start processing the new data file
 	if (CreateThread(wxTHREAD_JOINABLE) != wxTHREAD_NO_ERROR)
 	{
@@ -230,21 +328,42 @@ void cMainFrame::startDataProcessing()
 }
 
 
-void cMainFrame::stopDataProcessing()
+void cMainWindow::stopDataProcessing()
 {
 	// Stop the processing of any previous file
 	auto* pThread = GetThread();
 	if (pThread && pThread->IsRunning())
 	{
-		wxString msg = "Stopping the processing of: ";
-		msg += mFilename;
+		//		wxString msg = "Stopping the processing of: ";
+		//		msg += mFilename;
 
-		SetStatusText(msg);
+		//		SetStatusText(msg);
 
 		pThread->Delete();
 	}
 }
 
+wxThread::ExitCode cMainWindow::Entry()
+{
+	while (mFileProcessors.size() > 0)
+	{
+		if (GetThread()->TestDestroy())
+			break;
+
+		auto* fp = mFileProcessors.front();
+		fp->process_file();
+		mFileProcessors.pop();
+		delete fp;
+	}
+
+	wxString msg = "Finished processing ";
+	msg += mSrcDirectory;
+	wxLogMessage(msg);
+
+	return (wxThread::ExitCode)0;
+}
+
+/*
 void cMainFrame::OnThreadUpdate(wxThreadEvent& evt)
 {
 	SetStatusText(evt.GetString());

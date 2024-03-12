@@ -8,12 +8,19 @@
 	#include <wx/wx.h>
 #endif
 
+#include "ConfigFileData.hpp"
+
 #include "../wxCustomWidgets/FileProgressCtrl.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
 
+#include <queue>
+
+// Forward Declarations
+class cFileProcessor;
+
 // Define a new frame type: this is going to be our main frame
-class cMainWindow : public wxPanel
+class cMainWindow : public wxPanel, public wxThreadHelper
 {
 public:
 	// ctor(s)
@@ -30,6 +37,11 @@ protected:
 	void OnSrcBrowse(wxCommandEvent& event);
 	void OnDstBrowse(wxCommandEvent& event);
 	void OnCfgBrowse(wxCommandEvent& event);
+	void OnPlotSplit(wxCommandEvent& event);
+
+
+protected:
+	virtual wxThread::ExitCode Entry();
 
 private:
 	void startDataProcessing();
@@ -38,10 +50,10 @@ private:
 private:
 	std::string mFilename;
 
-	wxTextCtrl* mpLoadSrcFile = nullptr;
+	wxTextCtrl* mpSrcDirTextCtrl = nullptr;
 	wxButton* mpLoadSrcButton = nullptr;
 
-	wxTextCtrl* mpLoadDstFile = nullptr;
+	wxTextCtrl* mpLoadDstDir = nullptr;
 	wxButton* mpLoadDstButton = nullptr;
 
 	wxTextCtrl* mpLoadConfigFile = nullptr;
@@ -55,6 +67,12 @@ private:
 	wxLog* mpOriginalLog = nullptr;
 
 	wxEvtHandler* mpHandler = nullptr;
+	std::queue<cFileProcessor*> mFileProcessors;
+
+	wxString mSrcDirectory;
+	wxString mDstDirectory;
+
+	std::unique_ptr<cConfigFileData> mConfigData;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();
