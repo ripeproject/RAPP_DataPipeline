@@ -22,14 +22,34 @@ std::mutex g_console_mutex;
 namespace
 {
 	int num_of_threads = 1;
-	std::string input_directory = std::filesystem::current_path().string();
-	std::string output_directory;
+	int numFilesToProcess = 0;
+	cTextProgressBar progress_bar;
 }
 
 void console_message(const std::string& msg)
 {
 	std::lock_guard<std::mutex> guard(g_console_mutex);
-	std::cout << msg << std::endl;
+	std::cout << "\n" << msg << std::endl;
+}
+
+void new_file_progress(const int id, std::string filename)
+{
+	progress_bar.addProgressEntry(id, filename);
+}
+
+void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
+{
+	progress_bar.updateProgressEntry(id, prefix, progress_pct);
+}
+
+void update_progress(const int id, const int progress_pct)
+{
+	progress_bar.updateProgressEntry(id, progress_pct);
+}
+
+void complete_file_progress(const int id)
+{
+	progress_bar.finishProgressEntry(id);
 }
 
 
@@ -42,6 +62,9 @@ int main(int argc, char** argv)
 	bool showHelp = false;
 	std::string config_file;
 	cConfigFileData* pConfigData = nullptr;
+
+	std::string input_directory = current_path().string();
+	std::string output_directory = current_path().string();
 
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
@@ -146,7 +169,7 @@ int main(int argc, char** argv)
 
 		cFileProcessor* fp = nullptr;	// new cLidarData2CeresConverter();
 
-		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
+//		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
 
 		file_processors.push_back(fp);
 	}

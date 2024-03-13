@@ -23,7 +23,9 @@ public:
 
 	bool empty() const;
 
+	bool savePlotsInSingleFile() const;
 	bool savePlysFiles() const;
+	bool plysUseBinaryFormat() const;
 
 	bool hasPlotInfo(const std::string& scan_name) const;
 
@@ -32,7 +34,9 @@ public:
 private:
 	std::string mConfigFilename;
 
+	bool mSavePlotsInSingleFile = false;
 	bool mSavePlyFiles = false;
+	bool mPlyUseBinaryFormat = false;
 
 	std::map<std::string, std::shared_ptr<cPlotBoundaries>> mPlots;
 };

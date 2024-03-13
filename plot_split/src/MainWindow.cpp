@@ -135,7 +135,7 @@ void cMainWindow::CreateControls()
 	mpSplitButton->Disable();
 	mpSplitButton->Bind(wxEVT_BUTTON, &cMainWindow::OnPlotSplit, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 150);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control
@@ -301,6 +301,9 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
+		fp->savePlotsInSingleFile(mConfigData->savePlotsInSingleFile());
+		fp->savePlyFiles(mConfigData->savePlysFiles());
+		fp->plyUseBinaryFormat(mConfigData->plysUseBinaryFormat());
 		fp->setPlotInfo(mConfigData->getPlotInfo(in_file.path().filename().string()));
 
 		mFileProcessors.push(fp);

@@ -41,7 +41,7 @@ endif()
 # We need a C++ compiler, so make sure project() test for it.
 project(plot_split VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Turn off any compiler extensions
@@ -105,6 +105,7 @@ find_package(fmt REQUIRED)
 
 # Find and include my libraries for data collection
 find_package(CBDF REQUIRED cbdf info) # ctrl sensors)
+find_package(tinyply REQUIRED)
 
 
 #******************************************************************************

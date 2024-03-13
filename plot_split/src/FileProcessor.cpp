@@ -54,6 +54,21 @@ bool cFileProcessor::open()
     return mFileWriter.isOpen() && mFileReader.isOpen();
 }
 
+void cFileProcessor::savePlotsInSingleFile(bool singleFile)
+{
+    mSavePlotsInSingleFile = singleFile;
+}
+
+void cFileProcessor::savePlyFiles(bool savePlys)
+{
+    mSavePlyFiles = savePlys;
+}
+
+void cFileProcessor::plyUseBinaryFormat(bool binaryFormat)
+{
+    mPlyUseBinaryFormat = binaryFormat;
+}
+
 void cFileProcessor::setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info)
 {
     mPlotInfo = plot_info;
@@ -193,7 +208,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
 */
 
     mPointCloud = cRappPointCloud(pointCloud);
- //   flattenPointCloud();
+    doPlotSplit();
 
  //   save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -206,7 +221,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -219,7 +234,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -232,7 +247,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -245,7 +260,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -258,7 +273,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -271,7 +286,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
 void cFileProcessor::onPointCloudData(cPointCloud pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -284,7 +299,7 @@ void cFileProcessor::onPointCloudData(cPointCloud pointCloud)
 void cFileProcessor::onPointCloudData(cPointCloud_FrameId pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -297,7 +312,7 @@ void cFileProcessor::onPointCloudData(cPointCloud_FrameId pointCloud)
 void cFileProcessor::onPointCloudData(cPointCloud_SensorInfo pointCloud)
 {
     mPointCloud = cRappPointCloud(pointCloud);
-//    flattenPointCloud();
+    doPlotSplit();
 
 //    save_flatten_to_pointcloud(mPointCloud, pointCloud);
 
@@ -308,6 +323,23 @@ void cFileProcessor::onPointCloudData(cPointCloud_SensorInfo pointCloud)
 }
 
 //-----------------------------------------------------------------------------
+void cFileProcessor::doPlotSplit()
+{
+    mPointCloud.trim_outside(mPlotInfo->getBoundingBox());
+
+    auto info_plots = mPlotInfo->getPlots();
+
+    for (auto plot_info : info_plots)
+    {
+        std::unique_ptr<cRappPointCloud> plot = std::make_unique<cRappPointCloud>(mPointCloud);
+
+        plot->trim_outside(plot_info->getBoundingBox());
+
+        plot->trim_outside(plot_info->getPlotBounds());
+
+        mPlots.push_back(std::move(plot));
+    }
+}
 
 //-----------------------------------------------------------------------------
 

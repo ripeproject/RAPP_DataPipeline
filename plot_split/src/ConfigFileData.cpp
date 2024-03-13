@@ -27,9 +27,19 @@ bool cConfigFileData::empty() const
 	return mPlots.empty();
 }
 
+bool cConfigFileData::savePlotsInSingleFile() const
+{
+	return mSavePlotsInSingleFile;
+}
+
 bool cConfigFileData::savePlysFiles() const
 {
 	return mSavePlyFiles;
+}
+
+bool cConfigFileData::plysUseBinaryFormat() const
+{
+	return mPlyUseBinaryFormat;
 }
 
 bool cConfigFileData::load()
@@ -62,7 +72,9 @@ bool cConfigFileData::load()
 	{
 		auto options = configDoc["options"];
 
-		mSavePlyFiles = options["create_plys"];
+		mSavePlyFiles = options["create plys"];
+		mSavePlotsInSingleFile = options["save plots in single file"];
+		mPlyUseBinaryFormat = options["plys use binary format"];
 	}
 
 	auto scans = configDoc["scans"];

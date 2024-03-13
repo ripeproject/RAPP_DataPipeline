@@ -198,6 +198,18 @@ pointcloud::sBoundingBox_t cPlotBoundary::getBoundingBox() const
 	return box;
 }
 
+pointcloud::sBoundingBox_t cPlotBoundary::getPlotBounds() const
+{
+	pointcloud::sBoundingBox_t box;
+
+	box.points[0] = { mNorthWestCorner.x_mm * nConstants::MM_TO_M, mNorthWestCorner.y_mm * nConstants::MM_TO_M };
+	box.points[1] = { mSouthWestCorner.x_mm * nConstants::MM_TO_M, mSouthWestCorner.y_mm * nConstants::MM_TO_M };
+	box.points[2] = { mSouthEastCorner.x_mm * nConstants::MM_TO_M, mSouthEastCorner.y_mm * nConstants::MM_TO_M };
+	box.points[3] = { mNorthEastCorner.x_mm * nConstants::MM_TO_M, mNorthEastCorner.y_mm * nConstants::MM_TO_M };
+
+	return box;
+}
+
 bool cPlotBoundary::inPlot(rfm::rappPoint2D_t point) const
 {
 	if ((point.x_mm < mNorthBoundary_mm) || (point.x_mm > mSouthBoundary_mm))

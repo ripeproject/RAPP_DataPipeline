@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <string>
 #include <memory>
+#include <vector>
 
 // Forward Declarations
 class cPlotBoundaries;
@@ -21,6 +22,10 @@ public:
 	cFileProcessor(int id, std::filesystem::directory_entry in,
 				std::filesystem::path out);
 	~cFileProcessor();
+
+	void savePlotsInSingleFile(bool singleFile);
+	void savePlyFiles(bool savePlys);
+	void plyUseBinaryFormat(bool binaryFormat);
 
 	void setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info);
 
@@ -58,9 +63,14 @@ private:
 	void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
 
 private:
+	void doPlotSplit();
 
 private:
 	const int mID;
+
+	bool mSavePlotsInSingleFile = false;
+	bool mSavePlyFiles = false;
+	bool mPlyUseBinaryFormat = false;
 
 	std::uintmax_t mFileSize = 0;
 	double		   mFilePos = 0.0;
@@ -77,4 +87,6 @@ private:
 //	cPointCloudSerializer	  mPointCloudSerializer;
 
 	cRappPointCloud mPointCloud;
+
+	std::vector<std::unique_ptr<cRappPointCloud>> mPlots;
 };

@@ -18,6 +18,9 @@ set(PLOT_SPLIT_COMMON_FILES
 
 	FileProcessor.hpp
 	FileProcessor.cpp
+
+	ExportUtils.hpp
+	ExportUtils.cpp
 )
 
 
@@ -55,6 +58,7 @@ target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
 target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE fmt::fmt)
+target_link_libraries(console_app PRIVATE tinyply)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
@@ -123,6 +127,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE math_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
+	target_link_libraries(gui_app PRIVATE tinyply)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

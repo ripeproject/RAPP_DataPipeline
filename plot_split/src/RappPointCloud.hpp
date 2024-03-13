@@ -33,7 +33,7 @@ public:
 public:
 	cRappPointCloud();
 	cRappPointCloud(const cRappPointCloud& pc) = default;
-	virtual ~cRappPointCloud() = default;
+	~cRappPointCloud();
 
 	explicit cRappPointCloud(rfm::sCentroid_t centroid, const vCloud_t& pc);
 	explicit cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_t>& pc);

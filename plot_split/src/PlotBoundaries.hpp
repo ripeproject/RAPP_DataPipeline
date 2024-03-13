@@ -34,6 +34,7 @@ public:
 	double getSouthBoundary_m() const;
 
 	pointcloud::sBoundingBox_t getBoundingBox() const;
+	pointcloud::sBoundingBox_t getPlotBounds() const;
 
 	bool inPlot(rfm::rappPoint2D_t point) const;
 	bool inPlot(rfm::rappPoint_t point) const;

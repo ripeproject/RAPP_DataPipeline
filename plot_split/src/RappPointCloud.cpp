@@ -33,6 +33,9 @@ namespace
 cRappPointCloud::cRappPointCloud() : mCentroid(), mID(::id++)
 {}
 
+cRappPointCloud::~cRappPointCloud()
+{}
+
 cRappPointCloud::cRappPointCloud(rfm::sCentroid_t centroid, const vCloud_t& pc)
 	: mCentroid(centroid), mID(::id++)
 {
