@@ -5,6 +5,7 @@
 #include "PointCloudParser.hpp"
 //#include "PointCloudSerializer.hpp"
 #include "RappPointCloud.hpp"
+#include "RappPlot.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -64,6 +65,7 @@ private:
 
 private:
 	void doPlotSplit();
+	void savePlyFiles();
 
 private:
 	const int mID;
@@ -88,5 +90,5 @@ private:
 
 	cRappPointCloud mPointCloud;
 
-	std::vector<std::unique_ptr<cRappPointCloud>> mPlots;
+	std::vector<cRappPlot*> mPlots;
 };

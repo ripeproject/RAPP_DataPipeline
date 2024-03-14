@@ -37,6 +37,13 @@ cFileProcessor::~cFileProcessor()
     mPointCloud.clear();
     mFileWriter.close();
     mFileReader.close();
+
+    for (auto plot : mPlots)
+    {
+        delete plot;
+    }
+
+    mPlots.clear();
 }
 
 bool cFileProcessor::open()
@@ -331,17 +338,31 @@ void cFileProcessor::doPlotSplit()
 
     for (auto plot_info : info_plots)
     {
-        std::unique_ptr<cRappPointCloud> plot = std::make_unique<cRappPointCloud>(mPointCloud);
+        std::unique_ptr<cRappPointCloud> plotPointCloud = std::make_unique<cRappPointCloud>(mPointCloud);
 
-        plot->trim_outside(plot_info->getBoundingBox());
+        plotPointCloud->trim_outside(plot_info->getBoundingBox());
 
-        plot->trim_outside(plot_info->getPlotBounds());
+        plotPointCloud->trim_outside(plot_info->getPlotBounds());
 
-        mPlots.push_back(std::move(plot));
+        cRappPlot* plot = new cRappPlot(plot_info->getPlotNumber());
+
+        plot->setPlotName(plot_info->getPlotName());
+        plot->setEvent(plot_info->getEvent());
+        plot->setEventDescription(plot_info->getEventDescription());
+        plot->setPointCloud(*plotPointCloud);
+
+        mPlots.push_back(plot);
     }
 }
 
 //-----------------------------------------------------------------------------
+void cFileProcessor::savePlyFiles()
+{
+//    for (cRappPointCloud* plot : mPlots)
+    {
+    }
+
+}
 
 //-----------------------------------------------------------------------------
 

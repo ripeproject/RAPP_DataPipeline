@@ -286,14 +286,8 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 
 		if (out_file.empty())
 		{
-			std::string out_filename = fe.filename;
 			out_file = mDstDirectory.ToStdString();
-			out_file /= addProcessedTimestamp(out_filename);
-
-			if (!fe.extension.empty())
-			{
-				out_file.replace_extension(fe.extension);
-			}
+			out_file /= fe.filename;
 		}
 
 		if (!mConfigData->hasPlotInfo(in_file.path().filename().string()))

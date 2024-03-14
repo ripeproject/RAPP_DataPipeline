@@ -10,6 +10,9 @@ set(PLOT_SPLIT_COMMON_FILES
 	RappPointCloud.hpp
 	RappPointCloud.cpp
 
+	RappPlot.hpp
+	RappPlot.cpp
+
 	PlotBoundaries.hpp
 	PlotBoundaries.cpp
 
