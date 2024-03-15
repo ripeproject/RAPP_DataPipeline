@@ -2,6 +2,7 @@
 #include "FileProcessor.hpp"
 
 #include "PlotBoundaries.hpp"
+#include "ExportUtils.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -208,21 +209,10 @@ void cFileProcessor::onImuData(pointcloud::imu_data_t data)
 
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
 {
-/*
-    cPointCloudParser* parser = static_cast<cPointCloudParser*>(this);
-    parser->blockID().majorVersion();
-    parser->blockID().minorVersion();
-*/
-
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
- //   save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
- //   mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
- //       pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
- //   mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
@@ -230,12 +220,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
@@ -243,12 +228,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
@@ -256,12 +236,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
@@ -269,12 +244,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
@@ -282,12 +252,7 @@ void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, c
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(cPointCloud pointCloud)
@@ -295,12 +260,7 @@ void cFileProcessor::onPointCloudData(cPointCloud pointCloud)
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(cPointCloud_FrameId pointCloud)
@@ -308,12 +268,7 @@ void cFileProcessor::onPointCloudData(cPointCloud_FrameId pointCloud)
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 void cFileProcessor::onPointCloudData(cPointCloud_SensorInfo pointCloud)
@@ -321,12 +276,7 @@ void cFileProcessor::onPointCloudData(cPointCloud_SensorInfo pointCloud)
     mPointCloud = cRappPointCloud(pointCloud);
     doPlotSplit();
 
-//    save_flatten_to_pointcloud(mPointCloud, pointCloud);
-
-//    mPointCloudSerializer.writeDimensions(pointCloud.minX_m(), pointCloud.maxX_m(),
-//        pointCloud.minY_m(), pointCloud.maxY_m(), pointCloud.minZ_m(), pointCloud.maxZ_m());
-
-//    mPointCloudSerializer.write(pointCloud);
+    savePlyFiles();
 }
 
 //-----------------------------------------------------------------------------
@@ -358,10 +308,16 @@ void cFileProcessor::doPlotSplit()
 //-----------------------------------------------------------------------------
 void cFileProcessor::savePlyFiles()
 {
-//    for (cRappPointCloud* plot : mPlots)
-    {
-    }
+    if (!mSavePlyFiles) return;
 
+    for (auto plot : mPlots)
+    {
+        std::string filename = mOutputFile.string();
+        filename += "_Plot";
+        filename += std::to_string(plot->id());
+        filename += ".ply";
+        exportPointcloud2Ply(filename, plot->data(), mPlyUseBinaryFormat);
+    }
 }
 
 //-----------------------------------------------------------------------------
