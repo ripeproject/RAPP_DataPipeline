@@ -22,6 +22,17 @@ set(PLOT_SPLIT_COMMON_FILES
 	FileProcessor.hpp
 	FileProcessor.cpp
 
+	ExperimentInfoTypes.hpp
+	ExperimentInfo.hpp
+	ExperimentInfo.cpp
+	ExperimentInfoLoader.hpp
+	ExperimentInfoLoader.cpp
+
+	PointCloudInfo.hpp
+	PointCloudInfo.cpp
+	PointCloudLoader.hpp
+	PointCloudLoader.cpp
+	
 	ExportUtils.hpp
 	ExportUtils.cpp
 )
@@ -47,6 +58,7 @@ PRIVATE
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE "../support/PointCloud")
 target_include_directories(console_app PRIVATE "../support/ProcessingInfo")
+target_include_directories(console_app PRIVATE "../support/PlotInfo")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/MathUtils")
@@ -57,6 +69,7 @@ target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE nlohmann_json)
 target_link_libraries(console_app PRIVATE pointcloud_io)
 target_link_libraries(console_app PRIVATE processing_info)
+target_link_libraries(console_app PRIVATE plot_info)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
 target_link_libraries(console_app PRIVATE math_utils)
@@ -116,6 +129,8 @@ if(wxWidgets_FOUND)
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_include_directories(gui_app PRIVATE "../support/PointCloud")
+	target_include_directories(gui_app PRIVATE "../support/ProcessingInfo")
+	target_include_directories(gui_app PRIVATE "../support/PlotInfo")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 	target_include_directories(gui_app PRIVATE "../support/MathUtils")
@@ -127,6 +142,8 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
 	target_link_libraries(gui_app PRIVATE nlohmann_json)
 	target_link_libraries(gui_app PRIVATE pointcloud_io)
+	target_link_libraries(gui_app PRIVATE processing_info)
+	target_link_libraries(gui_app PRIVATE plot_info)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE math_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)

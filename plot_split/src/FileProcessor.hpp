@@ -1,9 +1,9 @@
 
 #pragma once
 
-//#include "ProcessingInfoSerializer.hpp"
-#include "PointCloudParser.hpp"
-//#include "PointCloudSerializer.hpp"
+#include "PointCloudInfo.hpp"
+#include "ExperimentInfo.hpp"
+#include "ProcessingInfo.hpp"
 #include "RappPointCloud.hpp"
 #include "RappPlot.hpp"
 
@@ -13,11 +13,15 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <list>
 
 // Forward Declarations
 class cPlotBoundaries;
+class cProcessingInfoSerializer;
+class cExperimentSerializer;
 
-class cFileProcessor: public cPointCloudParser
+
+class cFileProcessor
 {
 public:
 	cFileProcessor(int id, std::filesystem::directory_entry in,
@@ -37,35 +41,16 @@ protected:
 	void run();
 
 private:
-	void processBlock(const cBlockID& id);
-	void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len);
-
-private:
-	void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;
-	void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) override;
-	void onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) override;
-	void onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) override;
-
-	void onDimensions(double x_min_m, double x_max_m,
-		double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
-
-	void onImuData(pointcloud::imu_data_t data) override;
-
-	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
-	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud) override;
-	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud) override;
-
-	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
-	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud) override;
-	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud) override;
-
-	void onPointCloudData(cPointCloud pointCloud) override;
-	void onPointCloudData(cPointCloud_FrameId pointCloud) override;
-	void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
+	bool loadFileData();
 
 private:
 	void doPlotSplit();
+	void savePlotFile();
+	void savePlotFiles();
 	void savePlyFiles();
+
+	void writeProcessingInfo(cProcessingInfoSerializer& serializer);
+	void writeExperimentInfo(cExperimentSerializer& serializer);
 
 private:
 	const int mID;
@@ -78,17 +63,15 @@ private:
 	double		   mFilePos = 0.0;
 
 	cBlockDataFileReader mFileReader;
-	cBlockDataFileWriter mFileWriter;
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
 
 	std::shared_ptr<cPlotBoundaries> mPlotInfo;
 
-//	cProcessingInfoSerializer mInfoSerializer;
-//	cPointCloudSerializer	  mPointCloudSerializer;
-
-	cRappPointCloud mPointCloud;
+	cProcessingInfo mProcessingInfo;
+	cExperimentInfo mExpInfo;
+	std::list<cPointCloudInfo> mPointClouds;
 
 	std::vector<cRappPlot*> mPlots;
 };

@@ -38,6 +38,7 @@ public:
 	const std::string& event() const;
 	const std::string& eventDescription() const;
 
+	const cRappPointCloud& pointCloud() const { return mCloud; }
 
     bool empty() const;
 
@@ -69,7 +70,7 @@ public:
 
 	rfm::sPoint3D_t operator[](int i) const { return mCloud[i]; }
 
-    const cRappPointCloud& data() const { return mCloud; }
+	const cRappPointCloud& data() const { return mCloud; }
 
 private:
 	int mID;

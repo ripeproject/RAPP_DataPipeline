@@ -1,9 +1,18 @@
 
 #include "FileProcessor.hpp"
 
+#include "ProcessingInfoLoader.hpp"
+#include "ExperimentInfoLoader.hpp"
+#include "PointCloudLoader.hpp"
+
 #include "PlotBoundaries.hpp"
+#include "StringUtils.hpp"
 #include "ExportUtils.hpp"
 
+#include "ProcessingInfoSerializer.hpp"
+#include "PlotInfoSerializer.hpp"
+
+#include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 
 #include <filesystem>
@@ -22,6 +31,40 @@ extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id);
 
 
+namespace
+{
+    void save_plot_to_pointcloud(const cRappPointCloud& in, cPointCloud& out)
+    {
+        assert(in.size() == out.size());
+
+        double x_min_m = in.minX_mm() * nConstants::MM_TO_M;
+        double x_max_m = in.maxX_mm() * nConstants::MM_TO_M;
+        double y_min_m = in.minY_mm() * nConstants::MM_TO_M;
+        double y_max_m = in.maxY_mm() * nConstants::MM_TO_M;
+        double z_min_m = in.minZ_mm() * nConstants::MM_TO_M;
+        double z_max_m = in.maxZ_mm() * nConstants::MM_TO_M;
+
+        out.setExtents(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
+
+        auto n = out.size();
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            auto& p1 = out[i];
+            auto p2 = in[i];
+
+            p1.X_m = p2.x_mm * nConstants::MM_TO_M;
+            p1.Y_m = p2.y_mm * nConstants::MM_TO_M;
+            p1.Z_m = p2.z_mm * nConstants::MM_TO_M;
+
+            p1.range_mm = p2.range_mm;
+            p1.signal = p2.signal;
+            p1.reflectivity = p2.reflectivity;
+            p1.nir = p2.nir;
+        }
+    }
+}
+
+
 cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
@@ -29,14 +72,10 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
 {
     mInputFile = in;
     mOutputFile = out;
-
-//    mPointCloudSerializer.setVersion(1, 0);
 }
 
 cFileProcessor::~cFileProcessor()
 {
-    mPointCloud.clear();
-    mFileWriter.close();
     mFileReader.close();
 
     for (auto plot : mPlots)
@@ -54,12 +93,11 @@ bool cFileProcessor::open()
         return false;
     }
 
-    mFileWriter.open(mOutputFile.string());
     mFileReader.open(mInputFile.string());
 
     mFileSize = mFileReader.file_size();
 
-    return mFileWriter.isOpen() && mFileReader.isOpen();
+    return mFileReader.isOpen();
 }
 
 void cFileProcessor::savePlotsInSingleFile(bool singleFile)
@@ -94,35 +132,57 @@ void cFileProcessor::process_file()
 
 void cFileProcessor::run()
 {
-	if (!mFileReader.isOpen())
+    update_prefix_progress(mID, "Loading...              ", 0);
+    if (!loadFileData())
 	{
-        throw std::logic_error("No file is open for reading.");
+        return;
 	}
+
+    update_prefix_progress(mID, "Splitting in Plots...    ", 0);
+    doPlotSplit();
+
+    update_prefix_progress(mID, "Saving...                ", 0);
+    if (mSavePlotsInSingleFile)
+        savePlotFile();
+    else
+        savePlotFiles();
+
+    if (mSavePlyFiles)
+    {
+        update_prefix_progress(mID, "Saving PLY files...      ", 0);
+        savePlyFiles();
+    }
+
+    update_prefix_progress(mID, "       Complete          ", 100);
+    complete_file_progress(mID);
+}
+
+bool cFileProcessor::loadFileData()
+{
+    if (!mFileReader.isOpen())
+    {
+        throw std::logic_error("No file is open for reading.");
+    }
 
     int last_file_pos_pct = 0;
 
-    mFileReader.attach(this);
+    std::unique_ptr<cProcessingInfoLoader> pProcessingInfo  = std::make_unique<cProcessingInfoLoader>(mProcessingInfo);
+    std::unique_ptr<cExperimentInfoLoader> pExpInfo         = std::make_unique<cExperimentInfoLoader>(mExpInfo);
+    std::unique_ptr<cPointCloudLoader> pPcInfo              = std::make_unique<cPointCloudLoader>(mPointClouds);
 
-//    mInfoSerializer.attach(&mFileWriter);
-//    mPointCloudSerializer.attach(&mFileWriter);
-
-//    mInfoSerializer.write("flatten_pointcloud", processing_info::ePROCESSING_TYPE::FLAT_POINT_CLOUD_GENERATION);
+    mFileReader.attach(pProcessingInfo.get());
+    mFileReader.attach(pExpInfo.get());
+    mFileReader.attach(pPcInfo.get());
 
     try
     {
-	    mFileReader.registerCallback([this](const cBlockID& id){ this->processBlock(id); });
-	    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });
-
-        update_prefix_progress(mID, "Scanning...              ", 0);
-
         while (!mFileReader.eof())
         {
             if (mFileReader.fail())
             {
                 mFileReader.close();
-                mFileWriter.close();
 
-                return;
+                return true;
             }
 
             mFileReader.processBlock();
@@ -142,176 +202,211 @@ void cFileProcessor::run()
         std::string msg = "Stream Error: ";
         msg += e.what();
         console_message(msg);
+
+        return false;
     }
     catch (const bdf::crc_error& e)
     {
         std::string msg = "CRC Error: ";
         msg += e.what();
         console_message(msg);
+
+        return false;
     }
     catch (const bdf::unexpected_eof& e)
     {
         std::string msg = "Unexpected EOF: ";
         msg += e.what();
         console_message(msg);
+
+        return false;
     }
     catch (const std::exception& e)
     {
         std::string msg = "Unknown Exception: ";
         msg += e.what();
         console_message(msg);
+
+        return false;
     }
 
-    update_prefix_progress(mID, "       Complete          ", 100);
-    complete_file_progress(mID);
-}
+    mFileReader.close();
 
-void cFileProcessor::processBlock(const cBlockID& id)
-{
-	mFileWriter.writeBlock(id);
-}
-
-void cFileProcessor::processBlock(const cBlockID& id, const std::byte* buf, std::size_t len)
-{
-	mFileWriter.writeBlock(id, buf, len);
-}
-
-
-void cFileProcessor::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param)
-{
-//    mPointCloudSerializer.write(config_param);
-}
-
-void cFileProcessor::onKinematicModel(pointcloud::eKINEMATIC_MODEL model)
-{
-//    mPointCloudSerializer.write(model);
-}
-
-void cFileProcessor::onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) 
-{
-//    mPointCloudSerializer.writeSensorAngles(pitch_deg, roll_deg, yaw_deg);
-}
-
-void cFileProcessor::onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) 
-{
-//    mPointCloudSerializer.writeKinematicSpeed(vx_mps, vy_mps, vz_mps);
-}
-
-void cFileProcessor::onDimensions(double x_min_m, double x_max_m,
-    double y_min_m, double y_max_m, double z_min_m, double z_max_m) 
-{
-}
-
-void cFileProcessor::onImuData(pointcloud::imu_data_t data)
-{
-//    mPointCloudSerializer.write(data);
-}
-
-void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(cPointCloud pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(cPointCloud_FrameId pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
-}
-
-void cFileProcessor::onPointCloudData(cPointCloud_SensorInfo pointCloud)
-{
-    mPointCloud = cRappPointCloud(pointCloud);
-    doPlotSplit();
-
-    savePlyFiles();
+    return true;
 }
 
 //-----------------------------------------------------------------------------
 void cFileProcessor::doPlotSplit()
 {
-    mPointCloud.trim_outside(mPlotInfo->getBoundingBox());
+    auto n = mPointClouds.size();
+    int i = 0;
 
-    auto info_plots = mPlotInfo->getPlots();
-
-    for (auto plot_info : info_plots)
+    for (auto& info : mPointClouds)
     {
-        std::unique_ptr<cRappPointCloud> plotPointCloud = std::make_unique<cRappPointCloud>(mPointCloud);
+        update_progress(mID, static_cast<int>((100.0 * i++) / n));
 
-        plotPointCloud->trim_outside(plot_info->getBoundingBox());
+        auto pointCloud = info.pointCloud();
+        pointCloud.trim_outside(mPlotInfo->getBoundingBox());
 
-        plotPointCloud->trim_outside(plot_info->getPlotBounds());
+        auto info_plots = mPlotInfo->getPlots();
 
-        cRappPlot* plot = new cRappPlot(plot_info->getPlotNumber());
+        for (auto plot_info : info_plots)
+        {
+            std::unique_ptr<cRappPointCloud> plotPointCloud = std::make_unique<cRappPointCloud>(pointCloud);
 
-        plot->setPlotName(plot_info->getPlotName());
-        plot->setEvent(plot_info->getEvent());
-        plot->setEventDescription(plot_info->getEventDescription());
-        plot->setPointCloud(*plotPointCloud);
+            plotPointCloud->trim_outside(plot_info->getBoundingBox());
 
-        mPlots.push_back(plot);
+            plotPointCloud->trim_outside(plot_info->getPlotBounds());
+
+            cRappPlot* plot = new cRappPlot(plot_info->getPlotNumber());
+
+            plot->setPlotName(plot_info->getPlotName());
+            plot->setEvent(plot_info->getEvent());
+            plot->setEventDescription(plot_info->getEventDescription());
+            plot->setPointCloud(*plotPointCloud);
+
+            mPlots.push_back(plot);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::savePlotFile()
+{
+    auto n = mPlots.size();
+    int i = 0;
+
+
+    std::string filename = mOutputFile.string();
+    filename = nStringUtils::addProcessedTimestamp(filename);
+    filename += ".ceres";
+
+    cBlockDataFileWriter fileWriter;
+
+    cExperimentSerializer       experimentSerializer;
+    cProcessingInfoSerializer   processInfoSerializer;
+    cPlotInfoSerializer 	    plotInfoSerializer;
+
+    experimentSerializer.setBufferCapacity(4096 * 1024);
+    processInfoSerializer.setBufferCapacity(4096);
+
+    experimentSerializer.attach(&fileWriter);
+    processInfoSerializer.attach(&fileWriter);
+    plotInfoSerializer.attach(&fileWriter);
+
+    fileWriter.open(filename);
+    if (!fileWriter.isOpen())
+        return;
+
+    writeProcessingInfo(processInfoSerializer);
+
+    writeExperimentInfo(experimentSerializer);
+
+    for (auto plot : mPlots)
+    {
+        plotInfoSerializer.setBufferCapacity(plot->data().size() * sizeof(cRappPlot::value_type));
+
+        update_progress(mID, static_cast<int>((100.0 * i++) / n));
+        plotInfoSerializer.writeID(plot->id());
+
+        if (!plot->plotName().empty())
+            plotInfoSerializer.writeName(plot->plotName());
+
+        if (!plot->event().empty())
+            plotInfoSerializer.writeEvent(plot->event());
+
+        if (!plot->eventDescription().empty())
+            plotInfoSerializer.writeEventDescription(plot->eventDescription());
+
+        plotInfoSerializer.writeEventDescription(plot->eventDescription());
+
+        cPointCloud point_cloud;
+        point_cloud.resize(plot->pointCloud().size());
+        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+
+        plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+            point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+        plotInfoSerializer.write(point_cloud);
+    }
+
+    fileWriter.close();
+}
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::savePlotFiles()
+{
+    auto n = mPlots.size();
+    int i = 0;
+
+    for (auto plot : mPlots)
+    {
+        update_progress(mID, static_cast<int>((100.0 * i++) / n));
+
+        std::string filename = mOutputFile.string();
+        filename += "_Plot";
+        filename += std::to_string(plot->id());
+        filename = nStringUtils::addProcessedTimestamp(filename);
+        filename += ".ceres";
+
+        cBlockDataFileWriter fileWriter;
+
+        cExperimentSerializer       experimentSerializer;
+        cProcessingInfoSerializer   processInfoSerializer;
+        cPlotInfoSerializer 	    plotInfoSerializer;
+
+        experimentSerializer.setBufferCapacity(4096 * 1024);
+        processInfoSerializer.setBufferCapacity(4096);
+        plotInfoSerializer.setBufferCapacity(plot->data().size() * sizeof(cRappPlot::value_type));
+
+        experimentSerializer.attach(&fileWriter);
+        processInfoSerializer.attach(&fileWriter);
+        plotInfoSerializer.attach(&fileWriter);
+
+        fileWriter.open(filename);
+        if (!fileWriter.isOpen())
+            continue;
+
+        writeProcessingInfo(processInfoSerializer);
+
+        writeExperimentInfo(experimentSerializer);
+
+        plotInfoSerializer.writeID(plot->id());
+
+        if (!plot->plotName().empty())
+            plotInfoSerializer.writeName(plot->plotName());
+
+        if (!plot->event().empty())
+            plotInfoSerializer.writeEvent(plot->event());
+
+        if (!plot->eventDescription().empty())
+            plotInfoSerializer.writeEventDescription(plot->eventDescription());
+
+        plotInfoSerializer.writeEventDescription(plot->eventDescription());
+
+        cPointCloud point_cloud;
+        point_cloud.resize(plot->pointCloud().size());
+        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+
+        plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(), 
+            point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+        plotInfoSerializer.write(point_cloud);
+
+        fileWriter.close();
     }
 }
 
 //-----------------------------------------------------------------------------
 void cFileProcessor::savePlyFiles()
 {
-    if (!mSavePlyFiles) return;
+    auto n = mPlots.size();
+    int i = 0;
 
     for (auto plot : mPlots)
     {
+        update_progress(mID, static_cast<int>((100.0 * i++) / n));
+
         std::string filename = mOutputFile.string();
         filename += "_Plot";
         filename += std::to_string(plot->id());
@@ -321,9 +416,84 @@ void cFileProcessor::savePlyFiles()
 }
 
 //-----------------------------------------------------------------------------
+void cFileProcessor::writeProcessingInfo(cProcessingInfoSerializer& serializer)
+{
+    serializer.write("plot_split", processing_info::ePROCESSING_TYPE::PLOT_SPLITTING);
+
+    for (auto it = mProcessingInfo.begin(); it != mProcessingInfo.end(); ++it)
+    {
+        serializer.write(*it);
+    }
+}
 
 //-----------------------------------------------------------------------------
+void cFileProcessor::writeExperimentInfo(cExperimentSerializer& serializer)
+{
+    serializer.writeBeginHeader();
 
-//-----------------------------------------------------------------------------
+    if (!mExpInfo.title().empty())
+        serializer.writeTitle(mExpInfo.title());
 
+    if (!mExpInfo.experimentDoc().empty())
+        serializer.writeExperimentDoc(mExpInfo.experimentDoc());
+
+    if (!mExpInfo.comments().empty())
+        serializer.writeComments(mExpInfo.comments());
+
+    if (!mExpInfo.principalInvestigator().empty())
+        serializer.writePrincipalInvestigator(mExpInfo.principalInvestigator());
+
+    if (!mExpInfo.researchers().empty())
+        serializer.writeResearchers(mExpInfo.researchers());
+
+    if (!mExpInfo.species().empty())
+        serializer.writeSpecies(mExpInfo.species());
+
+    if (!mExpInfo.cultivar().empty())
+        serializer.writeCultivar(mExpInfo.cultivar());
+
+    if (!mExpInfo.construct().empty())
+        serializer.writeConstructName(mExpInfo.construct());
+
+    if (!mExpInfo.eventNumbers().empty())
+        serializer.writeEventNumbers(mExpInfo.eventNumbers());
+
+    if (!mExpInfo.treatments().empty())
+        serializer.writeTreatments(mExpInfo.treatments());
+
+    if (!mExpInfo.fieldDesign().empty())
+        serializer.writeFieldDesign(mExpInfo.fieldDesign());
+
+    if (!mExpInfo.permit().empty())
+        serializer.writePermitInfo(mExpInfo.permit());
+
+    if (mExpInfo.plantingDate().has_value())
+    {
+        nExpTypes::sDateDoy_t date = mExpInfo.plantingDate().value();
+        serializer.writePlantingDate(date.year, date.month, date.day, date.doy);
+    }
+
+    if (mExpInfo.harvestDate().has_value())
+    {
+        nExpTypes::sDateDoy_t date = mExpInfo.harvestDate().value();
+        serializer.writeHarvestDate(date.year, date.month, date.day, date.doy);
+    }
+
+    if (mExpInfo.fileDate().has_value())
+    {
+        nExpTypes::sDate_t date = mExpInfo.fileDate().value();
+        serializer.writeFileDate(date.year, date.month, date.day);
+    }
+
+    if (mExpInfo.fileTime().has_value())
+    {
+        nExpTypes::sTime_t time = mExpInfo.fileTime().value();
+        serializer.writeFileTime(time.hour, time.minute, time.seconds);
+    }
+
+    if (mExpInfo.dayOfYear().has_value())
+        serializer.writeDayOfYear(mExpInfo.dayOfYear().value());
+
+    serializer.writeEndOfHeader();
+}
 

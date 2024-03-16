@@ -60,6 +60,7 @@ public:
 
 	void sort();
 
+	/** SpiderCam uses millimeters **/
 	int minX_mm() const;
 	int maxX_mm() const;
 
