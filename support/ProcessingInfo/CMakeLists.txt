@@ -96,6 +96,9 @@ PUBLIC
 	ProcessingInfoTypes.hpp
 	ProcessingInfoParser.hpp
 	ProcessingInfoSerializer.hpp
+
+	ProcessingInfo.hpp
+	ProcessingInfoLoader.hpp
 	
 PRIVATE
 
@@ -105,6 +108,8 @@ PRIVATE
 	ProcessingInfoDataIdentifiers.hpp
 	ProcessingInfoParser.cpp
 	ProcessingInfoSerializer.cpp
+	ProcessingInfo.cpp
+	ProcessingInfoLoader.cpp
 )
 
 target_include_directories(processing_info PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
