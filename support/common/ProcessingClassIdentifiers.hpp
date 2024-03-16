@@ -20,5 +20,10 @@ enum class ProcessingClassIDs : ClassID_t
      */
     PROCESSING_INFO = POINT_CLOUD + 0x0080,
 
+    /*
+     * Plot Information
+     */
+    PLOT_INFO = PROCESSING_INFO + 0x0008,
+
 };
 
