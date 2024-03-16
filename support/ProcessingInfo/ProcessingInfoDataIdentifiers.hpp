@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace processing_info
 {
 	/**********************************************************
