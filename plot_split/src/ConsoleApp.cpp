@@ -15,6 +15,7 @@
 #include <iostream>
 #include <mutex>
 #include <numbers>
+#include <memory>
 
 
 std::mutex g_console_mutex;
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
 
 	bool showHelp = false;
 	std::string config_file;
-	cConfigFileData* pConfigData = nullptr;
+	std::unique_ptr<cConfigFileData> pConfigData;
 
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
@@ -71,18 +72,18 @@ int main(int argc, char** argv)
 		("Show usage information.")
 		| lyra::opt(config_file, "configuration")
 		["-c"]["--config"]
-		("Configuration file to set the options in generating the point cloud data.")
-		.optional()
+		("Configuration file to set the options in generating the plot data.")
+		.required()
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")
 		.optional()
 		| lyra::arg(input_directory, "input directory")
-		("The path to input directory for converting data to a ceres file(s).")
+		("The path to input directory for converting point cloud scans to plot scans.")
 		.required()
 		| lyra::arg(output_directory, "output directory")
-		("The path to output directory for the ceres file(s).")
-		.optional();
+		("The path to output directory for the plot file(s).")
+		.required();
 
 	auto result = cli.parse({argc, argv});
 
@@ -98,6 +99,15 @@ int main(int argc, char** argv)
 		std::cerr << std::endl;
 		std::cerr << cli << std::endl;
 		return 1;
+	}
+
+	pConfigData = std::make_unique<cConfigFileData>(config_file);
+
+	if (!pConfigData->load())
+	{
+		std::cerr << "Error in configuration file: " << config_file << std::endl;
+		std::cerr << std::endl;
+		return 2;
 	}
 
 	if (output_directory.empty())

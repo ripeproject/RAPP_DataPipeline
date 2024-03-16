@@ -59,9 +59,9 @@ private:
 	wxTextCtrl* mpLoadConfigFile = nullptr;
 	wxButton* mpLoadConfigButton = nullptr;
 
-	wxRadioButton* mpSavePlyFiles = nullptr;
-	wxRadioButton* mpPlyUseBinaryFormat = nullptr;
-	wxRadioButton* mpSavePlotsInSingleFile = nullptr;
+	wxCheckBox* mpSavePlyFiles = nullptr;
+	wxCheckBox* mpPlyUseBinaryFormat = nullptr;
+	wxCheckBox* mpSavePlotsInSingleFile = nullptr;
 
 	wxButton* mpSplitButton = nullptr;
 

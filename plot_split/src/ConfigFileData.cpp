@@ -72,9 +72,14 @@ bool cConfigFileData::load()
 	{
 		auto options = configDoc["options"];
 
-		mSavePlyFiles = options["create plys"];
-		mSavePlotsInSingleFile = options["save plots in single file"];
-		mPlyUseBinaryFormat = options["plys use binary format"];
+		if (options.contains("create plys"))
+			mSavePlyFiles = options["create plys"];
+
+		if (options.contains("save plots in single file"))
+			mSavePlotsInSingleFile = options["save plots in single file"];
+
+		if (options.contains("plys use binary format"))
+			mPlyUseBinaryFormat = options["plys use binary format"];
 	}
 
 	auto scans = configDoc["scans"];

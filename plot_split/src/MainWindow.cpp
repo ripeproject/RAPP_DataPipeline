@@ -131,9 +131,9 @@ void cMainWindow::CreateControls()
 	mpLoadConfigButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadConfigButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgBrowse, this);
 
-	mpSavePlyFiles = new wxRadioButton(this, wxID_ANY, "Save PLY Files");
-	mpPlyUseBinaryFormat = new wxRadioButton(this, wxID_ANY, "Use Binary Format");
-//	mpSavePlotsInSingleFile = new wxRadioButton(this, wxID_ANY, "Basic (Smallest File Size)");
+	mpSavePlyFiles = new wxCheckBox(this, wxID_ANY, "Save PLY Files");
+	mpPlyUseBinaryFormat = new wxCheckBox(this, wxID_ANY, "Use Binary Format");
+//	mpSavePlotsInSingleFile = new wxCheckBox(this, wxID_ANY, "Basic (Smallest File Size)");
 
 	mpSplitButton = new wxButton(this, wxID_ANY, "Split");
 	mpSplitButton->Disable();
