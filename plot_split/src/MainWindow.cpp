@@ -131,6 +131,10 @@ void cMainWindow::CreateControls()
 	mpLoadConfigButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadConfigButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgBrowse, this);
 
+	mpSavePlyFiles = new wxRadioButton(this, wxID_ANY, "Save PLY Files", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	mpPlyUseBinaryFormat = new wxRadioButton(this, wxID_ANY, "Use Binary Format");
+//	mpSavePlotsInSingleFile = new wxRadioButton(this, wxID_ANY, "Basic (Smallest File Size)");
+
 	mpSplitButton = new wxButton(this, wxID_ANY, "Split");
 	mpSplitButton->Disable();
 	mpSplitButton->Bind(wxEVT_BUTTON, &cMainWindow::OnPlotSplit, this);
@@ -166,6 +170,15 @@ void cMainWindow::CreateLayout()
 	grid_sizer->Add(mpLoadConfigFile, 1, wxEXPAND);
 	grid_sizer->Add(mpLoadConfigButton, 0, wxALIGN_CENTER_VERTICAL);
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+
+	wxStaticBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, this, "Save Options");
+	options->Add(mpSavePlyFiles, wxSizerFlags().Proportion(0).Expand());
+	options->Add(mpPlyUseBinaryFormat, wxSizerFlags().Proportion(0).Expand());
+//	options->AddSpacer(5);
+//	options->Add(mpSavePlotsInSingleFile, wxSizerFlags().Proportion(0).Expand());
+	topsizer->Add(options, wxSizerFlags().Proportion(1));
+
+
 
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpSplitButton, wxSizerFlags().Proportion(0).Expand());
