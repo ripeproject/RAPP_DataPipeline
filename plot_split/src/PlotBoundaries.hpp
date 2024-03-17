@@ -20,7 +20,7 @@ public:
 
 	const std::string& getPlotName() const;
 	const std::string& getEvent() const;
-	const std::string& getEventDescription() const;
+	const std::string& getDescription() const;
 
 	rfm::rappPoint2D_t getNorthEastCorner() const;
 	rfm::rappPoint2D_t getNorthWestCorner() const;
@@ -52,7 +52,7 @@ protected:
 	int32_t		mPlotNumber = 0;
 	std::string mPlotName;
 	std::string mEvent;
-	std::string mEventDescription;
+	std::string mDescription;
 
 	std::int32_t mEastBoundary_mm = 0;
 	std::int32_t mWestBoundary_mm = 0;

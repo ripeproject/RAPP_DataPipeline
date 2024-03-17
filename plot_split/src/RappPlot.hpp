@@ -33,10 +33,10 @@ public:
 
 	int id() const;
 
-	const std::string& plotName() const;
+	const std::string& name() const;
 
 	const std::string& event() const;
-	const std::string& eventDescription() const;
+	const std::string& description() const;
 
 	const cRappPointCloud& pointCloud() const { return mCloud; }
 
@@ -45,7 +45,7 @@ public:
 	void setPlotName(const std::string& name);
 
 	void setEvent(const std::string& event);
-	void setEventDescription(const std::string& description);
+	void setDescription(const std::string& description);
 
 	void setPointCloud(const cRappPointCloud& pointCloud);
 
@@ -76,9 +76,9 @@ private:
 	int mID;
 
 	std::string mName;
+	std::string mDescription;
 
 	std::string mEvent;
-	std::string mEventDescription;
 
 	
 	cRappPointCloud mCloud;

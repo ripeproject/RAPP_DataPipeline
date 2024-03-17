@@ -14,9 +14,9 @@ cRappPlot::~cRappPlot()
 
 
 int cRappPlot::id() const { return mID; }
-const std::string& cRappPlot::plotName() const { return mName; }
+const std::string& cRappPlot::name() const { return mName; }
 const std::string& cRappPlot::event() const { return mEvent; }
-const std::string& cRappPlot::eventDescription() const { return mEventDescription; }
+const std::string& cRappPlot::description() const { return mDescription; }
 
 
 bool cRappPlot::empty() const
@@ -35,9 +35,9 @@ void cRappPlot::setEvent(const std::string& event)
 	mEvent = event;
 }
 
-void cRappPlot::setEventDescription(const std::string& description)
+void cRappPlot::setDescription(const std::string& description)
 {
-	mEventDescription = description;
+	mDescription = description;
 }
 
 

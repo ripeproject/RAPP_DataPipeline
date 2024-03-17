@@ -29,8 +29,8 @@ bool cPlotBoundary::load(const nlohmann::json& plot_info)
 	if (plot_info.contains("event"))
 		mEvent = plot_info["event"];
 
-	if (plot_info.contains("event_description"))
-		mEventDescription = plot_info["event_description"];
+	if (plot_info.contains("description"))
+		mDescription = plot_info["description"];
 
 	auto corners = plot_info["corners"];
 
@@ -140,9 +140,9 @@ const std::string& cPlotBoundary::getEvent() const
 	return mEvent;
 }
 
-const std::string& cPlotBoundary::getEventDescription() const
+const std::string& cPlotBoundary::getDescription() const
 {
-	return mEventDescription;
+	return mDescription;
 }
 
 rfm::rappPoint2D_t cPlotBoundary::getNorthEastCorner() const

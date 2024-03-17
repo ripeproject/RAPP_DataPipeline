@@ -262,7 +262,7 @@ void cFileProcessor::doPlotSplit()
 
             plot->setPlotName(plot_info->getPlotName());
             plot->setEvent(plot_info->getEvent());
-            plot->setEventDescription(plot_info->getEventDescription());
+            plot->setDescription(plot_info->getDescription());
             plot->setPointCloud(*plotPointCloud);
 
             mPlots.push_back(plot);
@@ -309,16 +309,16 @@ void cFileProcessor::savePlotFile()
         update_progress(mID, static_cast<int>((100.0 * i++) / n));
         plotInfoSerializer.writeID(plot->id());
 
-        if (!plot->plotName().empty())
-            plotInfoSerializer.writeName(plot->plotName());
+        if (!plot->name().empty())
+            plotInfoSerializer.writeName(plot->name());
 
         if (!plot->event().empty())
             plotInfoSerializer.writeEvent(plot->event());
 
-        if (!plot->eventDescription().empty())
-            plotInfoSerializer.writeEventDescription(plot->eventDescription());
+        if (!plot->description().empty())
+            plotInfoSerializer.writeDescription(plot->description());
 
-        plotInfoSerializer.writeEventDescription(plot->eventDescription());
+        plotInfoSerializer.writeDescription(plot->description());
 
         cPointCloud point_cloud;
         point_cloud.resize(plot->pointCloud().size());
@@ -373,16 +373,16 @@ void cFileProcessor::savePlotFiles()
 
         plotInfoSerializer.writeID(plot->id());
 
-        if (!plot->plotName().empty())
-            plotInfoSerializer.writeName(plot->plotName());
+        if (!plot->name().empty())
+            plotInfoSerializer.writeName(plot->name());
 
         if (!plot->event().empty())
             plotInfoSerializer.writeEvent(plot->event());
 
-        if (!plot->eventDescription().empty())
-            plotInfoSerializer.writeEventDescription(plot->eventDescription());
+        if (!plot->description().empty())
+            plotInfoSerializer.writeDescription(plot->description());
 
-        plotInfoSerializer.writeEventDescription(plot->eventDescription());
+        plotInfoSerializer.writeDescription(plot->description());
 
         cPointCloud point_cloud;
         point_cloud.resize(plot->pointCloud().size());
