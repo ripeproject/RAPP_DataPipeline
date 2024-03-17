@@ -133,7 +133,7 @@ void cMainWindow::CreateControls()
 
 	mpSavePlyFiles = new wxCheckBox(this, wxID_ANY, "Save PLY Files");
 	mpPlyUseBinaryFormat = new wxCheckBox(this, wxID_ANY, "Use Binary Format");
-//	mpSavePlotsInSingleFile = new wxCheckBox(this, wxID_ANY, "Basic (Smallest File Size)");
+	mpSavePlotsInSingleFile = new wxCheckBox(this, wxID_ANY, "Save In Single File");
 
 	mpSplitButton = new wxButton(this, wxID_ANY, "Split");
 	mpSplitButton->Disable();
@@ -173,14 +173,29 @@ void cMainWindow::CreateLayout()
 
 	topsizer->AddSpacer(5);
 
-	wxStaticBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, this, "Save Options");
-	options->AddSpacer(5);
-	options->Add(mpSavePlyFiles, wxSizerFlags().Proportion(0).Expand());
-	options->AddSpacer(5);
-	options->Add(mpPlyUseBinaryFormat, wxSizerFlags().Proportion(0).Expand());
-//	options->AddSpacer(5);
-//	options->Add(mpSavePlotsInSingleFile, wxSizerFlags().Proportion(0).Expand());
-	topsizer->Add(options, wxSizerFlags().Proportion(0).Expand());
+	wxBoxSizer* op_sizer = new wxBoxSizer(wxHORIZONTAL);
+
+	{
+		wxStaticBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, this, "Save Options");
+		options->AddSpacer(5);
+		options->Add(mpSavePlotsInSingleFile, wxSizerFlags().Proportion(0).Expand());
+
+		op_sizer->Add(options, wxSizerFlags().Proportion(0).Expand());
+	}
+
+	op_sizer->AddSpacer(10);
+
+	{
+		wxStaticBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, this, "Export Options");
+		options->AddSpacer(5);
+		options->Add(mpSavePlyFiles, wxSizerFlags().Proportion(0).Expand());
+		options->AddSpacer(5);
+		options->Add(mpPlyUseBinaryFormat, wxSizerFlags().Proportion(0).Expand());
+
+		op_sizer->Add(options, wxSizerFlags().Proportion(0).Expand());
+	}
+
+	topsizer->Add(op_sizer, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpSplitButton, wxSizerFlags().Proportion(0).Expand());
@@ -255,6 +270,7 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 
 	mpLoadConfigFile->SetValue(config_file);
 
+	mpSavePlotsInSingleFile->SetValue(mConfigData->savePlotsInSingleFile());
 	mpSavePlyFiles->SetValue(mConfigData->savePlysFiles());
 	mpPlyUseBinaryFormat->SetValue(mConfigData->plysUseBinaryFormat());
 
@@ -296,7 +312,7 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 		return;
 	}
 
-	bool savePlotsInSingleFile = false;		// mConfigData->savePlotsInSingleFile()
+	bool savePlotsInSingleFile = mpSavePlotsInSingleFile->GetValue();
 	bool savePlyFiles = mpSavePlyFiles->GetValue();
 	bool plyUseBinaryFormat = mpPlyUseBinaryFormat->GetValue();
 
