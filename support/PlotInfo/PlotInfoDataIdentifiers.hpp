@@ -17,7 +17,7 @@ namespace plot_info
 		POINT_CLOUD_DATA,
 		POINT_CLOUD_DIMENSIONS,
 		EVENT,
-		EVENT_DESCRIPTION,
+		DESCRIPTION,
 	};
 }
 

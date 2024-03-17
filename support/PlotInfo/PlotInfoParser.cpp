@@ -35,7 +35,7 @@ void cPlotInfoParser::processData(BLOCK_MAJOR_VERSION_t major_version,
         processPlotID(buffer);
         break;
     case DataID::PLOT_NAME:
-        processPlotName(buffer);
+        processName(buffer);
         break;
     case DataID::POINT_CLOUD_DATA:
         switch (major_version)
@@ -61,8 +61,8 @@ void cPlotInfoParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::EVENT:
         processEvent(buffer);
         break;
-    case DataID::EVENT_DESCRIPTION:
-        processEventDescription(buffer);
+    case DataID::DESCRIPTION:
+        processDescription(buffer);
         break;
     }
 }
@@ -77,15 +77,15 @@ void cPlotInfoParser::processPlotID(cDataBuffer& buffer)
     onPlotID(id);
 }
 
-void cPlotInfoParser::processPlotName(cDataBuffer& buffer)
+void cPlotInfoParser::processName(cDataBuffer& buffer)
 {
     std::string name;
     buffer >> name;
 
     if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPlotName.");
+        throw std::runtime_error("ERROR, Buffer under run in processName.");
 
-    onPlotName(name);
+    onName(name);
 }
 
 void cPlotInfoParser::processDimensions(cDataBuffer& buffer)
@@ -168,15 +168,15 @@ void cPlotInfoParser::processEvent(cDataBuffer& buffer)
     onEvent(event_num);
 }
 
-void cPlotInfoParser::processEventDescription(cDataBuffer& buffer)
+void cPlotInfoParser::processDescription(cDataBuffer& buffer)
 {
     std::string event_description;
     buffer >> event_description;
 
     if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processEventDescription.");
+        throw std::runtime_error("ERROR, Buffer under run in processDescription.");
 
-    onEventDescription(event_description);
+    onDescription(event_description);
 }
 
 

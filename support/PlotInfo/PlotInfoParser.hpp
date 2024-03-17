@@ -26,7 +26,8 @@ public:
 	cBlockID& blockID() override;
 
 	virtual void onPlotID(int id) = 0;
-	virtual void onPlotName(const std::string& name) = 0;
+	virtual void onName(const std::string& name) = 0;
+	virtual void onDescription(const std::string& description) = 0;
 
 	virtual void onDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m,
@@ -35,7 +36,6 @@ public:
 	virtual void onPointCloudData(cPointCloud pointCloud) = 0;
 
 	virtual void onEvent(const std::string& event) = 0;
-	virtual void onEventDescription(const std::string& description) = 0;
 
 protected:
 	void processData(BLOCK_MAJOR_VERSION_t major_version,
@@ -45,7 +45,8 @@ protected:
 
 protected:
 	virtual void processPlotID(cDataBuffer& buffer);
-	virtual void processPlotName(cDataBuffer& buffer);
+	virtual void processName(cDataBuffer& buffer);
+	virtual void processDescription(cDataBuffer& buffer);
 
 	void processDimensions(cDataBuffer& buffer);
 
@@ -53,7 +54,6 @@ protected:
 	void processPointCloudData_1_1(cDataBuffer& buffer);
 
 	virtual void processEvent(cDataBuffer& buffer);
-	virtual void processEventDescription(cDataBuffer& buffer);
 
 private:
 	std::unique_ptr<cPlotInfoID> mBlockID;

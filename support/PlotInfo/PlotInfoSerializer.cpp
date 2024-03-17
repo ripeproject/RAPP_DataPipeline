@@ -128,16 +128,16 @@ void cPlotInfoSerializer::writeEvent(const std::string& event)
     writeBlock(*mBlockID, mDataBuffer);
 }
 
-void cPlotInfoSerializer::writeEventDescription(const std::string& description)
+void cPlotInfoSerializer::writeDescription(const std::string& description)
 {
     setVersion(1, 0);
-    mBlockID->dataID(DataID::EVENT_DESCRIPTION);
+    mBlockID->dataID(DataID::DESCRIPTION);
 
     mDataBuffer.clear();
     mDataBuffer << description;
 
     if (mDataBuffer.overrun())
-        throw std::runtime_error("ERROR, Buffer Overrun in writing writeEventDescription data.");
+        throw std::runtime_error("ERROR, Buffer Overrun in writing writeDescription data.");
 
     writeBlock(*mBlockID, mDataBuffer);
 }

@@ -24,14 +24,14 @@ public:
 
 	void writeID(int id);
 	void writeName(const std::string& name);
+	void writeDescription(const std::string& description);
+
+	void writeEvent(const std::string& event);
 
 	void writeDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m, double z_min_m, double z_max_m);
 
 	void write(const cPointCloud& in);
-
-	void writeEvent(const std::string& event);
-	void writeEventDescription(const std::string& description);
 
 protected:
 	cBlockID& blockID() override;
