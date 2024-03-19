@@ -410,6 +410,13 @@ void cFileProcessor::savePlyFiles()
         std::string filename = mOutputFile.string();
         filename += "_Plot";
         filename += std::to_string(plot->id());
+
+        if (!plot->name().empty())
+        {
+            filename += "_";
+            filename += plot->name();
+        }
+
         filename += ".ply";
         exportPointcloud2Ply(filename, plot->data(), mPlyUseBinaryFormat);
     }
