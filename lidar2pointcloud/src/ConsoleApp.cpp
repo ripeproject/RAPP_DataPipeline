@@ -5,6 +5,8 @@
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
 
+#include "GroundModelUtils.hpp"
+
 #include "Kinematics_Constant.hpp"
 #include "Kinematics_Dolly.hpp"
 #include "Kinematics_GPS.hpp"
@@ -34,64 +36,8 @@ namespace
 	cTextProgressBar progress_bar;
 
 	const double INVALID_VALUE = -10000.0;
-
-	const double DEFAULT_PITCH_DEG = 0.0;
-	const double DEFAULT_ROLL_DEG = 0.0;
-	const double DEFAULT_YAW_DEG = 0.0;
-
-	const double DEFAULT_MIN_DIST_M = 0.0;
-	const double DEFAULT_MAX_DIST_M = 1000.0;
-
-	const double DEFAULT_MIN_AZIMUTH_DEG = 0.0;
-	const double DEFAULT_MAX_AZIMUTH_DEG = 360.0;
-
-	const double DEFAULT_MIN_ALTITUDE_DEG = -90.0;
-	const double DEFAULT_MAX_ALTITUDE_DEG = 90.0;
-
-	cLidar2PointCloud::eOutputOptions convert(nConfigFileData::eOutputOptions option)
-	{
-		if (option == nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES)
-			return cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
-
-		if (option == nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES)
-			return cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
-
-		return cLidar2PointCloud::eOutputOptions::AGGREGATE;
-	}
-
-	cLidar2PointCloud::eSaveOptions convert(nConfigFileData::eSaveOptions option)
-	{
-		if (option == nConfigFileData::eSaveOptions::FRAME_ID)
-			return cLidar2PointCloud::eSaveOptions::FRAME_ID;
-
-		if (option == nConfigFileData::eSaveOptions::SENSOR_INFO)
-			return cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
-
-		return cLidar2PointCloud::eSaveOptions::BASIC;
-	}
-
-	nConfigFileData::eOutputOptions convert(cLidar2PointCloud::eOutputOptions option)
-	{
-		if (option == cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES)
-			return nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES;
-
-		if (option == cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES)
-			return nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES;
-
-		return nConfigFileData::eOutputOptions::AGGREGATE;
-	}
-
-	nConfigFileData::eSaveOptions convert(cLidar2PointCloud::eSaveOptions option)
-	{
-		if (option == cLidar2PointCloud::eSaveOptions::FRAME_ID)
-			return nConfigFileData::eSaveOptions::FRAME_ID;
-
-		if (option == cLidar2PointCloud::eSaveOptions::SENSOR_INFO)
-			return nConfigFileData::eSaveOptions::SENSOR_INFO;
-
-		return nConfigFileData::eSaveOptions::BASIC;
-	}
 }
+
 
 void console_message(const std::string& msg)
 {
@@ -125,25 +71,11 @@ int main(int argc, char** argv)
 	using namespace std::filesystem;
 	using namespace nStringUtils;
 
+	std::string ground_data = current_path().string() + "FullField.csv";
 
-	double pitch_deg = INVALID_VALUE;
-	double roll_deg = INVALID_VALUE;
-	double yaw_deg = INVALID_VALUE;
-
-	double min_dist_m = INVALID_VALUE;
-	double max_dist_m = INVALID_VALUE;
-
-	double min_azimuth_deg = INVALID_VALUE;
-	double max_azimuth_deg = INVALID_VALUE;
-
-	double min_altitude_deg = INVALID_VALUE;
-	double max_altitude_deg = INVALID_VALUE;
-
-	std::string kinematics;
 	bool isFile = false;
 	bool showHelp = false;
 	std::string config_file;
-	cConfigFileData* pConfigData = nullptr;
 
 	int num_of_threads = 1;
 	std::string input_directory = current_path().string();
@@ -155,28 +87,14 @@ int main(int argc, char** argv)
 		| lyra::opt(config_file, "configuration")
 		["-c"]["--config"]
 		("Configuration file to set the options in generating the point cloud data.")
-		.optional()
+		.required()
+		| lyra::opt(ground_data, "Ground data source")
+		["-g"]["--ground_data"]
+		("The file containing the GPS ground point data.")
+		.required()
 		| lyra::opt(isFile)
 		["-f"]["--file"]
 		("Operate on a single file instead of directory.")
-		| lyra::opt(kinematics, "kinematics type")
-		["-k"]["--kinematic"]
-		("Specify the type of kinematics to apply to the pointcloud data.")
-		| lyra::opt(pitch_deg, "pitch (deg)")
-		["-p"]["--pitch_deg"]
-		("The pitch angle of the sensor with respect to the horizontal.  Range is +90 to -90 degrees.")
-		| lyra::opt(roll_deg, "roll (deg)")
-		["-r"]["--roll_deg"]
-		("The roll angle of the sensor with respect to the horizontal.  Range is +180 to -180 degrees.")
-		| lyra::opt(yaw_deg, "yaw (deg)")
-		["-y"]["--yaw_deg"]
-		("The yaw angle of the sensor with respect to the east axis.  Range is 0 to 360 degrees.")
-		| lyra::opt(min_dist_m, "min distance (m)")
-		["-m"]["--min_distance_m"]
-		("The minimum distance of the lidar return to use in meters.")
-		| lyra::opt(max_dist_m, "max distance (m)")
-		["-x"]["--max_distance_m"]
-		("The maximum distance of the lidar return to use in meters.")
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")
@@ -201,6 +119,44 @@ int main(int argc, char** argv)
 		std::cerr << "Error in command line: " << result.message() << std::endl;
 		std::cerr << std::endl;
 		std::cerr << cli << std::endl;
+		return 1;
+	}
+
+	if (!std::filesystem::exists(input_directory))
+	{
+		if (isFile)
+			std::cerr << "Input file " << input_directory << " does not exists." << std::endl;
+		else
+			std::cerr << "Input directory " << input_directory << " does not exists." << std::endl;
+		return 1;
+	}
+
+	// Bail out if we can't load the ground data
+	if (!std::filesystem::exists(ground_data))
+	{
+		std::cerr << "Error: " << ground_data << " does not exists." << std::endl;
+		return 1;
+	}
+
+	if (!load_ground_data(ground_data))
+	{
+		std::cerr << "Error: " << ground_data << " could not be loaded." << std::endl;
+		return 1;
+	}
+
+
+	// Bail out if we can't load the configuration data
+	if (!std::filesystem::exists(config_file))
+	{
+		std::cerr << "Error: " << config_file << " does not exists." << std::endl;
+		return 1;
+	}
+
+	cConfigFileData configData(config_file);
+
+	if (!configData.load())
+	{
+		std::cerr << "Error: " << config_file << " could not be loaded." << std::endl;
 		return 1;
 	}
 
@@ -279,102 +235,6 @@ int main(int argc, char** argv)
 	}
 
 
-	eKinematics model;
-	model = eKinematics::NONE;
-
-	bool useConfigFile = false;
-
-	double eastSpeed_mmps = 0;
-	double northSpeed_mmps = 0;
-	double vertSpeed_mmps = 0;
-
-	if (!config_file.empty())
-	{
-		useConfigFile = true;
-
-		pConfigData = new cConfigFileData(config_file);
-
-		if (!pConfigData->loadDefaults())
-		{
-			std::cerr << "Could not load configuration file: ";
-			std::cerr << config_file;
-			return 1;
-		}
-
-		if (pitch_deg != INVALID_VALUE)
-			pConfigData->setDefaultPitch(pitch_deg);
-
-		if (roll_deg != INVALID_VALUE)
-			pConfigData->setDefaultRoll(roll_deg);
-
-		if (yaw_deg != INVALID_VALUE)
-			pConfigData->setDefaultYaw(yaw_deg);
-
-		if (min_dist_m != INVALID_VALUE)
-			pConfigData->setDefaultMinRange_m(min_dist_m);
-
-		if (max_dist_m != INVALID_VALUE)
-			pConfigData->setDefaultMaxRange_m(max_dist_m);
-
-		if (min_azimuth_deg != INVALID_VALUE)
-			pConfigData->setDefaultMinAzimuth_deg(min_azimuth_deg);
-
-		if (max_azimuth_deg != INVALID_VALUE)
-			pConfigData->setDefaultMaxAzimuth_deg(max_azimuth_deg);
-
-		if (min_altitude_deg != INVALID_VALUE)
-			pConfigData->setDefaultMinAltitude_deg(min_altitude_deg);
-
-		if (max_altitude_deg != INVALID_VALUE)
-			pConfigData->setDefaultMaxAltitude_deg(max_altitude_deg);
-
-//		pConfigData->setDefaultAggregatePointCloud(mpAggregatePointCloud->GetValue());
-//		pConfigData->setDefaultReducedPointCloud(mpSaveReducedPointCloud->GetValue());
-
-		pConfigData->loadKinematicModels();
-	}
-	else
-	{
-		if (icontains(kinematics, "constant"))
-		{
-			model = eKinematics::CONSTANT;
-
-			auto parameters = get_parameters(kinematics);
-			if (parameters.size() != 3)
-			{
-				std::cout << cli << std::endl;
-				return 0;
-			}
-
-			eastSpeed_mmps = std::stod(parameters[0]);
-			northSpeed_mmps = std::stod(parameters[1]);
-			vertSpeed_mmps = std::stod(parameters[2]);
-		}
-		else if (iequal(kinematics, "slam"))
-		{
-			model = eKinematics::DOLLY;
-		}
-		else if (iequal(kinematics, "dolly"))
-		{
-			model = eKinematics::DOLLY;
-		}
-		else if (iequal(kinematics, "gps"))
-		{
-			model = eKinematics::GPS;
-		}
-	}
-
-	// Restore defaults if not set
-	if (pitch_deg == INVALID_VALUE)			pitch_deg = DEFAULT_PITCH_DEG;
-	if (roll_deg == INVALID_VALUE)			roll_deg = DEFAULT_ROLL_DEG;
-	if (yaw_deg == INVALID_VALUE)			yaw_deg = DEFAULT_YAW_DEG;
-	if (min_dist_m == INVALID_VALUE)		min_dist_m = DEFAULT_MIN_DIST_M;
-	if (max_dist_m == INVALID_VALUE)		max_dist_m = DEFAULT_MAX_DIST_M;
-	if (min_azimuth_deg == INVALID_VALUE)	min_azimuth_deg = DEFAULT_MIN_AZIMUTH_DEG;
-	if (max_azimuth_deg == INVALID_VALUE)	max_azimuth_deg = DEFAULT_MAX_AZIMUTH_DEG;
-	if (min_altitude_deg == INVALID_VALUE)	min_altitude_deg = DEFAULT_MIN_ALTITUDE_DEG;
-	if (max_altitude_deg == INVALID_VALUE)	max_altitude_deg = DEFAULT_MAX_ALTITUDE_DEG;
-
 	/*
 	 * Add all of the files to process to the thread pool
 	 */
@@ -393,90 +253,28 @@ int main(int argc, char** argv)
 			{
 				out_file += ".";
 				out_file += fe.extension;
-				//				out_file.replace_extension(fe.extension);
 			}
 		}
+
+		auto options = configData.getParameters(in_file.path().filename().string());
+
+		if (!options.has_value())
+			continue;
+
+		nConfigFileData::sParameters_t parameters = options.value();
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
-		fp->setValidRange_m(min_dist_m, max_dist_m);
-		fp->setAzimuthWindow_deg(min_azimuth_deg, max_azimuth_deg);
-		fp->setAltitudeWindow_deg(min_altitude_deg, max_altitude_deg);
+		fp->setValidRange_m(parameters.minDistance_m, parameters.maxDistance_m);
+		fp->setAzimuthWindow_deg(parameters.minAzimuth_deg, parameters.maxAzimuth_deg);
+		fp->setAltitudeWindow_deg(parameters.minAltitude_deg, parameters.maxAltitude_deg);
 
-//BAF		fp->saveAggregatePointCloud(aggregatePointCloud);
-//BAF		fp->saveReducedPointCloud(saveReducedPointCloud);
+		fp->setInitialPosition_m(parameters.startX_m, parameters.startY_m, parameters.startZ_m);
+		fp->setFinalPosition_m(parameters.endX_m, parameters.endY_m, parameters.endZ_m);
 
-		std::unique_ptr<cKinematics> kinematics;
+		fp->setDollySpeed(parameters.Vx_mmps, parameters.Vy_mmps, parameters.Vz_mmps);
 
-		if (useConfigFile)
-		{
-			auto options = pConfigData->getOptions(in_file.path().filename().string());
-
-			fp->setValidRange_m(options.minDistance_m, options.maxDistance_m);
-			fp->setAzimuthWindow_deg(options.minAzimuth_deg, options.maxAzimuth_deg);
-			fp->setAltitudeWindow_deg(options.minAltitude_deg, options.maxAltitude_deg);
-
-			cLidar2PointCloud::eOutputOptions output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
-			if (options.outputOption == nConfigFileData::eOutputOptions::AGGREGATE)
-			{
-				output_option = cLidar2PointCloud::eOutputOptions::AGGREGATE;
-			}
-			else if (options.outputOption == nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES)
-			{
-				output_option = cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
-			}
-			else if (options.outputOption == nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES)
-			{
-				output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
-			}
-
-			fp->setOutputOption(output_option);
-
-			cLidar2PointCloud::eSaveOptions save_option = cLidar2PointCloud::eSaveOptions::BASIC;
-			if (options.saveOption == nConfigFileData::eSaveOptions::FRAME_ID)
-			{
-				save_option = cLidar2PointCloud::eSaveOptions::FRAME_ID;
-			}
-			else if (options.saveOption == nConfigFileData::eSaveOptions::SENSOR_INFO)
-			{
-				save_option = cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
-			}
-
-			fp->setSaveOption(save_option);
-
-			kinematics = pConfigData->getModel(in_file.path().filename().string());
-		}
-		else
-		{
-			switch (model)
-			{
-			case eKinematics::CONSTANT:
-				kinematics = std::make_unique<cKinematics_Constant>(eastSpeed_mmps,
-					northSpeed_mmps, vertSpeed_mmps);
-				break;
-			case eKinematics::DOLLY:
-				kinematics = std::make_unique<cKinematics_Dolly>();
-				break;
-			case eKinematics::GPS:
-				kinematics = std::make_unique<cKinematics_GPS>();
-				break;
-			case eKinematics::SLAM:
-				kinematics = std::make_unique<cKinematics_SLAM>();
-				break;
-			}
-
-			kinematics->rotateToSEU(true);
-			kinematics->setSensorOrientation(yaw_deg, pitch_deg, roll_deg);
-		}
-
-		if (!kinematics)
-		{
-			--numFilesToProcess;
-			delete fp;
-			continue;
-		}
-
-		fp->setKinematicModel(std::move(kinematics));
+//		fp->setKinematicModel(std::move(kinematics));
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 
@@ -500,7 +298,6 @@ int main(int argc, char** argv)
 			std::cout << "The empty directory " << output_dir << " was removed." << std::endl;
 		}
 	}
-
 
 	return 0;
 }

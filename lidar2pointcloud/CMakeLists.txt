@@ -152,10 +152,13 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 
 find_package(lyra REQUIRED)
 find_package(Catch2 QUIET)
+find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(wxWidgets QUIET COMPONENTS core base aui)
 find_package(fmt REQUIRED)
+find_package(dlib REQUIRED)
+find_package(tinyply REQUIRED)
 
 
 # Find and include my libraries for data collection
@@ -214,5 +217,6 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PointCloud)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/Utilities)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/MathUtils)
 
 #print_all_variables()

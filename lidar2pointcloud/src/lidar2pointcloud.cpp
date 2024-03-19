@@ -1,6 +1,8 @@
 
 #include "lidar2pointcloud.hpp"
 #include "PointCloudTypes.hpp"
+#include "Constants.hpp"
+#include "MathUtils.hpp"
 
 #include <ouster/simple_blas.h>
 #include <ouster/ouster_utils.h>
@@ -15,6 +17,7 @@
 #include <iostream>
 
 using namespace ouster;
+using namespace nMathUtils;
 
 extern void console_message(const std::string& msg);
 
@@ -24,37 +27,7 @@ namespace
 	constexpr double range_unit_m = 0.001;
 	constexpr double range_unit_mm = 1.0;
 
-	constexpr double m_to_mm = 1000.0;
-	constexpr double mm_to_m = 0.001;
-
 	constexpr double g_mps2 = 9.80665;
-
-	double wrap_pi_to_neg_pi(double angle_rad)
-	{
-		constexpr double neg_pi = -1.0 * std::numbers::pi;
-		constexpr double two_pi = 2.0 * std::numbers::pi;
-
-		while (angle_rad < neg_pi)
-			angle_rad += two_pi;
-
-		while (angle_rad > std::numbers::pi)
-			angle_rad -= two_pi;
-
-		return angle_rad;
-	}
-
-	double wrap_zero_to_two_pi(double angle_rad)
-	{
-		constexpr double two_pi = 2.0 * std::numbers::pi;
-
-		while (angle_rad < 0)
-			angle_rad += two_pi;
-
-		while (angle_rad > two_pi)
-			angle_rad -= two_pi;
-
-		return angle_rad;
-	}
 
 	/** Lookup table of beam directions and offsets. */
 	struct sXYZ_Lut_t
@@ -194,8 +167,8 @@ namespace
 			double azimuth  = azimuth_rad[i];
 			double altitude = altitude_rad[i];
 
-			lut.theta_rad[i] = wrap_zero_to_two_pi(encoder + azimuth);
-			lut.phi_rad[i]   = wrap_pi_to_neg_pi(altitude);
+			lut.theta_rad[i] = wrap_0_to_two_pi(encoder + azimuth);
+			lut.phi_rad[i]   = wrap_neg_pi_to_pi(altitude);
 
 			if (((min_encoder_rad < encoder) && (encoder < max_encoder_rad))
 				&& ((min_altitude_rad < altitude) && (altitude < max_altitude_rad)))
@@ -330,24 +303,94 @@ void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double ma
 	mMaxAltitude_rad = max_altitude_deg * std::numbers::pi / 180.0;
 }
 
-void cLidar2PointCloud::setOutputOption(eOutputOptions option)
+void cLidar2PointCloud::setInitialPosition_m(double x_m, double y_m, double z_m)
 {
-	mOutputOptions = option;
+	mStartX_mm = x_m * nConstants::M_TO_MM;
+	mStartY_mm = y_m * nConstants::M_TO_MM;
+	mStartZ_mm = z_m * nConstants::M_TO_MM;
 }
 
-void cLidar2PointCloud::setSaveOption(eSaveOptions option)
+void cLidar2PointCloud::setFinalPosition_m(double x_m, double y_m, double z_m)
 {
-	mSaveOption = option;
+	mEndX_mm = x_m * nConstants::M_TO_MM;
+	mEndY_mm = y_m * nConstants::M_TO_MM;
+	mEndZ_mm = z_m * nConstants::M_TO_MM;
 }
 
-void cLidar2PointCloud::setKinematicModel(std::unique_ptr<cKinematics> model)
+void cLidar2PointCloud::setDollySpeed(double Vx_mmps, double Vy_mmps, double Vz_mmps)
 {
-	mKinematic.reset(model.release());
+	mVx_mmps = Vx_mmps;
+	mVy_mmps = Vy_mmps;
+	mVz_mmps = Vz_mmps;
 }
 
-const cKinematics* cLidar2PointCloud::getKinematicModel() const
+void cLidar2PointCloud::setSensorMountOrientation(double yaw_deg, double pitch_deg, double roll_deg)
 {
-	return mKinematic.get();
+	mSensorMountPitch_deg = pitch_deg;
+	mSensorMountRoll_deg = roll_deg;
+	mSensorMountYaw_deg = yaw_deg;
+
+	double pitch_rad = -pitch_deg * nConstants::DEG_TO_RAD;
+	double roll_rad = -roll_deg * nConstants::DEG_TO_RAD;
+	double yaw_rad = -yaw_deg * nConstants::DEG_TO_RAD;
+
+	Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
+	Eigen::AngleAxisd yawAngle(yaw_rad, Eigen::Vector3d::UnitZ());
+	Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
+
+	//	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
+	Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
+	Eigen::Matrix3d rotationMatrix = q.matrix();
+
+	double e; // Used for debugging;
+
+	auto c1 = mSensorToSEU.column(0);
+	c1[0] = e = rotationMatrix.col(0)[0];
+	c1[1] = e = rotationMatrix.col(0)[1];
+	c1[2] = e = rotationMatrix.col(0)[2];
+
+	auto c2 = mSensorToSEU.column(1);
+	c2[0] = e = rotationMatrix.col(1)[0];
+	c2[1] = e = rotationMatrix.col(1)[1];
+	c2[2] = e = rotationMatrix.col(1)[2];
+
+	auto c3 = mSensorToSEU.column(2);
+	c3[0] = e = rotationMatrix.col(2)[0];
+	c3[1] = e = rotationMatrix.col(2)[1];
+	c3[2] = e = rotationMatrix.col(2)[2];
+}
+
+void cLidar2PointCloud::setOrientationOffset_deg(double yaw_deg, double pitch_deg, double roll_deg)
+{
+	mEndPitchOffset_deg = mStartPitchOffset_deg = pitch_deg;
+	mEndRollOffset_deg = mStartRollOffset_deg = roll_deg;
+	mEndYawOffset_deg = mStartYawOffset_deg = yaw_deg;
+}
+
+void cLidar2PointCloud::setInitialOffset_deg(double yaw_deg, double pitch_deg, double roll_deg)
+{
+	mStartPitchOffset_deg = pitch_deg;
+	mStartRollOffset_deg = roll_deg;
+	mStartYawOffset_deg = yaw_deg;
+}
+
+void cLidar2PointCloud::setFinalOffset_deg(double yaw_deg, double pitch_deg, double roll_deg)
+{
+	mEndPitchOffset_deg = pitch_deg;
+	mEndRollOffset_deg = roll_deg;
+	mEndYawOffset_deg = yaw_deg;
+}
+
+void cLidar2PointCloud::enableTranslateToGround(bool enable, double threshold_pct)
+{
+	mTranslateToGround = enable;
+	mTranslateThreshold_pct = threshold_pct;
+}
+
+void cLidar2PointCloud::enableRotateToGround(bool enable, double threshold_pct)
+{
+	mRotateToGround = enable;
+	mRotateThreshold_pct = threshold_pct;
 }
 
 bool cLidar2PointCloud::requiresTelemetryPass()
@@ -415,6 +458,7 @@ void cLidar2PointCloud::writeAndClearData()
 		mPointCloud.minY_m(), mPointCloud.maxY_m(),
 		mPointCloud.minZ_m(), mPointCloud.maxZ_m());
 
+/*
 	switch (mSaveOption)
 	{
 	case eSaveOptions::BASIC:
@@ -436,6 +480,8 @@ void cLidar2PointCloud::writeAndClearData()
 		break;
 	}
 	}
+*/
+
 	mPointCloud.clear();
 }
 
@@ -459,8 +505,8 @@ void cLidar2PointCloud::createXyzLookupTable(const beam_intrinsics_2_t& beam,
 
 void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 {
-	double minDistance_mm = mMinDistance_m * m_to_mm;
-	double maxDistance_mm = mMaxDistance_m * m_to_mm;
+	double minDistance_mm = mMinDistance_m * nConstants::M_TO_MM;
+	double maxDistance_mm = mMaxDistance_m * nConstants::M_TO_MM;
 
 	auto frameID = data.frame_id();
 	auto timestamp_ns = data.timestamp_ns();
@@ -523,9 +569,9 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 					y_mm += offset.y;
 					z_mm += offset.z;
 
-					point.X_m = x_mm * mm_to_m;
-					point.Y_m = y_mm * mm_to_m;
-					point.Z_m = z_mm * mm_to_m;
+					point.X_m = x_mm * nConstants::MM_TO_M;
+					point.Y_m = y_mm * nConstants::MM_TO_M;
+					point.Z_m = z_mm * nConstants::MM_TO_M;
 				}
 			}
 
@@ -548,6 +594,7 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 		return;
 	}
 
+/*
 	switch (mOutputOptions)
 	{
 		case eOutputOptions::AGGREGATE:
@@ -582,6 +629,7 @@ void cLidar2PointCloud::computePointCloud(const cOusterLidarData& data)
 			break;
 		}
 	}
+*/
 }
 
 void cLidar2PointCloud::writeReducedPointCloud(uint16_t frameID, uint64_t timestamp_ns,
@@ -589,6 +637,7 @@ void cLidar2PointCloud::writeReducedPointCloud(uint16_t frameID, uint64_t timest
 {
 	if (mCloud.empty()) return;
 
+/*
 	switch (mSaveOption)
 	{
 		case eSaveOptions::BASIC:
@@ -626,6 +675,7 @@ void cLidar2PointCloud::writeReducedPointCloud(uint16_t frameID, uint64_t timest
 			break;
 		}
 	}
+*/
 
 	mCloud.clear();
 }
@@ -634,7 +684,7 @@ void cLidar2PointCloud::writeSensorPointCloud(uint16_t frameID, uint64_t timesta
 												std::size_t columns_per_frame, std::size_t pixels_per_column)
 {
 	if (mCloud.empty()) return;
-
+/*
 	switch (mSaveOption)
 	{
 		case eSaveOptions::BASIC:
@@ -672,6 +722,7 @@ void cLidar2PointCloud::writeSensorPointCloud(uint16_t frameID, uint64_t timesta
 			break;
 		}
 	}
+*/
 
 	mCloud.clear();
 }

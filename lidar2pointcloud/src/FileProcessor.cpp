@@ -49,22 +49,19 @@ void cFileProcessor::setAltitudeWindow_deg(double min_altitude_deg, double max_a
     mConverter->setAltitudeWindow_deg(min_altitude_deg, max_altitude_deg);
 }
 
-void cFileProcessor::setOutputOption(cLidar2PointCloud::eOutputOptions options)
+void cFileProcessor::setInitialPosition_m(double x_m, double y_m, double z_m)
 {
-    mConverter->setOutputOption(options);
+    mConverter->setInitialPosition_m(x_m, y_m, z_m);
 }
 
-void cFileProcessor::setSaveOption(cLidar2PointCloud::eSaveOptions options)
+void cFileProcessor::setFinalPosition_m(double x_m, double y_m, double z_m)
 {
-    mConverter->setSaveOption(options);
+    mConverter->setFinalPosition_m(x_m, y_m, z_m);
 }
 
-/**
- * Set the kinematic type to apply to the pointcloud data.
- */
-void cFileProcessor::setKinematicModel(std::unique_ptr<cKinematics> model)
+void cFileProcessor::setDollySpeed(double Vx_mmps, double Vy_mmps, double Vz_mmps)
 {
-    mConverter->setKinematicModel(std::move(model));
+    mConverter->setDollySpeed(Vx_mmps, Vy_mmps, Vz_mmps);
 }
 
 bool cFileProcessor::open()

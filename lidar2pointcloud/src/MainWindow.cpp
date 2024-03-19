@@ -21,57 +21,13 @@
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
-
-	cLidar2PointCloud::eOutputOptions convert(nConfigFileData::eOutputOptions option)
-	{
-		if (option == nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES)
-			return cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
-
-		if (option == nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES)
-			return cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
-
-		return cLidar2PointCloud::eOutputOptions::AGGREGATE;
-	}
-
-	cLidar2PointCloud::eSaveOptions convert(nConfigFileData::eSaveOptions option)
-	{
-		if (option == nConfigFileData::eSaveOptions::FRAME_ID)
-			return cLidar2PointCloud::eSaveOptions::FRAME_ID;
-
-		if (option == nConfigFileData::eSaveOptions::SENSOR_INFO)
-			return cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
-
-		return cLidar2PointCloud::eSaveOptions::BASIC;
-	}
-
-	nConfigFileData::eOutputOptions convert(cLidar2PointCloud::eOutputOptions option)
-	{
-		if (option == cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES)
-			return nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES;
-
-		if (option == cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES)
-			return nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES;
-
-		return nConfigFileData::eOutputOptions::AGGREGATE;
-	}
-
-	nConfigFileData::eSaveOptions convert(cLidar2PointCloud::eSaveOptions option)
-	{
-		if (option == cLidar2PointCloud::eSaveOptions::FRAME_ID)
-			return nConfigFileData::eSaveOptions::FRAME_ID;
-
-		if (option == cLidar2PointCloud::eSaveOptions::SENSOR_INFO)
-			return nConfigFileData::eSaveOptions::SENSOR_INFO;
-
-		return nConfigFileData::eSaveOptions::BASIC;
-	}
 }
+
 
 void console_message(const std::string& msg)
 {
 	wxLogMessage(wxString(msg));
 }
-
 
 void new_file_progress(const int id, std::string filename)
 {
@@ -754,30 +710,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	mpSensorPitch_deg->TransferDataFromWindow();
 	mpSensorRoll_deg->TransferDataFromWindow();
 
-	cLidar2PointCloud::eOutputOptions output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
-	if (mpAggregatePointCloud->GetValue())
-	{
-		output_option = cLidar2PointCloud::eOutputOptions::AGGREGATE;
-	}
-	else if (mpSaveReducedPointCloud->GetValue())
-	{
-		output_option = cLidar2PointCloud::eOutputOptions::REDUCED_SINGLE_FRAMES;
-	}
-	else if (mpSaveSensorPointCloud->GetValue())
-	{
-		output_option = cLidar2PointCloud::eOutputOptions::SENSOR_SINGLE_FRAMES;
-	}
-
-	cLidar2PointCloud::eSaveOptions save_option = cLidar2PointCloud::eSaveOptions::BASIC;
-	if (mpSaveFrameID->GetValue())
-	{
-		save_option = cLidar2PointCloud::eSaveOptions::FRAME_ID;
-	}
-	else if (mpSaveSensorInfo->GetValue())
-	{
-		save_option = cLidar2PointCloud::eSaveOptions::SENSOR_INFO;
-	}
-
 	std::string input_directory = mSourceData.ToStdString();
 	std::string output_directory = mDestinationData.ToStdString();
 
@@ -842,7 +774,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		std::filesystem::create_directories(output_dir);
 	}
 
-
+#if 0
 	eKinematics model;
 	model = eKinematics::NONE;
 
@@ -1047,6 +979,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	}
 
 	startDataProcessing();
+#endif
 }
 
 void cMainWindow::startDataProcessing()

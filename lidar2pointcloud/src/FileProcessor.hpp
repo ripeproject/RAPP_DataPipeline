@@ -55,13 +55,11 @@ public:
 	 */
 	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
 
-	void setOutputOption(cLidar2PointCloud::eOutputOptions option);
-	void setSaveOption(cLidar2PointCloud::eSaveOptions option);
+	void setInitialPosition_m(double x_m, double y_m, double z_m);
+	void setFinalPosition_m(double x_m, double y_m, double z_m);
 
-	/**
-	 * Set the kinematic type to apply to the pointcloud data.
-	 */
-	void setKinematicModel(std::unique_ptr<cKinematics> model);
+	void setDollySpeed(double Vx_mmps, double Vy_mmps, double Vz_mmps);
+
 
 	void process_file();
 

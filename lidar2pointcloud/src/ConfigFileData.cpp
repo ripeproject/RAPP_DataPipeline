@@ -14,23 +14,8 @@
 #include <stdexcept>
 
 
-namespace
-{
-	nConfigFileData::eHeightAxis to_HeightAxis(char axis)
-	{
-		switch (toupper(axis))
-		{
-		case 'X':
-			return nConfigFileData::eHeightAxis::X;
-		case 'Y':
-			return nConfigFileData::eHeightAxis::Y;
-		case 'Z':
-			return nConfigFileData::eHeightAxis::Z;
-		}
+extern void console_message(const std::string& msg);
 
-		return nConfigFileData::eHeightAxis::Z;
-	}
-}
 
 cConfigFileData::cConfigFileData(const std::string& filename)
 	: mConfigFilename(filename)
@@ -42,145 +27,27 @@ cConfigFileData::~cConfigFileData()
 
 bool cConfigFileData::empty() const
 {
-	return mKinematicModels.empty();
+	return mParameters.empty();
 }
 
-void cConfigFileData::setDefaultMinRange_m(double minimumDistance_m)
-{
-	mDefaultOptions.minDistance_m = minimumDistance_m;
-}
-
-void cConfigFileData::setDefaultMaxRange_m(double maximumDistance_m)
-{
-	mDefaultOptions.maxDistance_m = maximumDistance_m;
-}
-
-void cConfigFileData::setDefaultValidRange_m(double minimumDistance_m, double maximumDistance_m)
-{
-	mDefaultOptions.minDistance_m = minimumDistance_m;
-	mDefaultOptions.maxDistance_m = maximumDistance_m;
-}
-
-void cConfigFileData::setDefaultMinAzimuth_deg(double minimumAzimuth_deg)
-{
-	mDefaultOptions.minAzimuth_deg = minimumAzimuth_deg;
-}
-
-void cConfigFileData::setDefaultMaxAzimuth_deg(double maximumAzimuth_deg)
-{
-	mDefaultOptions.maxAzimuth_deg = maximumAzimuth_deg;
-}
-
-void cConfigFileData::setDefaultAzimuthWindow_deg(double minimumAzimuth_deg, double maximumAzimuth_deg)
-{
-	mDefaultOptions.minAzimuth_deg = minimumAzimuth_deg;
-	mDefaultOptions.maxAzimuth_deg = maximumAzimuth_deg;
-}
-
-void cConfigFileData::setDefaultMinAltitude_deg(double minimumAltitude_deg)
-{
-	mDefaultOptions.minAltitude_deg = minimumAltitude_deg;
-}
-
-void cConfigFileData::setDefaultMaxAltitude_deg(double maximumAltitude_deg)
-{
-	mDefaultOptions.maxAltitude_deg = maximumAltitude_deg;
-}
-
-void cConfigFileData::setDefaultAltitudeWindow_deg(double minimumAltitude_deg, double maximumAltitude_deg)
-{
-	mDefaultOptions.minAltitude_deg = minimumAltitude_deg;
-	mDefaultOptions.maxAltitude_deg = maximumAltitude_deg;
-}
-
-void cConfigFileData::setDefaultOutputOption(nConfigFileData::eOutputOptions option)
-{
-	mDefaultOptions.outputOption = option;
-}
-
-void cConfigFileData::setDefaultSaveOption(nConfigFileData::eSaveOptions option)
-{
-	mDefaultOptions.saveOption = option;
-}
-
-void cConfigFileData::setDefaultInitialPosition_m(double x_m, double y_m, double z_m)
-{
-	mDefault_X_m = x_m;
-	mDefault_Y_m = y_m;
-	mDefault_Z_m = z_m;
-}
-
-void cConfigFileData::setDefaultSpeeds_mmmps(double vx_mmps, double vy_mmps, double vz_mmps)
-{
-	mDefault_Vx_mmps = vx_mmps;
-	mDefault_Vy_mmps = vy_mmps;
-	mDefault_Vz_mmps = vz_mmps;
-}
-
-void cConfigFileData::setDefaultHeight_m(double height_m, nConfigFileData::eHeightAxis axis)
-{
-	mDefault_Height_m = height_m;
-	mDefault_HeightAxis = axis;
-}
-
-void cConfigFileData::setDefaultPitch(double pitch_deg)
-{
-	mDefault_SensorPitch_deg = pitch_deg;
-}
-
-void cConfigFileData::setDefaultRoll(double roll_deg)
-{
-	mDefault_SensorRoll_deg = roll_deg;
-}
-
-void cConfigFileData::setDefaultYaw(double yaw_deg)
-{
-	mDefault_SensorYaw_deg = yaw_deg;
-}
-
-void cConfigFileData::setDefaultOrientation(double pitch_deg, double roll_deg, double yaw_deg, bool rotateToSEU)
-{
-	mDefault_SensorPitch_deg = pitch_deg;
-	mDefault_SensorRoll_deg = roll_deg;
-	mDefault_SensorYaw_deg = yaw_deg;
-	mDefault_RotateToSEU = rotateToSEU;
-}
-
-
-nConfigFileData::sOptions_t cConfigFileData::getOptions(const std::string& experiment_filename)
+std::optional<nConfigFileData::sParameters_t> cConfigFileData::getParameters(const std::string& experiment_filename)
 {
 	using namespace nStringUtils;
 
 	auto in = removeMeasurementTimestamp(experiment_filename);
 	auto filename = safeFilename(in.filename);
 
-	auto it = mOptions.find(filename);
+	auto it = mParameters.find(filename);
 
-	if (it == mOptions.end())
-		return mDefaultOptions;
+	if (it == mParameters.end())
+		return std::optional<nConfigFileData::sParameters_t>();
 
 	return it->second;
 }
 
-
-std::unique_ptr<cKinematics> cConfigFileData::getModel(const std::string& experiment_filename)
+bool cConfigFileData::load()
 {
-	using namespace nStringUtils;
-
-	auto in = removeMeasurementTimestamp(experiment_filename);
-	auto filename = safeFilename(in.filename);
-
-	auto it = mKinematicModels.find(filename);
-
-	if (it == mKinematicModels.end())
-		return std::unique_ptr<cKinematics>();
-
-	return std::move(it->second);
-}
-
-
-bool cConfigFileData::loadDefaults()
-{
+	using namespace nConfigFileData;
 	using namespace nStringUtils;
 
 	if (mConfigFilename.empty()) return false;
@@ -197,517 +64,246 @@ bool cConfigFileData::loadDefaults()
 	}
 	catch (const nlohmann::json::parse_error& e)
 	{
-		auto msg = e.what();
+		console_message(e.what());
 		return false;
 	}
 	catch (const std::exception& e)
 	{
+		console_message(e.what());
 		return false;
 	}
 
 	/*** Load Defaults ***/
+	sParameters_t defaultParameters;
+	double height_m = 0.0;
 
-	if (configDoc.contains("defaults"))
-	{
-		auto defaults = configDoc["defaults"];
-
-		if (defaults.contains("dolly speeds"))
-		{
-			auto speeds = defaults["dolly speeds"];
-
-			if (speeds.contains("Vx (mm/s)"))
-				mDefault_Vx_mmps = speeds["Vx (mm/s)"];
-
-			if (speeds.contains("Vy (mm/s)"))
-				mDefault_Vy_mmps = speeds["Vy (mm/s)"];
-
-			if (speeds.contains("Vz (mm/s)"))
-				mDefault_Vz_mmps = speeds["Vz (mm/s)"];
-		}
-
-		if (defaults.contains("dolly height"))
-		{
-			auto height = defaults["dolly height"];
-
-			mDefault_Height_m = height["height (m)"];
-			std::string axis = height["height axis"];
-			mDefault_HeightAxis = to_HeightAxis(axis[0]);
-		}
-
-		if (defaults.contains("sensor orientation"))
-		{
-			auto orientation = defaults["sensor orientation"];
-
-			if (orientation.contains("pitch (deg)"))
-				mDefault_SensorPitch_deg = orientation["pitch (deg)"];
-
-			if (orientation.contains("roll (deg)"))
-				mDefault_SensorRoll_deg = orientation["roll (deg)"];
-
-			if (orientation.contains("yaw (deg)"))
-				mDefault_SensorYaw_deg = orientation["yaw (deg)"];
-
-			if (orientation.contains("rotate to SEU"))
-				mDefault_RotateToSEU = orientation["rotate to SEU"];
-		}
-
-		if (defaults.contains("sensor limits"))
-		{
-			auto limits = defaults["sensor limits"];
-
-			if (limits.contains("min distance (m)"))
-				mDefaultOptions.maxDistance_m = limits["min distance (m)"];
-
-			if (limits.contains("max distance (m)"))
-				mDefaultOptions.maxDistance_m = limits["max distance (m)"];
-
-			if (limits.contains("min azimuth (deg)"))
-				mDefaultOptions.minAzimuth_deg = limits["min azimuth (deg)"];
-
-			if (limits.contains("max azimuth (deg)"))
-				mDefaultOptions.maxAzimuth_deg = limits["max azimuth (deg)"];
-
-			if (limits.contains("min altitude (deg)"))
-				mDefaultOptions.minAltitude_deg = limits["min altitude (deg)"];
-
-			if (limits.contains("max altitude (deg)"))
-				mDefaultOptions.maxAltitude_deg = limits["max altitude (deg)"];
-		}
-
-		if (defaults.contains("options"))
-		{
-			auto options = defaults["options"];
-
-			if (options.contains("output"))
-			{
-				std::string output = options["output"];
-				if (output == "aggregate")
-					mDefaultOptions.outputOption = nConfigFileData::eOutputOptions::AGGREGATE;
-				else if (output == "reduced")
-					mDefaultOptions.outputOption = nConfigFileData::eOutputOptions::REDUCED_SINGLE_FRAMES;
-				else if (output == "sensor")
-					mDefaultOptions.outputOption = nConfigFileData::eOutputOptions::SENSOR_SINGLE_FRAMES;
-				else
-				{
-					std::string msg = "Unknown output option: ";
-					msg += output;
-					msg += ", valid options are aggregate, reduced, and sensor.";
-					throw std::logic_error(msg);
-				}
-			}
-
-			if (options.contains("save"))
-			{
-				std::string save = options["save"];
-				if (save == "basic")
-					mDefaultOptions.saveOption = nConfigFileData::eSaveOptions::BASIC;
-				else if (save == "frame_id")
-					mDefaultOptions.saveOption = nConfigFileData::eSaveOptions::FRAME_ID;
-				else if (save == "sensor_info")
-					mDefaultOptions.saveOption = nConfigFileData::eSaveOptions::SENSOR_INFO;
-				else
-				{
-					std::string msg = "Unknown save option: ";
-					msg += save;
-					msg += ", valid options are basic, frame_id, and sensor_info.";
-					throw std::logic_error(msg);
-				}
-			}
-		}
-	}
-
-	return true;
-}
-
-bool cConfigFileData::loadKinematicModels()
-{
-	using namespace nStringUtils;
-
-	if (mConfigFilename.empty()) return false;
-
-	std::ifstream in;
-	in.open(mConfigFilename);
-	if (!in.is_open())
-		return false;
-
-	nlohmann::json configDoc;
 	try
 	{
-		in >> configDoc;
+		if (configDoc.contains("defaults"))
+		{
+			auto defaults = configDoc["defaults"];
+
+			if (defaults.contains("dolly speeds"))
+			{
+				auto speeds = defaults["dolly speeds"];
+
+				if (speeds.contains("Vx (mm/s)"))
+					defaultParameters.Vx_mmps = speeds["Vx (mm/s)"];
+
+				if (speeds.contains("Vy (mm/s)"))
+					defaultParameters.Vy_mmps = speeds["Vy (mm/s)"];
+
+				if (speeds.contains("Vz (mm/s)"))
+					defaultParameters.Vz_mmps = speeds["Vz (mm/s)"];
+			}
+
+			if (defaults.contains("dolly height"))
+			{
+				auto height = defaults["dolly height"];
+
+				height_m = height["height (m)"];
+			}
+
+			if (defaults.contains("sensor mount orientation"))
+			{
+				auto orientation = defaults["sensor mount orientation"];
+
+				if (orientation.contains("pitch (deg)"))
+					defaultParameters.sensorMountPitch_deg = orientation["pitch (deg)"];
+
+				if (orientation.contains("roll (deg)"))
+					defaultParameters.sensorMountRoll_deg = orientation["roll (deg)"];
+
+				if (orientation.contains("yaw (deg)"))
+					defaultParameters.sensorMountYaw_deg = orientation["yaw (deg)"];
+			}
+
+			if (defaults.contains("sensor limits"))
+			{
+				auto limits = defaults["sensor limits"];
+
+				if (limits.contains("min distance (m)"))
+					defaultParameters.maxDistance_m = limits["min distance (m)"];
+
+				if (limits.contains("max distance (m)"))
+					defaultParameters.maxDistance_m = limits["max distance (m)"];
+
+				if (limits.contains("min azimuth (deg)"))
+					defaultParameters.minAzimuth_deg = limits["min azimuth (deg)"];
+
+				if (limits.contains("max azimuth (deg)"))
+					defaultParameters.maxAzimuth_deg = limits["max azimuth (deg)"];
+
+				if (limits.contains("min altitude (deg)"))
+					defaultParameters.minAltitude_deg = limits["min altitude (deg)"];
+
+				if (limits.contains("max altitude (deg)"))
+					defaultParameters.maxAltitude_deg = limits["max altitude (deg)"];
+			}
+
+			if (defaults.contains("options"))
+			{
+				auto options = defaults["options"];
+
+				if (options.contains("translate to ground"))
+					defaultParameters.translateToGround = options["translate to ground"];
+
+				if (options.contains("translation threshold (%)"))
+					defaultParameters.translateThreshold_pct = options["translation threshold (%)"];
+
+				if (options.contains("rotate to ground"))
+					defaultParameters.rotateToGround = options["rotate to ground"];
+
+				if (options.contains("rotation threshold (%)"))
+					defaultParameters.rotateThreshold_pct = options["rotation threshold (%)"];
+			}
+		}
+
+		if (configDoc.contains("experiments"))
+		{
+			auto experiments = configDoc["experiments"];
+
+			for (auto experiment : experiments)
+			{
+				sParameters_t parameters = defaultParameters;
+
+				std::string name = safeFilename(experiment["experiment name"]);
+
+				if (experiment.contains("sensor mount orientation"))
+				{
+					auto orientation = experiment["sensor mount orientation"];
+
+					if (orientation.contains("pitch (deg)"))
+						parameters.sensorMountPitch_deg = orientation["pitch (deg)"];
+
+					if (orientation.contains("roll (deg)"))
+						parameters.sensorMountRoll_deg = orientation["roll (deg)"];
+
+					if (orientation.contains("yaw (deg)"))
+						parameters.sensorMountYaw_deg = orientation["yaw (deg)"];
+				}
+
+				parameters.startZ_m = height_m;
+
+				if (experiment.contains("start position"))
+				{
+					auto pos = experiment["start position"];
+
+					if (pos.contains("x (m)"))
+						parameters.startX_m = pos["x (m)"];
+
+					if (pos.contains("y (m)"))
+						parameters.startY_m = pos["y (m)"];
+
+					if (pos.contains("z (m)"))
+						parameters.startZ_m = pos["z (m)"];
+				}
+
+				parameters.endX_m = parameters.startX_m;
+				parameters.endY_m = parameters.startY_m;
+				parameters.endZ_m = parameters.startZ_m;
+
+				if (experiment.contains("end position"))
+				{
+					auto pos = experiment["end position"];
+
+					if (pos.contains("x (m)"))
+						parameters.endX_m = pos["x (m)"];
+
+					if (pos.contains("y (m)"))
+						parameters.endY_m = pos["y (m)"];
+
+					if (pos.contains("z (m)"))
+						parameters.endZ_m = pos["z (m)"];
+				}
+
+				if (experiment.contains("Vx (mm/s)"))
+					parameters.Vx_mmps = experiment["Vx (mm/s)"];
+
+				if (experiment.contains("Vy (mm/s)"))
+					parameters.Vy_mmps = experiment["Vy (mm/s)"];
+
+				if (experiment.contains("Vz (mm/s)"))
+					parameters.Vz_mmps = experiment["Vz (mm/s)"];
+
+				if (experiment.contains("sensor start orientation offset"))
+				{
+					auto orientation = experiment["sensor start orientation offset"];
+
+					if (orientation.contains("pitch (deg)"))
+						parameters.startPitchOffset_deg = orientation["pitch (deg)"];
+
+					if (orientation.contains("roll (deg)"))
+						parameters.startRollOffset_deg = orientation["roll (deg)"];
+
+					if (orientation.contains("yaw (deg)"))
+						parameters.startYawOffset_deg = orientation["yaw (deg)"];
+				}
+				else if (experiment.contains("sensor orientation offset"))
+				{
+					auto orientation = experiment["sensor orientation offset"];
+
+					if (orientation.contains("pitch (deg)"))
+						parameters.startPitchOffset_deg = orientation["pitch (deg)"];
+
+					if (orientation.contains("roll (deg)"))
+						parameters.startRollOffset_deg = orientation["roll (deg)"];
+
+					if (orientation.contains("yaw (deg)"))
+						parameters.startYawOffset_deg = orientation["yaw (deg)"];
+				}
+
+				parameters.endPitchOffset_deg = parameters.startPitchOffset_deg;
+				parameters.endRollOffset_deg = parameters.startRollOffset_deg;
+				parameters.endYawOffset_deg = parameters.startYawOffset_deg;
+
+				if (experiment.contains("sensor final orientation offset"))
+				{
+					auto orientation = experiment["sensor final orientation offset"];
+
+					if (orientation.contains("pitch (deg)"))
+						parameters.endPitchOffset_deg = orientation["pitch (deg)"];
+
+					if (orientation.contains("roll (deg)"))
+						parameters.endRollOffset_deg = orientation["roll (deg)"];
+
+					if (orientation.contains("yaw (deg)"))
+						parameters.endYawOffset_deg = orientation["yaw (deg)"];
+				}
+
+				mParameters[name] = parameters;
+			}
+		}
 	}
-	catch (const nlohmann::json::parse_error& e)
+	catch (const nlohmann::json::invalid_iterator& e)
 	{
-		auto msg = e.what();
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::type_error& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::out_of_range& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::other_error& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::exception& e)
+	{
+		console_message(e.what());
 		return false;
 	}
 	catch (const std::exception& e)
 	{
+		console_message(e.what());
 		return false;
-	}
-
-	if (configDoc.contains("experiments"))
-	{
-		auto experiments = configDoc["experiments"];
-
-		for (auto experiment : experiments)
-		{
-			std::string name = safeFilename(experiment["experiment_name"]);
-			std::string model = experiment["kinematic model"];
-			std::string debugFileName;
-
-			if (experiment.contains("debug filename"))
-				debugFileName = experiment["debug filename"];
-
-			double sensorPitch_deg = mDefault_SensorPitch_deg;
-			double sensorRoll_deg = mDefault_SensorRoll_deg;
-			double sensorYaw_deg = mDefault_SensorYaw_deg;
-			bool rotateToSEU = mDefault_RotateToSEU;
-
-			if (experiment.contains("sensor orientation"))
-			{
-				auto orientation = experiment["sensor orientation"];
-
-				if (orientation.contains("pitch (deg)"))
-					sensorPitch_deg = orientation["pitch (deg)"];
-
-				if (orientation.contains("roll (deg)"))
-					sensorRoll_deg = orientation["roll (deg)"];
-
-				if (orientation.contains("yaw (deg)"))
-					sensorYaw_deg = orientation["yaw (deg)"];
-
-				if (orientation.contains("rotate to SEU"))
-					rotateToSEU = orientation["rotate to SEU"];
-			}
-
-			if (model == "constant")
-			{
-				double initialX_m = mDefault_X_m;
-				double initialY_m = mDefault_Y_m;
-				double initialZ_m = mDefault_Z_m;
-
-				double Vx_mmps = mDefault_Vx_mmps;
-				double Vy_mmps = mDefault_Vy_mmps;
-				double Vz_mmps = mDefault_Vz_mmps;
-
-				double height_m = mDefault_Height_m;
-				auto heightAxis = mDefault_HeightAxis;
-
-				if (experiment.contains("start position"))
-				{
-					auto pos = experiment["start position"];
-
-					if (pos.contains("x (m)"))
-						initialX_m = pos["x (m)"];
-
-					if (pos.contains("y (m)"))
-						initialY_m = pos["y (m)"];
-
-					if (pos.contains("z (m)"))
-						initialZ_m = pos["z (m)"];
-				}
-
-				bool hasEndPosition = false;
-				double finalX_m = initialX_m;
-				double finalY_m = initialY_m;
-				double finalZ_m = initialZ_m;
-
-				if (experiment.contains("end position"))
-				{
-					auto pos = experiment["end position"];
-
-					hasEndPosition = true;
-
-					if (pos.contains("x (m)"))
-						finalX_m = pos["x (m)"];
-
-					if (pos.contains("y (m)"))
-						finalY_m = pos["y (m)"];
-
-					if (pos.contains("z (m)"))
-						finalZ_m = pos["z (m)"];
-				}
-
-				if (experiment.contains("Vx (mm/s)"))
-					Vx_mmps = experiment["Vx (mm/s)"];
-
-				if (experiment.contains("Vy (mm/s)"))
-					Vy_mmps = experiment["Vy (mm/s)"];
-
-				if (experiment.contains("Vz (mm/s)"))
-					Vz_mmps = experiment["Vz (mm/s)"];
-
-				auto km = std::make_unique<cKinematics_Constant>(Vx_mmps, Vy_mmps, Vz_mmps);
-
-				if (experiment.contains("height (m)"))
-				{
-					height_m = experiment["height (m)"];
-					std::string axis = experiment["height axis"];
-					heightAxis = to_HeightAxis(axis[0]);
-				}
-
-				switch (heightAxis)
-				{
-				case nConfigFileData::eHeightAxis::X:
-					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
-					km->setInitialPosition_m(height_m, initialY_m, initialZ_m);
-
-					if (hasEndPosition)
-						km->setFinalPosition_m(height_m, finalY_m, finalZ_m);
-					break;
-				case nConfigFileData::eHeightAxis::Y:
-					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
-					km->setInitialPosition_m(initialX_m, height_m, initialZ_m);
-
-					if (hasEndPosition)
-						km->setFinalPosition_m(finalX_m, height_m, finalZ_m);
-					break;
-				case nConfigFileData::eHeightAxis::Z:
-					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
-					km->setInitialPosition_m(initialX_m, initialY_m, height_m);
-
-					if (hasEndPosition)
-						km->setFinalPosition_m(finalX_m, finalY_m, height_m);
-					break;
-				}
-
-				km->rotateToSEU(rotateToSEU);
-				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
-
-				if (!debugFileName.empty())
-					km->setDebugFileName(debugFileName);
-
-				mKinematicModels[name] = std::move(km);
-			}
-			else if (model == "constant with sensor rotation")
-			{
-				double initialX_m = mDefault_X_m;
-				double initialY_m = mDefault_Y_m;
-				double initialZ_m = mDefault_Z_m;
-
-				double Vx_mmps = mDefault_Vx_mmps;
-				double Vy_mmps = mDefault_Vy_mmps;
-				double Vz_mmps = mDefault_Vz_mmps;
-
-				double height_m = mDefault_Height_m;
-				auto heightAxis = mDefault_HeightAxis;
-
-				if (experiment.contains("start position"))
-				{
-					auto pos = experiment["start position"];
-
-					if (pos.contains("x (m)"))
-						initialX_m = pos["x (m)"];
-
-					if (pos.contains("y (m)"))
-						initialY_m = pos["y (m)"];
-
-					if (pos.contains("z (m)"))
-						initialZ_m = pos["z (m)"];
-				}
-
-				bool hasEndPosition = false;
-				double finalX_m = initialX_m;
-				double finalY_m = initialY_m;
-				double finalZ_m = initialZ_m;
-
-				if (experiment.contains("end position"))
-				{
-					auto pos = experiment["end position"];
-
-					hasEndPosition = true;
-
-					if (pos.contains("x (m)"))
-						finalX_m = pos["x (m)"];
-
-					if (pos.contains("y (m)"))
-						finalY_m = pos["y (m)"];
-
-					if (pos.contains("z (m)"))
-						finalZ_m = pos["z (m)"];
-				}
-
-				if (experiment.contains("Vx (mm/s)"))
-					Vx_mmps = experiment["Vx (mm/s)"];
-
-				if (experiment.contains("Vy (mm/s)"))
-					Vy_mmps = experiment["Vy (mm/s)"];
-
-				if (experiment.contains("Vz (mm/s)"))
-					Vz_mmps = experiment["Vz (mm/s)"];
-
-				if (experiment.contains("sensor start orientation"))
-				{
-					auto orientation = experiment["sensor start orientation"];
-
-					if (orientation.contains("pitch (deg)"))
-						sensorPitch_deg = orientation["pitch (deg)"];
-
-					if (orientation.contains("roll (deg)"))
-						sensorRoll_deg = orientation["roll (deg)"];
-
-					if (orientation.contains("yaw (deg)"))
-						sensorYaw_deg = orientation["yaw (deg)"];
-
-					rotateToSEU = true;
-				}
-
-				double finalPitch_deg = sensorPitch_deg;
-				double finalRoll_deg = sensorRoll_deg;
-				double finalYaw_deg = sensorYaw_deg;
-
-				if (experiment.contains("sensor final orientation"))
-				{
-					auto orientation = experiment["sensor final orientation"];
-
-					if (orientation.contains("pitch (deg)"))
-						finalPitch_deg = orientation["pitch (deg)"];
-
-					if (orientation.contains("roll (deg)"))
-						finalRoll_deg = orientation["roll (deg)"];
-
-					if (orientation.contains("yaw (deg)"))
-						finalYaw_deg = orientation["yaw (deg)"];
-
-					rotateToSEU = true;
-				}
-
-				auto km = std::make_unique<cKinematics_Constant_SensorRotation>(Vx_mmps, Vy_mmps, Vz_mmps);
-
-				if (experiment.contains("height (m)"))
-				{
-					height_m = experiment["height (m)"];
-					std::string axis = experiment["height axis"];
-					heightAxis = to_HeightAxis(axis[0]);
-				}
-
-				switch (heightAxis)
-				{
-				case nConfigFileData::eHeightAxis::X:
-					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::X);
-					km->setInitialPosition_m(height_m, initialY_m, initialZ_m);
-
-					if (hasEndPosition)
-						km->setFinalPosition_m(height_m, finalY_m, finalZ_m);
-					break;
-				case nConfigFileData::eHeightAxis::Y:
-					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Y);
-					km->setInitialPosition_m(initialX_m, height_m, initialZ_m);
-
-					if (hasEndPosition)
-						km->setFinalPosition_m(finalX_m, height_m, finalZ_m);
-					break;
-				case nConfigFileData::eHeightAxis::Z:
-					km->setHeightAxis(cKinematics_Constant::eHEIGHT_AXIS::Z);
-					km->setInitialPosition_m(initialX_m, initialY_m, height_m);
-
-					if (hasEndPosition)
-						km->setFinalPosition_m(finalX_m, finalY_m, height_m);
-					break;
-				}
-
-				km->setInitialOrientation_deg(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
-				km->setFinalOrientation_deg(finalYaw_deg, finalPitch_deg, finalRoll_deg);
-
-				if (experiment.contains("sensor orientations"))
-				{
-					double pitch_deg	= sensorPitch_deg;
-					double roll_deg		= sensorRoll_deg;
-					double yaw_deg		= sensorYaw_deg;
-
-					auto orientations = experiment["sensor orientations"];
-
-					for (auto orientation : orientations)
-					{
-						double time_sec = orientation["time (sec)"];
-
-						if (orientation.contains("pitch (deg)"))
-							pitch_deg = orientation["pitch (deg)"];
-
-						if (orientation.contains("roll (deg)"))
-							roll_deg = orientation["roll (deg)"];
-
-						if (orientation.contains("yaw (deg)"))
-							yaw_deg = orientation["yaw (deg)"];
-
-						km->addOrientationPoint(time_sec, yaw_deg, pitch_deg, roll_deg);
-					}
-
-					rotateToSEU = true;
-				}
-
-
-				if (experiment.contains("sensor rotational rates"))
-				{
-					auto rates = experiment["sensor rotational rates"];
-
-					double pitchRate_dps = 0.0;
-					double rollRate_dps = 0.0;
-					double yawRate_dps = 0.0;
-
-					if (rates.contains("pitch rate (dps)"))
-						pitchRate_dps = rates["pitch rate (dps)"];
-
-					if (rates.contains("roll rate (dps)"))
-						rollRate_dps = rates["roll rate (dps)"];
-
-					if (rates.contains("yaw rate (dps)"))
-						yawRate_dps = rates["yaw rate (dps)"];
-
-					rotateToSEU = true;
-
-					km->setRotationalRates_deg(yawRate_dps, pitchRate_dps, rollRate_dps);
-				}
-
-				km->rotateToSEU(rotateToSEU);
-				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
-
-				if (!debugFileName.empty())
-					km->setDebugFileName(debugFileName);
-
-				mKinematicModels[name] = std::move(km);
-			}
-			else if (model == "dolly")
-			{
-				auto km = std::make_unique<cKinematics_Dolly>();
-//				km->useImuData(mpKM_DO_UseImuData->GetValue());
-//				km->averageImuData(mpKM_DO_AverageImuData->GetValue());
-//				km->setSensorPitchOffset_deg(mKM_DO_PitchOffset_deg);
-//				km->setSensorRollOffset_deg(mKM_DO_RollOffset_deg);
-
-				km->rotateToSEU(rotateToSEU);
-				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
-
-				if (!debugFileName.empty())
-					km->setDebugFileName(debugFileName);
-
-				mKinematicModels[name] = std::move(km);
-			}
-			else if (model == "gps")
-			{
-				auto km = std::make_unique<cKinematics_GPS>();
-
-				km->rotateToSEU(rotateToSEU);
-				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
-
-				if (!debugFileName.empty())
-					km->setDebugFileName(debugFileName);
-
-				mKinematicModels[name] = std::move(km);
-			}
-			else if (model == "slam")
-			{
-				auto km = std::make_unique<cKinematics_SLAM>();
-
-				km->rotateToSEU(rotateToSEU);
-				km->setSensorOrientation(sensorYaw_deg, sensorPitch_deg, sensorRoll_deg);
-
-				if (!debugFileName.empty())
-					km->setDebugFileName(debugFileName);
-
-				mKinematicModels[name] = std::move(km);
-			}
-		}
 	}
 
 	return true;
