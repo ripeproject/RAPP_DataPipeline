@@ -9,11 +9,14 @@
 #include <wx/aui/auibook.h>
 #include <wx/aboutdlg.h>
 #include <wx/thread.h>
+#include <wx/config.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
 #include <filesystem>
 #include <memory>
+#include <map>
+
 
 using namespace std::filesystem;
 
@@ -21,6 +24,8 @@ using namespace std::filesystem;
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
+
+	std::map<int, int> prev_progress;
 }
 
 
@@ -38,6 +43,8 @@ void new_file_progress(const int id, std::string filename)
 		event->SetFileName(filename);
 
 		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress[id] = -1;
 	}
 }
 
@@ -45,11 +52,15 @@ void update_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
-		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
-		event->SetFileProcessID(id);
-		event->SetProgress_pct(progress_pct);
+		if (prev_progress[id] != progress_pct)
+		{
+			auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+			event->SetFileProcessID(id);
+			event->SetProgress_pct(progress_pct);
 
-		wxQueueEvent(g_pEventHandler, event);
+			wxQueueEvent(g_pEventHandler, event);
+			prev_progress[id] = progress_pct;
+		}
 	}
 }
 
@@ -63,6 +74,8 @@ void update_prefix_progress(const int id, std::string prefix, const int progress
 		event->SetProgress_pct(progress_pct);
 
 		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress[id] = progress_pct;
 	}
 }
 
@@ -74,6 +87,8 @@ void complete_file_progress(const int id)
 		event->SetFileProcessID(id);
 
 		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress.erase(id);
 	}
 }
 
@@ -109,10 +124,21 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 	CreateControls();
 	CreateLayout();
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("PlotSplit");
+
+	config->Read("Files/Source", &mSrcDirectory);
+	config->Read("Files/Destination", &mDstDirectory);
+	config->Read("Files/ConfigurationFile", &mConfigFileName);
 }
 
 cMainWindow::~cMainWindow()
 {
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("PlotSplit");
+
+	config->Write("Files/Source", mSrcDirectory);
+	config->Write("Files/Destination", mDstDirectory);
+	config->Write("Files/ConfigurationFile", mConfigFileName);
 }
 
 void cMainWindow::CreateControls()
@@ -251,7 +277,7 @@ void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 
 void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 {
-	wxFileDialog dlg(this, _("Open file"), "", "",
+	wxFileDialog dlg(this, _("Open file"), "", mConfigFileName,
 		"Config files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -268,7 +294,8 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 		return;
 	}
 
-	mpLoadConfigFile->SetValue(config_file);
+	mConfigFileName = dlg.GetPath();
+	mpLoadConfigFile->SetValue(mConfigFileName);
 
 	mpSavePlotsInSingleFile->SetValue(mConfigData->savePlotsInSingleFile());
 	mpSavePlyFiles->SetValue(mConfigData->savePlysFiles());

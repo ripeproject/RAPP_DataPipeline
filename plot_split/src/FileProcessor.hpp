@@ -2,12 +2,12 @@
 #pragma once
 
 #include "PointCloudInfo.hpp"
-#include "ExperimentInfo.hpp"
 #include "ProcessingInfo.hpp"
 #include "RappPointCloud.hpp"
 #include "RappPlot.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
+#include <cbdf/ExperimentInfo.hpp>
 
 #include <filesystem>
 #include <string>
@@ -69,8 +69,8 @@ private:
 
 	std::shared_ptr<cPlotBoundaries> mPlotInfo;
 
-	cProcessingInfo mProcessingInfo;
-	cExperimentInfo mExpInfo;
+	std::shared_ptr<cProcessingInfo> mProcessingInfo;
+	std::shared_ptr<cExperimentInfo> mExpInfo;
 	std::list<cPointCloudInfo> mPointClouds;
 
 	std::vector<cRappPlot*> mPlots;

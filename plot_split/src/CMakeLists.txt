@@ -22,12 +22,6 @@ set(PLOT_SPLIT_COMMON_FILES
 	FileProcessor.hpp
 	FileProcessor.cpp
 
-	ExperimentInfoTypes.hpp
-	ExperimentInfo.hpp
-	ExperimentInfo.cpp
-	ExperimentInfoLoader.hpp
-	ExperimentInfoLoader.cpp
-
 	PointCloudInfo.hpp
 	PointCloudInfo.cpp
 	PointCloudLoader.hpp

@@ -2,7 +2,6 @@
 #include "FileProcessor.hpp"
 
 #include "ProcessingInfoLoader.hpp"
-#include "ExperimentInfoLoader.hpp"
 #include "PointCloudLoader.hpp"
 
 #include "PlotBoundaries.hpp"
@@ -14,6 +13,7 @@
 
 #include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
+#include <cbdf/ExperimentInfoLoader.hpp>
 
 #include <filesystem>
 #include <string>
@@ -72,6 +72,9 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
 {
     mInputFile = in;
     mOutputFile = out;
+
+    mProcessingInfo = std::make_shared<cProcessingInfo>();
+    mExpInfo = std::make_shared<cExperimentInfo>();
 }
 
 cFileProcessor::~cFileProcessor()
@@ -166,7 +169,7 @@ bool cFileProcessor::loadFileData()
 
     int last_file_pos_pct = 0;
 
-    std::unique_ptr<cProcessingInfoLoader> pProcessingInfo  = std::make_unique<cProcessingInfoLoader>(mProcessingInfo.weak_from_this());
+    std::unique_ptr<cProcessingInfoLoader> pProcessingInfo  = std::make_unique<cProcessingInfoLoader>(mProcessingInfo);
     std::unique_ptr<cExperimentInfoLoader> pExpInfo         = std::make_unique<cExperimentInfoLoader>(mExpInfo);
     std::unique_ptr<cPointCloudLoader> pPcInfo              = std::make_unique<cPointCloudLoader>(mPointClouds);
 
@@ -427,7 +430,7 @@ void cFileProcessor::writeProcessingInfo(cProcessingInfoSerializer& serializer)
 {
     serializer.write("plot_split", processing_info::ePROCESSING_TYPE::PLOT_SPLITTING);
 
-    for (auto it = mProcessingInfo.begin(); it != mProcessingInfo.end(); ++it)
+    for (auto it = mProcessingInfo->begin(); it != mProcessingInfo->end(); ++it)
     {
         serializer.write(*it);
     }
@@ -438,68 +441,68 @@ void cFileProcessor::writeExperimentInfo(cExperimentSerializer& serializer)
 {
     serializer.writeBeginHeader();
 
-    if (!mExpInfo.title().empty())
-        serializer.writeTitle(mExpInfo.title());
+    if (!mExpInfo->title().empty())
+        serializer.writeTitle(mExpInfo->title());
 
-    if (!mExpInfo.experimentDoc().empty())
-        serializer.writeExperimentDoc(mExpInfo.experimentDoc());
+    if (!mExpInfo->experimentDoc().empty())
+        serializer.writeExperimentDoc(mExpInfo->experimentDoc());
 
-    if (!mExpInfo.comments().empty())
-        serializer.writeComments(mExpInfo.comments());
+    if (!mExpInfo->comments().empty())
+        serializer.writeComments(mExpInfo->comments());
 
-    if (!mExpInfo.principalInvestigator().empty())
-        serializer.writePrincipalInvestigator(mExpInfo.principalInvestigator());
+    if (!mExpInfo->principalInvestigator().empty())
+        serializer.writePrincipalInvestigator(mExpInfo->principalInvestigator());
 
-    if (!mExpInfo.researchers().empty())
-        serializer.writeResearchers(mExpInfo.researchers());
+    if (!mExpInfo->researchers().empty())
+        serializer.writeResearchers(mExpInfo->researchers());
 
-    if (!mExpInfo.species().empty())
-        serializer.writeSpecies(mExpInfo.species());
+    if (!mExpInfo->species().empty())
+        serializer.writeSpecies(mExpInfo->species());
 
-    if (!mExpInfo.cultivar().empty())
-        serializer.writeCultivar(mExpInfo.cultivar());
+    if (!mExpInfo->cultivar().empty())
+        serializer.writeCultivar(mExpInfo->cultivar());
 
-    if (!mExpInfo.construct().empty())
-        serializer.writeConstructName(mExpInfo.construct());
+    if (!mExpInfo->construct().empty())
+        serializer.writeConstructName(mExpInfo->construct());
 
-    if (!mExpInfo.eventNumbers().empty())
-        serializer.writeEventNumbers(mExpInfo.eventNumbers());
+    if (!mExpInfo->eventNumbers().empty())
+        serializer.writeEventNumbers(mExpInfo->eventNumbers());
 
-    if (!mExpInfo.treatments().empty())
-        serializer.writeTreatments(mExpInfo.treatments());
+    if (!mExpInfo->treatments().empty())
+        serializer.writeTreatments(mExpInfo->treatments());
 
-    if (!mExpInfo.fieldDesign().empty())
-        serializer.writeFieldDesign(mExpInfo.fieldDesign());
+    if (!mExpInfo->fieldDesign().empty())
+        serializer.writeFieldDesign(mExpInfo->fieldDesign());
 
-    if (!mExpInfo.permit().empty())
-        serializer.writePermitInfo(mExpInfo.permit());
+    if (!mExpInfo->permit().empty())
+        serializer.writePermitInfo(mExpInfo->permit());
 
-    if (mExpInfo.plantingDate().has_value())
+    if (mExpInfo->plantingDate().has_value())
     {
-        nExpTypes::sDateDoy_t date = mExpInfo.plantingDate().value();
+        nExpTypes::sDateDoy_t date = mExpInfo->plantingDate().value();
         serializer.writePlantingDate(date.year, date.month, date.day, date.doy);
     }
 
-    if (mExpInfo.harvestDate().has_value())
+    if (mExpInfo->harvestDate().has_value())
     {
-        nExpTypes::sDateDoy_t date = mExpInfo.harvestDate().value();
+        nExpTypes::sDateDoy_t date = mExpInfo->harvestDate().value();
         serializer.writeHarvestDate(date.year, date.month, date.day, date.doy);
     }
 
-    if (mExpInfo.fileDate().has_value())
+    if (mExpInfo->fileDate().has_value())
     {
-        nExpTypes::sDate_t date = mExpInfo.fileDate().value();
+        nExpTypes::sDate_t date = mExpInfo->fileDate().value();
         serializer.writeFileDate(date.year, date.month, date.day);
     }
 
-    if (mExpInfo.fileTime().has_value())
+    if (mExpInfo->fileTime().has_value())
     {
-        nExpTypes::sTime_t time = mExpInfo.fileTime().value();
+        nExpTypes::sTime_t time = mExpInfo->fileTime().value();
         serializer.writeFileTime(time.hour, time.minute, time.seconds);
     }
 
-    if (mExpInfo.dayOfYear().has_value())
-        serializer.writeDayOfYear(mExpInfo.dayOfYear().value());
+    if (mExpInfo->dayOfYear().has_value())
+        serializer.writeDayOfYear(mExpInfo->dayOfYear().value());
 
     serializer.writeEndOfHeader();
 }

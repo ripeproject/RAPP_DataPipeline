@@ -16,6 +16,7 @@
 #include <mutex>
 #include <numbers>
 #include <memory>
+#include <map>
 
 
 std::mutex g_console_mutex;
@@ -25,6 +26,8 @@ namespace
 	int num_of_threads = 1;
 	int numFilesToProcess = 0;
 	cTextProgressBar progress_bar;
+
+	std::map<int, int> prev_progress;
 }
 
 void console_message(const std::string& msg)
@@ -36,21 +39,28 @@ void console_message(const std::string& msg)
 void new_file_progress(const int id, std::string filename)
 {
 	progress_bar.addProgressEntry(id, filename);
+	prev_progress[id] = -1;
 }
 
 void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
 {
 	progress_bar.updateProgressEntry(id, prefix, progress_pct);
+	prev_progress[id] = progress_pct;
 }
 
 void update_progress(const int id, const int progress_pct)
 {
-	progress_bar.updateProgressEntry(id, progress_pct);
+	if (prev_progress[id] != progress_pct)
+	{
+		progress_bar.updateProgressEntry(id, progress_pct);
+		prev_progress[id] = progress_pct;
+	}
 }
 
 void complete_file_progress(const int id)
 {
 	progress_bar.finishProgressEntry(id);
+	prev_progress.erase(id);
 }
 
 

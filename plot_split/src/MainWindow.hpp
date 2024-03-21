@@ -75,6 +75,7 @@ private:
 
 	wxString mSrcDirectory;
 	wxString mDstDirectory;
+	wxString mConfigFileName;
 
 	std::unique_ptr<cConfigFileData> mConfigData;
 
