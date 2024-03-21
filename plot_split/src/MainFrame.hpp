@@ -23,8 +23,6 @@ public:
 	virtual ~cMainFrame();
 
 	// event handlers (these functions should _not_ be virtual)
-	void OnFileOpen(wxCommandEvent& event);
-	void OnFileExport(wxCommandEvent& event);
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& evt);

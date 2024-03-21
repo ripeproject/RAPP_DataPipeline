@@ -30,8 +30,6 @@ enum
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 wxBEGIN_EVENT_TABLE(cMainFrame, wxFrame)
-	EVT_MENU(wxID_OPEN, cMainFrame::OnFileOpen)
-	EVT_MENU(wxID_SAVE, cMainFrame::OnFileExport)
 	EVT_MENU(wxID_EXIT, cMainFrame::OnQuit)
 	EVT_MENU(wxID_ABOUT, cMainFrame::OnAbout)
 	EVT_CLOSE(cMainFrame::OnClose)
@@ -54,9 +52,6 @@ cMainFrame::cMainFrame()
 	// create a menu bar
 	wxMenu* fileMenu = new wxMenu;
 
-	wxMenuItem* open_file   = fileMenu->Append(wxID_OPEN);
-	wxMenuItem* export_file = fileMenu->Append(wxID_SAVE, "&Export\tCtrl+E", "Export data to text file");
-	fileMenu->AppendSeparator();
 	fileMenu->Append(wxID_EXIT, "E&xit\tAlt-X", "Quit this program");
 
 	// the "About" item should be in the help menu
@@ -120,27 +115,6 @@ cMainFrame::~cMainFrame()
 
 
 // event handlers
-
-void cMainFrame::OnFileOpen(wxCommandEvent& WXUNUSED(event))
-{
-	wxFileDialog
-		openFileDialog(this, _("Open Ceres file"), "", "",
-			"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-
-	if (openFileDialog.ShowModal() == wxID_CANCEL)
-		return;     // the user changed their mind...
-
-	stopDataProcessing();
-
-	mFilename = openFileDialog.GetPath().ToStdString();
-
-	startDataProcessing();
-}
-
-void cMainFrame::OnFileExport(wxCommandEvent& WXUNUSED(event))
-{
-}
-
 void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
 	stopDataProcessing();
