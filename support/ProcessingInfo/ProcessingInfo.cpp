@@ -2,6 +2,10 @@
 #include "ProcessingInfo.hpp"
 
 
+void cProcessingInfo::clear()
+{
+	mProcessingSteps.clear();
+}
 
 bool cProcessingInfo::empty() const
 {

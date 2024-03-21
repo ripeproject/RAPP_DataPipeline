@@ -1,10 +1,11 @@
 
 #include "ProcessingInfoLoader.hpp"
+#include "ProcessingInfo.hpp"
 
 
-cProcessingInfoLoader::cProcessingInfoLoader(cProcessingInfo& info)
-    : mInfo(info)
+cProcessingInfoLoader::cProcessingInfoLoader(std::weak_ptr<cProcessingInfo> info)
 {
+    mInfo = info.lock();
 }
 
 cProcessingInfoLoader::~cProcessingInfoLoader()
@@ -13,5 +14,5 @@ cProcessingInfoLoader::~cProcessingInfoLoader()
 
 void cProcessingInfoLoader::onProcessingInfo(processing_info::sProcessInfo_1_t info)
 {
-    mInfo.addProcessingInfo(info);
+    mInfo->addProcessingInfo(info);
 }

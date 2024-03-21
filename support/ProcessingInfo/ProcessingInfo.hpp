@@ -3,9 +3,10 @@
 #include "ProcessingInfoTypes.hpp"
 
 #include <vector>
+#include <memory>
 
 
-class cProcessingInfo
+class cProcessingInfo : public std::enable_shared_from_this<cProcessingInfo>
 {
 public:
 	typedef std::vector<processing_info::sProcessInfo_1_t>  vProcessingSteps_t;
@@ -25,6 +26,8 @@ public:
 public:
 	cProcessingInfo() = default;
 	virtual ~cProcessingInfo() = default;
+
+	void clear();
 
 	bool empty() const;
 	std::size_t size() const;
