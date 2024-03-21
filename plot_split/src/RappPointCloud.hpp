@@ -164,7 +164,13 @@ void cRappPointCloud::assign(const cBasePointCloud<POINT2>& pc)
 		sum_y += y;
 		sum_z += z;
 
-		mCloud[i] = {static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z)};
+		uint32_t range_mm = static_cast<uint32_t>(point.range_mm);
+		uint16_t signal	  = static_cast<uint16_t>(point.signal);
+		uint16_t reflectivity = static_cast<uint16_t>(point.reflectivity);
+		uint16_t nir = static_cast<uint16_t>(point.nir);
+
+		mCloud[i] = {static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z),
+					rfm::INVALID_HEIGHT, range_mm, signal, reflectivity, nir};
 	}
 
 	double x_mm = sum_x / n;
