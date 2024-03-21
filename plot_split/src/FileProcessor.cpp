@@ -166,7 +166,7 @@ bool cFileProcessor::loadFileData()
 
     int last_file_pos_pct = 0;
 
-    std::unique_ptr<cProcessingInfoLoader> pProcessingInfo  = std::make_unique<cProcessingInfoLoader>(mProcessingInfo);
+    std::unique_ptr<cProcessingInfoLoader> pProcessingInfo  = std::make_unique<cProcessingInfoLoader>(mProcessingInfo.weak_from_this());
     std::unique_ptr<cExperimentInfoLoader> pExpInfo         = std::make_unique<cExperimentInfoLoader>(mExpInfo);
     std::unique_ptr<cPointCloudLoader> pPcInfo              = std::make_unique<cPointCloudLoader>(mPointClouds);
 
