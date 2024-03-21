@@ -20,11 +20,11 @@ bool cPlotBoundary::load(const nlohmann::json& plot_info)
 
 	if (plot_info.contains("name"))
 		mPlotName = plot_info["name"];
-	else
-	{
-		mPlotName = "Plot ";
-		mPlotName += std::to_string(mPlotNumber);
-	}
+	//else
+	//{
+	//	mPlotName = "Plot ";
+	//	mPlotName += std::to_string(mPlotNumber);
+	//}
 
 	if (plot_info.contains("event"))
 		mEvent = plot_info["event"];
