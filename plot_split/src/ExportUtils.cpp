@@ -11,7 +11,7 @@
 #include <iostream>
 #include <filesystem>
 
-//#define USE_FLOATS
+#define USE_FLOATS
 
 namespace
 {
