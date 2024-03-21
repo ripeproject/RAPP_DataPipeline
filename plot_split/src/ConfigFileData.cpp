@@ -85,7 +85,13 @@ bool cConfigFileData::load()
 	auto scans = configDoc["scans"];
 	for (auto scan : scans)
 	{
-		std::string name = scan["experiment_name"];
+		std::string name;
+		
+		if (scan.contains("experiment_name"))
+			name = scan["experiment_name"];
+		else
+			name = scan["experiment name"];
+
 		auto filename = safeFilename(name);
 
 		std::shared_ptr<cPlotBoundaries> plots = std::make_shared<cPlotBoundaries>();
