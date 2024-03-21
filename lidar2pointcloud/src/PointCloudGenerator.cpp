@@ -27,6 +27,8 @@
 
 using namespace ouster;
 
+extern void update_progress(const int id, const int progress_pct);
+
 
 namespace
 {
@@ -276,20 +278,6 @@ void cPointCloudGenerator::setDollyPath(const std::vector<rfm::sDollyInfo_t>& pa
     mDollyPath = path;
 }
 
-void cPointCloudGenerator::run()
-{
-    mPointCloud.clear();
-
-   if (!computePointCloud())
-       goto end_of_processing;
-
-end_of_processing:
-
-   int y = 0;
-
-//    emit generationComplete();
-}
-
 void cPointCloudGenerator::clear()
 {
     mPointCloud.clear();
@@ -307,8 +295,6 @@ void cPointCloudGenerator::clear()
 
     mAzimuthAngles_rad.clear();
     mAltitudeAngles_rad.clear();
-
-//    emit onAltitudeWindowChange(-90.0, 90.0);
 
     mLidarToSensorTransform.clear();
 
@@ -453,12 +439,14 @@ cPointCloudGenerator::sLUT_t cPointCloudGenerator::generateLookupTable()
     return { lut.direction, lut.offset };
 }
 
-bool cPointCloudGenerator::computePointCloud()
+bool cPointCloudGenerator::computePointCloud(int id)
 {
+    mPointCloud.clear();
+
     std::size_t i = 0;
     std::size_t n = mLidarData.size() + 1;    // Add one to account for generation of LUT
 
-//    emit progressUpdated((100.0 * i++) / n);
+    update_progress(id, (100.0 * i++) / n);
 
     auto lut = generateLookupTable();
 
@@ -470,7 +458,7 @@ bool cPointCloudGenerator::computePointCloud()
 
     for (auto& lidar_frame : mLidarData)
     {
-//        emit progressUpdated((100.0 * i++) / n);
+        update_progress(id, (100.0 * i++) / n);
 
         double timestamp_ns = lidar_frame.timestamp_ns();
         auto time_us = static_cast<double>(timestamp_ns - startTimestamp_ns) * nConstants::NS_TO_US;

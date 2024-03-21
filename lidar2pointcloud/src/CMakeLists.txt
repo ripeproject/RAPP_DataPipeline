@@ -6,19 +6,6 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
 	datatypes.hpp
 
-	Kinematics.hpp
-	Kinematics.cpp
-	Kinematics_Constant.hpp
-	Kinematics_Constant.cpp
-	Kinematics_Constant_SensorRotation.hpp
-	Kinematics_Constant_SensorRotation.cpp
-	Kinematics_Dolly.hpp
-	Kinematics_Dolly.cpp
-	Kinematics_GPS.hpp
-	Kinematics_GPS.cpp
-	Kinematics_SLAM.hpp
-	Kinematics_SLAM.cpp
-
 	ConfigFileData.hpp
 	ConfigFileData.cpp
 
@@ -37,6 +24,9 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
 	FieldScanLoader.hpp
 	FieldScanLoader.cpp
+
+	PointCloudSaver.hpp
+	PointCloudSaver.cpp
 
 	ExportUtils.hpp
 	ExportUtils.cpp

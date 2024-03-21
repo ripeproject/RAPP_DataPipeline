@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "ConfigFileData.hpp"
 #include "ProcessingInfoSerializer.hpp"
 #include "lidar2pointcloud.hpp"
 
@@ -13,78 +14,49 @@
 #include <memory>
 
 
+// Forward Declarations
+class cProcessingInfo;
+class cProcessingInfoSerializer;
+class cExperimentInfo;
+class cExperimentSerializer;
+
+
 class cFileProcessor
 {
 public:
-	cFileProcessor(int id, std::filesystem::directory_entry in,
-				std::filesystem::path out);
+	cFileProcessor(int id, std::filesystem::directory_entry in, std::filesystem::path out);
 	~cFileProcessor();
 
+	void saveCompactPointCloud(bool compact);
+	void savePlyFiles(bool savePlys);
+	void plyUseBinaryFormat(bool binaryFormat);
 
 	/**
-	 * Set the valid range in meters
+	 * Set the default parameters to use in computing the point cloud.
 	 *
-	 * The lidar return range is considered valid if:
-	 * 		min_dist_m < range_m < max_dist_m
-	 *
-	 * @param	min_dist_m	: The minimum distance to be considered valid
-	 * @param	max_dist_m	: The maximum distance to be considered valid
+	 * Some of the defaults are not used depending on the data in the 
+	 * Ceres file.
 	 */
-	void setValidRange_m(double min_dist_m, double max_dist_m);
-
-	/**
-	 * Set the azimuth bounds to consider valid data
-	 *
-	 * The azimuth angle (zero) starts at the connector and increases in the
-	 * counter-clock-wise direction.
-	 * 		min_azimuth_deg < azimuth_deg < max_azimuth_deg
-	 *
-	 * @param	min_azimuth_deg	: The minimum azimuth to be considered valid
-	 * @param	max_azimuth_deg	: The maximum azimuth to be considered valid
-	 */
-	void setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg);
-
-	/**
-	 * Set the altitude bounds to consider valid data
-	 *
-	 * The lidar return range is considered valid if:
-	 * 		min_dist_m < range_m < max_dist_m
-	 *
-	 * @param	min_altitude_deg	: The minimum altitude to be considered valid
-	 * @param	max_altitude_deg	: The maximum altitude to be considered valid
-	 */
-	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
-
-	void setInitialPosition_m(double x_m, double y_m, double z_m);
-	void setFinalPosition_m(double x_m, double y_m, double z_m);
-
-	void setDollySpeed(double Vx_mmps, double Vy_mmps, double Vz_mmps);
-
+	void setDefaults(const nConfigFileData::sParameters_t& defaults);
 
 	void process_file();
 
-protected:
-	bool open();
-	void run();
-
 private:
-	void processBlock(const cBlockID& id);
-	void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len);
+	void savePointCloudFile(const cLidar2PointCloud& data, const cRappPointCloud& pc);
+	void savePlyFiles(const cRappPointCloud& pc);
 
-private:
-	void deleteOutputFile();
+	void writeProcessingInfo(const cProcessingInfo& info, cProcessingInfoSerializer& serializer);
+	void writeExperimentInfo(const cExperimentInfo& info, cExperimentSerializer& serializer);
 
 private:
 	const int mID;
 
-	std::uintmax_t mFileSize = 0;
+	bool mSaveCompactPointCloud = true;
+	bool mSavePlyFiles = false;
+	bool mPlyUseBinaryFormat = false;
 
-	cBlockDataFileReader mFileReader;
-	cBlockDataFileWriter mFileWriter;
+	nConfigFileData::sParameters_t mDefaults;
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
-
-	cProcessingInfoSerializer mSerializer;
-	std::unique_ptr<cLidar2PointCloud> mConverter;
 };

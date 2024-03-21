@@ -1,15 +1,15 @@
 
 #pragma once
 
-#include "PointCloudSerializer.hpp"
+//#include "PointCloudSerializer.hpp"
 #include "PointCloudTypes.hpp"
 #include "PointCloud.hpp"
 
-#include "Kinematics.hpp"
+#include "FieldScanDataModel.hpp"
 
-#include <cbdf/BlockDataFile.hpp>
-#include <cbdf/OusterParser.hpp>
-#include <ouster/simple_blas.h>
+//#include <cbdf/BlockDataFile.hpp>
+//#include <cbdf/OusterParser.hpp>
+//#include <ouster/simple_blas.h>
 
 #include <filesystem>
 #include <string>
@@ -30,10 +30,10 @@ struct sPoint_t
 };
 
 
-class cLidar2PointCloud : public cOusterParser, public cPointCloudSerializer
+class cLidar2PointCloud : public cFieldScanDataModel
 {
 public:
-	cLidar2PointCloud();
+	explicit cLidar2PointCloud(int id);
 	~cLidar2PointCloud();
 
 	/**
@@ -85,84 +85,41 @@ public:
 	void enableTranslateToGround(bool enable, double threshold_pct);
 	void enableRotateToGround(bool enable, double threshold_pct);
 
-	/*
-	 * Does the kinematics model require a pass through the
-	 * data file to precompute telemetry data.
-	 */
-	bool requiresTelemetryPass();
-	void telemetryPassComplete();
+	const cRappPointCloud& getPointCloud() const;
 
-	/*
-	 * Attach/Detach parser to for the kinematics model.
-	 */
-	void attachKinematicParsers(cBlockDataFileReader& file);
-	void detachKinematicParsers(cBlockDataFileReader& file);
-
-	/*
-	 * Attach/Detach parser/serializer to for the transform phase.
-	 */
-	void attachTransformParsers(cBlockDataFileReader& file);
-	void detachTransformParsers(cBlockDataFileReader& file);
-
-	void attachTransformSerializers(cBlockDataFileWriter& file);
-	void detachTransformSerializers(cBlockDataFileWriter& file);
-
-	/*
-	 * Write any header data
-	 */
-	void writeHeader();
-
-	/*
-	 * Write and clear any pointcloud data
-	 */
-	void writeAndClearData();
+public:
+	bool computeDollyMovement();
+	bool computeDollyOrientation();
+	bool computePointCloud();
 
 private:
-	void writeReducedPointCloud(uint16_t frameID, uint64_t timestamp_ns, 
-								std::size_t columns_per_frame, std::size_t pixels_per_column);
-	void writeSensorPointCloud(uint16_t frameID, uint64_t timestamp_ns,
-								std::size_t columns_per_frame, std::size_t pixels_per_column);
+	void computeDollyMovement_ConstantSpeed();
+	void computeDollyMovement_SpiderCam();
+	void computeDollyMovement_GpsSpeeds();
+
+	void computeDollyOrientation_Constant();
+	void computeDollyOrientation_ConstantSpeed();
+	void computeDollyOrientation_IMU();
 
 private:
-	void onConfigParam(ouster::config_param_2_t config_param) override;
-	void onSensorInfo(ouster::sensor_info_2_t sensor_info) override;
-	void onTimestamp(ouster::timestamp_2_t timestamp) override;
-	void onSyncPulseIn(ouster::sync_pulse_in_2_t pulse_info) override;
-	void onSyncPulseOut(ouster::sync_pulse_out_2_t pulse_info) override;
-	void onMultipurposeIo(ouster::multipurpose_io_2_t io) override;
-	void onNmea(ouster::nmea_2_t nmea) override;
-	void onTimeInfo(ouster::time_info_2_t time_info) override;
-	void onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsics) override;
-	void onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics) override;
-	void onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics) override;
-	void onLidarDataFormat(ouster::lidar_data_format_2_t format) override;
-	void onImuData(ouster::imu_data_t data) override;
-	void onLidarData(cOusterLidarData data) override;
+	const int mID;
 
-private:
-    void createXyzLookupTable(const ouster::beam_intrinsics_2_t& beam,
-                              const ouster::lidar_intrinsics_2_t& lidar,
-                              const ouster::lidar_data_format_2_t& format);
-
-    void computePointCloud(const cOusterLidarData& data);
-
-private:
 	double mMinDistance_m = 0.001;
 	double mMaxDistance_m = 1000.0;
 
-	double mMinEncoder_rad = 0.0;
-	double mMaxEncoder_rad = 2.0 * std::numbers::pi;
+	double mMinAzimuth_deg = 0.0;
+	double mMaxAzimuth_deg = 360;
 
-	double mMinAltitude_rad = -std::numbers::pi;
-	double mMaxAltitude_rad = +std::numbers::pi;
+	double mMinAltitude_deg = -25.0;
+	double mMaxAltitude_deg = 25.0;
 
-	double mStartX_mm = 0.0;
-	double mStartY_mm = 0.0;
-	double mStartZ_mm = 0.0;
+	int32_t mStartX_mm = 0;
+	int32_t mStartY_mm = 0;
+	int32_t mStartZ_mm = 0;
 
-	double mEndX_mm = 0.0;
-	double mEndY_mm = 0.0;
-	double mEndZ_mm = 0.0;
+	int32_t mEndX_mm = 0;
+	int32_t mEndY_mm = 0;
+	int32_t mEndZ_mm = 0;
 
 	double mVx_mmps = 0.0;
 	double mVy_mmps = 0.0;
@@ -185,37 +142,7 @@ private:
 	bool   mRotateToGround = true;
 	double mRotateThreshold_pct = 1.0;
 
-
 private:
-	std::optional<ouster::beam_intrinsics_2_t>   mBeamIntrinsics;
-	std::optional<ouster::lidar_intrinsics_2_t>  mLidarIntrinsics;
-	std::optional<ouster::lidar_data_format_2_t> mLidarDataFormat;
-	std::vector<int> mPixelShiftByRow;
-
-	ouster::imu_intrinsics_2_t			mImuIntrinsics;
-	ouster::cTransformMatrix<double>	mImuTransform;
-	ouster::cRotationMatrix<double>		mImuToSensor;
-
-private:
-	std::unique_ptr<cKinematics>	mKinematic;
-
-	/*
-	 * The rotation needed to convert sensor orientation
-	 * to the spidercam South\East\Up coordination system
-	 */
-	ouster::cRotationMatrix<double> mSensorToSEU;
-
-    ouster::matrix_col_major<pointcloud::sCloudPoint_SensorInfo_t> mCloud;
-
-	cPointCloud_SensorInfo mPointCloud;
-
-	std::vector<bool>     mExcludePoint;
-	std::vector<sPoint_t> mUnitVectors;
-    std::vector<sPoint_t> mOffsets;
-	std::vector<double>   mTheta_rad;
-	std::vector<double>   mPhi_rad;
-
-	uint64_t mStartTimestamp_ns = 0;
-	uint32_t mFrameID = 0;
-	uint64_t mTimeStep_ns = 100'000'000;
+	std::vector<rfm::sDollyInfo_t>			mDollyMovement;
+	std::vector<rfm::sDollyOrientation_t>	mDollyOrientation;
 };

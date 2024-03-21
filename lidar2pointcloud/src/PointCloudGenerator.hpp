@@ -84,7 +84,7 @@ public:
 
 	const cRappPointCloud& getPointCloud() const;
 
-	void run();
+	bool computePointCloud(int id);
 
 public:
 	void fixTimestampInfo(double updateRate_Hz, uint64_t start_timestamp_ns = 0);
@@ -104,7 +104,6 @@ protected:
 	void addLidarData(const cOusterLidarData& data);
 
 private:
-	bool computePointCloud();
 	bool shiftPointCloudToAGL();
 
 public:

@@ -69,10 +69,18 @@ public:
 
 	bool empty() const;
 
+	bool saveCompactPointCloud() const;
+	bool savePlyFiles() const;
+	bool plyUseBinaryFormat() const;
+
 	std::optional<nConfigFileData::sParameters_t> getParameters(const std::string& experiment_filename);
 
 private:
 	std::string mConfigFilename;
+
+	bool mSaveCompactPointCloud = false;
+	bool mSavePlyFiles = false;
+	bool mPlyUseBinaryFormat = false;
 
 	std::map<std::string, nConfigFileData::sParameters_t>	mParameters;
 };

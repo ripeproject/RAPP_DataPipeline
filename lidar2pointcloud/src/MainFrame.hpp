@@ -10,6 +10,8 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
+#include <memory>
+
 // Forward Declarations
 class cMainWindow;
 
@@ -23,16 +25,13 @@ public:
 	virtual ~cMainFrame();
 
 	// event handlers (these functions should _not_ be virtual)
-	void OnFileOpen(wxCommandEvent& event);
-	void OnFileExport(wxCommandEvent& event);
+	void OnFileGroundData(wxCommandEvent& event);
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& evt);
 
 private:
-	std::string mFilename;
-
-	cMainWindow* mpMainWindow = nullptr;
+	std::unique_ptr<cMainWindow> mMainWindow;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

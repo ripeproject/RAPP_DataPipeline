@@ -6,6 +6,6 @@
 #include <string>
 
 
-void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc, bool useBinaryFormat = true);
+void exportPointcloud2Ply(int id, const std::string& filename, const cRappPointCloud& pc, bool useBinaryFormat = true);
 
 

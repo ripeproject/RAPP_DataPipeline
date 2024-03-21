@@ -46,6 +46,11 @@ bool load_ground_data(const std::string& ground_data_filename)
 	return true;
 }
 
+bool is_ground_data_loaded()
+{
+	return gData.numOfGroundPoints() > 0;
+}
+
 double getMeshHeight_mm(std::int32_t x_mm, std::int32_t y_mm)
 {
 	return gData.getMeshHeight_mm(x_mm, y_mm);

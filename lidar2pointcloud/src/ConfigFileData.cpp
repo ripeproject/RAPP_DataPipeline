@@ -2,12 +2,6 @@
 #include "ConfigFileData.hpp"
 #include "StringUtils.hpp"
 
-#include "Kinematics_Constant.hpp"
-#include "Kinematics_Constant_SensorRotation.hpp"
-#include "Kinematics_Dolly.hpp"
-#include "Kinematics_GPS.hpp"
-#include "Kinematics_SLAM.hpp"
-
 #include <nlohmann/json.hpp>
 
 #include <fstream>
@@ -28,6 +22,21 @@ cConfigFileData::~cConfigFileData()
 bool cConfigFileData::empty() const
 {
 	return mParameters.empty();
+}
+
+bool cConfigFileData::saveCompactPointCloud() const
+{
+	return mSaveCompactPointCloud;
+}
+
+bool cConfigFileData::savePlyFiles() const
+{
+	return mSavePlyFiles;
+}
+
+bool cConfigFileData::plyUseBinaryFormat() const
+{
+	return mPlyUseBinaryFormat;
 }
 
 std::optional<nConfigFileData::sParameters_t> cConfigFileData::getParameters(const std::string& experiment_filename)
@@ -72,6 +81,55 @@ bool cConfigFileData::load()
 		console_message(e.what());
 		return false;
 	}
+
+	/*** Load Options ***/
+	try
+	{
+		if (configDoc.contains("options"))
+		{
+			auto options = configDoc["options"];
+
+			if (options.contains("save compact data file"))
+				mSaveCompactPointCloud = options["save compact data file"];
+
+			if (options.contains("create plys"))
+				mSavePlyFiles = options["create plys"];
+
+			if (options.contains("plys use binary format"))
+				mPlyUseBinaryFormat = options["plys use binary format"];
+		}
+	}
+	catch (const nlohmann::json::invalid_iterator& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::type_error& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::out_of_range& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::other_error& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const nlohmann::json::exception& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+	catch (const std::exception& e)
+	{
+		console_message(e.what());
+		return false;
+	}
+
 
 	/*** Load Defaults ***/
 	sParameters_t defaultParameters;

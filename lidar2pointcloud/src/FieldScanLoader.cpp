@@ -4,6 +4,7 @@
 #include "FieldScanDataModel.hpp"
 
 #include "OusterInfoLoader.hpp"
+#include "ProcessingInfoLoader.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
@@ -15,9 +16,12 @@
 #include <filesystem>
 
 
-cFieldScanLoader::cFieldScanLoader(cFieldScanDataModel& model)
+extern void update_progress(const int id, const int progress_pct);
+
+
+cFieldScanLoader::cFieldScanLoader(int id, cFieldScanDataModel& model)
     :
-        mModel(model)
+        mID(id), mModel(model)
 {}
 
 bool cFieldScanLoader::loadFile(const std::string& filename)
@@ -31,18 +35,22 @@ bool cFieldScanLoader::loadFile(const std::string& filename)
     return true;
 }
 
-void cFieldScanLoader::run()
+bool cFieldScanLoader::run()
 {
     cBlockDataFileReader fileReader;
 
     if (!fileReader.open(mFilename))
-        return;
+    {
+        return false;
+    }
 
+    auto processing = std::make_unique<cProcessingInfoLoader>(mModel.getProcessingInfo());
     auto info = std::make_unique<cExperimentInfoLoader>(mModel.getExperimentInfo());
     auto ctrl = std::make_unique<cSpiderCamInfoLoader>(mModel.getSpiderCamInfo());
     auto ssnx = std::make_unique<cSsnxInfoLoader>(mModel.getSsnxInfo());
     auto ouster = std::make_unique<cOusterInfoLoader>(mModel.getOusterInfo());
 
+    fileReader.attach(processing.get());
     fileReader.attach(info.get());
     fileReader.attach(ctrl.get());
     fileReader.attach(ssnx.get());
@@ -58,7 +66,7 @@ void cFieldScanLoader::run()
             if (fileReader.fail())
             {
                 fileReader.close();
-                return;
+                return true;
             }
 
             fileReader.processBlock();
@@ -66,37 +74,30 @@ void cFieldScanLoader::run()
             test_pos = fileReader.filePosition();
             double file_pos = static_cast<double>(test_pos);
 
-            file_pos = 100.0 * (file_pos / file_size);
-//            emit progressUpdated(std::max(static_cast<int>(file_pos), 1));
+            int progress_pct = static_cast<int>(100.0 * (file_pos / file_size));
+            update_progress(mID, progress_pct);
         }
     }
     catch (const bdf::stream_error& e)
     {
-//        emit progressUpdated(100);
-//        emit loadingComplete();
-        return;
+        return false;
     }
     catch (const bdf::crc_error& e)
     {
-//        emit progressUpdated(100);
-//        emit loadingComplete();
-        return;
+        return false;
     }
     catch (const bdf::unexpected_eof& e)
     {
-//        emit progressUpdated(100);
-//        emit loadingComplete();
-        return;
+        return false;
     }
     catch (const std::exception& e)
     {
-//        emit progressUpdated(100);
-//        emit loadingComplete();
-        return;
+        return false;
     }
 
-//    emit progressUpdated(100);
-//    emit loadingComplete();
+    update_progress(mID, 100);
+
+    return true;
 }
 
 

@@ -7,11 +7,6 @@
 
 #include "GroundModelUtils.hpp"
 
-#include "Kinematics_Constant.hpp"
-#include "Kinematics_Dolly.hpp"
-#include "Kinematics_GPS.hpp"
-#include "Kinematics_SLAM.hpp"
-
 #include "ConfigFileData.hpp"
 
 #include "TextProgressBar.hpp"
@@ -265,16 +260,10 @@ int main(int argc, char** argv)
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
-		fp->setValidRange_m(parameters.minDistance_m, parameters.maxDistance_m);
-		fp->setAzimuthWindow_deg(parameters.minAzimuth_deg, parameters.maxAzimuth_deg);
-		fp->setAltitudeWindow_deg(parameters.minAltitude_deg, parameters.maxAltitude_deg);
-
-		fp->setInitialPosition_m(parameters.startX_m, parameters.startY_m, parameters.startZ_m);
-		fp->setFinalPosition_m(parameters.endX_m, parameters.endY_m, parameters.endZ_m);
-
-		fp->setDollySpeed(parameters.Vx_mmps, parameters.Vy_mmps, parameters.Vz_mmps);
-
-//		fp->setKinematicModel(std::move(kinematics));
+		fp->saveCompactPointCloud(configData.saveCompactPointCloud());
+		fp->savePlyFiles(configData.savePlyFiles());
+		fp->plyUseBinaryFormat(configData.plyUseBinaryFormat());
+		fp->setDefaults(parameters);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 

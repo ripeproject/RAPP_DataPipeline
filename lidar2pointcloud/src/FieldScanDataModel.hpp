@@ -3,6 +3,7 @@
 #include "datatypes.hpp"
 
 #include "OusterInfo.hpp"
+#include "ProcessingInfo.hpp"
 
 #include "RappFieldBoundary.hpp"
 #include "RappTriangle.hpp"
@@ -25,13 +26,15 @@ class cFieldScanLoader;
 class cFieldScanDataModel
 {
 public:
-	cFieldScanDataModel();
+	explicit cFieldScanDataModel(int id);
 	~cFieldScanDataModel();
+
+	const std::string& getFileName() const;
+
+	const std::string& getExperimentTitle() const;
 
 	double getScanTime_sec() const;
 	double getGroundTrack_deg() const;
-
-	const std::string& getFileName();
 
 	void loadFieldScanData(const std::string& filename);
 
@@ -41,31 +44,42 @@ public:
 	bool hasSpiderData() const;
 	bool hasGpsData() const;
 
+	std::shared_ptr<cProcessingInfo> getProcessingInfo();
+	std::shared_ptr<cProcessingInfo> getProcessingInfo() const;
+
 	std::shared_ptr<cExperimentInfo> getExperimentInfo();
+	std::shared_ptr<cExperimentInfo> getExperimentInfo() const;
+
 	std::shared_ptr<cSpiderCamInfo>  getSpiderCamInfo();
+	std::shared_ptr<cSpiderCamInfo>  getSpiderCamInfo() const;
+
 	std::shared_ptr<cSsnxInfo>       getSsnxInfo();
+	std::shared_ptr<cSsnxInfo>       getSsnxInfo() const;
+
 	std::shared_ptr<cOusterInfo>	 getOusterInfo();
+	std::shared_ptr<cOusterInfo>	 getOusterInfo() const;
 
-	void setStartIndex(std::size_t i);
-	void setEndIndex(std::size_t i);
+	void setScanTime_sec(double time_sec);
+	void setGroundTrack_deg(double track_deg);
 
-/*
-	void onStartPosition(double x_mm, double y_mm, double h_mm, uint32_t index);
-	void onEndPosition(double x_mm, double y_mm, double h_mm, uint32_t index);
-	void onGroundTrackUpdate(double groundTrack_deg);
-*/
+	void validateStartPosition(int32_t x_mm, int32_t y_mm, int32_t z_mm, uint32_t tolerence_mm = 500);
+	void validateEndPosition(int32_t x_mm, int32_t y_mm, int32_t z_mm, uint32_t tolerence_mm = 500);
 
 private:
-	double mScanTime_sec = 0.0;
-	double mGroundTrack_deg = 0.0;
+	const int mID;
 
 	std::string mFilename;
 
+private:
+	std::string mExperimentTitle;
+
+	double mScanTime_sec = 0.0;
+	double mGroundTrack_deg = 0.0;
+
+	std::shared_ptr<cProcessingInfo> mProcessingInfo;
 	std::shared_ptr<cExperimentInfo> mExperimentInfo;
 	std::shared_ptr<cSpiderCamInfo>  mSpiderCamInfo;
 	std::shared_ptr<cSsnxInfo>		 mSsnxInfo;
 	std::shared_ptr<cOusterInfo>	 mOusterInfo;
-
-	std::unique_ptr<cFieldScanLoader> mFieldScanLoader;
 };
 

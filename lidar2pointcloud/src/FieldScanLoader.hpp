@@ -9,14 +9,15 @@ class cFieldScanDataModel;
 class cFieldScanLoader
 {
 public:
-	cFieldScanLoader(cFieldScanDataModel& model);
+	cFieldScanLoader(int id, cFieldScanDataModel& model);
 	~cFieldScanLoader() = default;
 
 	bool loadFile(const std::string& filename);
 
-	void run();
+	bool run();
 
 private:
+	const int mID;
 	std::string mFilename;
 
 	cFieldScanDataModel& mModel;

@@ -3,7 +3,6 @@
 
 #include "datatypes.hpp"
 #include "Constants.hpp"
-#include "FieldUtils.hpp"
 
 #include <tinyply.h>
 
@@ -13,6 +12,8 @@
 #include <filesystem>
 
 //#define USE_FLOATS
+
+extern void update_progress(const int id, const int progress_pct);
 
 namespace
 {
@@ -35,20 +36,23 @@ namespace
 // end of namespace
 
 
-void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc, bool useBinaryFormat)
+void exportPointcloud2Ply(int id, const std::string& filename, const cRappPointCloud& pc, bool useBinaryFormat)
 {
     using namespace tinyply;
 
     auto cloud_data = pc.data();
 
-    shiftPointCloudToAGL(cloud_data);
-
     std::vector<position3> vertices;
     std::vector<range_t>   ranges;
     std::vector<returns3>  returns;
 
+    int i = 0;
+    auto n = 3 * cloud_data.size() / 2;
+
     for (const auto& point : cloud_data)
     {
+        update_progress(id, static_cast<int>((100.0 * i++) / n));
+
         if ((point.x_mm == 0) && (point.y_mm == 0) && (point.z_mm == 0))
             continue;
 
@@ -123,5 +127,7 @@ void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc
         // Write an ASCII file
         ply_file.write(outstream_ascii, false);
     }
+
+    update_progress(id, 100);
 }
 

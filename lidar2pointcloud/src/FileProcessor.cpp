@@ -1,8 +1,15 @@
 
 #include "FileProcessor.hpp"
 #include "lidar2pointcloud.hpp"
+#include "StringUtils.hpp"
+#include "FieldUtils.hpp"
+#include "ExportUtils.hpp"
+#include "PointCloudSaver.hpp"
+
+#include "PointCloudSerializer.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
+#include <cbdf/ExperimentSerializer.hpp>
 
 #include <filesystem>
 #include <string>
@@ -22,203 +29,261 @@ extern void complete_file_progress(const int id);
 cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
-    mID(id), mConverter{new cLidar2PointCloud}, mSerializer(1024)
+    mID(id)
 {
     mInputFile = in;
     mOutputFile = out;
 }
 
 cFileProcessor::~cFileProcessor()
+{}
+
+void cFileProcessor::saveCompactPointCloud(bool compact)
 {
-    mFileWriter.close();
-    mFileReader.close();
+    mSaveCompactPointCloud = compact;
 }
 
-void cFileProcessor::setValidRange_m(double min_dist_m, double max_dist_m)
+void cFileProcessor::savePlyFiles(bool savePlys)
 {
-    mConverter->setValidRange_m(min_dist_m, max_dist_m);
+    mSavePlyFiles = savePlys;
 }
 
-void cFileProcessor::setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg)
+void cFileProcessor::plyUseBinaryFormat(bool binaryFormat)
 {
-    mConverter->setAzimuthWindow_deg(min_azimuth_deg, max_azimuth_deg);
+    mPlyUseBinaryFormat = binaryFormat;
 }
 
-void cFileProcessor::setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg)
+void cFileProcessor::setDefaults(const nConfigFileData::sParameters_t& defaults)
 {
-    mConverter->setAltitudeWindow_deg(min_altitude_deg, max_altitude_deg);
-}
-
-void cFileProcessor::setInitialPosition_m(double x_m, double y_m, double z_m)
-{
-    mConverter->setInitialPosition_m(x_m, y_m, z_m);
-}
-
-void cFileProcessor::setFinalPosition_m(double x_m, double y_m, double z_m)
-{
-    mConverter->setFinalPosition_m(x_m, y_m, z_m);
-}
-
-void cFileProcessor::setDollySpeed(double Vx_mmps, double Vy_mmps, double Vz_mmps)
-{
-    mConverter->setDollySpeed(Vx_mmps, Vy_mmps, Vz_mmps);
-}
-
-bool cFileProcessor::open()
-{
-    if (std::filesystem::exists(mOutputFile))
-    {
-        return false;
-    }
-
-    mFileWriter.open(mOutputFile.string());
-    mFileReader.open(mInputFile.string());
-
-    mFileSize = mFileReader.file_size();
-
-    return mFileWriter.isOpen() && mFileReader.isOpen();
+    mDefaults = defaults;
 }
 
 void cFileProcessor::process_file()
 {
-    if (open())
-    {
-        new_file_progress(mID, mInputFile.string());
+    std::unique_ptr<cLidar2PointCloud> converter = std::make_unique<cLidar2PointCloud>(mID);
 
-        run();
+    converter->setValidRange_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
+    converter->setAzimuthWindow_deg(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
+    converter->setAltitudeWindow_deg(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
+
+    converter->setInitialPosition_m(mDefaults.startX_m, mDefaults.startY_m, mDefaults.startZ_m);
+    converter->setFinalPosition_m(mDefaults.endX_m, mDefaults.endY_m, mDefaults.endZ_m);
+
+    converter->setDollySpeed(mDefaults.Vx_mmps, mDefaults.Vy_mmps, mDefaults.Vz_mmps);
+
+    converter->setSensorMountOrientation(mDefaults.sensorMountYaw_deg, mDefaults.sensorMountPitch_deg, mDefaults.sensorMountRoll_deg);
+
+    if ((mDefaults.startPitchOffset_deg == mDefaults.endPitchOffset_deg)
+        && (mDefaults.startRollOffset_deg == mDefaults.endRollOffset_deg)
+        && (mDefaults.startYawOffset_deg == mDefaults.endYawOffset_deg))
+    {
+        converter->setOrientationOffset_deg(mDefaults.sensorYawOffset_deg, mDefaults.sensorPitchOffset_deg, mDefaults.sensorRollOffset_deg);
     }
-}
-
-void cFileProcessor::run()
-{
-	if (!mFileReader.isOpen())
-	{
-        throw std::logic_error("No file is open for reading.");
-	}
-
-    mSerializer.attach(&mFileWriter);
-    mConverter->attach(&mFileWriter);
-
-    mSerializer.write("lidar2pointcloud", processing_info::ePROCESSING_TYPE::POINT_CLOUD_GENERATION);
-
-    mConverter->writeHeader();
-
-    try
+    else
     {
-        if (mConverter->requiresTelemetryPass())
-        {
-            update_prefix_progress(mID, "Telemetry Pass", 0);
-
-            mConverter->attachKinematicParsers(mFileReader);
-
-            while (!mFileReader.eof())
-            {
-                if (mFileReader.fail())
-                {
-                    break;
-                }
-
-                mFileReader.processBlock();
-
-                auto file_pos = static_cast<double>(mFileReader.filePosition());
-                file_pos = 100.0 * (file_pos / mFileSize);
-
-                if (static_cast<int>(file_pos) > 1)
-                    update_progress(mID, static_cast<int>(file_pos));
-            }
-
-            mFileReader.gotoBeginning();
-            mConverter->telemetryPassComplete();
-
-            mConverter->detachKinematicParsers(mFileReader);
-        }
-
-        mConverter->attachTransformParsers(mFileReader);
-        mConverter->attachTransformSerializers(mFileWriter);
-
-	    mFileReader.registerCallback([this](const cBlockID& id){ this->processBlock(id); });
-	    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len){ this->processBlock(id, buf, len); });
-	    mFileReader.attach(mConverter.get());
-        mConverter.get()->attach(&mFileWriter);
-
-        update_prefix_progress(mID, "Compute Pass", 0);
-
-        while (!mFileReader.eof())
-        {
-            if (mFileReader.fail())
-            {
-                mFileReader.close();
-
-                mConverter->writeAndClearData();
-
-                mFileWriter.close();
-
-                return;
-            }
-
-            mFileReader.processBlock();
-
-            auto file_pos = static_cast<double>(mFileReader.filePosition());
-            file_pos = 100.0 * (file_pos / mFileSize);
-
-            if (static_cast<int>(file_pos) > 1)
-                update_progress(mID, static_cast<int>(file_pos));
-        }
-
-        mConverter->writeAndClearData();
+        converter->setInitialOffset_deg(mDefaults.startYawOffset_deg, mDefaults.startPitchOffset_deg, mDefaults.startRollOffset_deg);
+        converter->setFinalOffset_deg(mDefaults.endYawOffset_deg, mDefaults.endPitchOffset_deg, mDefaults.endRollOffset_deg);
     }
-    catch (const bdf::stream_error& e)
+
+    converter->enableTranslateToGround(mDefaults.translateToGround, mDefaults.translateThreshold_pct);
+    converter->enableRotateToGround(mDefaults.rotateToGround, mDefaults.rotateThreshold_pct);
+
+    // Start by loading the field scan data into memory
+    new_file_progress(mID, mInputFile.string());
+
+    converter->loadFieldScanData(mInputFile.string());
+
+    // Compute the Dolly Movement
+    if (!converter->computeDollyMovement())
     {
-        std::string msg = "Stream Error: ";
-        msg += e.what();
+        std::string msg = "Failed to compute the dolly movement: ";
+        msg += mInputFile.string();
         console_message(msg);
-    }
-    catch (const bdf::crc_error& e)
-    {
-        std::string msg = "CRC Error: ";
-        msg += e.what();
-        console_message(msg);
-    }
-    catch (const bdf::unexpected_eof& e)
-    {
-        std::string msg = "Unexpected EOF: ";
-        msg += e.what();
-        console_message(msg);
-    }
-    catch (const cKinematicNoData& e)
-    {
-        std::string msg = e.what();
-        console_message(msg);
-        deleteOutputFile();
-    }
-    catch (const cKinematicException& e)
-    {
-        std::string msg = "Kinematic Error: ";
-        msg += e.what();
-        console_message(msg);
-    }
-    catch (const std::exception& e)
-    {
-        std::string msg = "Unknown Exception: ";
-        msg += e.what();
-        console_message(msg);
+        return;
     }
 
+    // Compute the Dolly Orientation
+    if (!converter->computeDollyOrientation())
+    {
+        std::string msg = "Failed to compute the dolly orientation: ";
+        msg += mInputFile.string();
+        console_message(msg);
+        return;
+    }
+
+    if (!converter->computePointCloud())
+    {
+        std::string msg = "Failed to compute point cloud: ";
+        msg += mInputFile.string();
+        console_message(msg);
+        return;
+    }
+
+    cRappPointCloud pointCloud = converter->getPointCloud();
+
+    update_prefix_progress(mID, "Flattening Point Cloud...", 0);
+
+    shiftPointCloudToAGL(mID, pointCloud);
+
+    update_prefix_progress(mID, "Saving Point Cloud...", 0);
+
+    if (mSaveCompactPointCloud)
+    {
+        savePointCloudFile(*converter, pointCloud);
+    }
+    else
+    {
+        std::unique_ptr<cPointCloudSaver> saver = std::make_unique<cPointCloudSaver>(mID, pointCloud);
+
+        saver->setInputFile(mInputFile.string());
+        saver->setOutputFile(mOutputFile.string());
+
+        saver->save();
+    }
+
+    if (mSavePlyFiles)
+    {
+        update_prefix_progress(mID, "Exporting Point Cloud...", 0);
+        savePlyFiles(pointCloud);
+    }
+
+    update_prefix_progress(mID, "Finished", 100);
     complete_file_progress(mID);
 }
 
-void cFileProcessor::processBlock(const cBlockID& id)
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRappPointCloud& pc)
 {
-	mFileWriter.writeBlock(id);
+    auto processingInfo = data.getProcessingInfo();
+    auto experimentInfo = data.getExperimentInfo();
+
+    std::string filename = mOutputFile.string();
+
+    cBlockDataFileWriter fileWriter;
+
+    cExperimentSerializer       experimentSerializer;
+    cProcessingInfoSerializer   processInfoSerializer;
+    cPointCloudSerializer 	    pointCloudSerializer;
+
+    experimentSerializer.setBufferCapacity(4096 * 1024);
+    processInfoSerializer.setBufferCapacity(4096);
+
+    experimentSerializer.attach(&fileWriter);
+    processInfoSerializer.attach(&fileWriter);
+    pointCloudSerializer.attach(&fileWriter);
+
+    fileWriter.open(filename);
+    if (!fileWriter.isOpen())
+        return;
+
+    writeProcessingInfo(*processingInfo, processInfoSerializer);
+    update_progress(mID, 33);
+
+    writeExperimentInfo(*experimentInfo, experimentSerializer);
+    update_progress(mID, 67);
+
+    cPointCloud point_cloud;
+    point_cloud.resize(pc.size());
+    to_pointcloud(pc, point_cloud);
+
+    pointCloudSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+            point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+    pointCloudSerializer.write(point_cloud);
+
+    fileWriter.close();
+    update_progress(mID, 100);
 }
 
-void cFileProcessor::processBlock(const cBlockID& id, const std::byte* buf, std::size_t len)
+//-----------------------------------------------------------------------------
+void cFileProcessor::savePlyFiles(const cRappPointCloud& pc)
 {
-	mFileWriter.writeBlock(id, buf, len);
+    auto fe = nStringUtils::splitFilename(mOutputFile.string());
+    std::string filename = fe.filename;
+    filename += ".ply";
+    exportPointcloud2Ply(mID, filename, pc, mPlyUseBinaryFormat);
 }
 
-void cFileProcessor::deleteOutputFile()
+//-----------------------------------------------------------------------------
+void cFileProcessor::writeProcessingInfo(const cProcessingInfo& info, cProcessingInfoSerializer& serializer)
 {
-    mFileWriter.close();
-    std::filesystem::remove(mOutputFile);
+    serializer.write("FlattenPointCloud", processing_info::ePROCESSING_TYPE::FLAT_POINT_CLOUD_GENERATION);
+
+    for (auto it = info.begin(); it != info.end(); ++it)
+    {
+        serializer.write(*it);
+    }
 }
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::writeExperimentInfo(const cExperimentInfo& info, cExperimentSerializer& serializer)
+{
+    serializer.writeBeginHeader();
+
+    if (!info.title().empty())
+        serializer.writeTitle(info.title());
+
+    if (!info.experimentDoc().empty())
+        serializer.writeExperimentDoc(info.experimentDoc());
+
+    if (!info.comments().empty())
+        serializer.writeComments(info.comments());
+
+    if (!info.principalInvestigator().empty())
+        serializer.writePrincipalInvestigator(info.principalInvestigator());
+
+    if (!info.researchers().empty())
+        serializer.writeResearchers(info.researchers());
+
+    if (!info.species().empty())
+        serializer.writeSpecies(info.species());
+
+    if (!info.cultivar().empty())
+        serializer.writeCultivar(info.cultivar());
+
+    if (!info.construct().empty())
+        serializer.writeConstructName(info.construct());
+
+    if (!info.eventNumbers().empty())
+        serializer.writeEventNumbers(info.eventNumbers());
+
+    if (!info.treatments().empty())
+        serializer.writeTreatments(info.treatments());
+
+    if (!info.fieldDesign().empty())
+        serializer.writeFieldDesign(info.fieldDesign());
+
+    if (!info.permit().empty())
+        serializer.writePermitInfo(info.permit());
+
+    if (info.plantingDate().has_value())
+    {
+        nExpTypes::sDateDoy_t date = info.plantingDate().value();
+        serializer.writePlantingDate(date.year, date.month, date.day, date.doy);
+    }
+
+    if (info.harvestDate().has_value())
+    {
+        nExpTypes::sDateDoy_t date = info.harvestDate().value();
+        serializer.writeHarvestDate(date.year, date.month, date.day, date.doy);
+    }
+
+    if (info.fileDate().has_value())
+    {
+        nExpTypes::sDate_t date = info.fileDate().value();
+        serializer.writeFileDate(date.year, date.month, date.day);
+    }
+
+    if (info.fileTime().has_value())
+    {
+        nExpTypes::sTime_t time = info.fileTime().value();
+        serializer.writeFileTime(time.hour, time.minute, time.seconds);
+    }
+
+    if (info.dayOfYear().has_value())
+        serializer.writeDayOfYear(info.dayOfYear().value());
+
+    serializer.writeEndOfHeader();
+}
+

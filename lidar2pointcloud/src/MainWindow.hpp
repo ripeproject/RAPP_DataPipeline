@@ -9,6 +9,8 @@
 	#include <wx/valnum.h>
 #endif
 
+#include "ConfigFileData.hpp"
+
 #include "../wxCustomWidgets/FileProgressCtrl.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
@@ -45,10 +47,6 @@ protected:
 	void OnDstBrowse(wxCommandEvent& event);
 	void OnCfgFileBrowse(wxCommandEvent& event);
 
-	void OnOrientationOverride(wxCommandEvent& event);
-	void OnSensorLimitsOverride(wxCommandEvent& event);
-	void OnOptionsOverride(wxCommandEvent& event);
-
 	void OnModelChange(wxCommandEvent& event);
 	void OnCompute(wxCommandEvent& event);
 
@@ -60,11 +58,6 @@ private:
 	void stopDataProcessing();
 
 private:
-	void createConfigFileLayout();
-	void createConstantSpeedLayout();
-	void createDollyLayout();
-
-private:
 	std::string mFilename;
 
 	wxTextCtrl* mpLoadSrcFile = nullptr;
@@ -74,122 +67,13 @@ private:
 	wxTextCtrl* mpLoadDstFile = nullptr;
 	wxButton* mpLoadDstButton = nullptr;
 
-	wxComboBox* mpKinematicModel = nullptr;
-
-	wxStaticBoxSizer* mpKinematicOptions = nullptr;
-
-	/*** Configuration File ***/
-	wxPanel*	mpKM_ConfigurationFile = nullptr;
-
 	wxTextCtrl* mpLoadCfgFile = nullptr;
 	wxButton*	mpLoadCfgButton = nullptr;
 
-	wxCheckBox* mpKM_CF_OverrideOrientation = nullptr;
-	wxCheckBox* mpKM_CF_OverrideLimits = nullptr;
-	wxCheckBox* mpKM_CF_OverrideOptions = nullptr;
-
-	bool mKM_CF_OverrideOrientation = false;
-	bool mKM_CF_OverrideLimits = false;
-	bool mKM_CF_OverrideOptions = false;
-
-	/*** Constant Speed Options (CSO) ***/
-	wxPanel* mpKM_ConstantSpeedOptions = nullptr;
-
-	double mKM_CSO_Vx_mmps = 0.0;
-	double mKM_CSO_Vy_mmps = 0.0;
-	double mKM_CSO_Vz_mmps = 0.0;
-	double mKM_CSO_Height_m = 0.0;
-
-	wxFloatingPointValidator<double> mKM_CSO_Vx_val;
-	wxFloatingPointValidator<double> mKM_CSO_Vy_val;
-	wxFloatingPointValidator<double> mKM_CSO_Vz_val;
-	wxFloatingPointValidator<double> mKM_CSO_Height_val;
-
-	wxTextCtrl* mpKM_CSO_Vx_mmps = nullptr;
-	wxTextCtrl* mpKM_CSO_Vy_mmps = nullptr;
-	wxTextCtrl* mpKM_CSO_Vz_mmps = nullptr;
-	wxTextCtrl* mpKM_CSO_Height_m = nullptr;
-	wxComboBox* mpKM_CSO_HeightAxis = nullptr;
-
-	/*** Dolly Options ***/
-	wxPanel* mpKM_DollyOptions = nullptr;
-
-	double mKM_DO_PitchOffset_deg = 0.0;
-	double mKM_DO_RollOffset_deg = 0.0;
-
-	wxFloatingPointValidator<double> mKM_DO_Pitch_Offset_val;
-	wxFloatingPointValidator<double> mKM_DO_Roll_Offset_val;
-
-	wxCheckBox* mpKM_DO_UseImuData = nullptr;
-	wxCheckBox* mpKM_DO_AverageImuData = nullptr;
-	wxTextCtrl* mpKM_DO_PitchOffset_deg = nullptr;
-	wxTextCtrl* mpKM_DO_RollOffset_deg = nullptr;
-
-	/*** GPS Options ***/
-	wxPanel* mpKM_GpsOptions = nullptr;
-
-	/*** SLAM Options ***/
-	wxPanel* mpKM_SlamOptions = nullptr;
-
-	/*** Sensor Orientation ***/
-	wxStaticBoxSizer* mpSensorOrientation = nullptr;
-//	wxPanel* mpSensorOrientation = nullptr;
-
-	double mSensorPitch_deg = -90.0;
-	double mSensorRoll_deg = 0.0;
-	double mSensorYaw_deg = 270.0;
-
-	wxFloatingPointValidator<double> mSensorPitch_val;
-	wxFloatingPointValidator<double> mSensorRoll_val;
-	wxFloatingPointValidator<double> mSensorYaw_val;
-
-	wxTextCtrl* mpSensorPitch_deg = nullptr;
-	wxTextCtrl* mpSensorRoll_deg = nullptr;
-	wxTextCtrl* mpSensorYaw_deg = nullptr;
-	wxCheckBox* mpRotateSensorToSEU = nullptr;
-
-	/*** Sensor Limits ***/
-	wxStaticBoxSizer* mpSensorLimits = nullptr;
-
-	double mMinimumDistance_m = 0.0;
-	double mMaximumDistance_m = 0.0;
-
-	wxFloatingPointValidator<double> mMinimumDistance_val;
-	wxFloatingPointValidator<double> mMaximumDistance_val;
-
-	wxTextCtrl* mpMinimumDistance_m = nullptr;
-	wxTextCtrl* mpMaximumDistance_m = nullptr;
-
-	double mMinimumAzimuth_deg = 0.0;
-	double mMaximumAzimuth_deg = 360.0;
-
-	wxFloatingPointValidator<double> mMinimumAzimuth_val;
-	wxFloatingPointValidator<double> mMaximumAzimuth_val;
-
-	wxTextCtrl* mpMinimumAzimuth_deg = nullptr;
-	wxTextCtrl* mpMaximumAzimuth_deg = nullptr;
-
-	double mMinimumAltitude_deg = -25.0;
-	double mMaximumAltitude_deg = 25.0;
-
-	wxFloatingPointValidator<double> mMinimumAltitude_val;
-	wxFloatingPointValidator<double> mMaximumAltitude_val;
-
-	wxTextCtrl* mpMinimumAltitude_deg = nullptr;
-	wxTextCtrl* mpMaximumAltitude_deg = nullptr;
-
 	/*** Options ***/
-	wxStaticBoxSizer* mpOptions = nullptr;
-
-	wxRadioButton* mpAggregatePointCloud = nullptr;
-	wxRadioButton* mpSaveReducedPointCloud = nullptr;
-	wxRadioButton* mpSaveSensorPointCloud = nullptr;
-
-	wxStaticBoxSizer* mpSaveOptions = nullptr;
-
-	wxRadioButton* mpSaveBasic		= nullptr;
-	wxRadioButton* mpSaveFrameID	= nullptr;
-	wxRadioButton* mpSaveSensorInfo	= nullptr;
+	wxCheckBox* mpSavePlyFiles = nullptr;
+	wxCheckBox* mpPlyUseBinaryFormat = nullptr;
+	wxCheckBox* mpSaveCompactFile = nullptr;
 
 	wxButton* mpComputeButton = nullptr;
 
@@ -201,9 +85,11 @@ private:
 	std::queue<cFileProcessor*> mFileProcessors;
 
 	bool mIsFile = false;
-	wxString mSourceData;
-	wxString mDestinationData;
-	wxString mConfigurationFilename;
+	wxString mSource;
+	wxString mDestination;
+	wxString mCfgFilename;
+
+	std::unique_ptr<cConfigFileData> mConfigData;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

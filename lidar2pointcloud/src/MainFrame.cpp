@@ -1,6 +1,7 @@
 
 #include "MainFrame.hpp"
 #include "MainWindow.hpp"
+#include "GroundModelUtils.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
 #include "Resources/LidarConvert.xpm"
@@ -11,6 +12,7 @@
 #include <wx/aboutdlg.h>
 #include <wx/thread.h>
 #include <wx/display.h>
+#include <wx/config.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -22,7 +24,7 @@
 enum
 {
 	// Custom submenu items
-	ID_RECONNECT = wxID_HIGHEST + 1,
+	ID_LOAD_GROUND_DATA = wxID_HIGHEST + 1,
 
 };
 
@@ -34,9 +36,8 @@ enum
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 wxBEGIN_EVENT_TABLE(cMainFrame, wxFrame)
-	EVT_MENU(wxID_OPEN, cMainFrame::OnFileOpen)
-	EVT_MENU(wxID_SAVE, cMainFrame::OnFileExport)
 	EVT_MENU(wxID_EXIT, cMainFrame::OnQuit)
+	EVT_MENU(ID_LOAD_GROUND_DATA, cMainFrame::OnFileGroundData)
 	EVT_MENU(wxID_ABOUT, cMainFrame::OnAbout)
 	EVT_CLOSE(cMainFrame::OnClose)
 wxEND_EVENT_TABLE()
@@ -47,7 +48,7 @@ wxEND_EVENT_TABLE()
 cMainFrame::cMainFrame()
 	: wxFrame(NULL, wxID_ANY, "Ceres LiDAR-to-PointCloud")
 {
-	mpMainWindow = new cMainWindow(this);
+	mMainWindow = std::make_unique<cMainWindow>(this);
 
 	// set the frame icon
 	SetIcon(wxICON(LidarConvert));
@@ -56,8 +57,7 @@ cMainFrame::cMainFrame()
 	// create a menu bar
 	wxMenu* fileMenu = new wxMenu;
 
-	wxMenuItem* open_file   = fileMenu->Append(wxID_OPEN);
-	wxMenuItem* export_file = fileMenu->Append(wxID_SAVE, "&Export\tCtrl+E", "Export data to text file");
+	wxMenuItem* setting_ground_data = fileMenu->Append(ID_LOAD_GROUND_DATA, "Load Ground Data", "Load the GPS based ground data");
 	fileMenu->AppendSeparator();
 	fileMenu->Append(wxID_EXIT, "E&xit\tAlt-X", "Quit this program");
 
@@ -87,7 +87,7 @@ cMainFrame::cMainFrame()
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
-	sizer->Add(mpMainWindow, wxSizerFlags().Proportion(1).Expand().Border(wxALL, 5));
+	sizer->Add(mMainWindow.get(), wxSizerFlags().Proportion(1).Expand().Border(wxALL, 5));
 
 	sizer->Layout();
 	SetSizerAndFit(sizer);
@@ -111,6 +111,13 @@ cMainFrame::cMainFrame()
 	SetMinSize(size);
 
 	Centre();
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("LidarConvert");
+	wxString savedFileName;
+	if (config->Read("Field/groundMeshFile", &savedFileName))
+	{
+		load_ground_data(savedFileName.ToStdString());
+	}
 }
 
 cMainFrame::~cMainFrame()
@@ -120,20 +127,29 @@ cMainFrame::~cMainFrame()
 
 // event handlers
 
-void cMainFrame::OnFileOpen(wxCommandEvent& WXUNUSED(event))
+void cMainFrame::OnFileGroundData(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog
-		openFileDialog(this, _("Open Ceres file"), "", "",
-			"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("LidarConvert");
+	wxString savedFileName;
 
-	if (openFileDialog.ShowModal() == wxID_CANCEL)
+	config->Read("Field/groundMeshFile", &savedFileName);
+	
+	wxFileDialog dlg(this, _("Import Ground Data..."), savedFileName, "",
+		"GPS CSV Files (*.csv)|*.csv", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
 
-	mFilename = openFileDialog.GetPath().ToStdString();
-}
+	auto ground_data = dlg.GetPath();
 
-void cMainFrame::OnFileExport(wxCommandEvent& WXUNUSED(event))
-{
+	if (load_ground_data(ground_data.ToStdString()))
+	{
+		config->Write("Field/groundMeshFile", ground_data);
+	}
+	else
+	{
+
+	}
 }
 
 void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))

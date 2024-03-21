@@ -4,9 +4,14 @@
 #include "FieldScanLoader.hpp"
 #include "PointCloudGenerator.hpp"
 
+extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
+extern void update_progress(const int id, const int progress_pct);
 
-cFieldScanDataModel::cFieldScanDataModel()
+
+cFieldScanDataModel::cFieldScanDataModel(int id)
+    : mID(id)
 {
+    mProcessingInfo = std::make_shared<cProcessingInfo>();
 	mExperimentInfo = std::make_shared<cExperimentInfo>();
     mSpiderCamInfo = std::make_shared<cSpiderCamInfo>();
     mSsnxInfo = std::make_shared<cSsnxInfo>();
@@ -27,15 +32,23 @@ double cFieldScanDataModel::getGroundTrack_deg() const
     return mGroundTrack_deg;
 }
 
-const std::string& cFieldScanDataModel::getFileName()
+const std::string& cFieldScanDataModel::getFileName() const
 {
     return mFilename;
+}
+
+const std::string& cFieldScanDataModel::getExperimentTitle() const
+{
+    return mExperimentTitle;
 }
 
 void cFieldScanDataModel::clear()
 {
     mScanTime_sec = 0.0;
+    mGroundTrack_deg = cSsnxInfo::INVALID_GROUND_TRACK;
     mFilename.clear();
+    mExperimentTitle.clear();
+    mProcessingInfo->clear();
 	mExperimentInfo->clear();
     mSpiderCamInfo->clear();
     mSsnxInfo->clear();
@@ -59,12 +72,32 @@ bool cFieldScanDataModel::hasGpsData() const
 }
 
 //-----------------------------------------------------------------------------
+std::shared_ptr<cProcessingInfo> cFieldScanDataModel::getProcessingInfo()
+{
+    return mProcessingInfo;
+}
+
+std::shared_ptr<cProcessingInfo> cFieldScanDataModel::getProcessingInfo() const
+{
+    return mProcessingInfo;
+}
+
 std::shared_ptr<cExperimentInfo> cFieldScanDataModel::getExperimentInfo()
 {
 	return mExperimentInfo;
 }
 
+std::shared_ptr<cExperimentInfo> cFieldScanDataModel::getExperimentInfo() const
+{
+    return mExperimentInfo;
+}
+
 std::shared_ptr<cSpiderCamInfo> cFieldScanDataModel::getSpiderCamInfo()
+{
+    return mSpiderCamInfo;
+}
+
+std::shared_ptr<cSpiderCamInfo> cFieldScanDataModel::getSpiderCamInfo() const
 {
     return mSpiderCamInfo;
 }
@@ -74,48 +107,38 @@ std::shared_ptr<cSsnxInfo> cFieldScanDataModel::getSsnxInfo()
     return mSsnxInfo;
 }
 
+std::shared_ptr<cSsnxInfo> cFieldScanDataModel::getSsnxInfo() const
+{
+    return mSsnxInfo;
+}
+
 std::shared_ptr<cOusterInfo> cFieldScanDataModel::getOusterInfo()
+{
+    return mOusterInfo;
+}
+
+std::shared_ptr<cOusterInfo> cFieldScanDataModel::getOusterInfo() const
 {
     return mOusterInfo;
 }
 
 void cFieldScanDataModel::loadFieldScanData(const std::string& filename)
 {
-    if (!mFieldScanLoader)
-    {
-        mFieldScanLoader = std::make_unique<cFieldScanLoader>(*this);
-    }
+    std::unique_ptr<cFieldScanLoader> fieldScanLoader = std::make_unique<cFieldScanLoader>(mID, *this);
 
-    if (!mFieldScanLoader->loadFile(filename))
+    if (!fieldScanLoader->loadFile(filename))
         return;
 
     clear();
 
-/*
-    QString str = "Loading ";
-    str += QString::fromStdString(filename);
-    str += "...";
+    update_prefix_progress(mID, "Loading data...", 0);
 
-    QProgressDialog* progress = new QProgressDialog(str, "Abort", 0, 100, QApplication::activeModalWidget(), Qt::WindowStaysOnTopHint);
-    progress->setWindowModality(Qt::WindowModal);
-    progress->setMinimumDuration(0);
-
-    connect(progress, &QProgressDialog::canceled, mFieldScanLoader.get(), &cFieldScanLoader::abort);
-    connect(mFieldScanLoader.get(), &cFieldScanLoader::progressUpdated, progress, &QProgressDialog::setValue);
-    connect(mFieldScanLoader.get(), &cFieldScanLoader::loadingComplete, this, &cRappDataModel::onFileLoadComplete);
-    connect(this, &cRappDataModel::closeProgressDialog, progress, &QObject::deleteLater);
-*/
-
-    mFieldScanLoader->run();
+    if (!fieldScanLoader->run())
+        return;
 
     mFilename = filename;
-}
 
-/*
-void cRappDataModel::onFileLoadComplete()
-{
-    QString title = QString::fromStdString(mExperimentInfo->title());
-    emit onExperimentTitle(title);
+    mExperimentTitle = mExperimentInfo->title();
 
     auto ouster = mOusterInfo->getPointCloudGenerator().lock();
     mScanTime_sec = ouster->getScanTime_sec();
@@ -123,69 +146,110 @@ void cRappDataModel::onFileLoadComplete()
     if (mScanTime_sec <= 0.0)
     {
         double updateRate_Hz = mOusterInfo->getUpdateRate_Hz();
-        
+
         ouster->fixTimestampInfo(updateRate_Hz);
 
         mScanTime_sec = ouster->getScanTime_sec();
     }
 
-    bool hasLidarData = ouster->hasData();
-    if (hasLidarData)
-    {
-        emit onHasLidarData();
-    }
-
     bool hasSpidercamInfo = mSpiderCamInfo->hasPositionData();
     if (hasSpidercamInfo)
     {
-        emit onHasSpiderData();
-
         mSpiderCamInfo->findStartAndEndIndex();
-
-        auto start = mSpiderCamInfo->startPosition();
-        emit onStartPosition(start.X_mm, start.Y_mm, start.Z_mm, mSpiderCamInfo->getStartIndex());
-
-        auto end = mSpiderCamInfo->endPosition();
-        emit onEndPosition(end.X_mm, end.Y_mm, end.Z_mm, mSpiderCamInfo->getEndIndex());
-
-        double time_sec = ((end.timestamp - start.timestamp) * 0.1) * nConstants::US_TO_SEC;
-        emit onScanTimeUpdate(mScanTime_sec);
-    }
-    else
-    {
-        emit onScanTimeUpdate(mScanTime_sec);
     }
 
-    double groundTrack_deg = mSsnxInfo->computeAvgGroundTrack_deg();
-    bool hasGpsInfo = groundTrack_deg != cSsnxInfo::INVALID_GROUND_TRACK;
-    if (hasGpsInfo)
-    {
-        emit onHasGpsData();
-        emit onGroundTrackUpdate(groundTrack_deg);
-    }
-
-    emit closeProgressDialog();
+    mGroundTrack_deg = mSsnxInfo->computeAvgGroundTrack_deg();
 }
-*/
 
-void cFieldScanDataModel::setStartIndex(std::size_t i)
+void cFieldScanDataModel::setScanTime_sec(double time_sec)
 {
-    if (!mSpiderCamInfo->hasPositionData())
+    mScanTime_sec = time_sec;
+}
+
+void cFieldScanDataModel::setGroundTrack_deg(double track_deg)
+{
+    mGroundTrack_deg = track_deg;
+}
+
+void cFieldScanDataModel::validateStartPosition(int32_t x_mm, int32_t y_mm, int32_t z_mm, uint32_t tolerence_mm)
+{
+    // All valid SpiderCam positions are positive, except the z-axis
+    if ((x_mm < 0) || (y_mm < 0) || (z_mm < -1000))
         return;
 
-    mSpiderCamInfo->setStartIndex(i);
+    // Not a valid position
+    if ((x_mm == 0) && (y_mm == 0) && (z_mm == 0))
+        return;
+
+    if (!mSpiderCamInfo->hasPositionData())
+        return;
 
     auto start = mSpiderCamInfo->startPosition();
-//    emit onStartPosition(start.X_mm, start.Y_mm, start.Z_mm, i);
+
+    double dx = start.X_mm - x_mm;
+    double dy = start.Y_mm - y_mm;
+    double dz = start.Z_mm - z_mm;
+
+    double d = sqrt(dx * dx + dy * dy + dz * dz);
+
+    if (d < tolerence_mm) return;
+
+    auto positions = mSpiderCamInfo->getPositionData();
+
+    for (int i = 0; i < positions.size(); ++i)
+    {
+        auto pos = positions[i];
+        double dx = pos.X_mm - x_mm;
+        double dy = pos.Y_mm - y_mm;
+        double dz = pos.Z_mm - z_mm;
+
+        double d = sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (d < tolerence_mm)
+        {
+            mSpiderCamInfo->setStartIndex(i);
+        }
+    }
 }
 
-void cFieldScanDataModel::setEndIndex(std::size_t i)
+void cFieldScanDataModel::validateEndPosition(int32_t x_mm, int32_t y_mm, int32_t z_mm, uint32_t tolerence_mm)
 {
+    // All valid SpiderCam positions are positive, except the z-axis
+    if ((x_mm < 0) || (y_mm < 0) || (z_mm < -1000))
+        return;
+
+    // Not a valid position
+    if ((x_mm == 0) && (y_mm == 0) && (z_mm == 0))
+        return;
+
     if (!mSpiderCamInfo->hasPositionData())
         return;
 
-    mSpiderCamInfo->setEndIndex(i);
-
     auto end = mSpiderCamInfo->endPosition();
-//    emit onEndPosition(end.X_mm, end.Y_mm, end.Z_mm, i);
+
+    double dx = end.X_mm - x_mm;
+    double dy = end.Y_mm - y_mm;
+    double dz = end.Z_mm - z_mm;
+
+    double d = sqrt(dx * dx + dy * dy + dz * dz);
+
+    if (d < tolerence_mm) return;
+
+    auto positions = mSpiderCamInfo->getPositionData();
+
+    for (int i = positions.size() - 1; i > 0; --i)
+    {
+        auto pos = positions[i];
+        double dx = pos.X_mm - x_mm;
+        double dy = pos.Y_mm - y_mm;
+        double dz = pos.Z_mm - z_mm;
+
+        double d = sqrt(dx * dx + dy * dy + dz * dz);
+
+        if (d < tolerence_mm)
+        {
+            mSpiderCamInfo->setEndIndex(i);
+        }
+    }
 }
+

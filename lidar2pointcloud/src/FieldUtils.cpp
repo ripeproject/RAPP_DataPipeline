@@ -20,6 +20,8 @@
 
 #include "Constants.hpp"
 
+extern void update_progress(const int id, const int progress_pct);
+
 namespace
 {
     constexpr std::size_t MIN_SET_OF_POINTS = 10;
@@ -870,10 +872,16 @@ sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud
     return fitPointCloudToGroundMesh(temp);
 }
 
-void shiftPointCloudToAGL(cRappPointCloud& pc)
+void shiftPointCloudToAGL(int id, cRappPointCloud& pc)
 {
+    int i = 0;
+    auto n = pc.size();
+
     for (auto& point : pc)
     {
+        if (id >= 0)
+            update_progress(id, static_cast<int>((100.0 + i++) / n));
+
         if (point.h_mm != rfm::INVALID_HEIGHT)
         {
             point.z_mm -= point.h_mm;
@@ -889,10 +897,16 @@ void shiftPointCloudToAGL(cRappPointCloud& pc)
     pc.recomputeBounds();
 }
 
-void shiftPointCloudToAGL(cRappPointCloud::vCloud_t& pc)
+void shiftPointCloudToAGL(int id, cRappPointCloud::vCloud_t& pc)
 {
+    int i = 0;
+    auto n = pc.size();
+
     for (auto& point : pc)
     {
+        if (id >= 0)
+            update_progress(id, static_cast<int>((100.0 + i++)/n));
+
         if (point.h_mm != rfm::INVALID_HEIGHT)
         {
             point.z_mm -= point.h_mm;

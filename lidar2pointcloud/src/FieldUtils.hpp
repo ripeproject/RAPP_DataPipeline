@@ -69,6 +69,6 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, dou
 sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, double threshold_pct);
 sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud& pc, double threshold_pct);
 
-void shiftPointCloudToAGL(cRappPointCloud& pc);
-void shiftPointCloudToAGL(cRappPointCloud::vCloud_t& pc);
+void shiftPointCloudToAGL(int id, cRappPointCloud& pc);
+void shiftPointCloudToAGL(int id, cRappPointCloud::vCloud_t& pc);
 
