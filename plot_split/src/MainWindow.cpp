@@ -222,7 +222,7 @@ void cMainWindow::OnValidateSrc(wxFocusEvent& event)
 
 void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose source directory", "",
+	wxDirDialog dlg(NULL, "Choose source directory", mSrcDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	dlg.ShowModal();
@@ -236,7 +236,7 @@ void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 {
-	wxDirDialog dlg(NULL, "Choose Destination Directory", "",
+	wxDirDialog dlg(NULL, "Choose Destination Directory", mDstDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
