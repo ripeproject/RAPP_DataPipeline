@@ -10,6 +10,7 @@
 #include <wx/aboutdlg.h>
 #include <wx/thread.h>
 #include <wx/config.h>
+#include <wx/filename.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -277,7 +278,11 @@ void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 
 void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 {
-	wxFileDialog dlg(this, _("Open file"), "", mConfigFileName,
+	wxFileName fullname(mConfigFileName);
+	auto path = fullname.GetPath();
+	auto name = fullname.GetName();
+
+	wxFileDialog dlg(this, _("Open file"), path, name,
 		"Config files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
