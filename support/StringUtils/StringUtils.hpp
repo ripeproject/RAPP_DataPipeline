@@ -47,6 +47,8 @@ namespace nStringUtils
 
 	sFilenameAndExtension removeProcessedTimestamp(const std::string& filename);
 
+	sFilenameAndExtension splitFilename(const std::string& filename);
+
 	/**
 	 * Compacts a filename to a maximum length
 	 *

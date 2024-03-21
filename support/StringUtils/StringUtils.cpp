@@ -167,6 +167,26 @@ nStringUtils::sFilenameAndExtension nStringUtils::removeProcessedTimestamp(const
 	return { base, extension };
 }
 
+nStringUtils::sFilenameAndExtension nStringUtils::splitFilename(const std::string& filename)
+{
+	std::string base;
+	std::string extension;
+
+	auto pos = filename.rfind('.');
+
+	if (pos == std::string::npos)
+	{
+		base = filename;
+	}
+	else
+	{
+		base = filename.substr(0, pos);
+		extension = filename.substr(pos + 1);
+	}
+
+	return { base, extension };
+}
+
 std::string nStringUtils::safeFilename(std::string filename)
 {
 	std::replace_if(filename.begin(), filename.end(),
