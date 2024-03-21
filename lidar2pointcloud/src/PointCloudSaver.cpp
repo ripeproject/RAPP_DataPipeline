@@ -89,7 +89,7 @@ bool cPointCloudSaver::open()
     return mFileWriter.isOpen() && mFileReader.isOpen();
 }
 
-bool cPointCloudSaver::save()
+bool cPointCloudSaver::save(bool isFlattened)
 {
     if (!open())
     {
@@ -104,7 +104,10 @@ bool cPointCloudSaver::save()
     mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
     mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len) { this->processBlock(id, buf, len); });
 
-    mProcessingInfoSerializer.write("FlattenPointCloud", processing_info::ePROCESSING_TYPE::FLAT_POINT_CLOUD_GENERATION);
+    if (isFlattened)
+        mProcessingInfoSerializer.write("Lidar2PointCloud", processing_info::ePROCESSING_TYPE::FLAT_POINT_CLOUD_GENERATION);
+    else
+        mProcessingInfoSerializer.write("Lidar2PointCloud", processing_info::ePROCESSING_TYPE::POINT_CLOUD_GENERATION);
 
     try
     {

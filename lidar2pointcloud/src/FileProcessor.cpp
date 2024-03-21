@@ -4,6 +4,7 @@
 #include "StringUtils.hpp"
 #include "FieldUtils.hpp"
 #include "ExportUtils.hpp"
+#include "GroundModelUtils.hpp"
 #include "PointCloudSaver.hpp"
 
 #include "PointCloudSerializer.hpp"
@@ -60,6 +61,8 @@ void cFileProcessor::setDefaults(const nConfigFileData::sParameters_t& defaults)
 
 void cFileProcessor::process_file()
 {
+    mHasGroundData = is_ground_data_loaded();
+
     std::unique_ptr<cLidar2PointCloud> converter = std::make_unique<cLidar2PointCloud>(mID);
 
     converter->setValidRange_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
@@ -85,8 +88,8 @@ void cFileProcessor::process_file()
         converter->setFinalOffset_deg(mDefaults.endYawOffset_deg, mDefaults.endPitchOffset_deg, mDefaults.endRollOffset_deg);
     }
 
-    converter->enableTranslateToGround(mDefaults.translateToGround, mDefaults.translateThreshold_pct);
-    converter->enableRotateToGround(mDefaults.rotateToGround, mDefaults.rotateThreshold_pct);
+    converter->enableTranslateToGround(mHasGroundData && mDefaults.translateToGround, mDefaults.translateThreshold_pct);
+    converter->enableRotateToGround(mHasGroundData && mDefaults.rotateToGround, mDefaults.rotateThreshold_pct);
 
     // Start by loading the field scan data into memory
     new_file_progress(mID, mInputFile.string());
@@ -121,9 +124,11 @@ void cFileProcessor::process_file()
 
     cRappPointCloud pointCloud = converter->getPointCloud();
 
-    update_prefix_progress(mID, "Flattening Point Cloud...", 0);
-
-    shiftPointCloudToAGL(mID, pointCloud);
+    if (mFlattenPointCloud)
+    {
+        update_prefix_progress(mID, "Flattening Point Cloud...", 0);
+        shiftPointCloudToAGL(mID, pointCloud);
+    }
 
     update_prefix_progress(mID, "Saving Point Cloud...", 0);
 
@@ -138,7 +143,7 @@ void cFileProcessor::process_file()
         saver->setInputFile(mInputFile.string());
         saver->setOutputFile(mOutputFile.string());
 
-        saver->save();
+        saver->save(mFlattenPointCloud);
     }
 
     if (mSavePlyFiles)
@@ -208,7 +213,14 @@ void cFileProcessor::savePlyFiles(const cRappPointCloud& pc)
 //-----------------------------------------------------------------------------
 void cFileProcessor::writeProcessingInfo(const cProcessingInfo& info, cProcessingInfoSerializer& serializer)
 {
-    serializer.write("FlattenPointCloud", processing_info::ePROCESSING_TYPE::FLAT_POINT_CLOUD_GENERATION);
+    if (mFlattenPointCloud)
+    {
+        serializer.write("Lidar2PointCloud", processing_info::ePROCESSING_TYPE::FLAT_POINT_CLOUD_GENERATION);
+    }
+    else
+    {
+        serializer.write("Lidar2PointCloud", processing_info::ePROCESSING_TYPE::POINT_CLOUD_GENERATION);
+    }
 
     for (auto it = info.begin(); it != info.end(); ++it)
     {

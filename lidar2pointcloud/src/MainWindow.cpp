@@ -9,15 +9,19 @@
 
 #include <wx/thread.h>
 #include <wx/msgdlg.h>
+#include <wx/config.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
 #include <memory>
+#include <map>
 
 
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
+
+	std::map<int, int> prev_progress;
 }
 
 
@@ -35,6 +39,7 @@ void new_file_progress(const int id, std::string filename)
 		event->SetFileName(filename);
 
 		wxQueueEvent(g_pEventHandler, event);
+		prev_progress[id] = -1;
 	}
 }
 
@@ -48,6 +53,8 @@ void update_prefix_progress(const int id, std::string prefix, const int progress
 		event->SetProgress_pct(progress_pct);
 
 		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress[id] = progress_pct;
 	}
 }
 
@@ -55,11 +62,16 @@ void update_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
-		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
-		event->SetFileProcessID(id);
-		event->SetProgress_pct(progress_pct);
+		if (prev_progress[id] != progress_pct)
+		{
+			auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+			event->SetFileProcessID(id);
+			event->SetProgress_pct(progress_pct);
 
-		wxQueueEvent(g_pEventHandler, event);
+			wxQueueEvent(g_pEventHandler, event);
+
+			prev_progress[id] = progress_pct;
+		}
 	}
 }
 
@@ -70,6 +82,8 @@ void complete_file_progress(const int id)
 		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
 		event->SetProgress_pct(100);
 		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress.erase(id);
 	}
 }
 
@@ -106,10 +120,22 @@ cMainWindow::cMainWindow(wxWindow* parent)
 {
 	CreateControls();
 	CreateLayout();
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("LidarConvert");
+
+	config->Read("Files/Source", &mSource);
+	config->Read("Files/Destination", &mDestination);
+	config->Read("Files/ConfigurationFile", &mCfgFilename);
 }
 
 cMainWindow::~cMainWindow()
 {
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("LidarConvert");
+
+	config->Write("Files/Source", mSource);
+	config->Write("Files/Destination", mDestination);
+	config->Write("Files/ConfigurationFile", mCfgFilename);
+
 	g_pEventHandler = nullptr;
 
 	delete mpOriginalLog;

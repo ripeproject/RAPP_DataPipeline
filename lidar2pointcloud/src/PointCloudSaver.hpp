@@ -25,7 +25,7 @@ public:
 	void setInputFile(const std::string& in);
 	void setOutputFile(const std::string& out);
 
-	bool save();
+	bool save(bool isFlattened);
 
 protected:
 	bool open();

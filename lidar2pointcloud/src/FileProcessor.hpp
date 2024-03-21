@@ -55,6 +55,9 @@ private:
 	bool mSavePlyFiles = false;
 	bool mPlyUseBinaryFormat = false;
 
+	bool mHasGroundData = false;
+	bool mFlattenPointCloud = true;
+
 	nConfigFileData::sParameters_t mDefaults;
 
 	std::filesystem::path mInputFile;
