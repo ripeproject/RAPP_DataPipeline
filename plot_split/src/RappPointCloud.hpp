@@ -44,6 +44,9 @@ public:
 
 	int id() const;
 
+	bool hasFrameIDs() const;
+	bool hasPixelInfo() const;
+
     void clear();
 
     bool empty() const;
@@ -104,6 +107,12 @@ public:
 
     const vCloud_t& data() const { return mCloud; }
 
+	void disableFrameIDs();
+	void enableFrameIDs();
+
+	void disablePixelInfo();
+	void enablePixelInfo();
+
 protected:
 	template<class POINT2>
 	void assign(const cBasePointCloud<POINT2>& pc);
@@ -121,7 +130,13 @@ private:
 	int mMaxZ_mm = 0;
 
 	rfm::sCentroid_t mCentroid;
-	
+
+	bool mHasFrameIDs  = false;
+	bool mHasPixelInfo = false;
+
+	bool mEnableFrameIDs = true;
+	bool mEnablePixelInfo = true;
+
 	vCloud_t mCloud;
 };
 
@@ -169,8 +184,9 @@ void cRappPointCloud::assign(const cBasePointCloud<POINT2>& pc)
 		uint16_t reflectivity = static_cast<uint16_t>(point.reflectivity);
 		uint16_t nir = static_cast<uint16_t>(point.nir);
 
-		mCloud[i] = {static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z),
-					rfm::INVALID_HEIGHT, range_mm, signal, reflectivity, nir};
+		mCloud[i] = point;
+//		{static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z),
+//					rfm::INVALID_HEIGHT, range_mm, signal, reflectivity, nir};
 	}
 
 	double x_mm = sum_x / n;

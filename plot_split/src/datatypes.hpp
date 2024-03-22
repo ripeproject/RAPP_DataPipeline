@@ -3,6 +3,14 @@
 
 #include <cstdint>
 
+// Forward Declarations
+namespace pointcloud
+{
+	struct sCloudPoint_t;
+	struct sCloudPoint_FrameID_t;
+	struct sCloudPoint_SensorInfo_t;
+}
+
 
 namespace rfm
 {
@@ -123,6 +131,13 @@ namespace rfm
 		uint16_t signal = 0;
 		uint16_t reflectivity = 0;
 		uint16_t nir = 0;
+		uint16_t frameID = 0;
+		uint16_t chnNum = 0;
+		uint16_t pixelNum = 0;
+
+		sPoint3D_t& operator=(const pointcloud::sCloudPoint_t& rhs);
+		sPoint3D_t& operator=(const pointcloud::sCloudPoint_FrameID_t& rhs);
+		sPoint3D_t& operator=(const pointcloud::sCloudPoint_SensorInfo_t& rhs);
 	};
 
 }

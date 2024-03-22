@@ -18,12 +18,14 @@ namespace
 #ifdef USE_FLOATS
     typedef float range_t;
     struct returns3 { float s, r, a; };
-    struct beam_loc { float theta, phi; };
+
+    typedef float frameID_t;
     struct pixel_loc { float chn, pixel; };
 #else
     typedef uint32_t range_t;
     struct returns3 { uint16_t s, r, a; };
-    struct beam_loc { double theta, phi; };
+
+    typedef uint16_t frameID_t;
     struct pixel_loc { uint16_t chn, pixel; };
 #endif
 
@@ -43,6 +45,11 @@ void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc
     std::vector<position3> vertices;
     std::vector<range_t>   ranges;
     std::vector<returns3>  returns;
+    std::vector<frameID_t> frameIDs;
+    std::vector<pixel_loc> pixels;
+
+    bool saveFrameIDs = pc.hasFrameIDs();
+    bool savePixels   = pc.hasPixelInfo();
 
     for (const auto& point : cloud_data)
     {
@@ -63,6 +70,21 @@ void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc
         data.s = point.signal;
         data.r = point.reflectivity;
         returns.push_back(data);
+
+        if (savePixels)
+        {
+            frameIDs.push_back(point.frameID);
+
+            pixel_loc loc;
+            loc.chn   = point.chnNum;
+            loc.pixel = point.pixelNum;
+
+            pixels.push_back(loc);
+        }
+        else if (saveFrameIDs)
+        {
+            frameIDs.push_back(point.frameID);
+        }
     }
 
     std::filebuf file_buffer;
@@ -92,6 +114,18 @@ void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc
     ply_file.add_properties_to_element("vertex", { "intensity", "reflectivity", "ambient_noise" },
         Type::FLOAT32, returns.size(), reinterpret_cast<uint8_t*>(returns.data()), Type::INVALID, 0);
 
+    if (!frameIDs.empty())
+    {
+        ply_file.add_properties_to_element("vertex", { "frame_id" },
+            Type::FLOAT32, frameIDs.size(), reinterpret_cast<uint8_t*>(frameIDs.data()), Type::INVALID, 0);
+    }
+
+    if (!pixels.empty())
+    {
+        ply_file.add_properties_to_element("vertex", { "chn_num", "pixel_num"},
+            Type::FLOAT32, pixels.size(), reinterpret_cast<uint8_t*>(pixels.data()), Type::INVALID, 0);
+    }
+
 #else
 
     ply_file.add_properties_to_element("vertex", { "range_mm" },
@@ -99,6 +133,18 @@ void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc
 
     ply_file.add_properties_to_element("vertex", { "intensity", "reflectivity", "ambient_noise" },
         Type::UINT16, returns.size(), reinterpret_cast<uint8_t*>(returns.data()), Type::INVALID, 0);
+
+    if (!frameIDs.empty())
+    {
+        ply_file.add_properties_to_element("vertex", { "frame_id" },
+            Type::FLOAT32, frameIDs.size(), reinterpret_cast<uint8_t*>(frameIDs.data()), Type::INVALID, 0);
+    }
+
+    if (!pixels.empty())
+    {
+        ply_file.add_properties_to_element("vertex", { "chn_num", "pixel_num" },
+            Type::FLOAT32, pixels.size(), reinterpret_cast<uint8_t*>(pixels.data()), Type::INVALID, 0);
+    }
 
 #endif
 

@@ -6,14 +6,13 @@
 
 #include <list>
 #include <memory>
-
-// Forward Declarations
+#include <deque>
 
 
 class cPointCloudLoader : public cPointCloudParser
 {
 public:
-	explicit cPointCloudLoader(std::list<cPointCloudInfo>& infoList);
+	explicit cPointCloudLoader(std::weak_ptr<cPointCloudInfo> info);
 	virtual ~cPointCloudLoader();
 
 protected:
@@ -21,11 +20,18 @@ protected:
 	void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) override;
 	void onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) override;
 	void onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) override;
+	void onDistanceWindow(double min_dist_m, double max_dist_m) override;
+	void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) override;
+	void onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) override;
 
 	void onDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
 
 	void onImuData(pointcloud::imu_data_t data) override;
+
+	void onBeginSensorKinematics();
+	void onEndSensorKinematics();
+	void onSensorKinematicInfo(pointcloud::sSensorKinematicInfo_t point);
 
 	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
 	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud) override;
@@ -40,8 +46,6 @@ protected:
 	void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
 
 private:
-	cPointCloudInfo mInfo;
-
-	std::list<cPointCloudInfo>& mInfoList;
+	std::shared_ptr<cPointCloudInfo> mInfo;
 };
 

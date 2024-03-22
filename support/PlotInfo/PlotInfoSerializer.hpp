@@ -32,6 +32,8 @@ public:
 		double y_min_m, double y_max_m, double z_min_m, double z_max_m);
 
 	void write(const cPointCloud& in);
+	void write(const cPointCloud_FrameId& in);
+	void write(const cPointCloud_SensorInfo& in);
 
 protected:
 	cBlockID& blockID() override;

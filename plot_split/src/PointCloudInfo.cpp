@@ -8,12 +8,16 @@ void cPointCloudInfo::clear()
 	mKinematicModel.reset();
 
 	mSensorAngles.reset();
+	mSensorSpeeds.reset();
 
-	mDollySpeeds.reset();
+	mDistanceWindow.reset();
+	mAzimuthWindow.reset();
+	mAltitudeWindow.reset();
 
 	mImuData.reset();
 
-	mPointCloud.clear();
+	mSensorKinematicData.clear();
+	mPointClouds.clear();
 }
 
 /**********************************************************
@@ -35,9 +39,24 @@ const std::optional<cPointCloudInfo::sSensorAngles_t>& cPointCloudInfo::sensorAn
 	return mSensorAngles;
 }
 
-const std::optional<cPointCloudInfo::sDollySpeeds_t>& cPointCloudInfo::dollySpeeds() const
+const std::optional<cPointCloudInfo::sSensorSpeeds_t>& cPointCloudInfo::sensorSpeeds() const
 {
-	return mDollySpeeds;
+	return mSensorSpeeds;
+}
+
+const std::optional<cPointCloudInfo::sDistanceWindow_t>& cPointCloudInfo::distanceWindow() const
+{
+	return mDistanceWindow;
+}
+
+const std::optional<cPointCloudInfo::sAzimuthWindow_t>& cPointCloudInfo::azimuthWindow() const
+{
+	return mAzimuthWindow;
+}
+
+const std::optional<cPointCloudInfo::sAltitudeWindow_t>& cPointCloudInfo::altitudeWindow() const
+{
+	return mAltitudeWindow;
 }
 
 const std::optional<pointcloud::imu_data_t>& cPointCloudInfo::imuData() const
@@ -45,9 +64,21 @@ const std::optional<pointcloud::imu_data_t>& cPointCloudInfo::imuData() const
 	return mImuData;
 }
 
-const cRappPointCloud& cPointCloudInfo::pointCloud() const
+std::size_t cPointCloudInfo::numPointClouds() const
 {
-	return mPointCloud;
+	return mPointClouds.size();
+}
+
+const cRappPointCloud& cPointCloudInfo::getPointCloud(int index) const
+{
+	auto it = mPointClouds.begin();
+	std::advance(it, index);
+	return *it;
+}
+
+const std::list<cRappPointCloud>& cPointCloudInfo::getPointClouds() const
+{
+	return mPointClouds;
 }
 
 /**********************************************************
@@ -72,8 +103,26 @@ void cPointCloudInfo::setSensorAngles(double pitch_deg, double roll_deg, double 
 
 void cPointCloudInfo::setKinematicSpeed(double vx_mps, double vy_mps, double vz_mps)
 {
-	sDollySpeeds_t speeds = { vx_mps, vy_mps, vz_mps };
-	mDollySpeeds = speeds;
+	sSensorSpeeds_t speeds = { vx_mps, vy_mps, vz_mps };
+	mSensorSpeeds = speeds;
+}
+
+void cPointCloudInfo::setDistanceWindow(double min_distance_m, double max_distance_m)
+{
+	sDistanceWindow_t window = { min_distance_m, max_distance_m };
+	mDistanceWindow = window;
+}
+
+void cPointCloudInfo::setAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg)
+{
+	sAzimuthWindow_t window = { min_azimuth_deg, max_azimuth_deg };
+	mAzimuthWindow = window;
+}
+
+void cPointCloudInfo::setAltitudeWindow(double min_altitude_deg, double max_altitude_deg)
+{
+	sAltitudeWindow_t window = { min_altitude_deg, max_altitude_deg };
+	mAltitudeWindow = window;
 }
 
 void cPointCloudInfo::setImuData(pointcloud::imu_data_t data)
@@ -81,50 +130,62 @@ void cPointCloudInfo::setImuData(pointcloud::imu_data_t data)
 	mImuData = data;
 }
 
-void cPointCloudInfo::setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
+void cPointCloudInfo::clearPointCloudData()
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.clear();
 }
 
-void cPointCloudInfo::setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
+void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
-void cPointCloudInfo::setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
+void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
-void cPointCloudInfo::setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
+void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
-void cPointCloudInfo::setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
+void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
-void cPointCloudInfo::setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
+void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
-void cPointCloudInfo::setPointCloudData(cPointCloud pointCloud)
+void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
-void cPointCloudInfo::setPointCloudData(cPointCloud_FrameId pointCloud)
+void cPointCloudInfo::addPointCloudData(cPointCloud pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
-void cPointCloudInfo::setPointCloudData(cPointCloud_SensorInfo pointCloud)
+void cPointCloudInfo::addPointCloudData(cPointCloud_FrameId pointCloud)
 {
-	mPointCloud = cRappPointCloud(pointCloud);
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
 }
 
+void cPointCloudInfo::addPointCloudData(cPointCloud_SensorInfo pointCloud)
+{
+	mPointClouds.push_back(cRappPointCloud(pointCloud));
+}
 
+void cPointCloudInfo::clearSensorKinematics()
+{
+	mSensorKinematicData.clear();
+}
 
+void cPointCloudInfo::addSensorKinematicPoint(const pointcloud::sSensorKinematicInfo_t& point)
+{
+	mSensorKinematicData.push_back(point);
+}

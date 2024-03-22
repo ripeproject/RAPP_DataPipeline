@@ -98,8 +98,6 @@ namespace pointcloud
     {
         uint16_t chnNum = 0;
         uint16_t pixelNum = 0;
-        double   theta_rad = 0.0;
-        double   phi_rad = 0.0;
 
         sCloudPoint_SensorInfo_t() {}
     };
@@ -110,6 +108,37 @@ namespace pointcloud
     struct sBoundingBox_t
     {
         std::array<sPoint2D_t, 4> points;
+    };
+
+
+    /*
+     * The meaning of X, Y, and Z are depended on the value of the
+     * eCOORDINATE_SYSTEM enumeration.
+     * 
+     * If eCOORDINATE_SYSTEM == SENSOR_SEU (south/east/up), then
+     * x axis is positive heading south
+     * y axis is positive heading east
+     * z axis is positive going up
+     */
+    struct sSensorKinematicInfo_t
+    {
+        double timestamp_us = 0.0;
+
+        double X_m = 0.0;
+        double Y_m = 0.0;
+        double Z_m = 0.0;
+
+        double Vx_mps = 0.0;
+        double Vy_mps = 0.0;
+        double Vz_mps = 0.0;
+
+        double pitch_deg = 0.0;
+        double roll_deg = 0.0;
+        double yaw_deg = 0.0;
+
+        double pitchRate_dps = 0.0;
+        double rollRate_dps = 0.0;
+        double yawRate_dps = 0.0;
     };
 }
 

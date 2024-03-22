@@ -38,22 +38,13 @@ void cPlotInfoParser::processData(BLOCK_MAJOR_VERSION_t major_version,
         processName(buffer);
         break;
     case DataID::POINT_CLOUD_DATA:
-        switch (major_version)
-        {
-        case 1:
-        {
-            switch (minor_version)
-            {
-            case 0:
-                processPointCloudData_1_0(buffer);
-                break;
-            case 1:
-                processPointCloudData_1_1(buffer);
-                break;
-            }
-            break;
-        }
-        }
+        processPointCloudData(buffer);
+        break;
+    case DataID::POINT_CLOUD_DATA_FRAME_ID:
+        processPointCloudData_FrameId(buffer);
+        break;
+    case DataID::POINT_CLOUD_DATA_SENSOR_INFO:
+        processPointCloudData_SensorInfo(buffer);
         break;
     case DataID::POINT_CLOUD_DIMENSIONS:
         processDimensions(buffer);
@@ -103,34 +94,7 @@ void cPlotInfoParser::processDimensions(cDataBuffer& buffer)
     onDimensions(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
 }
 
-void cPlotInfoParser::processPointCloudData_1_0(cDataBuffer& buffer)
-{
-    uint32_t num_points = buffer.get<uint32_t>();
-
-    cPointCloud pointCloud;
-    pointCloud.resize(num_points);
-
-    for (uint32_t n = 0; n < num_points; ++n)
-    {
-        pointcloud::sCloudPoint_t point;
-        buffer >> point.X_m;
-        buffer >> point.Y_m;
-        buffer >> point.Z_m;
-        buffer >> point.range_mm;
-        buffer >> point.signal;
-        buffer >> point.reflectivity;
-        buffer >> point.nir;
-
-        pointCloud.set(n, point);
-    }
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_0.");
-
-    onPointCloudData(pointCloud);
-}
-
-void cPlotInfoParser::processPointCloudData_1_1(cDataBuffer& buffer)
+void cPlotInfoParser::processPointCloudData(cDataBuffer& buffer)
 {
     uint64_t num_points = buffer.get<uint64_t>();
 
@@ -153,6 +117,64 @@ void cPlotInfoParser::processPointCloudData_1_1(cDataBuffer& buffer)
 
     if (buffer.underrun())
         throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_1.");
+
+    onPointCloudData(pointCloud);
+}
+
+void cPlotInfoParser::processPointCloudData_FrameId(cDataBuffer& buffer)
+{
+    uint64_t num_points = buffer.get<uint64_t>();
+
+    cPointCloud_FrameId pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_FrameID_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+        buffer >> point.frameID;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_FrameId.");
+
+    onPointCloudData(pointCloud);
+}
+
+void cPlotInfoParser::processPointCloudData_SensorInfo(cDataBuffer& buffer)
+{
+    uint64_t num_points = buffer.get<uint64_t>();
+
+    cPointCloud_SensorInfo pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_SensorInfo_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+        buffer >> point.frameID;
+        buffer >> point.chnNum;
+        buffer >> point.pixelNum;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
 
     onPointCloudData(pointCloud);
 }

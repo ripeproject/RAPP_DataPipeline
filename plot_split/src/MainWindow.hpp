@@ -61,7 +61,10 @@ private:
 
 	wxCheckBox* mpSavePlyFiles = nullptr;
 	wxCheckBox* mpPlyUseBinaryFormat = nullptr;
+
 	wxCheckBox* mpSavePlotsInSingleFile = nullptr;
+	wxCheckBox* mpEnableFrameIDs = nullptr;
+	wxCheckBox* mpEnablePixelInfo = nullptr;
 
 	wxButton* mpSplitButton = nullptr;
 

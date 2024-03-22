@@ -94,19 +94,73 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
         processPointCloudData_FrameId(buffer);
         break;
     case DataID::POINT_CLOUD_DATA_SENSOR_INFO:
-        processPointCloudData_SensorInfo(buffer);
+        switch (major_version)
+        {
+        case 1:
+        {
+            processPointCloudData_SensorInfo_1_0(buffer);
+            break;
+        }
+        case 2:
+        {
+            processPointCloudData_SensorInfo_2_0(buffer);
+            break;
+        }
+        }
         break;
     case DataID::REDUCED_POINT_CLOUD_DATA_BY_FRAME_FRAME_ID:
         processReducedPointCloudByFrame_FrameId(buffer);
         break;
     case DataID::REDUCED_POINT_CLOUD_DATA_BY_FRAME_SENSOR_INFO:
-        processReducedPointCloudByFrame_SensorInfo(buffer);
+        switch (major_version)
+        {
+        case 1:
+        {
+            processReducedPointCloudByFrame_SensorInfo_1_0(buffer);
+            break;
+        }
+        case 2:
+        {
+            processReducedPointCloudByFrame_SensorInfo_2_0(buffer);
+            break;
+        }
+        }
         break;
     case DataID::SENSOR_POINT_CLOUD_DATA_BY_FRAME_FRAME_ID:
         processSensorPointCloudByFrame_FrameId(buffer);
         break;
     case DataID::SENSOR_POINT_CLOUD_DATA_BY_FRAME_SENSOR_INFO:
-        processSensorPointCloudByFrame_SensorInfo(buffer);
+        switch (major_version)
+        {
+        case 1:
+        {
+            processSensorPointCloudByFrame_SensorInfo_1_0(buffer);
+            break;
+        }
+        case 2:
+        {
+            processSensorPointCloudByFrame_SensorInfo_2_0(buffer);
+            break;
+        }
+        }
+        break;
+    case DataID::DISTANCE_WINDOW_M:
+        processDistanceWindow(buffer);
+        break;
+    case DataID::AZIMUTH_WINDOW_DEG:
+        processAzimuthWindow(buffer);
+        break;
+    case DataID::ALTITUDE_WINDOW_DEG:
+        processAltitudeWindow(buffer);
+        break;
+    case DataID::BEGIN_SENSOR_KINEMATICS:
+        processBeginSensorKinematics(buffer);
+        break;
+    case DataID::END_SENSOR_KINEMATICS:
+        processEndSensorKinematics(buffer);
+        break;
+    case DataID::SENSOR_KINEMATIC_POINT:
+        processSensorKinematicInfo(buffer);
         break;
     }
 }
@@ -155,6 +209,39 @@ void cPointCloudParser::processKinematicSpeed(cDataBuffer& buffer)
     onKinematicSpeed(vx_mps, vy_mps, vz_mps);
 }
 
+void cPointCloudParser::processDistanceWindow(cDataBuffer& buffer)
+{
+    double min_dist_m = buffer.get<double>();
+    double max_dist_m = buffer.get<double>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processDistanceWindow.");
+
+    onDistanceWindow(min_dist_m, max_dist_m);
+}
+
+void cPointCloudParser::processAzimuthWindow(cDataBuffer& buffer)
+{
+    double min_azimuth_deg = buffer.get<double>();
+    double max_azimuth_deg = buffer.get<double>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processAzimuthWindow.");
+
+    onAzimuthWindow(min_azimuth_deg, max_azimuth_deg);
+}
+
+void cPointCloudParser::processAltitudeWindow(cDataBuffer& buffer)
+{
+    double min_altitude_deg = buffer.get<double>();
+    double max_altitude_deg = buffer.get<double>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processAltitudeWindow.");
+
+    onAltitudeWindow(min_altitude_deg, max_altitude_deg);
+}
+
 void cPointCloudParser::processDimensions(cDataBuffer& buffer)
 {
      double x_min_m = buffer.get<double>();
@@ -190,6 +277,49 @@ void cPointCloudParser::processImuData(cDataBuffer& buffer)
 
     onImuData(data);
 }
+
+void cPointCloudParser::processBeginSensorKinematics(cDataBuffer& buffer)
+{
+    assert(0 == buffer.read_size());
+
+    onBeginSensorKinematics();
+}
+
+void cPointCloudParser::processEndSensorKinematics(cDataBuffer& buffer)
+{
+    assert(0 == buffer.read_size());
+
+    onEndSensorKinematics();
+}
+
+void cPointCloudParser::processSensorKinematicInfo(cDataBuffer& buffer)
+{
+    pointcloud::sSensorKinematicInfo_t point;
+
+    point.timestamp_us = buffer.get<double>();
+
+    buffer >> point.X_m;
+    buffer >> point.Y_m;
+    buffer >> point.Z_m;
+
+    buffer >> point.Vx_mps;
+    buffer >> point.Vy_mps;
+    buffer >> point.Vz_mps;
+
+    buffer >> point.pitch_deg;
+    buffer >> point.roll_deg;
+    buffer >> point.yaw_deg;
+
+    buffer >> point.pitchRate_dps;
+    buffer >> point.rollRate_dps;
+    buffer >> point.yawRate_dps;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processSensorKinematicInfo.");
+
+    onSensorKinematicInfo(point);
+}
+
 
 void cPointCloudParser::processReducedPointCloudByFrame(cDataBuffer& buffer)
 {
@@ -258,7 +388,47 @@ void cPointCloudParser::processReducedPointCloudByFrame_FrameId(cDataBuffer& buf
     onPointCloudData(frameID, timestamp_ns, pointCloud);
 }
 
-void cPointCloudParser::processReducedPointCloudByFrame_SensorInfo(cDataBuffer& buffer)
+void cPointCloudParser::processReducedPointCloudByFrame_SensorInfo_1_0(cDataBuffer& buffer)
+{
+    double theta, phi;
+
+    uint16_t frameID = buffer.get<uint16_t>();
+    uint64_t timestamp_ns = buffer.get<uint64_t>();
+
+    cReducedPointCloudByFrame_SensorInfo pointCloud;
+    pointCloud.frameID(frameID);
+    pointCloud.timestamp_ns(timestamp_ns);
+
+    uint32_t num_points = buffer.get<uint32_t>();
+
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_SensorInfo_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+        buffer >> point.frameID;
+        buffer >> point.chnNum;
+        buffer >> point.pixelNum;
+        buffer >> theta;
+        buffer >> phi;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processReducedPointCloudByFrame_SensorInfo.");
+
+    onPointCloudData(frameID, timestamp_ns, pointCloud);
+}
+
+void cPointCloudParser::processReducedPointCloudByFrame_SensorInfo_2_0(cDataBuffer& buffer)
 {
     uint16_t frameID = buffer.get<uint16_t>();
     uint64_t timestamp_ns = buffer.get<uint64_t>();
@@ -284,8 +454,6 @@ void cPointCloudParser::processReducedPointCloudByFrame_SensorInfo(cDataBuffer& 
         buffer >> point.frameID;
         buffer >> point.chnNum;
         buffer >> point.pixelNum;
-        buffer >> point.theta_rad;
-        buffer >> point.phi_rad;
 
         pointCloud.set(n, point);
     }
@@ -371,7 +539,51 @@ void cPointCloudParser::processSensorPointCloudByFrame_FrameId(cDataBuffer& buff
     onPointCloudData(frameID, timestamp_ns, pointCloud);
 }
 
-void cPointCloudParser::processSensorPointCloudByFrame_SensorInfo(cDataBuffer& buffer)
+void cPointCloudParser::processSensorPointCloudByFrame_SensorInfo_1_0(cDataBuffer& buffer)
+{
+    double theta, phi;
+
+    uint16_t frameID = buffer.get<uint16_t>();
+    uint64_t timestamp_ns = buffer.get<uint64_t>();
+
+    cSensorPointCloudByFrame_SensorInfo pointCloud;
+    pointCloud.frameID(frameID);
+    pointCloud.timestamp_ns(timestamp_ns);
+
+    uint32_t channelsPerColumn = buffer.get<uint32_t>();
+    uint32_t columnsPerFrame = buffer.get<uint32_t>();
+
+    pointCloud.resize(channelsPerColumn, columnsPerFrame);
+
+    for (int c = 0; c < columnsPerFrame; ++c)
+    {
+        for (int p = 0; p < channelsPerColumn; ++p)
+        {
+            pointcloud::sCloudPoint_SensorInfo_t point;
+            buffer >> point.X_m;
+            buffer >> point.Y_m;
+            buffer >> point.Z_m;
+            buffer >> point.range_mm;
+            buffer >> point.signal;
+            buffer >> point.reflectivity;
+            buffer >> point.nir;
+            buffer >> point.frameID;
+            buffer >> point.chnNum;
+            buffer >> point.pixelNum;
+            buffer >> theta;
+            buffer >> phi;
+
+            pointCloud.set(c, p, point);
+        }
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processSensorPointCloudByFrame.");
+
+    onPointCloudData(frameID, timestamp_ns, pointCloud);
+}
+
+void cPointCloudParser::processSensorPointCloudByFrame_SensorInfo_2_0(cDataBuffer& buffer)
 {
     uint16_t frameID = buffer.get<uint16_t>();
     uint64_t timestamp_ns = buffer.get<uint64_t>();
@@ -400,8 +612,6 @@ void cPointCloudParser::processSensorPointCloudByFrame_SensorInfo(cDataBuffer& b
             buffer >> point.frameID;
             buffer >> point.chnNum;
             buffer >> point.pixelNum;
-            buffer >> point.theta_rad;
-            buffer >> point.phi_rad;
 
             pointCloud.set(c, p, point);
         }
@@ -495,7 +705,41 @@ void cPointCloudParser::processPointCloudData_FrameId(cDataBuffer& buffer)
     onPointCloudData(pointCloud);
 }
 
-void cPointCloudParser::processPointCloudData_SensorInfo(cDataBuffer& buffer)
+void cPointCloudParser::processPointCloudData_SensorInfo_1_0(cDataBuffer& buffer)
+{
+    double theta, phi;
+
+    uint64_t num_points = buffer.get<uint64_t>();
+
+    cPointCloud_SensorInfo pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_SensorInfo_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+        buffer >> point.frameID;
+        buffer >> point.chnNum;
+        buffer >> point.pixelNum;
+        buffer >> theta;
+        buffer >> phi;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
+
+    onPointCloudData(pointCloud);
+}
+
+void cPointCloudParser::processPointCloudData_SensorInfo_2_0(cDataBuffer& buffer)
 {
     uint64_t num_points = buffer.get<uint64_t>();
 
@@ -515,8 +759,6 @@ void cPointCloudParser::processPointCloudData_SensorInfo(cDataBuffer& buffer)
         buffer >> point.frameID;
         buffer >> point.chnNum;
         buffer >> point.pixelNum;
-        buffer >> point.theta_rad;
-        buffer >> point.phi_rad;
 
         pointCloud.set(n, point);
     }

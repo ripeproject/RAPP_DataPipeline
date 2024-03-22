@@ -160,7 +160,10 @@ void cMainWindow::CreateControls()
 
 	mpSavePlyFiles = new wxCheckBox(this, wxID_ANY, "Save PLY Files");
 	mpPlyUseBinaryFormat = new wxCheckBox(this, wxID_ANY, "Use Binary Format");
+
 	mpSavePlotsInSingleFile = new wxCheckBox(this, wxID_ANY, "Save In Single File");
+	mpEnableFrameIDs = new wxCheckBox(this, wxID_ANY, "Enable Saving Frame IDs (If Present)");
+	mpEnablePixelInfo = new wxCheckBox(this, wxID_ANY, "Enable Saving Pixel Info (If Present)");
 
 	mpSplitButton = new wxButton(this, wxID_ANY, "Split");
 	mpSplitButton->Disable();
@@ -206,6 +209,10 @@ void cMainWindow::CreateLayout()
 		wxStaticBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, this, "Save Options");
 		options->AddSpacer(5);
 		options->Add(mpSavePlotsInSingleFile, wxSizerFlags().Proportion(0).Expand());
+		options->AddSpacer(5);
+		options->Add(mpEnableFrameIDs, wxSizerFlags().Proportion(0).Expand());
+		options->AddSpacer(5);
+		options->Add(mpEnablePixelInfo, wxSizerFlags().Proportion(0).Expand());
 
 		op_sizer->Add(options, wxSizerFlags().Proportion(0).Expand());
 	}
@@ -303,6 +310,10 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 	mpLoadConfigFile->SetValue(mConfigFileName);
 
 	mpSavePlotsInSingleFile->SetValue(mConfigData->savePlotsInSingleFile());
+
+	mpEnableFrameIDs->SetValue(mConfigData->saveFrameIds());
+	mpEnablePixelInfo->SetValue(mConfigData->savePixelInfo());
+
 	mpSavePlyFiles->SetValue(mConfigData->savePlysFiles());
 	mpPlyUseBinaryFormat->SetValue(mConfigData->plysUseBinaryFormat());
 
@@ -347,6 +358,9 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 	bool savePlotsInSingleFile = mpSavePlotsInSingleFile->GetValue();
 	bool savePlyFiles = mpSavePlyFiles->GetValue();
 	bool plyUseBinaryFormat = mpPlyUseBinaryFormat->GetValue();
+	bool enableFrameIds = mpEnableFrameIDs->GetValue();
+	bool enablePixelInfo = mpEnablePixelInfo->GetValue();
+
 
 	/*
 	 * Add all of the files to process
@@ -371,6 +385,9 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 		fp->savePlotsInSingleFile(savePlotsInSingleFile);
 		fp->savePlyFiles(savePlyFiles);
 		fp->plyUseBinaryFormat(plyUseBinaryFormat);
+		fp->enableSavingFrameIDs(enableFrameIds);
+		fp->enableSavingPixelInfo(enablePixelInfo);
+
 		fp->setPlotInfo(mConfigData->getPlotInfo(in_file.path().filename().string()));
 
 		mFileProcessors.push(fp);

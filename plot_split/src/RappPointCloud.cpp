@@ -2,6 +2,8 @@
 #include "RappPointCloud.hpp"
 #include "PointCloudUtils.hpp"
 
+#include "Constants.hpp"
+
 #include <eigen3/Eigen/Eigen>
 
 #include <numbers>
@@ -29,6 +31,57 @@ namespace
 	int id = 0;
 }
 
+
+rfm::sPoint3D_t& rfm::sPoint3D_t::operator=(const pointcloud::sCloudPoint_t& rhs)
+{
+	x_mm = rhs.X_m * nConstants::M_TO_MM;
+	y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	h_mm = INVALID_HEIGHT;
+	range_mm = rhs.range_mm;
+	signal = rhs.signal;
+	reflectivity = rhs.reflectivity;
+	nir = rhs.nir;
+	frameID = 0;
+	chnNum = 0;
+	pixelNum = 0;
+
+	return *this;
+}
+
+rfm::sPoint3D_t& rfm::sPoint3D_t::operator=(const pointcloud::sCloudPoint_FrameID_t& rhs)
+{
+	x_mm = rhs.X_m * nConstants::M_TO_MM;
+	y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	h_mm = INVALID_HEIGHT;
+	range_mm = rhs.range_mm;
+	signal = rhs.signal;
+	reflectivity = rhs.reflectivity;
+	nir = rhs.nir;
+	frameID = rhs.frameID;
+	chnNum = 0;
+	pixelNum = 0;
+
+	return *this;
+}
+
+rfm::sPoint3D_t& rfm::sPoint3D_t::operator=(const pointcloud::sCloudPoint_SensorInfo_t& rhs)
+{
+	x_mm = rhs.X_m * nConstants::M_TO_MM;
+	y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	h_mm = INVALID_HEIGHT;
+	range_mm = rhs.range_mm;
+	signal = rhs.signal;
+	reflectivity = rhs.reflectivity;
+	nir = rhs.nir;
+	frameID = rhs.frameID;
+	chnNum = rhs.chnNum;
+	pixelNum = rhs.pixelNum;
+
+	return *this;
+}
 
 cRappPointCloud::cRappPointCloud() : mCentroid(), mID(::id++)
 {}
@@ -65,21 +118,53 @@ cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_t
 	: mCentroid(), mID(::id++) 
 {
 	assign(pc);
+
+	mHasFrameIDs = false;
+	mHasPixelInfo = false;
 }
 
 cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_FrameID_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
 	assign(pc);
+
+	mHasFrameIDs = true;
+	mHasPixelInfo = false;
 }
 
 cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_SensorInfo_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
 	assign(pc);
+
+	mHasFrameIDs = true;
+	mHasPixelInfo = true;
 }
 
 int cRappPointCloud::id() const { return mID; }
+
+bool cRappPointCloud::hasFrameIDs() const { return mHasFrameIDs && mEnableFrameIDs; }
+bool cRappPointCloud::hasPixelInfo() const { return mHasPixelInfo && mEnableFrameIDs && mEnablePixelInfo; }
+
+void cRappPointCloud::disableFrameIDs() 
+{
+	mEnableFrameIDs = false; 
+}
+
+void cRappPointCloud::enableFrameIDs()
+{
+	mEnableFrameIDs = true;
+}
+
+void cRappPointCloud::disablePixelInfo()
+{
+	mEnablePixelInfo = false;
+}
+
+void cRappPointCloud::enablePixelInfo()
+{
+	mEnablePixelInfo = true;
+}
 
 void cRappPointCloud::clear()
 {

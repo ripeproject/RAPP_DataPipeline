@@ -7,6 +7,8 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <deque>
+#include <list>
 
 // Forward Declarations
 
@@ -20,12 +22,31 @@ public:
 		double yaw_deg = 0.0;
 	};
 
-	struct sDollySpeeds_t
+	struct sSensorSpeeds_t
 	{
 		double vx_mps = 0.0;
 		double vy_mps = 0.0;
-		double vz_mp = 0.0;
+		double vz_mps = 0.0;
 	};
+
+	struct sDistanceWindow_t
+	{
+		double min_distance_m = 0.0;
+		double max_distance_m = 0.0;
+	};
+
+	struct sAzimuthWindow_t
+	{
+		double min_azimuth_deg = 0.0;
+		double max_azimuth_deg = 0.0;
+	};
+
+	struct sAltitudeWindow_t
+	{
+		double min_altitude_deg = 0.0;
+		double max_altitude_deg = 0.0;
+	};
+
 
 public:
 	cPointCloudInfo() = default;
@@ -35,11 +56,18 @@ public:
 	const std::optional<pointcloud::eKINEMATIC_MODEL>&	 kinematicModel() const;
 
 	const std::optional<cPointCloudInfo::sSensorAngles_t>& sensorAngles() const;
-	const std::optional<cPointCloudInfo::sDollySpeeds_t>&  dollySpeeds() const;
+	const std::optional<cPointCloudInfo::sSensorSpeeds_t>& sensorSpeeds() const;
+
+	const std::optional<sDistanceWindow_t>& distanceWindow() const;
+	const std::optional<sAzimuthWindow_t>&  azimuthWindow() const;
+	const std::optional<sAltitudeWindow_t>& altitudeWindow() const;
 
 	const std::optional<pointcloud::imu_data_t>& imuData() const;
 
-	const cRappPointCloud& pointCloud() const;
+	std::size_t numPointClouds() const;
+	const cRappPointCloud& getPointCloud(int index) const;
+
+	const std::list<cRappPointCloud>& getPointClouds() const;
 
 	void clear();
 
@@ -50,17 +78,25 @@ protected:
 	void setSensorAngles(double pitch_deg, double roll_deg, double yaw_deg);
 	void setKinematicSpeed(double vx_mps, double vy_mps, double vz_mps);
 
+	void setDistanceWindow(double min_distance_m, double max_distance_m);
+	void setAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg);
+	void setAltitudeWindow(double min_altitude_deg, double max_altitude_deg);
+
 	void setImuData(pointcloud::imu_data_t data);
 
-	void setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud);
-	void setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud);
-	void setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud);
-	void setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud);
-	void setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud);
-	void setPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud);
-	void setPointCloudData(cPointCloud pointCloud);
-	void setPointCloudData(cPointCloud_FrameId pointCloud);
-	void setPointCloudData(cPointCloud_SensorInfo pointCloud);
+	void clearPointCloudData();
+	void addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud);
+	void addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud);
+	void addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud);
+	void addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud);
+	void addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud);
+	void addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud);
+	void addPointCloudData(cPointCloud pointCloud);
+	void addPointCloudData(cPointCloud_FrameId pointCloud);
+	void addPointCloudData(cPointCloud_SensorInfo pointCloud);
+
+	void clearSensorKinematics();
+	void addSensorKinematicPoint(const pointcloud::sSensorKinematicInfo_t& point);
 
 private:
 
@@ -69,11 +105,17 @@ private:
 
 	std::optional<sSensorAngles_t> mSensorAngles;
 
-	std::optional<sDollySpeeds_t> mDollySpeeds;
+	std::optional<sSensorSpeeds_t> mSensorSpeeds;
+
+	std::optional<sDistanceWindow_t> mDistanceWindow;
+	std::optional<sAzimuthWindow_t>  mAzimuthWindow;
+	std::optional<sAltitudeWindow_t> mAltitudeWindow;
 
 	std::optional<pointcloud::imu_data_t> mImuData;
 
-	cRappPointCloud mPointCloud;
+	std::deque<pointcloud::sSensorKinematicInfo_t> mSensorKinematicData;
+
+	std::list<cRappPointCloud> mPointClouds;
 
 	friend class cPointCloudLoader;
 };

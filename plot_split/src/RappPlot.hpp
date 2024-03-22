@@ -39,6 +39,7 @@ public:
 	const std::string& description() const;
 
 	const cRappPointCloud& pointCloud() const { return mCloud; }
+	cRappPointCloud& pointCloud() { return mCloud; }
 
     bool empty() const;
 

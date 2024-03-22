@@ -162,7 +162,7 @@ void cPointCloudSerializer::write(const cPointCloud_FrameId& in)
 
 void cPointCloudSerializer::write(const cPointCloud_SensorInfo& in)
 {
-    mBlockID->setVersion(1, 0);
+    mBlockID->setVersion(2, 0);
     mBlockID->dataID(DataID::POINT_CLOUD_DATA_SENSOR_INFO);
 
     mDataBuffer.clear();
@@ -191,8 +191,6 @@ void cPointCloudSerializer::write(const cPointCloud_SensorInfo& in)
         mDataBuffer << point.frameID;
         mDataBuffer << point.chnNum;
         mDataBuffer << point.pixelNum;
-        mDataBuffer << point.theta_rad;
-        mDataBuffer << point.phi_rad;
     }
 
     if (mDataBuffer.overrun())
@@ -267,6 +265,51 @@ void cPointCloudSerializer::writeDimensions(double x_min_m, double x_max_m,
 
     if (mDataBuffer.overrun())
         throw std::runtime_error("ERROR, Buffer Overrun in writing dimemsional data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
+void cPointCloudSerializer::writeDistanceWindow(double min_dist_m, double max_dist_m)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::DISTANCE_WINDOW_M);
+
+    mDataBuffer.clear();
+    mDataBuffer << min_dist_m;
+    mDataBuffer << max_dist_m;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing distance window data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
+void cPointCloudSerializer::writeAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::AZIMUTH_WINDOW_DEG);
+
+    mDataBuffer.clear();
+    mDataBuffer << min_azimuth_deg;
+    mDataBuffer << max_azimuth_deg;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing azimuth window data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
+void cPointCloudSerializer::writeAltitudeWindow(double min_altitude_deg, double max_altitude_deg)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::ALTITUDE_WINDOW_DEG);
+
+    mDataBuffer.clear();
+    mDataBuffer << min_altitude_deg;
+    mDataBuffer << max_altitude_deg;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing altitude window data.");
 
     writeBlock(*mBlockID, mDataBuffer);
 }
@@ -352,7 +395,7 @@ void cPointCloudSerializer::write(const cReducedPointCloudByFrame_FrameId& in)
 
 void cPointCloudSerializer::write(const cReducedPointCloudByFrame_SensorInfo& in)
 {
-    mBlockID->setVersion(1, 0);
+    mBlockID->setVersion(2, 0);
     mBlockID->dataID(DataID::REDUCED_POINT_CLOUD_DATA_BY_FRAME_SENSOR_INFO);
 
     mDataBuffer.clear();
@@ -384,8 +427,6 @@ void cPointCloudSerializer::write(const cReducedPointCloudByFrame_SensorInfo& in
         mDataBuffer << point.frameID;
         mDataBuffer << point.chnNum;
         mDataBuffer << point.pixelNum;
-        mDataBuffer << point.theta_rad;
-        mDataBuffer << point.phi_rad;
     }
 
     if (mDataBuffer.overrun())
@@ -478,7 +519,7 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame_FrameId& in)
 
 void cPointCloudSerializer::write(const cSensorPointCloudByFrame_SensorInfo& in)
 {
-    mBlockID->setVersion(1, 0);
+    mBlockID->setVersion(2, 0);
     mBlockID->dataID(DataID::SENSOR_POINT_CLOUD_DATA_BY_FRAME_SENSOR_INFO);
 
     mDataBuffer.clear();
@@ -511,8 +552,6 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame_SensorInfo& in)
         mDataBuffer << point.frameID;
         mDataBuffer << point.chnNum;
         mDataBuffer << point.pixelNum;
-        mDataBuffer << point.theta_rad;
-        mDataBuffer << point.phi_rad;
     }
 
     if (mDataBuffer.overrun())
@@ -521,4 +560,52 @@ void cPointCloudSerializer::write(const cSensorPointCloudByFrame_SensorInfo& in)
     writeBlock(*mBlockID, mDataBuffer);
 }
 
+void cPointCloudSerializer::writeBeginSensorKinematics()
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::BEGIN_SENSOR_KINEMATICS);
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing begin sensor kinematics data.");
+
+    writeBlock(*mBlockID);
+}
+
+void cPointCloudSerializer::writeEndSensorKinematics()
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::END_SENSOR_KINEMATICS);
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing end sensor kinematics data.");
+
+    writeBlock(*mBlockID);
+}
+
+void cPointCloudSerializer::writeSensorKinematicInfo(const pointcloud::sSensorKinematicInfo_t& point)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::POINT_CLOUD_DIMENSIONS);
+
+    mDataBuffer.clear();
+    mDataBuffer.put<double>(point.timestamp_us);
+    mDataBuffer << point.X_m;
+    mDataBuffer << point.Y_m;
+    mDataBuffer << point.Z_m;
+    mDataBuffer << point.Vx_mps;
+    mDataBuffer << point.Vy_mps;
+    mDataBuffer << point.Vz_mps;
+
+    mDataBuffer << point.pitch_deg;
+    mDataBuffer << point.roll_deg;
+    mDataBuffer << point.yaw_deg;
+    mDataBuffer << point.pitchRate_dps;
+    mDataBuffer << point.rollRate_dps;
+    mDataBuffer << point.yawRate_dps;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing sensor kinemation data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
 

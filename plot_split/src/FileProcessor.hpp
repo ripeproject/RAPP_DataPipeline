@@ -32,6 +32,9 @@ public:
 	void savePlyFiles(bool savePlys);
 	void plyUseBinaryFormat(bool binaryFormat);
 
+	void enableSavingFrameIDs(bool enableFrameIDs);
+	void enableSavingPixelInfo(bool enablePixelInfo);
+
 	void setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info);
 
 	void process_file();
@@ -59,6 +62,9 @@ private:
 	bool mSavePlyFiles = false;
 	bool mPlyUseBinaryFormat = false;
 
+	bool mEnableFrameIDs  = false;
+	bool mEnablePixelInfo = false;
+
 	std::uintmax_t mFileSize = 0;
 	double		   mFilePos = 0.0;
 
@@ -71,7 +77,7 @@ private:
 
 	std::shared_ptr<cProcessingInfo> mProcessingInfo;
 	std::shared_ptr<cExperimentInfo> mExpInfo;
-	std::list<cPointCloudInfo> mPointClouds;
+	std::shared_ptr<cPointCloudInfo> mPointCloudInfo;
 
 	std::vector<cRappPlot*> mPlots;
 };

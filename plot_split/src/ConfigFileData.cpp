@@ -42,6 +42,16 @@ bool cConfigFileData::plysUseBinaryFormat() const
 	return mPlyUseBinaryFormat;
 }
 
+bool cConfigFileData::saveFrameIds() const
+{
+	return mSaveFrameIds;
+}
+
+bool cConfigFileData::savePixelInfo() const
+{
+	return mSavePixelInfo;
+}
+
 bool cConfigFileData::load()
 {
 	using namespace nStringUtils;
@@ -80,6 +90,12 @@ bool cConfigFileData::load()
 
 		if (options.contains("plys use binary format"))
 			mPlyUseBinaryFormat = options["plys use binary format"];
+
+		if (options.contains("save frame id info"))
+			mSaveFrameIds = options["save frame id info"];
+
+		if (options.contains("save pixel info"))
+			mSavePixelInfo = options["save pixel info"];
 	}
 
 	auto scans = configDoc["scans"];

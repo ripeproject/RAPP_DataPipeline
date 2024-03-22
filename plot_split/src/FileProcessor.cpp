@@ -62,6 +62,72 @@ namespace
             p1.nir = p2.nir;
         }
     }
+
+    void save_plot_to_pointcloud(const cRappPointCloud& in, cPointCloud_FrameId& out)
+    {
+        assert(in.size() == out.size());
+
+        double x_min_m = in.minX_mm() * nConstants::MM_TO_M;
+        double x_max_m = in.maxX_mm() * nConstants::MM_TO_M;
+        double y_min_m = in.minY_mm() * nConstants::MM_TO_M;
+        double y_max_m = in.maxY_mm() * nConstants::MM_TO_M;
+        double z_min_m = in.minZ_mm() * nConstants::MM_TO_M;
+        double z_max_m = in.maxZ_mm() * nConstants::MM_TO_M;
+
+        out.setExtents(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
+
+        auto n = out.size();
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            auto& p1 = out[i];
+            auto p2 = in[i];
+
+            p1.X_m = p2.x_mm * nConstants::MM_TO_M;
+            p1.Y_m = p2.y_mm * nConstants::MM_TO_M;
+            p1.Z_m = p2.z_mm * nConstants::MM_TO_M;
+
+            p1.range_mm = p2.range_mm;
+            p1.signal = p2.signal;
+            p1.reflectivity = p2.reflectivity;
+            p1.nir = p2.nir;
+
+            p1.frameID = p2.frameID;
+        }
+    }
+
+    void save_plot_to_pointcloud(const cRappPointCloud& in, cPointCloud_SensorInfo& out)
+    {
+        assert(in.size() == out.size());
+
+        double x_min_m = in.minX_mm() * nConstants::MM_TO_M;
+        double x_max_m = in.maxX_mm() * nConstants::MM_TO_M;
+        double y_min_m = in.minY_mm() * nConstants::MM_TO_M;
+        double y_max_m = in.maxY_mm() * nConstants::MM_TO_M;
+        double z_min_m = in.minZ_mm() * nConstants::MM_TO_M;
+        double z_max_m = in.maxZ_mm() * nConstants::MM_TO_M;
+
+        out.setExtents(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
+
+        auto n = out.size();
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            auto& p1 = out[i];
+            auto p2 = in[i];
+
+            p1.X_m = p2.x_mm * nConstants::MM_TO_M;
+            p1.Y_m = p2.y_mm * nConstants::MM_TO_M;
+            p1.Z_m = p2.z_mm * nConstants::MM_TO_M;
+
+            p1.range_mm = p2.range_mm;
+            p1.signal = p2.signal;
+            p1.reflectivity = p2.reflectivity;
+            p1.nir = p2.nir;
+
+            p1.frameID  = p2.frameID;
+            p1.chnNum   = p2.frameID;
+            p1.pixelNum = p2.pixelNum;
+        }
+    }
 }
 
 
@@ -74,7 +140,8 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
     mOutputFile = out;
 
     mProcessingInfo = std::make_shared<cProcessingInfo>();
-    mExpInfo = std::make_shared<cExperimentInfo>();
+    mExpInfo        = std::make_shared<cExperimentInfo>();
+    mPointCloudInfo = std::make_shared<cPointCloudInfo>();
 }
 
 cFileProcessor::~cFileProcessor()
@@ -116,6 +183,16 @@ void cFileProcessor::savePlyFiles(bool savePlys)
 void cFileProcessor::plyUseBinaryFormat(bool binaryFormat)
 {
     mPlyUseBinaryFormat = binaryFormat;
+}
+
+void cFileProcessor::enableSavingFrameIDs(bool enableFrameIDs)
+{
+    mEnableFrameIDs = enableFrameIDs;
+}
+
+void cFileProcessor::enableSavingPixelInfo(bool enablePixelInfo)
+{
+    mEnablePixelInfo = enablePixelInfo;
 }
 
 void cFileProcessor::setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info)
@@ -171,7 +248,7 @@ bool cFileProcessor::loadFileData()
 
     std::unique_ptr<cProcessingInfoLoader> pProcessingInfo  = std::make_unique<cProcessingInfoLoader>(mProcessingInfo);
     std::unique_ptr<cExperimentInfoLoader> pExpInfo         = std::make_unique<cExperimentInfoLoader>(mExpInfo);
-    std::unique_ptr<cPointCloudLoader> pPcInfo              = std::make_unique<cPointCloudLoader>(mPointClouds);
+    std::unique_ptr<cPointCloudLoader> pPcInfo              = std::make_unique<cPointCloudLoader>(mPointCloudInfo);
 
     mFileReader.attach(pProcessingInfo.get());
     mFileReader.attach(pExpInfo.get());
@@ -241,14 +318,13 @@ bool cFileProcessor::loadFileData()
 //-----------------------------------------------------------------------------
 void cFileProcessor::doPlotSplit()
 {
-    auto n = mPointClouds.size();
+    auto n = mPointCloudInfo->numPointClouds();
     int i = 0;
 
-    for (auto& info : mPointClouds)
+    for (auto pointCloud : mPointCloudInfo->getPointClouds())
     {
         update_progress(mID, static_cast<int>((100.0 * i++) / n));
 
-        auto pointCloud = info.pointCloud();
         pointCloud.trim_outside(mPlotInfo->getBoundingBox());
 
         auto info_plots = mPlotInfo->getPlots();
@@ -260,6 +336,16 @@ void cFileProcessor::doPlotSplit()
             plotPointCloud->trim_outside(plot_info->getBoundingBox());
 
             plotPointCloud->trim_outside(plot_info->getPlotBounds());
+
+            if (mEnableFrameIDs)
+                plotPointCloud->enableFrameIDs();
+            else
+                plotPointCloud->disableFrameIDs();
+
+            if (mEnablePixelInfo)
+                plotPointCloud->enablePixelInfo();
+            else
+                plotPointCloud->disablePixelInfo();
 
             cRappPlot* plot = new cRappPlot(plot_info->getPlotNumber());
 
@@ -323,14 +409,39 @@ void cFileProcessor::savePlotFile()
 
         plotInfoSerializer.writeDescription(plot->description());
 
-        cPointCloud point_cloud;
-        point_cloud.resize(plot->pointCloud().size());
-        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+        if (plot->pointCloud().hasPixelInfo())
+        {
+            cPointCloud_SensorInfo point_cloud;
+            point_cloud.resize(plot->pointCloud().size());
+            save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
 
-        plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
-            point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+            plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
 
-        plotInfoSerializer.write(point_cloud);
+            plotInfoSerializer.write(point_cloud);
+        }
+        else if (plot->pointCloud().hasFrameIDs())
+        {
+            cPointCloud_FrameId point_cloud;
+            point_cloud.resize(plot->pointCloud().size());
+            save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+
+            plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+            plotInfoSerializer.write(point_cloud);
+        }
+        else
+        {
+            cPointCloud point_cloud;
+            point_cloud.resize(plot->pointCloud().size());
+            save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+
+            plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+            plotInfoSerializer.write(point_cloud);
+        }
     }
 
     fileWriter.close();
@@ -387,14 +498,39 @@ void cFileProcessor::savePlotFiles()
 
         plotInfoSerializer.writeDescription(plot->description());
 
-        cPointCloud point_cloud;
-        point_cloud.resize(plot->pointCloud().size());
-        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+        if (plot->pointCloud().hasPixelInfo())
+        {
+            cPointCloud_SensorInfo point_cloud;
+            point_cloud.resize(plot->pointCloud().size());
+            save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
 
-        plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(), 
-            point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+            plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
 
-        plotInfoSerializer.write(point_cloud);
+            plotInfoSerializer.write(point_cloud);
+        }
+        else if (plot->pointCloud().hasFrameIDs())
+        {
+            cPointCloud_FrameId point_cloud;
+            point_cloud.resize(plot->pointCloud().size());
+            save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+
+            plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+            plotInfoSerializer.write(point_cloud);
+        }
+        else
+        {
+            cPointCloud point_cloud;
+            point_cloud.resize(plot->pointCloud().size());
+            save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+
+            plotInfoSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+            plotInfoSerializer.write(point_cloud);
+        }
 
         fileWriter.close();
     }

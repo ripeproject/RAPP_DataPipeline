@@ -27,6 +27,9 @@ public:
 	bool savePlysFiles() const;
 	bool plysUseBinaryFormat() const;
 
+	bool saveFrameIds() const;
+	bool savePixelInfo() const;
+
 	bool hasPlotInfo(const std::string& scan_name) const;
 
 	std::shared_ptr<cPlotBoundaries> getPlotInfo(const std::string& scan_name) const;
@@ -37,6 +40,9 @@ private:
 	bool mSavePlotsInSingleFile = false;
 	bool mSavePlyFiles = false;
 	bool mPlyUseBinaryFormat = false;
+
+	bool mSaveFrameIds = false;
+	bool mSavePixelInfo = false;
 
 	std::map<std::string, std::shared_ptr<cPlotBoundaries>> mPlots;
 };

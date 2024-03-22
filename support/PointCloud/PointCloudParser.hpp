@@ -26,11 +26,19 @@ public:
 	virtual void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) = 0;
 	virtual void onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) = 0;
 	virtual void onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) = 0;
+	virtual void onDistanceWindow(double min_dist_m, double max_dist_m) = 0;
+	virtual void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) = 0;
+	virtual void onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) = 0;
 
 	virtual void onDimensions(double x_min_m, double x_max_m,
 								double y_min_m, double y_max_m,
 								double z_min_m, double z_max_m) = 0;
+
 	virtual void onImuData(pointcloud::imu_data_t data) = 0;
+
+	virtual void onBeginSensorKinematics() = 0;
+	virtual void onEndSensorKinematics() = 0;
+	virtual void onSensorKinematicInfo(pointcloud::sSensorKinematicInfo_t point) = 0;
 
 	virtual void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns,
 									cReducedPointCloudByFrame pointCloud) = 0;
@@ -62,21 +70,31 @@ protected:
 	void processKinematicsModel(cDataBuffer& buffer);
 	void processSensorAngles(cDataBuffer& buffer);
 	void processKinematicSpeed(cDataBuffer& buffer);
+	void processDistanceWindow(cDataBuffer& buffer);
+	void processAzimuthWindow(cDataBuffer& buffer);
+	void processAltitudeWindow(cDataBuffer& buffer);
 	void processDimensions(cDataBuffer& buffer);
 	void processImuData(cDataBuffer& buffer);
 
+	void processBeginSensorKinematics(cDataBuffer& buffer);
+	void processEndSensorKinematics(cDataBuffer& buffer);
+	void processSensorKinematicInfo(cDataBuffer& buffer);
+
 	void processReducedPointCloudByFrame(cDataBuffer& buffer);
 	void processReducedPointCloudByFrame_FrameId(cDataBuffer& buffer);
-	void processReducedPointCloudByFrame_SensorInfo(cDataBuffer& buffer);
+	void processReducedPointCloudByFrame_SensorInfo_1_0(cDataBuffer& buffer);
+	void processReducedPointCloudByFrame_SensorInfo_2_0(cDataBuffer& buffer);
 
 	void processSensorPointCloudByFrame(cDataBuffer& buffer);
 	void processSensorPointCloudByFrame_FrameId(cDataBuffer& buffer);
-	void processSensorPointCloudByFrame_SensorInfo(cDataBuffer& buffer);
+	void processSensorPointCloudByFrame_SensorInfo_1_0(cDataBuffer& buffer);
+	void processSensorPointCloudByFrame_SensorInfo_2_0(cDataBuffer& buffer);
 
 	void processPointCloudData_1_0(cDataBuffer& buffer);
 	void processPointCloudData_1_1(cDataBuffer& buffer);
 	void processPointCloudData_FrameId(cDataBuffer& buffer);
-	void processPointCloudData_SensorInfo(cDataBuffer& buffer);
+	void processPointCloudData_SensorInfo_1_0(cDataBuffer& buffer);
+	void processPointCloudData_SensorInfo_2_0(cDataBuffer& buffer);
 
 private:
 	std::unique_ptr<cPointCloudID> mBlockID;

@@ -34,6 +34,8 @@ public:
 		double z_min_m, double z_max_m) = 0;
 
 	virtual void onPointCloudData(cPointCloud pointCloud) = 0;
+	virtual void onPointCloudData(cPointCloud_FrameId pointCloud) = 0;
+	virtual void onPointCloudData(cPointCloud_SensorInfo pointCloud) = 0;
 
 	virtual void onEvent(const std::string& event) = 0;
 
@@ -50,8 +52,9 @@ protected:
 
 	void processDimensions(cDataBuffer& buffer);
 
-	void processPointCloudData_1_0(cDataBuffer& buffer);
-	void processPointCloudData_1_1(cDataBuffer& buffer);
+	void processPointCloudData(cDataBuffer& buffer);
+	void processPointCloudData_FrameId(cDataBuffer& buffer);
+	void processPointCloudData_SensorInfo(cDataBuffer& buffer);
 
 	virtual void processEvent(cDataBuffer& buffer);
 
