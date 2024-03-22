@@ -171,27 +171,16 @@ void cRappPointCloud::assign(const cBasePointCloud<POINT2>& pc)
 	{
 		POINT2 point = data[i];
 
-		auto x = point.X_m * nConstants::M_TO_MM;
-		auto y = point.Y_m * nConstants::M_TO_MM;
-		auto z = point.Z_m * nConstants::M_TO_MM;
-
-		sum_x += x;
-		sum_y += y;
-		sum_z += z;
-
-		uint32_t range_mm = static_cast<uint32_t>(point.range_mm);
-		uint16_t signal	  = static_cast<uint16_t>(point.signal);
-		uint16_t reflectivity = static_cast<uint16_t>(point.reflectivity);
-		uint16_t nir = static_cast<uint16_t>(point.nir);
+		sum_x += point.X_m;
+		sum_y += point.Y_m;
+		sum_z += point.Z_m;
 
 		mCloud[i] = point;
-//		{static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z),
-//					rfm::INVALID_HEIGHT, range_mm, signal, reflectivity, nir};
 	}
 
-	double x_mm = sum_x / n;
-	double y_mm = sum_y / n;
-	double z_mm = sum_z / n;
+	double x_mm = (sum_x / n) * nConstants::M_TO_MM;
+	double y_mm = (sum_y / n) * nConstants::M_TO_MM;
+	double z_mm = (sum_z / n) * nConstants::M_TO_MM;
 
 	mCentroid = { x_mm , y_mm, z_mm };
 }
