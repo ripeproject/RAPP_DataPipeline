@@ -44,6 +44,16 @@ void cFileProcessor::saveCompactPointCloud(bool compact)
     mSaveCompactPointCloud = compact;
 }
 
+void cFileProcessor::saveFrameIds(bool save)
+{
+    mSaveFrameIds = save;
+}
+
+void cFileProcessor::savePixelInfo(bool save)
+{
+    mSavePixelInfo = save;
+}
+
 void cFileProcessor::savePlyFiles(bool savePlys)
 {
     mSavePlyFiles = savePlys;
@@ -123,6 +133,16 @@ void cFileProcessor::process_file()
     }
 
     cRappPointCloud pointCloud = converter->getPointCloud();
+    
+    if (mSaveFrameIds)
+        pointCloud.enableFrameIDs();
+    else
+        pointCloud.disableFrameIDs();
+
+    if (mSavePixelInfo)
+        pointCloud.enablePixelInfo();
+    else
+        pointCloud.disablePixelInfo();
 
     if (mFlattenPointCloud)
     {
@@ -142,6 +162,10 @@ void cFileProcessor::process_file()
 
         saver->setInputFile(mInputFile.string());
         saver->setOutputFile(mOutputFile.string());
+
+        saver->setRangeWindow_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
+        saver->setAzimuthWindow_deg(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
+        saver->setAltitudeWindow_deg(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
 
         saver->save(mFlattenPointCloud);
     }
@@ -188,14 +212,43 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
     writeExperimentInfo(*experimentInfo, experimentSerializer);
     update_progress(mID, 67);
 
-    cPointCloud point_cloud;
-    point_cloud.resize(pc.size());
-    to_pointcloud(pc, point_cloud);
+    pointCloudSerializer.writeDistanceWindow(mDefaults.minDistance_m, mDefaults.maxDistance_m);
+    pointCloudSerializer.writeAzimuthWindow(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
+    pointCloudSerializer.writeAltitudeWindow(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
 
-    pointCloudSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+    if (pc.hasPixelInfo())
+    {
+        cPointCloud_SensorInfo point_cloud;
+        point_cloud.resize(pc.size());
+        to_pointcloud(pc, point_cloud);
+
+        pointCloudSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
             point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
 
-    pointCloudSerializer.write(point_cloud);
+        pointCloudSerializer.write(point_cloud);
+    }
+    else if (pc.hasFrameIDs())
+    {
+        cPointCloud_FrameId point_cloud;
+        point_cloud.resize(pc.size());
+        to_pointcloud(pc, point_cloud);
+
+        pointCloudSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+            point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+        pointCloudSerializer.write(point_cloud);
+    }
+    else
+    {
+        cPointCloud point_cloud;
+        point_cloud.resize(pc.size());
+        to_pointcloud(pc, point_cloud);
+
+        pointCloudSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+            point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+        pointCloudSerializer.write(point_cloud);
+    }
 
     fileWriter.close();
     update_progress(mID, 100);

@@ -14,6 +14,8 @@
 #include <filesystem>
 
 void to_pointcloud(const cRappPointCloud& in, cPointCloud& out);
+void to_pointcloud(const cRappPointCloud& in, cPointCloud_FrameId& out);
+void to_pointcloud(const cRappPointCloud& in, cPointCloud_SensorInfo& out);
 
 class cPointCloudSaver : public cOusterParser
 {
@@ -24,6 +26,10 @@ public:
 
 	void setInputFile(const std::string& in);
 	void setOutputFile(const std::string& out);
+
+	void setRangeWindow_m(double min_dist_m, double max_dist_m);
+	void setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg);
+	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
 
 	bool save(bool isFlattened);
 
@@ -62,6 +68,15 @@ private:
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
+
+	double mMinDistance_m = 0;
+	double mMaxDistance_m = 0;
+
+	double mMinAzimuth_deg = 0;
+	double mMaxAzimuth_deg = 0;
+
+	double mMinAltitude_deg = 0;
+	double mMaxAltitude_deg = 0;
 
 	cProcessingInfoSerializer	mProcessingInfoSerializer;
 	cPointCloudSerializer		mPointCloudSerializer;

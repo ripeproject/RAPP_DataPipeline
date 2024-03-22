@@ -13,6 +13,7 @@
 extern void update_progress(const int id, const int progress_pct);
 
 
+
 void to_pointcloud(const cRappPointCloud& in, cPointCloud& out)
 {
     assert(in.size() == out.size());
@@ -43,6 +44,69 @@ void to_pointcloud(const cRappPointCloud& in, cPointCloud& out)
     }
 }
 
+void to_pointcloud(const cRappPointCloud& in, cPointCloud_FrameId& out)
+{
+    assert(in.size() == out.size());
+
+    double x_min_m = in.minX_mm() * nConstants::MM_TO_M;
+    double x_max_m = in.maxX_mm() * nConstants::MM_TO_M;
+    double y_min_m = in.minY_mm() * nConstants::MM_TO_M;
+    double y_max_m = in.maxY_mm() * nConstants::MM_TO_M;
+    double z_min_m = in.minZ_mm() * nConstants::MM_TO_M;
+    double z_max_m = in.maxZ_mm() * nConstants::MM_TO_M;
+
+    out.setExtents(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
+
+    auto n = out.size();
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        auto& p1 = out[i];
+        auto p2 = in[i];
+
+        p1.X_m = p2.x_mm * nConstants::MM_TO_M;
+        p1.Y_m = p2.y_mm * nConstants::MM_TO_M;
+        p1.Z_m = p2.z_mm * nConstants::MM_TO_M;
+
+        p1.range_mm = p2.range_mm;
+        p1.signal = p2.signal;
+        p1.reflectivity = p2.reflectivity;
+        p1.nir = p2.nir;
+        p1.frameID = p2.frameID;
+    }
+}
+
+void to_pointcloud(const cRappPointCloud& in, cPointCloud_SensorInfo& out)
+{
+    assert(in.size() == out.size());
+
+    double x_min_m = in.minX_mm() * nConstants::MM_TO_M;
+    double x_max_m = in.maxX_mm() * nConstants::MM_TO_M;
+    double y_min_m = in.minY_mm() * nConstants::MM_TO_M;
+    double y_max_m = in.maxY_mm() * nConstants::MM_TO_M;
+    double z_min_m = in.minZ_mm() * nConstants::MM_TO_M;
+    double z_max_m = in.maxZ_mm() * nConstants::MM_TO_M;
+
+    out.setExtents(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
+
+    auto n = out.size();
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        auto& p1 = out[i];
+        auto p2 = in[i];
+
+        p1.X_m = p2.x_mm * nConstants::MM_TO_M;
+        p1.Y_m = p2.y_mm * nConstants::MM_TO_M;
+        p1.Z_m = p2.z_mm * nConstants::MM_TO_M;
+
+        p1.range_mm = p2.range_mm;
+        p1.signal = p2.signal;
+        p1.reflectivity = p2.reflectivity;
+        p1.nir = p2.nir;
+        p1.frameID  = p2.frameID;
+        p1.chnNum   = p2.chnNum;
+        p1.pixelNum = p2.pixelNum;
+    }
+}
 
 
 cPointCloudSaver::cPointCloudSaver(int id, const cRappPointCloud& pointCloud)
@@ -67,6 +131,23 @@ void cPointCloudSaver::setOutputFile(const std::string& out)
     mOutputFile = out;
 }
 
+void cPointCloudSaver::setRangeWindow_m(double min_dist_m, double max_dist_m)
+{
+    mMinDistance_m = min_dist_m;
+    mMaxDistance_m = max_dist_m;
+}
+
+void cPointCloudSaver::setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg)
+{
+    mMinAzimuth_deg = min_azimuth_deg;
+    mMaxAzimuth_deg = max_azimuth_deg;
+}
+
+void cPointCloudSaver::setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg)
+{
+    mMinAltitude_deg = min_altitude_deg;
+    mMaxAltitude_deg = max_altitude_deg;
+}
 
 void cPointCloudSaver::close()
 {
@@ -125,6 +206,38 @@ bool cPointCloudSaver::save(bool isFlattened)
             update_progress(mID, static_cast<int>(file_pos));
         }
 
+        if (mMinDistance_m != mMaxDistance_m)
+            mPointCloudSerializer.writeDistanceWindow(mMinDistance_m, mMaxDistance_m);
+
+        if (mMinAzimuth_deg != mMaxAzimuth_deg)
+            mPointCloudSerializer.writeAzimuthWindow(mMinAzimuth_deg, mMaxAzimuth_deg);
+
+        if (mMinAltitude_deg != mMaxAltitude_deg)
+            mPointCloudSerializer.writeAltitudeWindow(mMinAltitude_deg, mMaxAltitude_deg);
+
+        if (mPointCloud.hasPixelInfo())
+        {
+            cPointCloud_SensorInfo point_cloud;
+            point_cloud.resize(mPointCloud.size());
+            to_pointcloud(mPointCloud, point_cloud);
+
+            mPointCloudSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+            mPointCloudSerializer.write(point_cloud);
+        }
+        if (mPointCloud.hasFrameIDs())
+        {
+            cPointCloud_FrameId point_cloud;
+            point_cloud.resize(mPointCloud.size());
+            to_pointcloud(mPointCloud, point_cloud);
+
+            mPointCloudSerializer.writeDimensions(point_cloud.minX_m(), point_cloud.maxX_m(),
+                point_cloud.minY_m(), point_cloud.maxY_m(), point_cloud.minZ_m(), point_cloud.maxZ_m());
+
+            mPointCloudSerializer.write(point_cloud);
+        }
+        else
         {
             cPointCloud point_cloud;
             point_cloud.resize(mPointCloud.size());

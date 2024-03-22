@@ -37,13 +37,27 @@ public:
 
 	explicit cRappPointCloud(rfm::sCentroid_t centroid, const vCloud_t& pc);
 
+/*
+	explicit cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_t>& pc);
+	explicit cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_FrameID_t>& pc);
+	explicit cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_SensorInfo_t>& pc);
+*/
+
 	cRappPointCloud& operator=(const cRappPointCloud& pc) = default;
 
 	int id() const;
 
+	bool hasFrameIDs() const;
+	bool hasPixelInfo() const;
+
     void clear();
 
     bool empty() const;
+
+	void reserve(size_type new_cap);
+	void resize(size_type count);
+	void resize(size_type count, const value_type& value);
+
 	size_type size() const;
 
 	void addPoint(const rfm::sPoint3D_t& cloudPoint);
@@ -52,6 +66,7 @@ public:
 
 	void sort();
 
+	/** SpiderCam uses millimeters **/
 	int minX_mm() const;
 	int maxX_mm() const;
 
@@ -69,6 +84,11 @@ public:
 
 	void rotate(double yaw_deg, double pitch_deg, double roll_deg);
 	void translate(int dx_mm, int dy_mm, int dz_mm);
+
+	void trim_outside(pointcloud::sBoundingBox_t box);
+
+	void trim_below(int z_mm);
+	void trim_above(int z_mm);
 
 	iterator begin() { return mCloud.begin(); }
 	const_iterator begin() const { return mCloud.begin(); }
@@ -90,6 +110,12 @@ public:
 
     const vCloud_t& data() const { return mCloud; }
 
+	void disableFrameIDs();
+	void enableFrameIDs();
+
+	void disablePixelInfo();
+	void enablePixelInfo();
+
 protected:
 	template<class POINT2>
 	void assign(const cBasePointCloud<POINT2>& pc);
@@ -107,7 +133,13 @@ private:
 	int mMaxZ_mm = 0;
 
 	rfm::sCentroid_t mCentroid;
-	
+
+	bool mHasFrameIDs  = true;
+	bool mHasPixelInfo = true;
+
+	bool mEnableFrameIDs = true;
+	bool mEnablePixelInfo = true;
+
 	vCloud_t mCloud;
 };
 
@@ -128,6 +160,8 @@ void cRappPointCloud::assign(const cBasePointCloud<POINT2>& pc)
 	mMinZ_mm = static_cast<int>(pc.minZ_m() * nConstants::M_TO_MM);
 	mMaxZ_mm = static_cast<int>(pc.maxZ_m() * nConstants::M_TO_MM);
 
+	mCloud.clear();
+
 	auto n = pc.size();
 	mCloud.resize(n);
 
@@ -140,20 +174,16 @@ void cRappPointCloud::assign(const cBasePointCloud<POINT2>& pc)
 	{
 		POINT2 point = data[i];
 
-		auto x = point.X_m * nConstants::M_TO_MM;
-		auto y = point.Y_m * nConstants::M_TO_MM;
-		auto z = point.Z_m * nConstants::M_TO_MM;
+		sum_x += point.X_m;
+		sum_y += point.Y_m;
+		sum_z += point.Z_m;
 
-		sum_x += x;
-		sum_y += y;
-		sum_z += z;
-
-		mCloud[i] = {static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z)};
+		mCloud[i] = point;
 	}
 
-	double x_mm = sum_x / n;
-	double y_mm = sum_y / n;
-	double z_mm = sum_z / n;
+	double x_mm = (sum_x / n) * nConstants::M_TO_MM;
+	double y_mm = (sum_y / n) * nConstants::M_TO_MM;
+	double z_mm = (sum_z / n) * nConstants::M_TO_MM;
 
 	mCentroid = { x_mm , y_mm, z_mm };
 }

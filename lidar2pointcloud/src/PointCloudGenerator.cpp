@@ -460,6 +460,7 @@ bool cPointCloudGenerator::computePointCloud(int id)
     {
         update_progress(id, (100.0 * i++) / n);
 
+        frameID = lidar_frame.frame_id();
         double timestamp_ns = lidar_frame.timestamp_ns();
         auto time_us = static_cast<double>(timestamp_ns - startTimestamp_ns) * nConstants::NS_TO_US;
 
@@ -470,11 +471,17 @@ bool cPointCloudGenerator::computePointCloud(int id)
 
         rfm::sPoint3D_t point;
 
+        point.frameID = frameID;
+
         for (int c = 0; c < mColumnsPerFrame; ++c)
         {
+            point.chnNum = c;
+
             auto column = lidar_data.column(c);
             for (int p = 0; p < mPixelsPerColumn; ++p)
             {
+                point.pixelNum = p;
+
                 std::size_t i = p * mColumnsPerFrame + c;
 
                 auto range_mm = column[p].range_mm;
@@ -584,7 +591,6 @@ bool cPointCloudGenerator::shiftPointCloudToAGL()
 
         if (progress_pct > previousProgress_pct)
         {
-//            emit progressUpdated(static_cast<int>(progress_pct));
             previousProgress_pct += 1.0;
         }
 

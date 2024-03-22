@@ -28,6 +28,9 @@ public:
 	~cFileProcessor();
 
 	void saveCompactPointCloud(bool compact);
+	void saveFrameIds(bool save);
+	void savePixelInfo(bool save);
+
 	void savePlyFiles(bool savePlys);
 	void plyUseBinaryFormat(bool binaryFormat);
 
@@ -54,6 +57,9 @@ private:
 	bool mSaveCompactPointCloud = true;
 	bool mSavePlyFiles = false;
 	bool mPlyUseBinaryFormat = false;
+
+	bool mSaveFrameIds = false;
+	bool mSavePixelInfo = false;
 
 	bool mHasGroundData = false;
 	bool mFlattenPointCloud = true;

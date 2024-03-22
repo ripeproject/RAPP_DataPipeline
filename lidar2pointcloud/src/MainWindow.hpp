@@ -73,7 +73,10 @@ private:
 	/*** Options ***/
 	wxCheckBox* mpSavePlyFiles = nullptr;
 	wxCheckBox* mpPlyUseBinaryFormat = nullptr;
+
 	wxCheckBox* mpSaveCompactFile = nullptr;
+	wxCheckBox* mpSaveLidarFrameIds = nullptr;
+	wxCheckBox* mpSaveLidarPixelInfo = nullptr;
 
 	wxButton* mpComputeButton = nullptr;
 

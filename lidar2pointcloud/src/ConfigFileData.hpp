@@ -70,6 +70,9 @@ public:
 	bool empty() const;
 
 	bool saveCompactPointCloud() const;
+	bool saveFrameIds() const;
+	bool savePixelInfo() const;
+
 	bool savePlyFiles() const;
 	bool plyUseBinaryFormat() const;
 
@@ -79,6 +82,9 @@ private:
 	std::string mConfigFilename;
 
 	bool mSaveCompactPointCloud = false;
+	bool mSaveFrameIDs = false;
+	bool mSavePixelInfo = false;
+
 	bool mSavePlyFiles = false;
 	bool mPlyUseBinaryFormat = false;
 

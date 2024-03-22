@@ -272,8 +272,12 @@ int main(int argc, char** argv)
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
 		fp->saveCompactPointCloud(configData.saveCompactPointCloud());
+		fp->saveFrameIds(configData.saveFrameIds());
+		fp->savePixelInfo(configData.savePixelInfo());
+
 		fp->savePlyFiles(configData.savePlyFiles());
 		fp->plyUseBinaryFormat(configData.plyUseBinaryFormat());
+
 		fp->setDefaults(parameters);
 
 		pool.push_task(&cFileProcessor::process_file, fp);

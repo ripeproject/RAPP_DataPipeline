@@ -1,5 +1,8 @@
 
 #include "RappPointCloud.hpp"
+#include "PointCloudUtils.hpp"
+
+#include "Constants.hpp"
 
 #include <eigen3/Eigen/Eigen>
 
@@ -26,6 +29,58 @@ namespace
 	}
 
 	int id = 0;
+}
+
+
+rfm::sPoint3D_t& rfm::sPoint3D_t::operator=(const pointcloud::sCloudPoint_t& rhs)
+{
+	x_mm = rhs.X_m * nConstants::M_TO_MM;
+	y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	h_mm = INVALID_HEIGHT;
+	range_mm = rhs.range_mm;
+	signal = rhs.signal;
+	reflectivity = rhs.reflectivity;
+	nir = rhs.nir;
+	frameID = 0;
+	chnNum = 0;
+	pixelNum = 0;
+
+	return *this;
+}
+
+rfm::sPoint3D_t& rfm::sPoint3D_t::operator=(const pointcloud::sCloudPoint_FrameID_t& rhs)
+{
+	x_mm = rhs.X_m * nConstants::M_TO_MM;
+	y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	h_mm = INVALID_HEIGHT;
+	range_mm = rhs.range_mm;
+	signal = rhs.signal;
+	reflectivity = rhs.reflectivity;
+	nir = rhs.nir;
+	frameID = rhs.frameID;
+	chnNum = 0;
+	pixelNum = 0;
+
+	return *this;
+}
+
+rfm::sPoint3D_t& rfm::sPoint3D_t::operator=(const pointcloud::sCloudPoint_SensorInfo_t& rhs)
+{
+	x_mm = rhs.X_m * nConstants::M_TO_MM;
+	y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	h_mm = INVALID_HEIGHT;
+	range_mm = rhs.range_mm;
+	signal = rhs.signal;
+	reflectivity = rhs.reflectivity;
+	nir = rhs.nir;
+	frameID = rhs.frameID;
+	chnNum = rhs.chnNum;
+	pixelNum = rhs.pixelNum;
+
+	return *this;
 }
 
 
@@ -57,15 +112,107 @@ cRappPointCloud::cRappPointCloud(rfm::sCentroid_t centroid, const vCloud_t& pc)
 	mCloud = pc;
 }
 
+/*
+cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_t>& pc)
+	: mCentroid(), mID(::id++) 
+{
+	assign(pc);
+
+	mHasFrameIDs = false;
+	mHasPixelInfo = false;
+}
+
+cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_FrameID_t>& pc)
+	: mCentroid(), mID(::id++) 
+{
+	assign(pc);
+
+	mHasFrameIDs = true;
+	mHasPixelInfo = false;
+}
+
+cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_SensorInfo_t>& pc)
+	: mCentroid(), mID(::id++) 
+{
+	assign(pc);
+
+	mHasFrameIDs = true;
+	mHasPixelInfo = true;
+}
+*/
+
 int cRappPointCloud::id() const { return mID; }
+
+bool cRappPointCloud::hasFrameIDs() const { return mHasFrameIDs && mEnableFrameIDs; }
+bool cRappPointCloud::hasPixelInfo() const { return mHasPixelInfo && mEnableFrameIDs && mEnablePixelInfo; }
+
+void cRappPointCloud::disableFrameIDs() 
+{
+	mEnableFrameIDs = false; 
+}
+
+void cRappPointCloud::enableFrameIDs()
+{
+	mEnableFrameIDs = true;
+}
+
+void cRappPointCloud::disablePixelInfo()
+{
+	mEnablePixelInfo = false;
+}
+
+void cRappPointCloud::enablePixelInfo()
+{
+	mEnablePixelInfo = true;
+}
 
 void cRappPointCloud::clear()
 {
 	mCloud.clear();
+
+	mMinX_mm = 0.0;
+	mMaxX_mm = 0.0;
+
+	mMinY_mm = 0.0;
+	mMaxY_mm = 0.0;
+
+	mMinZ_mm = 0.0;
+	mMaxZ_mm = 0.0;
+
+	mCentroid = rfm::sCentroid_t();
 }
 
-bool cRappPointCloud::empty() const { return mCloud.empty(); }
-std::size_t cRappPointCloud::size() const { return mCloud.size(); }
+bool cRappPointCloud::empty() const
+{
+	return mCloud.empty(); 
+}
+
+void cRappPointCloud::reserve(size_type new_cap)
+{
+	mCloud.reserve(new_cap);
+}
+
+void cRappPointCloud::resize(size_type count)
+{
+	mCloud.resize(count);
+}
+
+void cRappPointCloud::resize(size_type count, const value_type& value)
+{
+	mCloud.resize(count, value);
+}
+
+std::size_t cRappPointCloud::size() const
+{
+	return mCloud.size(); 
+}
+
+/*
+void cRappPointCloud::push_back(const value_type& value)
+{
+	mCloud.push_back(value);
+}
+*/
 
 int cRappPointCloud::minX_mm() const { return mMinX_mm; }
 int cRappPointCloud::maxX_mm() const { return mMaxX_mm; }
@@ -313,5 +460,37 @@ void cRappPointCloud::translate(int dx_mm, int dy_mm, int dz_mm)
 	recomputeBounds();
 }
 
+void cRappPointCloud::trim_outside(pointcloud::sBoundingBox_t box)
+{
+	auto cloud = pointcloud::trim_outside(mCloud, box);
+
+	mCloud = cloud;
+
+	recomputeBounds();
+}
+
+void cRappPointCloud::trim_below(int z_mm)
+{
+	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [z_mm](auto a)
+		{
+			return a.z_mm < z_mm;
+		});
+
+	mCloud.erase(it, mCloud.end());
+
+	recomputeBounds();
+}
+
+void cRappPointCloud::trim_above(int z_mm)
+{
+	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [z_mm](auto a)
+		{
+			return a.z_mm > z_mm;
+		});
+
+	mCloud.erase(it, mCloud.end());
+
+	recomputeBounds();
+}
 
 

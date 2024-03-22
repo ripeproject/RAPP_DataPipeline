@@ -169,7 +169,10 @@ void cMainWindow::CreateControls()
 
 	mpSavePlyFiles = new wxCheckBox(this, wxID_ANY, "Save PLY Files");
 	mpPlyUseBinaryFormat = new wxCheckBox(this, wxID_ANY, "Use Binary Format");
+
 	mpSaveCompactFile = new wxCheckBox(this, wxID_ANY, "Save Compact Point Cloud");
+	mpSaveLidarFrameIds = new wxCheckBox(this, wxID_ANY, "Save LiDAR Frame IDs");
+	mpSaveLidarPixelInfo = new wxCheckBox(this, wxID_ANY, "Save LiDAR Pixel Information");
 
 	mpComputeButton = new wxButton(this, wxID_ANY, "Compute Point Cloud");
 	mpComputeButton->Disable();
@@ -218,6 +221,10 @@ void cMainWindow::CreateLayout()
 		wxStaticBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, this, "Save Options");
 		options->AddSpacer(5);
 		options->Add(mpSaveCompactFile, wxSizerFlags().Proportion(0).Expand());
+		options->AddSpacer(5);
+		options->Add(mpSaveLidarFrameIds, wxSizerFlags().Proportion(0).Expand());
+		options->AddSpacer(5);
+		options->Add(mpSaveLidarPixelInfo, wxSizerFlags().Proportion(0).Expand());
 
 		op_sizer->Add(options, wxSizerFlags().Proportion(0).Expand());
 	}
@@ -330,6 +337,9 @@ void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
 	mCfgFilename = dlg.GetPath();
 
 	mpSaveCompactFile->SetValue(mConfigData->saveCompactPointCloud());
+	mpSaveLidarFrameIds->SetValue(mConfigData->saveFrameIds());
+	mpSaveLidarPixelInfo->SetValue(mConfigData->savePixelInfo());
+
 	mpSavePlyFiles->SetValue(mConfigData->savePlyFiles());
 	mpPlyUseBinaryFormat->SetValue(mConfigData->plyUseBinaryFormat());
 
@@ -413,6 +423,9 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	}
 
 	bool saveCompactFile = mpSaveCompactFile->GetValue();
+	bool saveFrameIds  = mpSaveLidarFrameIds->GetValue();
+	bool savePixelInfo = mpSaveLidarPixelInfo->GetValue();
+
 	bool savePlyFiles = mpSavePlyFiles->GetValue();
 	bool plyUseBinaryFormat = mpPlyUseBinaryFormat->GetValue();
 
@@ -450,6 +463,9 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
 		fp->saveCompactPointCloud(saveCompactFile);
+		fp->saveFrameIds(saveFrameIds);
+		fp->savePixelInfo(savePixelInfo);
+
 		fp->savePlyFiles(savePlyFiles);
 		fp->plyUseBinaryFormat(plyUseBinaryFormat);
 		fp->setDefaults(parameters);

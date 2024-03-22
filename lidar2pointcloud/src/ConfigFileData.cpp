@@ -29,6 +29,16 @@ bool cConfigFileData::saveCompactPointCloud() const
 	return mSaveCompactPointCloud;
 }
 
+bool cConfigFileData::saveFrameIds() const
+{
+	return mSaveFrameIDs;
+}
+
+bool cConfigFileData::savePixelInfo() const
+{
+	return mSavePixelInfo;
+}
+
 bool cConfigFileData::savePlyFiles() const
 {
 	return mSavePlyFiles;
@@ -91,6 +101,12 @@ bool cConfigFileData::load()
 
 			if (options.contains("save compact data file"))
 				mSaveCompactPointCloud = options["save compact data file"];
+
+			if (options.contains("save lidar frame ids"))
+				mSaveFrameIDs = options["save lidar frame ids"];
+
+			if (options.contains("save lidar pixel info"))
+				mSavePixelInfo = options["save lidar pixel info"];
 
 			if (options.contains("create plys"))
 				mSavePlyFiles = options["create plys"];
