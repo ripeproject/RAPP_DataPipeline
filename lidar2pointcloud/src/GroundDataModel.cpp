@@ -6,7 +6,10 @@ cGroundDataModel::cGroundDataModel()
 {}
 
 cGroundDataModel::~cGroundDataModel()
-{}
+{
+    mGroundPoints.clear();
+    mGroundMesh.clear();
+}
 
 //-----------------------------------------------------------------------------
 std::size_t cGroundDataModel::numOfTriangles() const
