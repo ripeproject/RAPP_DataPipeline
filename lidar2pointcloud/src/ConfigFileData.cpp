@@ -241,7 +241,12 @@ bool cConfigFileData::load()
 			{
 				sParameters_t parameters = defaultParameters;
 
-				std::string name = safeFilename(experiment["experiment name"]);
+				std::string name;
+
+				if (experiment.contains("experiment_name"))
+					name = safeFilename(experiment["experiment_name"]);
+				else
+					name = safeFilename(experiment["experiment name"]);
 
 				if (experiment.contains("sensor mount orientation"))
 				{
