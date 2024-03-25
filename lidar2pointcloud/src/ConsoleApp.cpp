@@ -301,6 +301,10 @@ int main(int argc, char** argv)
 		{
 			std::cout << "The empty directory " << output_dir << " was removed." << std::endl;
 		}
+		else
+		{
+			std::cout << "The empty directory " << output_dir << " could not  removed." << std::endl;
+		}
 	}
 
 	return 0;
