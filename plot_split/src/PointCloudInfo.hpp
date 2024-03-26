@@ -64,6 +64,8 @@ public:
 
 	const std::optional<pointcloud::imu_data_t>& imuData() const;
 
+	const std::deque<pointcloud::sSensorKinematicInfo_t>& getSensorKinematicData() const;
+
 	std::size_t numPointClouds() const;
 	const cRappPointCloud& getPointCloud(int index) const;
 

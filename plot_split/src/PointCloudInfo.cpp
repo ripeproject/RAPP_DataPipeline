@@ -64,6 +64,11 @@ const std::optional<pointcloud::imu_data_t>& cPointCloudInfo::imuData() const
 	return mImuData;
 }
 
+const std::deque<pointcloud::sSensorKinematicInfo_t>& cPointCloudInfo::getSensorKinematicData() const
+{
+	return mSensorKinematicData;
+}
+
 std::size_t cPointCloudInfo::numPointClouds() const
 {
 	return mPointClouds.size();
