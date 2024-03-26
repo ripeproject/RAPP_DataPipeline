@@ -91,6 +91,9 @@ private:
 template<class InputIt>
 inline void cPointCloudSerializer::writeSensorKinematics(InputIt first, InputIt last)
 {
+	if (first == last)
+		return;
+
 	writeBeginSensorKinematics();
 	for (; first != last; ++first)
 	{
