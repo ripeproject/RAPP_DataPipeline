@@ -368,6 +368,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 	std::vector<directory_entry> files_to_process;
 
+	std::string month_dir;
+
 	/*
 	 * Create list of files to process
 	 */
@@ -388,6 +390,11 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	}
 	else
 	{
+		if (input.has_parent_path())
+		{
+			month_dir = input.filename().string();
+		}
+
 		// Scan input directory for all CERES files to operate on
 		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 		{
@@ -407,7 +414,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	/*
 	 * Make sure the output directory exists
 	 */
-	const std::filesystem::path output{ output_directory };
+	std::filesystem::path output{ output_directory };
 
 	std::filesystem::directory_entry output_dir;
 
@@ -417,12 +424,21 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	}
 	else
 	{
-		output_dir = std::filesystem::directory_entry{ output };
-	}
+		if (!month_dir.empty())
+		{
+			std::string last_dir;
+			if (output.has_parent_path())
+			{
+				last_dir = output.filename().string();
+			}
 
-	if (!output_dir.exists())
-	{
-		std::filesystem::create_directories(output_dir);
+			if (month_dir != last_dir)
+			{
+				output /= month_dir;
+			}
+		}
+
+		output_dir = std::filesystem::directory_entry{ output };
 	}
 
 	bool saveCompactFile = mpSaveCompactFile->GetValue();
@@ -431,7 +447,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 	bool savePlyFiles = mpSavePlyFiles->GetValue();
 	bool plyUseBinaryFormat = mpPlyUseBinaryFormat->GetValue();
-
 
 	int numFilesToProcess = 0;
 
@@ -446,7 +461,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		if (out_file.empty())
 		{
 			std::string out_filename = fe.filename;
-			out_file = output_directory;
+			out_file = output;
 			out_file /= addProcessedTimestamp(out_filename);
 
 			if (!fe.extension.empty())
@@ -465,7 +480,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
 
-		++numFilesToProcess;
+		numFilesToProcess += 1;
 
 		fp->saveCompactPointCloud(saveCompactFile);
 		fp->saveFrameIds(saveFrameIds);
@@ -487,6 +502,11 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		msg += " files from ";
 		msg += mSource;
 		wxLogMessage(msg);
+	}
+
+	if (!output_dir.exists() && (numFilesToProcess > 1))
+	{
+		std::filesystem::create_directories(output_dir);
 	}
 
 	startDataProcessing();

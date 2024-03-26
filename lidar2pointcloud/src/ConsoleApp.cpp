@@ -168,6 +168,8 @@ int main(int argc, char** argv)
 
 	std::vector<directory_entry> files_to_process;
 
+	std::string month_dir;
+
 	/*
 	 * Create list of files to process
 	 */
@@ -188,6 +190,11 @@ int main(int argc, char** argv)
 	}
 	else
 	{
+		if (input.has_parent_path())
+		{
+			month_dir = input.filename().string();
+		}
+
 		// Scan input directory for all CERES files to operate on
 		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 		{
@@ -222,7 +229,7 @@ int main(int argc, char** argv)
 	/*
 	 * Make sure the output directory exists
 	 */
-	const std::filesystem::path output{ output_directory };
+	std::filesystem::path output{ output_directory };
 
 	std::filesystem::directory_entry output_dir;
 
@@ -232,14 +239,22 @@ int main(int argc, char** argv)
 	}
 	else
 	{
+		if (!month_dir.empty())
+		{
+			std::string last_dir;
+			if (output.has_parent_path())
+			{
+				last_dir = output.filename().string();
+			}
+
+			if (month_dir != last_dir)
+			{
+				output /= month_dir;
+			}
+		}
+
 		output_dir = std::filesystem::directory_entry{ output };
 	}
-
-	if (!output_dir.exists())
-	{
-		std::filesystem::create_directories(output_dir);
-	}
-
 
 	/*
 	 * Add all of the files to process to the thread pool
@@ -252,7 +267,7 @@ int main(int argc, char** argv)
 		if (out_file.empty())
 		{
 			std::string out_filename = fe.filename;
-			out_file = output_directory;
+			out_file = output;
 			out_file /= addProcessedTimestamp(out_filename);
 
 			if (!fe.extension.empty())
@@ -271,7 +286,7 @@ int main(int argc, char** argv)
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
 
-		++numFilesToProcess;
+		numFilesToProcess += 1;
 
 		fp->saveCompactPointCloud(configData.saveCompactPointCloud());
 		fp->saveFrameIds(configData.saveFrameIds());
@@ -285,6 +300,11 @@ int main(int argc, char** argv)
 		pool.push_task(&cFileProcessor::process_file, fp);
 
 		file_processors.push_back(fp);
+	}
+
+	if (!output_dir.exists() && (numFilesToProcess > 0))
+	{
+		std::filesystem::create_directories(output_dir);
 	}
 
 	progress_bar.setMaxID(numFilesToProcess);
