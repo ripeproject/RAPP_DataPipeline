@@ -137,13 +137,13 @@ void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc
     if (!frameIDs.empty())
     {
         ply_file.add_properties_to_element("vertex", { "frame_id" },
-            Type::FLOAT32, frameIDs.size(), reinterpret_cast<uint8_t*>(frameIDs.data()), Type::INVALID, 0);
+            Type::UINT16, frameIDs.size(), reinterpret_cast<uint8_t*>(frameIDs.data()), Type::INVALID, 0);
     }
 
     if (!pixels.empty())
     {
         ply_file.add_properties_to_element("vertex", { "chn_num", "pixel_num" },
-            Type::FLOAT32, pixels.size(), reinterpret_cast<uint8_t*>(pixels.data()), Type::INVALID, 0);
+            Type::UINT16, pixels.size(), reinterpret_cast<uint8_t*>(pixels.data()), Type::INVALID, 0);
     }
 
 #endif

@@ -133,7 +133,7 @@ pointcloud::sSensorKinematicInfo_t to_sensor_kinematics(const rfm::sDollyInfo_t&
 }
 
 cPointCloudSaver::cPointCloudSaver(int id, const cRappPointCloud& pointCloud)
-    : mID(id), mProcessingInfoSerializer(1024), mPointCloudSerializer(sizeof(pointcloud::sCloudPoint_t) * mPointCloud.size())
+    : mID(id), mProcessingInfoSerializer(1024), mPointCloudSerializer(4096)
 {
     mPointCloud = pointCloud;
 }
@@ -263,7 +263,7 @@ bool cPointCloudSaver::save(bool isFlattened)
 
             mPointCloudSerializer.write(point_cloud);
         }
-        if (mPointCloud.hasFrameIDs())
+        else if (mPointCloud.hasFrameIDs())
         {
             cPointCloud_FrameId point_cloud;
             point_cloud.resize(mPointCloud.size());

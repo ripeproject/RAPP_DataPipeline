@@ -11,7 +11,7 @@
 #include <iostream>
 #include <filesystem>
 
-//#define USE_FLOATS
+#define USE_FLOATS
 
 extern void update_progress(const int id, const int progress_pct);
 
@@ -144,13 +144,13 @@ void exportPointcloud2Ply(int id, const std::string& filename, const cRappPointC
     if (!frameIDs.empty())
     {
         ply_file.add_properties_to_element("vertex", { "frame_id" },
-            Type::FLOAT32, frameIDs.size(), reinterpret_cast<uint8_t*>(frameIDs.data()), Type::INVALID, 0);
+            Type::UINT16, frameIDs.size(), reinterpret_cast<uint8_t*>(frameIDs.data()), Type::INVALID, 0);
     }
 
     if (!pixels.empty())
     {
         ply_file.add_properties_to_element("vertex", { "chn_num", "pixel_num" },
-            Type::FLOAT32, pixels.size(), reinterpret_cast<uint8_t*>(pixels.data()), Type::INVALID, 0);
+            Type::UINT16, pixels.size(), reinterpret_cast<uint8_t*>(pixels.data()), Type::INVALID, 0);
     }
 
 #endif
