@@ -37,4 +37,5 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 
 void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const std::vector<rfm::sDollyOrientation_t>& orientation);
 
-bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, ouster::matrix_col_major<rfm::sPoint3D_t>& cloud);
+bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, 
+	ouster::matrix_col_major<rfm::sPoint3D_t>& cloud, std::vector<rfm::sDollyInfo_t>* pComputedPath);

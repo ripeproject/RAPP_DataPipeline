@@ -132,6 +132,12 @@ void cLidar2PointCloud::enableRotateToGround(bool enable, double threshold_pct)
 	mRotateThreshold_pct = threshold_pct;
 }
 
+const std::vector<rfm::sDollyInfo_t>& cLidar2PointCloud::getComputedDollyPath() const
+{
+	auto pPointCloudBenerator = getOusterInfo()->getPointCloudGenerator().lock();
+	return pPointCloudBenerator->getComputedDollyPath();
+}
+
 const cRappPointCloud& cLidar2PointCloud::getPointCloud() const
 {
 	auto pPointCloudBenerator = getOusterInfo()->getPointCloudGenerator().lock();

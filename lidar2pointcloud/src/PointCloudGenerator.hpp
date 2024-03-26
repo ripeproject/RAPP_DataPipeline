@@ -82,6 +82,8 @@ public:
 
 	void setDollyPath(const std::vector<rfm::sDollyInfo_t>& path);
 
+	const std::vector<rfm::sDollyInfo_t>& getComputedDollyPath() const;
+
 	const cRappPointCloud& getPointCloud() const;
 
 	bool computePointCloud(int id);
@@ -147,6 +149,8 @@ private:
 	double	mRotationThreshold_pct = 1.0;
 
 	std::vector<rfm::sDollyInfo_t> mDollyPath;
+
+	std::vector<rfm::sDollyInfo_t> mComputedDollyPath;
 
 	cRappPointCloud mPointCloud;
 

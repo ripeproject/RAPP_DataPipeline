@@ -9,7 +9,9 @@
 
 #include "MainFrame.hpp"
 
-
+#ifdef __WXMSW__
+#include <wx/msw/msvcrt.h>      // redefines the new() operator 
+#endif
 // ----------------------------------------------------------------------------
 // private classes
 // ----------------------------------------------------------------------------

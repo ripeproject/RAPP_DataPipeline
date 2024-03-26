@@ -85,6 +85,8 @@ public:
 	void enableTranslateToGround(bool enable, double threshold_pct);
 	void enableRotateToGround(bool enable, double threshold_pct);
 
+	const std::vector<rfm::sDollyInfo_t>& getComputedDollyPath() const;
+
 	const cRappPointCloud& getPointCloud() const;
 
 public:

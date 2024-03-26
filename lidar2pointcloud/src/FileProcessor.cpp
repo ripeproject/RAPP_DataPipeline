@@ -158,7 +158,8 @@ void cFileProcessor::process_file()
     }
     else
     {
-        std::unique_ptr<cPointCloudSaver> saver = std::make_unique<cPointCloudSaver>(mID, pointCloud);
+        auto dolly_path = converter->getComputedDollyPath();
+        std::unique_ptr<cPointCloudSaver> saver = std::make_unique<cPointCloudSaver>(mID, pointCloud, dolly_path);
 
         saver->setInputFile(mInputFile.string());
         saver->setOutputFile(mOutputFile.string());

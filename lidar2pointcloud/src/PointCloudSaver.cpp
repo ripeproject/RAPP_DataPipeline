@@ -13,7 +13,6 @@
 extern void update_progress(const int id, const int progress_pct);
 
 
-
 void to_pointcloud(const cRappPointCloud& in, cPointCloud& out)
 {
     assert(in.size() == out.size());
@@ -108,11 +107,44 @@ void to_pointcloud(const cRappPointCloud& in, cPointCloud_SensorInfo& out)
     }
 }
 
+pointcloud::sSensorKinematicInfo_t to_sensor_kinematics(const rfm::sDollyInfo_t& in)
+{
+    pointcloud::sSensorKinematicInfo_t point;
+
+    point.timestamp_us = in.timestamp_us;
+
+    point.X_m = in.x_mm * nConstants::MM_TO_M;
+    point.Y_m = in.y_mm * nConstants::MM_TO_M;
+    point.Z_m = in.z_mm * nConstants::MM_TO_M;
+
+    point.Vx_mps = in.vx_mmps * nConstants::MM_TO_M;
+    point.Vy_mps = in.vy_mmps * nConstants::MM_TO_M;
+    point.Vz_mps = in.vz_mmps * nConstants::MM_TO_M;
+
+    point.pitch_deg = in.pitch_deg;
+    point.roll_deg  = in.roll_deg;
+    point.yaw_deg   = in.yaw_deg;
+
+    point.pitchRate_dps = in.pitchRate_dps;
+    point.rollRate_dps  = in.rollRate_dps;
+    point.yawRate_dps   = in.yawRate_dps;
+
+    return point;
+}
 
 cPointCloudSaver::cPointCloudSaver(int id, const cRappPointCloud& pointCloud)
     : mID(id), mProcessingInfoSerializer(1024), mPointCloudSerializer(sizeof(pointcloud::sCloudPoint_t) * mPointCloud.size())
 {
     mPointCloud = pointCloud;
+}
+
+cPointCloudSaver::cPointCloudSaver(int id, const cRappPointCloud& pointCloud, const std::vector<rfm::sDollyInfo_t>& dollyPath)
+    : cPointCloudSaver(id, pointCloud)
+{
+    for (const auto& point : dollyPath)
+    {
+        mComputedDollyPath.push_back(to_sensor_kinematics(point));
+    }
 }
 
 cPointCloudSaver::~cPointCloudSaver()
@@ -214,6 +246,11 @@ bool cPointCloudSaver::save(bool isFlattened)
 
         if (mMinAltitude_deg != mMaxAltitude_deg)
             mPointCloudSerializer.writeAltitudeWindow(mMinAltitude_deg, mMaxAltitude_deg);
+
+        if (!mComputedDollyPath.empty())
+        {
+            mPointCloudSerializer.writeSensorKinematics(mComputedDollyPath.begin(), mComputedDollyPath.end());
+        }
 
         if (mPointCloud.hasPixelInfo())
         {

@@ -174,6 +174,11 @@ double cPointCloudGenerator::getScanTime_sec() const
     return (mLidarData.back().timestamp_ns() - mLidarData.front().timestamp_ns()) * nConstants::NS_TO_SEC;
 }
 
+const std::vector<rfm::sDollyInfo_t>& cPointCloudGenerator::getComputedDollyPath() const
+{
+    return mComputedDollyPath;
+}
+
 const cRappPointCloud& cPointCloudGenerator::getPointCloud() const
 {
     return mPointCloud;
@@ -281,6 +286,7 @@ void cPointCloudGenerator::setDollyPath(const std::vector<rfm::sDollyInfo_t>& pa
 void cPointCloudGenerator::clear()
 {
     mPointCloud.clear();
+    mComputedDollyPath.clear();
 
     resetValidRange();
     resetAzimuthWindow();
@@ -442,6 +448,7 @@ cPointCloudGenerator::sLUT_t cPointCloudGenerator::generateLookupTable()
 bool cPointCloudGenerator::computePointCloud(int id)
 {
     mPointCloud.clear();
+    mComputedDollyPath.clear();
 
     std::size_t i = 0;
     std::size_t n = mLidarData.size() + 1;    // Add one to account for generation of LUT
@@ -519,7 +526,7 @@ bool cPointCloudGenerator::computePointCloud(int id)
             }
         }
 
-        if (!transform(time_us, mDollyPath, cloud_frame))
+        if (!transform(time_us, mDollyPath, cloud_frame,  &mComputedDollyPath))
         {
             return true;
         }

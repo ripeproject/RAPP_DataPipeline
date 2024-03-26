@@ -13,15 +13,24 @@
 #include <string>
 #include <filesystem>
 
+// Forward Declarations
+namespace pointcloud
+{
+	struct sSensorKinematicInfo_t;
+}
+
 void to_pointcloud(const cRappPointCloud& in, cPointCloud& out);
 void to_pointcloud(const cRappPointCloud& in, cPointCloud_FrameId& out);
 void to_pointcloud(const cRappPointCloud& in, cPointCloud_SensorInfo& out);
+pointcloud::sSensorKinematicInfo_t to_sensor_kinematics(const rfm::sDollyInfo_t& in);
+
 
 class cPointCloudSaver : public cOusterParser
 {
 
 public:
 	cPointCloudSaver(int id, const cRappPointCloud& pointCloud);
+	cPointCloudSaver(int id, const cRappPointCloud& pointCloud, const std::vector<rfm::sDollyInfo_t>& dollyPath);
 	~cPointCloudSaver();
 
 	void setInputFile(const std::string& in);
@@ -58,6 +67,8 @@ private:
 	void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len);
 
 private:
+	std::vector<pointcloud::sSensorKinematicInfo_t> mComputedDollyPath;
+
 	cRappPointCloud mPointCloud;
 
 	const int mID = 0;

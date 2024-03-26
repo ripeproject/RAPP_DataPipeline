@@ -576,7 +576,9 @@ void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const 
 
 }
 
-bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, ouster::matrix_col_major<rfm::sPoint3D_t>& cloud)
+bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, 
+                ouster::matrix_col_major<rfm::sPoint3D_t>& cloud,
+                std::vector<rfm::sDollyInfo_t>* pComputedPath)
 {
     if (path.empty()) return false;
     if (time_us < 0.0) return false;
@@ -590,10 +592,11 @@ bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, ouste
     }
     else
     {
-        auto it = std::upper_bound(path.begin(), path.end(), time_us, [](double time_us, const rfm::sDollyInfo_t& p)
-            {
-                return time_us < p.timestamp_us;
-            });
+        auto it = std::upper_bound(path.begin(), path.end(),time_us,
+            [](double time_us, const rfm::sDollyInfo_t& p)
+                {
+                    return time_us < p.timestamp_us;
+                });
 
         // The upper bound is one past what we want!
         --it;
@@ -639,6 +642,30 @@ bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, ouste
 
             cloud.set(r, c, point);
         }
+    }
+
+    if (pComputedPath)
+    {
+        rfm::sDollyInfo_t info;
+
+        info.timestamp_us = time_us;
+        info.x_mm = southPos_mm;
+        info.y_mm = eastPos_mm;
+        info.z_mm = heightPos_m;
+
+        info.vx_mmps = dolly.vx_mmps;
+        info.vy_mmps = dolly.vy_mmps;
+        info.vz_mmps = dolly.vz_mmps;
+
+        info.pitch_deg = pitch_deg;
+        info.roll_deg  = roll_deg;
+        info.yaw_deg   = yaw_deg;
+
+        info.pitchRate_dps = dolly.pitchRate_dps;
+        info.rollRate_dps  = dolly.rollRate_dps;
+        info.yawRate_dps   = dolly.yawRate_dps;
+
+        pComputedPath->push_back(info);
     }
 
     return true;

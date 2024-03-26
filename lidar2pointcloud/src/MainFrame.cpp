@@ -16,6 +16,9 @@
 
 #include <cbdf/BlockDataFile.hpp>
 
+#ifdef __WXMSW__
+#include <wx/msw/msvcrt.h>      // redefines the new() operator 
+#endif
 // ----------------------------------------------------------------------------
 // constants
 // ----------------------------------------------------------------------------
@@ -55,14 +58,14 @@ cMainFrame::cMainFrame()
 
 #if wxUSE_MENUBAR
 	// create a menu bar
-	wxMenu* fileMenu = new wxMenu;
+	wxMenu* fileMenu = new wxMenu();
 
 	wxMenuItem* setting_ground_data = fileMenu->Append(ID_LOAD_GROUND_DATA, "Load Ground Data", "Load the GPS based ground data");
 	fileMenu->AppendSeparator();
 	fileMenu->Append(wxID_EXIT, "E&xit\tAlt-X", "Quit this program");
 
 	// the "About" item should be in the help menu
-	wxMenu* helpMenu = new wxMenu;
+	wxMenu* helpMenu = new wxMenu();
 	helpMenu->Append(wxID_ABOUT, "&About...", "Show about dialog");
 
 	// now append the freshly created menu to the menu bar...

@@ -17,6 +17,9 @@
 #include <memory>
 #include <map>
 
+#ifdef __WXMSW__
+#include <wx/msw/msvcrt.h>      // redefines the new() operator 
+#endif
 
 namespace
 {
@@ -460,7 +463,9 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		nConfigFileData::sParameters_t parameters = options.value();
 
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
+
+		++numFilesToProcess;
 
 		fp->saveCompactPointCloud(saveCompactFile);
 		fp->saveFrameIds(saveFrameIds);

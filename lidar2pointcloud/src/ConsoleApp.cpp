@@ -269,7 +269,9 @@ int main(int argc, char** argv)
 
 		nConfigFileData::sParameters_t parameters = options.value();
 
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
+
+		++numFilesToProcess;
 
 		fp->saveCompactPointCloud(configData.saveCompactPointCloud());
 		fp->saveFrameIds(configData.saveFrameIds());
