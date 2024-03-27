@@ -138,15 +138,6 @@ cPointCloudSaver::cPointCloudSaver(int id, const cRappPointCloud& pointCloud)
     mPointCloud = pointCloud;
 }
 
-cPointCloudSaver::cPointCloudSaver(int id, const cRappPointCloud& pointCloud, const std::vector<rfm::sDollyInfo_t>& dollyPath)
-    : cPointCloudSaver(id, pointCloud)
-{
-    for (const auto& point : dollyPath)
-    {
-        mComputedDollyPath.push_back(to_sensor_kinematics(point));
-    }
-}
-
 cPointCloudSaver::~cPointCloudSaver()
 {
 	mFileWriter.close();
@@ -161,6 +152,16 @@ void cPointCloudSaver::setInputFile(const std::string& in)
 void cPointCloudSaver::setOutputFile(const std::string& out)
 {
     mOutputFile = out;
+}
+
+void cPointCloudSaver::setKinematicModel(pointcloud::eKINEMATIC_MODEL model, const std::vector<rfm::sDollyInfo_t>& dollyPath)
+{
+    mKinematicModel = model;
+
+    for (const auto& point : dollyPath)
+    {
+        mComputedDollyPath.push_back(to_sensor_kinematics(point));
+    }
 }
 
 void cPointCloudSaver::setRangeWindow_m(double min_dist_m, double max_dist_m)
@@ -238,6 +239,12 @@ bool cPointCloudSaver::save(bool isFlattened)
             update_progress(mID, static_cast<int>(file_pos));
         }
 
+        mPointCloudSerializer.writeBeginPointCloudBlock();
+
+        mPointCloudSerializer.write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_SEU);
+
+        mPointCloudSerializer.write(mKinematicModel);
+
         if (mMinDistance_m != mMaxDistance_m)
             mPointCloudSerializer.writeDistanceWindow(mMinDistance_m, mMaxDistance_m);
 
@@ -286,6 +293,7 @@ bool cPointCloudSaver::save(bool isFlattened)
             mPointCloudSerializer.write(point_cloud);
         }
 
+        mPointCloudSerializer.writeEndPointCloudBlock();
     }
     catch (const bdf::stream_error& e)
     {

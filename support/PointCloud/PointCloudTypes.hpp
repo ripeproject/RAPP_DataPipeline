@@ -40,8 +40,11 @@ namespace pointcloud
         CONSTANT,
         DOLLY,
         GPS,
-        SLAM,
+        GPS_SPEEDS,
         CONSTANT_SENSOR_ROTATION,
+        DOLLY_SENSOR_ROTATION,
+        GPS_SENSOR_ROTATION,
+        GPS_SPEEDS_SENSOR_ROTATION,
     };
 
     struct imu_data_t

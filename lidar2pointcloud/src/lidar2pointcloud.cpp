@@ -33,6 +33,23 @@ namespace
 	constexpr double range_unit_mm = 1.0;
 
 	constexpr double g_mps2 = 9.80665;
+
+	pointcloud::eKINEMATIC_MODEL add_sensor_rotation(pointcloud::eKINEMATIC_MODEL in)
+	{
+		switch (in)
+		{
+		case pointcloud::eKINEMATIC_MODEL::CONSTANT:
+			return pointcloud::eKINEMATIC_MODEL::CONSTANT_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::DOLLY:
+			return pointcloud::eKINEMATIC_MODEL::DOLLY_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::GPS:
+			return pointcloud::eKINEMATIC_MODEL::GPS_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::GPS_SPEEDS:
+			return pointcloud::eKINEMATIC_MODEL::GPS_SPEEDS_SENSOR_ROTATION;
+		}
+
+		return in;
+	}
 }
 
 
@@ -130,6 +147,11 @@ void cLidar2PointCloud::enableRotateToGround(bool enable, double threshold_pct)
 {
 	mRotateToGround = enable;
 	mRotateThreshold_pct = threshold_pct;
+}
+
+pointcloud::eKINEMATIC_MODEL cLidar2PointCloud::getKinematicModel() const
+{
+	return mKinematicModel;
 }
 
 const std::vector<rfm::sDollyInfo_t>& cLidar2PointCloud::getComputedDollyPath() const
@@ -250,6 +272,8 @@ void cLidar2PointCloud::computeDollyMovement_ConstantSpeed()
 		return;
 	}
 
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::CONSTANT;
+
 	mDollyMovement = computeDollyKinematics(mID, start_pos, end_pos, speeds, &scanTime_sec);
 
 	setGroundTrack_deg(posGroundTrack);
@@ -272,6 +296,8 @@ void cLidar2PointCloud::computeDollyMovement_SpiderCam()
 
 	auto start_index = spiderCam->getStartIndex();
 	auto end_index = spiderCam->getEndIndex();
+
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::DOLLY;
 
 	mDollyMovement = computeDollyKinematics(mID, spiderCam->getPositionData(), start_index, end_index);
 }
@@ -315,6 +341,8 @@ void cLidar2PointCloud::computeDollyMovement_GpsSpeeds()
 
 	bool ignore = false;
 
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS_SPEEDS;
+
 	mDollyMovement = computeDollyKinematics(mID, start, end, gps, ignore, &scanTime_sec);
 }
 
@@ -330,6 +358,8 @@ void cLidar2PointCloud::computeDollyOrientation_Constant()
 
 void cLidar2PointCloud::computeDollyOrientation_ConstantSpeed()
 {
+	mKinematicModel = add_sensor_rotation(mKinematicModel);
+
 	double scanTime_sec = getScanTime_sec();
 
 	rfm::sDollyAtitude_t start = { mStartPitchOffset_deg, mStartRollOffset_deg, mStartYawOffset_deg };

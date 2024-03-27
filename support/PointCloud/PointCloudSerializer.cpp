@@ -31,6 +31,28 @@ cBlockID& cPointCloudSerializer::blockID()
     return *mBlockID;
 }
 
+void cPointCloudSerializer::writeBeginPointCloudBlock()
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::BEGIN_POINT_CLOUD_BLOCK);
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing begin point cloud block.");
+
+    writeBlock(*mBlockID);
+}
+
+void cPointCloudSerializer::writeEndPointCloudBlock()
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::END_POINT_CLOUD_BLOCK);
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing end point cloud block.");
+
+    writeBlock(*mBlockID);
+}
+
 void cPointCloudSerializer::write(const pointcloud::eCOORDINATE_SYSTEM in)
 {
     mBlockID->setVersion(1, 0);
@@ -313,6 +335,29 @@ void cPointCloudSerializer::writeAltitudeWindow(double min_altitude_deg, double 
 
     writeBlock(*mBlockID, mDataBuffer);
 }
+
+void cPointCloudSerializer::writeBeginPointCloudList()
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::BEGIN_POINT_CLOUD_LIST);
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing begin point cloud list.");
+
+    writeBlock(*mBlockID);
+}
+
+void cPointCloudSerializer::writeEndPointCloudList()
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::END_POINT_CLOUD_LIST);
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing end point cloud list.");
+
+    writeBlock(*mBlockID);
+}
+
 
 void cPointCloudSerializer::write(const cReducedPointCloudByFrame& in)
 {

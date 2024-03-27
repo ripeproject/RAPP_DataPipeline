@@ -158,12 +158,13 @@ void cFileProcessor::process_file()
     }
     else
     {
-        auto dolly_path = converter->getComputedDollyPath();
-        std::unique_ptr<cPointCloudSaver> saver = std::make_unique<cPointCloudSaver>(mID, pointCloud, dolly_path);
+        std::unique_ptr<cPointCloudSaver> saver = std::make_unique<cPointCloudSaver>(mID, pointCloud);
 
         saver->setInputFile(mInputFile.string());
         saver->setOutputFile(mOutputFile.string());
 
+        auto dolly_path = converter->getComputedDollyPath();
+        saver->setKinematicModel(converter->getKinematicModel(), dolly_path);
         saver->setRangeWindow_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
         saver->setAzimuthWindow_deg(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
         saver->setAltitudeWindow_deg(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
@@ -213,9 +214,28 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
     writeExperimentInfo(*experimentInfo, experimentSerializer);
     update_progress(mID, 67);
 
+    pointCloudSerializer.writeBeginPointCloudBlock();
+
+    pointCloudSerializer.write(pointcloud::eCOORDINATE_SYSTEM::SENSOR_SEU);
+
+    pointCloudSerializer.write(data.getKinematicModel());
+
     pointCloudSerializer.writeDistanceWindow(mDefaults.minDistance_m, mDefaults.maxDistance_m);
     pointCloudSerializer.writeAzimuthWindow(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
     pointCloudSerializer.writeAltitudeWindow(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
+
+    const auto& path = data.getComputedDollyPath();
+    if (!path.empty())
+    {
+        pointCloudSerializer.writeBeginSensorKinematics();
+
+        for (const auto& point : path)
+        {
+            pointCloudSerializer.writeSensorKinematicInfo(to_sensor_kinematics(point));
+        }
+
+        pointCloudSerializer.writeEndSensorKinematics();
+    }
 
     if (pc.hasPixelInfo())
     {
@@ -250,6 +270,8 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
 
         pointCloudSerializer.write(point_cloud);
     }
+
+    pointCloudSerializer.writeEndPointCloudBlock();
 
     fileWriter.close();
     update_progress(mID, 100);

@@ -85,6 +85,8 @@ public:
 	void enableTranslateToGround(bool enable, double threshold_pct);
 	void enableRotateToGround(bool enable, double threshold_pct);
 
+	pointcloud::eKINEMATIC_MODEL getKinematicModel() const;
+
 	const std::vector<rfm::sDollyInfo_t>& getComputedDollyPath() const;
 
 	const cRappPointCloud& getPointCloud() const;
@@ -105,6 +107,8 @@ private:
 
 private:
 	const int mID;
+
+	pointcloud::eKINEMATIC_MODEL mKinematicModel = pointcloud::eKINEMATIC_MODEL::UNKNOWN;
 
 	double mMinDistance_m = 0.001;
 	double mMaxDistance_m = 1000.0;

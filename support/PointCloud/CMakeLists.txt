@@ -95,6 +95,9 @@ PUBLIC
 	PointCloud.hpp
 	PointCloudParser.hpp
 	PointCloudSerializer.hpp
+
+	PointCloudInfo.hpp
+	PointCloudInfoLoader.hpp
 	
 PRIVATE
 
@@ -106,6 +109,9 @@ PRIVATE
 	PointCloud.cpp
 	PointCloudParser.cpp
 	PointCloudSerializer.cpp
+
+	PointCloudInfo.cpp
+	PointCloudInfoLoader.cpp
 )
 
 target_include_directories(pointcloud_io PRIVATE ${CMAKE_INSTALL_PREFIX}/include)

@@ -52,7 +52,7 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
         processCoordinateSystem(buffer);
         break;
     case DataID::IMU_DATA:
-        processImuData(buffer);
+        // processImuData(buffer);
         break;
     case DataID::REDUCED_POINT_CLOUD_DATA_BY_FRAME:
         processReducedPointCloudByFrame(buffer);
@@ -82,10 +82,10 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
         processKinematicsModel(buffer);
         break;
     case DataID::SENSOR_ROTATION_ANGLES:
-        processSensorAngles(buffer);
+        // processSensorAngles(buffer);
         break;
     case DataID::KINEMATICS_SPEEDS:
-        processKinematicSpeed(buffer);
+        // processKinematicSpeed(buffer);
         break;
     case DataID::POINT_CLOUD_DIMENSIONS:
         processDimensions(buffer);
@@ -162,7 +162,27 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::SENSOR_KINEMATIC_POINT:
         processSensorKinematicInfo(buffer);
         break;
+    case DataID::BEGIN_POINT_CLOUD_BLOCK:
+        processBeginPointCloudBlock(buffer);
+        break;
+    case DataID::END_POINT_CLOUD_BLOCK:
+        processEndPointCloudBlock(buffer);
+        break;
     }
+}
+
+void cPointCloudParser::processBeginPointCloudBlock(cDataBuffer& buffer)
+{
+    assert(0 == buffer.read_size());
+
+    onBeginPointCloudBlock();
+}
+
+void cPointCloudParser::processEndPointCloudBlock(cDataBuffer& buffer)
+{
+    assert(0 == buffer.read_size());
+
+    onEndPointCloudBlock();
 }
 
 void cPointCloudParser::processCoordinateSystem(cDataBuffer& buffer)
@@ -185,6 +205,7 @@ void cPointCloudParser::processKinematicsModel(cDataBuffer& buffer)
     onKinematicModel(model);
 }
 
+/*
 void cPointCloudParser::processSensorAngles(cDataBuffer& buffer)
 {
     double pitch_deg = buffer.get<double>();
@@ -196,7 +217,9 @@ void cPointCloudParser::processSensorAngles(cDataBuffer& buffer)
 
     onSensorAngles(pitch_deg, roll_deg, yaw_deg);
 }
+*/
 
+/*
 void cPointCloudParser::processKinematicSpeed(cDataBuffer& buffer)
 {
     double vx_mps = buffer.get<double>();
@@ -208,6 +231,7 @@ void cPointCloudParser::processKinematicSpeed(cDataBuffer& buffer)
 
     onKinematicSpeed(vx_mps, vy_mps, vz_mps);
 }
+*/
 
 void cPointCloudParser::processDistanceWindow(cDataBuffer& buffer)
 {
@@ -257,6 +281,7 @@ void cPointCloudParser::processDimensions(cDataBuffer& buffer)
      onDimensions(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
 }
 
+/*
 void cPointCloudParser::processImuData(cDataBuffer& buffer)
 {
     imu_data_t data;
@@ -277,6 +302,7 @@ void cPointCloudParser::processImuData(cDataBuffer& buffer)
 
     onImuData(data);
 }
+*/
 
 void cPointCloudParser::processBeginSensorKinematics(cDataBuffer& buffer)
 {

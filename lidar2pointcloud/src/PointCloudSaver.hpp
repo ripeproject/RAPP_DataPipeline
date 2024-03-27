@@ -30,12 +30,12 @@ class cPointCloudSaver : public cOusterParser
 
 public:
 	cPointCloudSaver(int id, const cRappPointCloud& pointCloud);
-	cPointCloudSaver(int id, const cRappPointCloud& pointCloud, const std::vector<rfm::sDollyInfo_t>& dollyPath);
 	~cPointCloudSaver();
 
 	void setInputFile(const std::string& in);
 	void setOutputFile(const std::string& out);
 
+	void setKinematicModel(pointcloud::eKINEMATIC_MODEL model, const std::vector<rfm::sDollyInfo_t>& dollyPath);
 	void setRangeWindow_m(double min_dist_m, double max_dist_m);
 	void setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg);
 	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
@@ -67,6 +67,7 @@ private:
 	void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len);
 
 private:
+	pointcloud::eKINEMATIC_MODEL mKinematicModel = pointcloud::eKINEMATIC_MODEL::UNKNOWN;
 	std::vector<pointcloud::sSensorKinematicInfo_t> mComputedDollyPath;
 
 	cRappPointCloud mPointCloud;
