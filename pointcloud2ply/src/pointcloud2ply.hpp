@@ -28,15 +28,28 @@ public:
     void close();
 
 private:
+    void onBeginPointCloudBlock() override;
+    void onEndPointCloudBlock() override;
+
     void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;
     void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) override;
-    void onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg) override;
-    void onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps) override;
+    void onDistanceWindow(double min_dist_m, double max_dist_m) override;
+    void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) override;
+    void onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) override;
 
     void onDimensions(double x_min_m, double x_max_m,
         double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
 
-    void onImuData(pointcloud::imu_data_t data) override;
+    void onBeginSensorKinematics() override;
+    void onEndSensorKinematics() override;
+    void onSensorKinematicInfo(pointcloud::sSensorKinematicInfo_t point) override;
+
+    void onPointCloudData(cPointCloud pointCloud) override;
+    void onPointCloudData(cPointCloud_FrameId pointCloud) override;
+    void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
+
+    void onBeginPointCloudList() override;
+    void onEndPointCloudList() override;
 
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud) override;
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud) override;
@@ -45,10 +58,6 @@ private:
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud) override;
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud) override;
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud) override;
-
-    void onPointCloudData(cPointCloud pointCloud) override;
-    void onPointCloudData(cPointCloud_FrameId pointCloud) override;
-    void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
 
     void onPosition(spidercam::sPosition_1_t pos) override;
 
@@ -63,12 +72,10 @@ private:
 #ifdef USE_FLOATS
     typedef float range_t;
     struct returns3 { float s, r, a; };
-    struct beam_loc { float theta, phi; };
     struct pixel_loc { float chn, pixel; };
 #else
     typedef uint32_t range_t;
     struct returns3 { uint16_t s, r, a; };
-    struct beam_loc { double theta, phi; };
     struct pixel_loc { uint16_t chn, pixel; };
 #endif
 
@@ -95,7 +102,6 @@ private:
 #endif
 
     std::vector<pixel_loc>  mPixelLocations;
-    std::vector<beam_loc>   mBeamLocations;
 
     bool mResyncTimestamp = false;
 	uint64_t mStartTimestamp_ns = 0;
