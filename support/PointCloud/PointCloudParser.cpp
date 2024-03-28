@@ -168,6 +168,12 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::END_POINT_CLOUD_BLOCK:
         processEndPointCloudBlock(buffer);
         break;
+    case DataID::BEGIN_POINT_CLOUD_LIST:
+        processBeginPointCloudList(buffer);
+        break;
+    case DataID::END_POINT_CLOUD_LIST:
+        processEndPointCloudList(buffer);
+        break;
     }
 }
 
@@ -346,6 +352,166 @@ void cPointCloudParser::processSensorKinematicInfo(cDataBuffer& buffer)
     onSensorKinematicInfo(point);
 }
 
+void cPointCloudParser::processPointCloudData_1_0(cDataBuffer& buffer)
+{
+    uint32_t num_points = buffer.get<uint32_t>();
+
+    cPointCloud pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_0.");
+
+    onPointCloudData(pointCloud);
+}
+
+void cPointCloudParser::processPointCloudData_1_1(cDataBuffer& buffer)
+{
+    uint64_t num_points = buffer.get<uint64_t>();
+
+    cPointCloud pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_1.");
+
+    onPointCloudData(pointCloud);
+}
+
+void cPointCloudParser::processPointCloudData_FrameId(cDataBuffer& buffer)
+{
+    uint64_t num_points = buffer.get<uint64_t>();
+
+    cPointCloud_FrameId pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_FrameID_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+        buffer >> point.frameID;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_FrameId.");
+
+    onPointCloudData(pointCloud);
+}
+
+void cPointCloudParser::processPointCloudData_SensorInfo_1_0(cDataBuffer& buffer)
+{
+    double theta, phi;
+
+    uint64_t num_points = buffer.get<uint64_t>();
+
+    cPointCloud_SensorInfo pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_SensorInfo_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+        buffer >> point.frameID;
+        buffer >> point.chnNum;
+        buffer >> point.pixelNum;
+        buffer >> theta;
+        buffer >> phi;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
+
+    onPointCloudData(pointCloud);
+}
+
+void cPointCloudParser::processPointCloudData_SensorInfo_2_0(cDataBuffer& buffer)
+{
+    uint64_t num_points = buffer.get<uint64_t>();
+
+    cPointCloud_SensorInfo pointCloud;
+    pointCloud.resize(num_points);
+
+    for (uint32_t n = 0; n < num_points; ++n)
+    {
+        pointcloud::sCloudPoint_SensorInfo_t point;
+        buffer >> point.X_m;
+        buffer >> point.Y_m;
+        buffer >> point.Z_m;
+        buffer >> point.range_mm;
+        buffer >> point.signal;
+        buffer >> point.reflectivity;
+        buffer >> point.nir;
+        buffer >> point.frameID;
+        buffer >> point.chnNum;
+        buffer >> point.pixelNum;
+
+        pointCloud.set(n, point);
+    }
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
+
+    onPointCloudData(pointCloud);
+}
+
+
+void cPointCloudParser::processBeginPointCloudList(cDataBuffer& buffer)
+{
+    assert(0 == buffer.read_size());
+
+    onBeginPointCloudList();
+}
+
+void cPointCloudParser::processEndPointCloudList(cDataBuffer& buffer)
+{
+    assert(0 == buffer.read_size());
+
+    onEndPointCloudList();
+}
 
 void cPointCloudParser::processReducedPointCloudByFrame(cDataBuffer& buffer)
 {
@@ -649,149 +815,5 @@ void cPointCloudParser::processSensorPointCloudByFrame_SensorInfo_2_0(cDataBuffe
     onPointCloudData(frameID, timestamp_ns, pointCloud);
 }
 
-void cPointCloudParser::processPointCloudData_1_0(cDataBuffer& buffer)
-{
-    uint32_t num_points = buffer.get<uint32_t>();
 
-    cPointCloud pointCloud;
-    pointCloud.resize(num_points);
-
-    for (uint32_t n = 0; n < num_points; ++n)
-    {
-        pointcloud::sCloudPoint_t point;
-        buffer >> point.X_m;
-        buffer >> point.Y_m;
-        buffer >> point.Z_m;
-        buffer >> point.range_mm;
-        buffer >> point.signal;
-        buffer >> point.reflectivity;
-        buffer >> point.nir;
-
-        pointCloud.set(n, point);
-    }
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_0.");
-
-    onPointCloudData(pointCloud);
-}
-
-void cPointCloudParser::processPointCloudData_1_1(cDataBuffer& buffer)
-{
-    uint64_t num_points = buffer.get<uint64_t>();
-
-    cPointCloud pointCloud;
-    pointCloud.resize(num_points);
-
-    for (uint32_t n = 0; n < num_points; ++n)
-    {
-        pointcloud::sCloudPoint_t point;
-        buffer >> point.X_m;
-        buffer >> point.Y_m;
-        buffer >> point.Z_m;
-        buffer >> point.range_mm;
-        buffer >> point.signal;
-        buffer >> point.reflectivity;
-        buffer >> point.nir;
-
-        pointCloud.set(n, point);
-    }
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_1.");
-
-    onPointCloudData(pointCloud);
-}
-
-void cPointCloudParser::processPointCloudData_FrameId(cDataBuffer& buffer)
-{
-    uint64_t num_points = buffer.get<uint64_t>();
-
-    cPointCloud_FrameId pointCloud;
-    pointCloud.resize(num_points);
-
-    for (uint32_t n = 0; n < num_points; ++n)
-    {
-        pointcloud::sCloudPoint_FrameID_t point;
-        buffer >> point.X_m;
-        buffer >> point.Y_m;
-        buffer >> point.Z_m;
-        buffer >> point.range_mm;
-        buffer >> point.signal;
-        buffer >> point.reflectivity;
-        buffer >> point.nir;
-        buffer >> point.frameID;
-
-        pointCloud.set(n, point);
-    }
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_FrameId.");
-
-    onPointCloudData(pointCloud);
-}
-
-void cPointCloudParser::processPointCloudData_SensorInfo_1_0(cDataBuffer& buffer)
-{
-    double theta, phi;
-
-    uint64_t num_points = buffer.get<uint64_t>();
-
-    cPointCloud_SensorInfo pointCloud;
-    pointCloud.resize(num_points);
-
-    for (uint32_t n = 0; n < num_points; ++n)
-    {
-        pointcloud::sCloudPoint_SensorInfo_t point;
-        buffer >> point.X_m;
-        buffer >> point.Y_m;
-        buffer >> point.Z_m;
-        buffer >> point.range_mm;
-        buffer >> point.signal;
-        buffer >> point.reflectivity;
-        buffer >> point.nir;
-        buffer >> point.frameID;
-        buffer >> point.chnNum;
-        buffer >> point.pixelNum;
-        buffer >> theta;
-        buffer >> phi;
-
-        pointCloud.set(n, point);
-    }
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
-
-    onPointCloudData(pointCloud);
-}
-
-void cPointCloudParser::processPointCloudData_SensorInfo_2_0(cDataBuffer& buffer)
-{
-    uint64_t num_points = buffer.get<uint64_t>();
-
-    cPointCloud_SensorInfo pointCloud;
-    pointCloud.resize(num_points);
-
-    for (uint32_t n = 0; n < num_points; ++n)
-    {
-        pointcloud::sCloudPoint_SensorInfo_t point;
-        buffer >> point.X_m;
-        buffer >> point.Y_m;
-        buffer >> point.Z_m;
-        buffer >> point.range_mm;
-        buffer >> point.signal;
-        buffer >> point.reflectivity;
-        buffer >> point.nir;
-        buffer >> point.frameID;
-        buffer >> point.chnNum;
-        buffer >> point.pixelNum;
-
-        pointCloud.set(n, point);
-    }
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
-
-    onPointCloudData(pointCloud);
-}
 

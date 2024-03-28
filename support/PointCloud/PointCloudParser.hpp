@@ -39,6 +39,14 @@ public:
 	virtual void onEndSensorKinematics() = 0;
 	virtual void onSensorKinematicInfo(pointcloud::sSensorKinematicInfo_t point) = 0;
 
+	virtual void onPointCloudData(cPointCloud pointCloud) = 0;
+	virtual void onPointCloudData(cPointCloud_FrameId pointCloud) = 0;
+	virtual void onPointCloudData(cPointCloud_SensorInfo pointCloud) = 0;
+
+
+	virtual void onBeginPointCloudList() = 0;
+	virtual void onEndPointCloudList() = 0;
+
 	virtual void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns,
 									cReducedPointCloudByFrame pointCloud) = 0;
 	virtual void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns,
@@ -52,10 +60,6 @@ public:
 									cSensorPointCloudByFrame_FrameId pointCloud) = 0;
 	virtual void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns,
 									cSensorPointCloudByFrame_SensorInfo pointCloud) = 0;
-
-	virtual void onPointCloudData(cPointCloud pointCloud) = 0;
-	virtual void onPointCloudData(cPointCloud_FrameId pointCloud) = 0;
-	virtual void onPointCloudData(cPointCloud_SensorInfo pointCloud) = 0;
 
 	// These data items have been marked deprecated in the serializer
 	// virtual void onImuData(pointcloud::imu_data_t data) = 0;
@@ -84,6 +88,15 @@ protected:
 	void processEndSensorKinematics(cDataBuffer& buffer);
 	void processSensorKinematicInfo(cDataBuffer& buffer);
 
+	void processPointCloudData_1_0(cDataBuffer& buffer);
+	void processPointCloudData_1_1(cDataBuffer& buffer);
+	void processPointCloudData_FrameId(cDataBuffer& buffer);
+	void processPointCloudData_SensorInfo_1_0(cDataBuffer& buffer);
+	void processPointCloudData_SensorInfo_2_0(cDataBuffer& buffer);
+
+	void processBeginPointCloudList(cDataBuffer& buffer);
+	void processEndPointCloudList(cDataBuffer& buffer);
+
 	void processReducedPointCloudByFrame(cDataBuffer& buffer);
 	void processReducedPointCloudByFrame_FrameId(cDataBuffer& buffer);
 	void processReducedPointCloudByFrame_SensorInfo_1_0(cDataBuffer& buffer);
@@ -93,12 +106,6 @@ protected:
 	void processSensorPointCloudByFrame_FrameId(cDataBuffer& buffer);
 	void processSensorPointCloudByFrame_SensorInfo_1_0(cDataBuffer& buffer);
 	void processSensorPointCloudByFrame_SensorInfo_2_0(cDataBuffer& buffer);
-
-	void processPointCloudData_1_0(cDataBuffer& buffer);
-	void processPointCloudData_1_1(cDataBuffer& buffer);
-	void processPointCloudData_FrameId(cDataBuffer& buffer);
-	void processPointCloudData_SensorInfo_1_0(cDataBuffer& buffer);
-	void processPointCloudData_SensorInfo_2_0(cDataBuffer& buffer);
 
 	// These data items have been marked deprecated in the serializer
 	// void processImuData(cDataBuffer& buffer);
