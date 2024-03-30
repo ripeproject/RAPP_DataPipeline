@@ -1,9 +1,24 @@
 
 #include "PointCloudInfo.hpp"
 
+void sPointCloudBlock::clear()
+{
+	coordinate_system = pointcloud::eCOORDINATE_SYSTEM::SENSOR_SEU;
+	kinematic_model = pointcloud::eKINEMATIC_MODEL::UNKNOWN;
+
+	distanceWindow.reset();
+	azimuthWindow.reset();
+	altitudeWindow.reset();
+
+	dimensions.reset();
+
+	path.clear();
+	pointCloud.clear();
+}
 
 void cPointCloudInfo::clear()
 {
+	mPointClouds.clear();
 }
 
 bool cPointCloudInfo::empty() const
@@ -16,23 +31,23 @@ std::size_t cPointCloudInfo::size() const
 	return 0;
 }
 
-/*
-cProcessingInfo::const_iterator cProcessingInfo::begin() const
+cPointCloudInfo::const_iterator cPointCloudInfo::begin() const
 {
-	return mProcessingSteps.begin();
+	return mPointClouds.begin();
 }
 
-cProcessingInfo::const_iterator cProcessingInfo::end() const
+cPointCloudInfo::const_iterator cPointCloudInfo::end() const
 {
-	return mProcessingSteps.end();
+	return mPointClouds.end();
 }
 
-
-void cProcessingInfo::addProcessingInfo(processing_info::sProcessInfo_1_t info)
+void cPointCloudInfo::clearPointClouds()
 {
-	if (mProcessingSteps.empty())
-		mProcessingSteps.push_back(info);
-	else
-		mProcessingSteps.insert(mProcessingSteps.begin(), info);
+	mPointClouds.clear();
 }
-*/
+
+void cPointCloudInfo::addPointCloudInfo(const sPointCloudBlock& info)
+{
+	mPointClouds.push_back(info);
+}
+

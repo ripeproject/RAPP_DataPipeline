@@ -81,7 +81,8 @@ namespace pointcloud
         uint16_t reflectivity = 0;
         uint16_t nir = 0;
 
-        sCloudPoint_t() {}
+        sCloudPoint_t() = default;
+        sCloudPoint_t(const sCloudPoint_t&) = default;
     };
 
     //
@@ -91,7 +92,11 @@ namespace pointcloud
     {
         uint16_t frameID = 0;
 
-        sCloudPoint_FrameID_t() {}
+        sCloudPoint_FrameID_t() = default;
+        sCloudPoint_FrameID_t(const sCloudPoint_FrameID_t&) = default;
+
+        explicit sCloudPoint_FrameID_t(const sCloudPoint_t& p);
+        const sCloudPoint_FrameID_t& operator=(const sCloudPoint_t& p);
     };
 
     //
@@ -102,7 +107,14 @@ namespace pointcloud
         uint16_t chnNum = 0;
         uint16_t pixelNum = 0;
 
-        sCloudPoint_SensorInfo_t() {}
+        sCloudPoint_SensorInfo_t() = default;
+        sCloudPoint_SensorInfo_t(const sCloudPoint_SensorInfo_t&) = default;
+
+        explicit sCloudPoint_SensorInfo_t(const sCloudPoint_t& p);
+        explicit sCloudPoint_SensorInfo_t(const sCloudPoint_FrameID_t& p);
+
+        const sCloudPoint_SensorInfo_t& operator=(const sCloudPoint_t& p);
+        const sCloudPoint_SensorInfo_t& operator=(const sCloudPoint_FrameID_t& p);
     };
 
     //
@@ -146,6 +158,11 @@ namespace pointcloud
 }
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Implementation Details
+///////////////////////////////////////////////////////////////////////////////
+
 inline pointcloud::sPoint2D_t::sPoint2D_t(const pointcloud::sPoint3D_t& p) : X_m(p.X_m), Y_m(p.Y_m)
 {}
 
@@ -155,3 +172,88 @@ inline const pointcloud::sPoint2D_t& pointcloud::sPoint2D_t::operator=(const poi
     Y_m = p.Y_m;
     return *this;
 }
+
+
+inline pointcloud::sCloudPoint_FrameID_t::sCloudPoint_FrameID_t(const pointcloud::sCloudPoint_t& p)
+{
+    X_m = p.X_m;
+    Y_m = p.Y_m;
+    Z_m = p.Z_m;
+    range_mm = p.range_mm;
+    signal = p.signal;
+    reflectivity = p.reflectivity;
+    nir = p.nir;
+    frameID = 0;
+}
+
+inline const pointcloud::sCloudPoint_FrameID_t& pointcloud::sCloudPoint_FrameID_t::operator=(const pointcloud::sCloudPoint_t& p)
+{
+    X_m = p.X_m;
+    Y_m = p.Y_m;
+    Z_m = p.Z_m;
+    range_mm = p.range_mm;
+    signal = p.signal;
+    reflectivity = p.reflectivity;
+    nir = p.nir;
+    frameID = 0;
+    return *this;
+}
+
+inline pointcloud::sCloudPoint_SensorInfo_t::sCloudPoint_SensorInfo_t(const pointcloud::sCloudPoint_t& p)
+{
+    X_m = p.X_m;
+    Y_m = p.Y_m;
+    Z_m = p.Z_m;
+    range_mm = p.range_mm;
+    signal = p.signal;
+    reflectivity = p.reflectivity;
+    nir = p.nir;
+    frameID = 0;
+    chnNum = 0;
+    pixelNum = 0;
+}
+
+inline pointcloud::sCloudPoint_SensorInfo_t::sCloudPoint_SensorInfo_t(const pointcloud::sCloudPoint_FrameID_t& p)
+{
+    X_m = p.X_m;
+    Y_m = p.Y_m;
+    Z_m = p.Z_m;
+    range_mm = p.range_mm;
+    signal = p.signal;
+    reflectivity = p.reflectivity;
+    nir = p.nir;
+    frameID = p.frameID;
+    chnNum = 0;
+    pixelNum = 0;
+}
+
+inline const pointcloud::sCloudPoint_SensorInfo_t& pointcloud::sCloudPoint_SensorInfo_t::operator=(const pointcloud::sCloudPoint_t& p)
+{
+    X_m = p.X_m;
+    Y_m = p.Y_m;
+    Z_m = p.Z_m;
+    range_mm = p.range_mm;
+    signal = p.signal;
+    reflectivity = p.reflectivity;
+    nir = p.nir;
+    frameID = 0;
+    chnNum = 0;
+    pixelNum = 0;
+    return *this;
+}
+
+inline const pointcloud::sCloudPoint_SensorInfo_t& pointcloud::sCloudPoint_SensorInfo_t::operator=(const pointcloud::sCloudPoint_FrameID_t& p)
+{
+    X_m = p.X_m;
+    Y_m = p.Y_m;
+    Z_m = p.Z_m;
+    range_mm = p.range_mm;
+    signal = p.signal;
+    reflectivity = p.reflectivity;
+    nir = p.nir;
+    frameID = p.frameID;
+    chnNum = 0;
+    pixelNum = 0;
+    return *this;
+}
+

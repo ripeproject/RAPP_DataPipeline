@@ -25,7 +25,7 @@ public:
 	virtual void onBeginPointCloudBlock() = 0;
 	virtual void onEndPointCloudBlock() = 0;
 
-	virtual void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) = 0;
+	virtual void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM coordinate_system) = 0;
 	virtual void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) = 0;
 	virtual void onDistanceWindow(double min_dist_m, double max_dist_m) = 0;
 	virtual void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) = 0;

@@ -1,13 +1,11 @@
 #pragma once
 
 #include "PointCloudTypes.hpp"
-
+#include "PointCloudInfo.hpp"
 #include "PointCloudParser.hpp"
 
 #include <memory>
 
-// Forward Declarations
-class cPointCloudInfo;
 
 class cPointCloudInfoLoader : public cPointCloudParser
 {
@@ -16,10 +14,10 @@ public:
 	virtual ~cPointCloudInfoLoader();
 
 protected:
-	void onBeginPointCloudBlock();
-	void onEndPointCloudBlock();
+	void onBeginPointCloudBlock() override;
+	void onEndPointCloudBlock() override;
 
-	void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM config_param) override;
+	void onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM coordinate_system) override;
 	void onKinematicModel(pointcloud::eKINEMATIC_MODEL model) override;
 	void onDistanceWindow(double min_dist_m, double max_dist_m) override;
 	void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) override;
@@ -32,6 +30,13 @@ protected:
 	void onBeginSensorKinematics() override;
 	void onEndSensorKinematics() override;
 	void onSensorKinematicInfo(pointcloud::sSensorKinematicInfo_t point) override;
+
+	void onPointCloudData(cPointCloud pointCloud) override;
+	void onPointCloudData(cPointCloud_FrameId pointCloud) override;
+	void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
+
+	void onBeginPointCloudList() override;
+	void onEndPointCloudList() override;
 
 	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns,
 		cReducedPointCloudByFrame pointCloud) override;
@@ -47,11 +52,12 @@ protected:
 	void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns,
 		cSensorPointCloudByFrame_SensorInfo pointCloud) override;
 
-	void onPointCloudData(cPointCloud pointCloud) override;
-	void onPointCloudData(cPointCloud_FrameId pointCloud) override;
-	void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
-
 private:
 	std::shared_ptr<cPointCloudInfo> mInfo;
+
+	sPointCloudBlock mBlock;
+
+	bool mHasListTag = false;
+	bool mHasBlockTag = false;
 };
 
