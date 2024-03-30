@@ -10,6 +10,9 @@ cPointCloudLoader::cPointCloudLoader(std::weak_ptr<cPointCloudInfo> info)
 cPointCloudLoader::~cPointCloudLoader()
 {}
 
+void cPointCloudLoader::onBeginPointCloudBlock() {}
+void cPointCloudLoader::onEndPointCloudBlock() {}
+
 void cPointCloudLoader::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM coordinate_system)
 {
     mInfo->setCoordinateSystem(coordinate_system);
@@ -18,16 +21,6 @@ void cPointCloudLoader::onCoordinateSystem(pointcloud::eCOORDINATE_SYSTEM coordi
 void cPointCloudLoader::onKinematicModel(pointcloud::eKINEMATIC_MODEL model)
 {
     mInfo->setKinematicModel(model);
-}
-
-void cPointCloudLoader::onSensorAngles(double pitch_deg, double roll_deg, double yaw_deg)
-{
-    mInfo->setSensorAngles(pitch_deg, roll_deg, yaw_deg);
-}
-
-void cPointCloudLoader::onKinematicSpeed(double vx_mps, double vy_mps, double vz_mps)
-{
-    mInfo->setKinematicSpeed(vx_mps, vy_mps, vz_mps);
 }
 
 void cPointCloudLoader::onDistanceWindow(double min_dist_m, double max_dist_m)
@@ -50,11 +43,6 @@ void cPointCloudLoader::onDimensions(double x_min_m, double x_max_m,
 {
 }
 
-void cPointCloudLoader::onImuData(pointcloud::imu_data_t data)
-{
-    mInfo->setImuData(data);
-}
-
 void cPointCloudLoader::onBeginSensorKinematics()
 {
     mInfo->clearSensorKinematics();
@@ -67,6 +55,24 @@ void cPointCloudLoader::onSensorKinematicInfo(pointcloud::sSensorKinematicInfo_t
 {
     mInfo->addSensorKinematicPoint(point);
 }
+
+void cPointCloudLoader::onPointCloudData(cPointCloud pointCloud)
+{
+    mInfo->addPointCloudData(pointCloud);
+}
+
+void cPointCloudLoader::onPointCloudData(cPointCloud_FrameId pointCloud)
+{
+    mInfo->addPointCloudData(pointCloud);
+}
+
+void cPointCloudLoader::onPointCloudData(cPointCloud_SensorInfo pointCloud)
+{
+    mInfo->addPointCloudData(pointCloud);
+}
+
+void cPointCloudLoader::onBeginPointCloudList() {}
+void cPointCloudLoader::onEndPointCloudList() {}
 
 void cPointCloudLoader::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
 {
@@ -96,21 +102,6 @@ void cPointCloudLoader::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns
 void cPointCloudLoader::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
 {
     mInfo->addPointCloudData(frameID, timestamp_ns, pointCloud);
-}
-
-void cPointCloudLoader::onPointCloudData(cPointCloud pointCloud)
-{
-    mInfo->addPointCloudData(pointCloud);
-}
-
-void cPointCloudLoader::onPointCloudData(cPointCloud_FrameId pointCloud)
-{
-    mInfo->addPointCloudData(pointCloud);
-}
-
-void cPointCloudLoader::onPointCloudData(cPointCloud_SensorInfo pointCloud)
-{
-    mInfo->addPointCloudData(pointCloud);
 }
 
 

@@ -19,8 +19,16 @@ public:
 	int32_t getPlotNumber() const;
 
 	const std::string& getPlotName() const;
-	const std::string& getEvent() const;
 	const std::string& getDescription() const;
+
+	const std::string& getSpecies() const;
+	const std::string& getCultivar() const;
+	const std::string& getConstructName() const;
+	const std::string& getEvent() const;
+	const std::string& getPotLabel() const;
+	const std::string& getSeedGeneration() const;
+	const std::string& getCopyNumber() const;
+	const std::vector<std::string>& getTreatments() const;
 
 	rfm::rappPoint2D_t getNorthEastCorner() const;
 	rfm::rappPoint2D_t getNorthWestCorner() const;
@@ -53,6 +61,13 @@ protected:
 	std::string mPlotName;
 	std::string mEvent;
 	std::string mDescription;
+	std::string mSpecies;
+	std::string mCultivar;
+	std::string mConstructName;
+	std::string mPotLabel;
+	std::string mSeedGeneration;
+	std::string mCopyNumber;
+	std::vector<std::string> mTreatments;
 
 	std::int32_t mEastBoundary_mm = 0;
 	std::int32_t mWestBoundary_mm = 0;

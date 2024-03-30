@@ -20,17 +20,39 @@ bool cPlotBoundary::load(const nlohmann::json& plot_info)
 
 	if (plot_info.contains("name"))
 		mPlotName = plot_info["name"];
-	//else
-	//{
-	//	mPlotName = "Plot ";
-	//	mPlotName += std::to_string(mPlotNumber);
-	//}
 
 	if (plot_info.contains("event"))
 		mEvent = plot_info["event"];
 
 	if (plot_info.contains("description"))
 		mDescription = plot_info["description"];
+
+	if (plot_info.contains("species"))
+		mSpecies = plot_info["species"];
+
+	if (plot_info.contains("cultivar"))
+		mCultivar = plot_info["cultivar"];
+
+	if (plot_info.contains("construct name"))
+		mConstructName = plot_info["construct name"];
+
+	if (plot_info.contains("pot label"))
+		mPotLabel = plot_info["pot label"];
+
+	if (plot_info.contains("seed generation"))
+		mSeedGeneration = plot_info["seed generation"];
+
+	if (plot_info.contains("copy number"))
+		mCopyNumber = plot_info["copy number"];
+
+	if (plot_info.contains("treatment"))
+	{
+		mTreatments.clear();
+		mTreatments.push_back(plot_info["treatment"]);
+	}
+
+	if (plot_info.contains("treatments"))
+		mTreatments = plot_info[""];
 
 	auto corners = plot_info["corners"];
 
@@ -135,14 +157,49 @@ const std::string& cPlotBoundary::getPlotName() const
 	return mPlotName;
 }
 
+const std::string& cPlotBoundary::getDescription() const
+{
+	return mDescription;
+}
+
+const std::string& cPlotBoundary::getSpecies() const
+{
+	return mSpecies;
+}
+
+const std::string& cPlotBoundary::getCultivar() const
+{
+	return mCultivar;
+}
+
+const std::string& cPlotBoundary::getConstructName() const
+{
+	return mConstructName;
+}
+
 const std::string& cPlotBoundary::getEvent() const
 {
 	return mEvent;
 }
 
-const std::string& cPlotBoundary::getDescription() const
+const std::string& cPlotBoundary::getPotLabel() const
 {
-	return mDescription;
+	return mPotLabel;
+}
+
+const std::string& cPlotBoundary::getSeedGeneration() const
+{
+	return mSeedGeneration;
+}
+
+const std::string& cPlotBoundary::getCopyNumber() const
+{
+	return mCopyNumber;
+}
+
+const std::vector<std::string>& cPlotBoundary::getTreatments() const
+{
+	return mTreatments;
 }
 
 rfm::rappPoint2D_t cPlotBoundary::getNorthEastCorner() const
