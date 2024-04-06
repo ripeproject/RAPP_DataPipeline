@@ -23,12 +23,17 @@ void cPointCloudInfo::clear()
 
 bool cPointCloudInfo::empty() const
 {
-	return true;
+	return mPointClouds.empty();
 }
 
 std::size_t cPointCloudInfo::size() const
 {
-	return 0;
+	return mPointClouds.size();
+}
+
+cPointCloudInfo::const_reference cPointCloudInfo::front() const
+{
+	return mPointClouds.front();
 }
 
 cPointCloudInfo::const_iterator cPointCloudInfo::begin() const

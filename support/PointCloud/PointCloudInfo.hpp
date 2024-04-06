@@ -83,6 +83,8 @@ public:
 	bool empty() const;
 	std::size_t size() const;
 
+	const_reference front() const;
+
 	const_iterator begin() const;
 	const_iterator end() const;
 
