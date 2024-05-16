@@ -67,6 +67,7 @@ public:
 	void writeEndPlotInfoBlock();
 
 	void writeID(int id);
+	void writeID(int id, int sub_id);
 	void writeName(const std::string& name);
 	void writeDescription(const std::string& description);
 

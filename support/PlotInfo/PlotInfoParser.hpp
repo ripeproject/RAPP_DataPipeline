@@ -26,6 +26,7 @@ public:
 	cBlockID& blockID() override;
 
 	virtual void onPlotID(int id) = 0;
+	virtual void onSubPlotID(int id) = 0;
 	virtual void onName(const std::string& name) = 0;
 	virtual void onDescription(const std::string& description) = 0;
 
@@ -47,6 +48,7 @@ protected:
 
 protected:
 	virtual void processPlotID(cDataBuffer& buffer);
+	virtual void processSubPlotID(cDataBuffer& buffer);
 	virtual void processName(cDataBuffer& buffer);
 	virtual void processDescription(cDataBuffer& buffer);
 

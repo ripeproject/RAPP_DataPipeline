@@ -85,6 +85,23 @@ void cPlotInfoSerializer::writeID(int id)
     writeBlock(*mBlockID, mDataBuffer);
 }
 
+void cPlotInfoSerializer::writeID(int id, int sub_id)
+{
+    writeID(id);
+
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::SUB_PLOT_ID);
+
+    mDataBuffer.clear();
+    mDataBuffer << static_cast<int32_t>(sub_id);
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing writeID sub id data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
+
 void cPlotInfoSerializer::writeName(const std::string& name)
 {
     setVersion(1, 0);

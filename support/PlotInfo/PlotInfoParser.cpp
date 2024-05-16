@@ -55,6 +55,9 @@ void cPlotInfoParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::DESCRIPTION:
         processDescription(buffer);
         break;
+    case DataID::SUB_PLOT_ID:
+        processSubPlotID(buffer);
+        break;
     }
 }
 
@@ -66,6 +69,16 @@ void cPlotInfoParser::processPlotID(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processPlotID.");
 
     onPlotID(id);
+}
+
+void cPlotInfoParser::processSubPlotID(cDataBuffer& buffer)
+{
+    int id = buffer.get<int32_t>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processSubPlotID.");
+
+    onSubPlotID(id);
 }
 
 void cPlotInfoParser::processName(cDataBuffer& buffer)
