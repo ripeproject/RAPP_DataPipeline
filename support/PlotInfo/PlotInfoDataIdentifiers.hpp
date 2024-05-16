@@ -32,8 +32,9 @@ namespace plot_info
         CONSTRUCT_NAME,
 		POT_LABEL,
 		SEED_GENERATION,
-		COPY_NUMBER
-    };
+		COPY_NUMBER,
+		SUB_PLOT_ID,
+	};
 }
 
 
