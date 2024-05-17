@@ -80,6 +80,10 @@ public:
 	void writeConstructName(const std::string& name);
 	void writeEvent(const std::string& event);
 
+	void writePotLabel(const std::string& pot_label);
+	void writeSeedGeneration(const std::string& seed_generation);
+	void writeCopyNumber(const std::string& copy_number);
+
 	void writeDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m, double z_min_m, double z_max_m);
 

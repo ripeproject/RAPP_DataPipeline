@@ -172,6 +172,48 @@ void cPlotInfoSerializer::writeEvent(const std::string& event)
     writeBlock(*mBlockID, mDataBuffer);
 }
 
+void cPlotInfoSerializer::writePotLabel(const std::string& pot_label)
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::POT_LABEL);
+
+    mDataBuffer.clear();
+    mDataBuffer << pot_label;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing writePotLabel data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
+void cPlotInfoSerializer::writeSeedGeneration(const std::string& seed_generation)
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::SEED_GENERATION);
+
+    mDataBuffer.clear();
+    mDataBuffer << seed_generation;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing writeSeedGeneration data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
+void cPlotInfoSerializer::writeCopyNumber(const std::string& copy_number)
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::COPY_NUMBER);
+
+    mDataBuffer.clear();
+    mDataBuffer << copy_number;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing writeCopyNumber data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
 void cPlotInfoSerializer::writeTreatment(const std::string& treatment)
 {
     setVersion(1, 0);
