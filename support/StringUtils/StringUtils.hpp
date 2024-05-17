@@ -63,4 +63,9 @@ namespace nStringUtils
 	 */
 	std::string compactFilename(const std::string& filename, std::size_t max_len);
 
+	/**
+	 * Checks to see if a directory is a standard month name used in the CERES framework
+	 */
+	bool isMonthDirectory(const std::string& dir);
+
 } // End of Namespace nStringUtils
