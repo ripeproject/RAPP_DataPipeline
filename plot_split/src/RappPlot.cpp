@@ -6,7 +6,10 @@
 #include <numeric>
 
 
-cRappPlot::cRappPlot(int plotId) : mID(plotId)
+cRappPlot::cRappPlot(int plotId) : mID(plotId), mSubID(0)
+{}
+
+cRappPlot::cRappPlot(int plotId, int subPlotId) : mID(plotId), mSubID(subPlotId)
 {}
 
 cRappPlot::~cRappPlot()
@@ -14,9 +17,17 @@ cRappPlot::~cRappPlot()
 
 
 int cRappPlot::id() const { return mID; }
+int cRappPlot::subPlotId() const { return mSubID; }
+
 const std::string& cRappPlot::name() const { return mName; }
 const std::string& cRappPlot::event() const { return mEvent; }
 const std::string& cRappPlot::description() const { return mDescription; }
+const std::string& cRappPlot::species() const { return mSpecies; }
+const std::string& cRappPlot::cultivar() const { return mCultivar; }
+const std::string& cRappPlot::constructName() const { return mConstructName; }
+const std::string& cRappPlot::potLabel() const { return mPotLabel; }
+const std::string& cRappPlot::seedGeneration() const { return mSeedGeneration; }
+const std::string& cRappPlot::copyNumber() const { return mCopyNumber; }
 
 
 bool cRappPlot::empty() const
@@ -38,6 +49,36 @@ void cRappPlot::setEvent(const std::string& event)
 void cRappPlot::setDescription(const std::string& description)
 {
 	mDescription = description;
+}
+
+void cRappPlot::setSpecies(const std::string& species)
+{
+	mSpecies = species;
+}
+
+void cRappPlot::setCultivar(const std::string& cultivar)
+{
+	mCultivar = cultivar;
+}
+
+void cRappPlot::setConstructName(const std::string& constructName)
+{
+	mConstructName = constructName;
+}
+
+void cRappPlot::setPotLabel(const std::string& potLabel)
+{
+	mPotLabel = potLabel;
+}
+
+void cRappPlot::setSeedGeneration(const std::string& seedGeneration)
+{
+	mSeedGeneration = seedGeneration;
+}
+
+void cRappPlot::setCopyNumber(const std::string& copyNumber)
+{
+	mCopyNumber = copyNumber;
 }
 
 

@@ -17,15 +17,17 @@
 
 // Forward Declarations
 class cPlotBoundaries;
+class cPlotConfigPlotInfo;
 class cProcessingInfoSerializer;
 class cExperimentSerializer;
+class cPlotConfigScan;
 
 
 class cFileProcessor
 {
 public:
 	cFileProcessor(int id, std::filesystem::directory_entry in,
-				std::filesystem::path out);
+				std::filesystem::path out, const cPlotConfigScan& plot_info);
 	~cFileProcessor();
 
 	void savePlotsInSingleFile(bool singleFile);
@@ -35,7 +37,7 @@ public:
 	void enableSavingFrameIDs(bool enableFrameIDs);
 	void enableSavingPixelInfo(bool enablePixelInfo);
 
-	void setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info);
+//	void setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info);
 
 	void process_file();
 
@@ -55,7 +57,12 @@ private:
 	void writeProcessingInfo(cProcessingInfoSerializer& serializer);
 	void writeExperimentInfo(cExperimentSerializer& serializer);
 
+	void fillPlotInformation(cRappPlot* plot, const cPlotConfigPlotInfo& info);
+
 private:
+
+	const cPlotConfigScan& mPlotInfo;
+
 	const int mID;
 
 	bool mSavePlotsInSingleFile = false;
@@ -73,7 +80,7 @@ private:
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
 
-	std::shared_ptr<cPlotBoundaries> mPlotInfo;
+//	std::shared_ptr<cPlotBoundaries> mPlotInfo;
 
 	std::shared_ptr<cProcessingInfo> mProcessingInfo;
 	std::shared_ptr<cExperimentInfo> mExpInfo;

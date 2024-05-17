@@ -6,6 +6,7 @@ set(PLOT_SPLIT_COMMON_FILES
 	ParserExceptions.hpp
 
 	datatypes.hpp
+	datatypes.cpp
 
 	RappPointCloud.hpp
 	RappPointCloud.cpp
@@ -21,6 +22,24 @@ set(PLOT_SPLIT_COMMON_FILES
 
 	FileProcessor.hpp
 	FileProcessor.cpp
+
+	PlotConfigFile.hpp
+	PlotConfigFile.cpp
+
+	PlotConfigOptions.hpp
+	PlotConfigOptions.cpp
+
+	PlotConfigScan.hpp
+	PlotConfigScan.cpp
+
+	PlotConfigBoundary.hpp
+	PlotConfigBoundary.cpp
+
+	PlotConfigIsolationMethod.hpp
+	PlotConfigIsolationMethod.cpp
+
+	PlotSplitUtils.hpp
+	PlotSplitUtils.cpp
 
 	PointCloudInfo.hpp
 	PointCloudInfo.cpp

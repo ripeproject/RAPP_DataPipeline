@@ -39,14 +39,32 @@ namespace rfm
 		std::int32_t x_mm = 0;
 		std::int32_t y_mm = 0;
 		std::int32_t z_mm = 0;
+
+		bool operator==(const rappPoint_t& rhs) const
+		{
+			return (x_mm == rhs.x_mm) && (y_mm == rhs.y_mm) && (z_mm == rhs.z_mm);
+		}
+
+		bool operator!=(const rappPoint_t& rhs) const
+		{
+			return ! operator==(rhs);
+		}
 	};
 
-	struct rappPoint2_t
+	struct rappPoint2_t : public rappPoint_t
 	{
-		std::int32_t x_mm = 0;
-		std::int32_t y_mm = 0;
-		std::int32_t z_mm = 0;
 		std::int32_t h_mm = INVALID_HEIGHT;
+
+		rappPoint2_t operator=(const rappPoint_t& rhs)
+		{
+			x_mm = rhs.x_mm;
+			y_mm = rhs.y_mm;
+			z_mm = rhs.z_mm;
+
+			h_mm = INVALID_HEIGHT;
+
+			return *this;
+		}
 	};
 
 	struct rappSpeeds_t
@@ -140,5 +158,16 @@ namespace rfm
 		sPoint3D_t& operator=(const pointcloud::sCloudPoint_SensorInfo_t& rhs);
 	};
 
+	struct sPlotBoundingBox_t
+	{
+		int32_t	plotNumber = 0;
+		rappPoint2D_t northEastCorner;
+		rappPoint2D_t northWestCorner;
+		rappPoint2D_t southEastCorner;
+		rappPoint2D_t southWestCorner;
+	};
 }
+
+enum class ePlotOrientation { eWEST_TO_EAST, eEAST_TO_WEST, eNORTH_TO_SOUTH, eSOUTH_TO_NORTH };
+enum class ePlotIsolationMethod { NONE, CENTER_OF_HEIGHT, POUR, ITERATIVE };
 

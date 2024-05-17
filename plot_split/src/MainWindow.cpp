@@ -9,6 +9,7 @@
 #include <wx/aui/auibook.h>
 #include <wx/aboutdlg.h>
 #include <wx/thread.h>
+#include <wx/msgdlg.h>
 #include <wx/config.h>
 #include <wx/filename.h>
 
@@ -101,18 +102,20 @@ void complete_file_progress(const int id)
 enum
 {
 	// Custom submenu items
-	ID_RECONNECT = wxID_HIGHEST + 1,
+	ID_COMPLETE = wxID_HIGHEST + 1,
 
 };
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
+wxDEFINE_EVENT(COMPUTATION_COMPLETE, wxCommandEvent);
 
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 wxBEGIN_EVENT_TABLE(cMainWindow, wxPanel)
+	EVT_COMMAND(wxID_ANY, COMPUTATION_COMPLETE, cMainWindow::OnComplete)
 wxEND_EVENT_TABLE()
 
 
@@ -140,6 +143,11 @@ cMainWindow::~cMainWindow()
 	config->Write("Files/Source", mSrcDirectory);
 	config->Write("Files/Destination", mDstDirectory);
 	config->Write("Files/ConfigurationFile", mConfigFileName);
+}
+
+void cMainWindow::OnComplete(wxCommandEvent& WXUNUSED(event))
+{
+	mpSplitButton->Enable();
 }
 
 void cMainWindow::CreateControls()
@@ -264,7 +272,8 @@ void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 	mSrcDirectory = dlg.GetPath().ToStdString();
 	mpSrcDirTextCtrl->SetValue(mSrcDirectory);
 
-	if ((mConfigData && !mConfigData->empty()) && (!mDstDirectory.IsEmpty()))
+//	if ((mConfigData && !mConfigData->empty()) && (!mDstDirectory.IsEmpty()))
+	if (!mConfigData.empty() && !mDstDirectory.IsEmpty())
 		mpSplitButton->Enable();
 }
 
@@ -279,7 +288,8 @@ void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 	mDstDirectory = dlg.GetPath().ToStdString();
 	mpLoadDstDir->SetValue(mDstDirectory);
 
-	if ((mConfigData && !mConfigData->empty()) && (!mSrcDirectory.IsEmpty()))
+//	if ((mConfigData && !mConfigData->empty()) && (!mSrcDirectory.IsEmpty()))
+	if (!mConfigData.empty() && !mSrcDirectory.IsEmpty())
 		mpSplitButton->Enable();
 }
 
@@ -297,9 +307,10 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 
 	std::string config_file = dlg.GetPath().ToStdString();
 
-	mConfigData = std::make_unique<cConfigFileData>(config_file);
+//	mConfigData = std::make_unique<cConfigFileData>(config_file);
 
-	if (!mConfigData->load())
+//	if (!mConfigData->load())
+	if (!mConfigData.open(config_file))
 	{
 		mpLoadConfigFile->SetValue("");
 		mpSplitButton->Disable();
@@ -309,6 +320,7 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 	mConfigFileName = dlg.GetPath();
 	mpLoadConfigFile->SetValue(mConfigFileName);
 
+/*
 	mpSavePlotsInSingleFile->SetValue(mConfigData->savePlotsInSingleFile());
 
 	mpEnableFrameIDs->SetValue(mConfigData->saveFrameIds());
@@ -316,6 +328,17 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 
 	mpSavePlyFiles->SetValue(mConfigData->savePlysFiles());
 	mpPlyUseBinaryFormat->SetValue(mConfigData->plysUseBinaryFormat());
+*/
+
+	const auto& options = mConfigData.getOptions();
+
+	mpSavePlotsInSingleFile->SetValue(options.getSavePlotsInSingleFile());
+
+	mpEnableFrameIDs->SetValue(options.getSaveFrameIds());
+	mpEnablePixelInfo->SetValue(options.getSavePixelInfo());
+
+	mpSavePlyFiles->SetValue(options.getSavePlyFiles());
+	mpPlyUseBinaryFormat->SetValue(options.getPlysUseBinaryFormat());
 
 	if (!mDstDirectory.IsEmpty() && !mSrcDirectory.IsEmpty())
 		mpSplitButton->Enable();
@@ -323,16 +346,31 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 
 void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 {
+	using namespace std::filesystem;
 	using namespace nStringUtils;
 
-	const std::filesystem::path input{ mSrcDirectory.ToStdString() };
+
+	std::string input_directory = mSrcDirectory.ToStdString();
+	std::string output_directory = mDstDirectory.ToStdString();
+
+	const std::filesystem::path input{ input_directory };
 
 	std::vector<directory_entry> files_to_process;
+
+	std::string month_dir;
 
 	/*
 	 * Create list of files to process
 	 */
 	{
+		if (input.has_parent_path())
+		{
+			month_dir = input.filename().string();
+			if (!isMonthDirectory(month_dir))
+				month_dir.clear();
+		}
+
+		// Scan input directory for all CERES files to operate on
 		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 		{
 			if (!dir_entry.is_regular_file())
@@ -347,6 +385,31 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 
 			files_to_process.push_back(dir_entry);
 		}
+	}
+
+	/*
+	 * Make sure the output directory exists
+	 */
+	std::filesystem::path output{ output_directory };
+
+	std::filesystem::directory_entry output_dir;
+
+	{
+		if (!month_dir.empty())
+		{
+			std::string last_dir;
+			if (output.has_parent_path())
+			{
+				last_dir = output.filename().string();
+			}
+
+			if (month_dir != last_dir)
+			{
+				output /= month_dir;
+			}
+		}
+
+		output_dir = std::filesystem::directory_entry{ output };
 	}
 
 	if (files_to_process.empty())
@@ -368,19 +431,20 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
-		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-		if (out_file.empty())
-		{
-			out_file = mDstDirectory.ToStdString();
-			out_file /= fe.filename;
-		}
+		std::filesystem::path out_file = output_dir;
 
-		if (!mConfigData->hasPlotInfo(in_file.path().filename().string()))
+		if (out_file.empty())
+			out_file = mDstDirectory.ToStdString();
+
+		out_file /= fe.filename;
+
+		auto it = mConfigData.find_by_filename(in_file.path().filename().string());
+		if (it == mConfigData.end())
 			continue;
 
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file, *it);
 
 		fp->savePlotsInSingleFile(savePlotsInSingleFile);
 		fp->savePlyFiles(savePlyFiles);
@@ -388,9 +452,25 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 		fp->enableSavingFrameIDs(enableFrameIds);
 		fp->enableSavingPixelInfo(enablePixelInfo);
 
-		fp->setPlotInfo(mConfigData->getPlotInfo(in_file.path().filename().string()));
+//Fix		fp->setPlotInfo(mConfigData->getPlotInfo(in_file.path().filename().string()));
 
 		mFileProcessors.push(fp);
+	}
+
+	mpSplitButton->Disable();
+
+	if (numFilesToProcess > 1)
+	{
+		wxString msg = "Processing ";
+		msg += wxString::Format("%d", numFilesToProcess);
+		msg += " files from ";
+		msg += mSrcDirectory;
+		wxLogMessage(msg);
+	}
+
+	if (!output_dir.exists() && (numFilesToProcess > 1))
+	{
+		std::filesystem::create_directories(output_dir);
 	}
 
 	startDataProcessing();
@@ -447,7 +527,11 @@ wxThread::ExitCode cMainWindow::Entry()
 	msg += mSrcDirectory;
 	wxLogMessage(msg);
 
-	return (wxThread::ExitCode)0;
+	auto event = new wxCommandEvent(COMPUTATION_COMPLETE);
+
+	wxQueueEvent(this, event);
+
+	return (wxThread::ExitCode) 0;
 }
 
 

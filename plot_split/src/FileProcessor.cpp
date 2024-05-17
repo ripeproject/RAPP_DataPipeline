@@ -5,6 +5,10 @@
 #include "PointCloudLoader.hpp"
 
 #include "PlotBoundaries.hpp"
+#include "PlotConfigScan.hpp"
+
+#include "PlotSplitUtils.hpp"
+
 #include "StringUtils.hpp"
 #include "ExportUtils.hpp"
 
@@ -132,9 +136,9 @@ namespace
 
 
 cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
-                                std::filesystem::path out) 
+                                std::filesystem::path out, const cPlotConfigScan& plot_info)
 :
-    mID(id)
+    mID(id), mPlotInfo(plot_info)
 {
     mInputFile = in;
     mOutputFile = out;
@@ -195,10 +199,12 @@ void cFileProcessor::enableSavingPixelInfo(bool enablePixelInfo)
     mEnablePixelInfo = enablePixelInfo;
 }
 
+/*
 void cFileProcessor::setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info)
 {
     mPlotInfo = plot_info;
 }
+*/
 
 void cFileProcessor::process_file()
 {
@@ -318,45 +324,124 @@ bool cFileProcessor::loadFileData()
 //-----------------------------------------------------------------------------
 void cFileProcessor::doPlotSplit()
 {
-    auto n = mPointCloudInfo->numPointClouds();
+    auto n = mPointCloudInfo->numPointClouds() * mPlotInfo.size();
     int i = 0;
 
     for (auto pointCloud : mPointCloudInfo->getPointClouds())
     {
-        update_progress(mID, static_cast<int>((100.0 * i++) / n));
-
-        pointCloud.trim_outside(mPlotInfo->getBoundingBox());
-
-        auto info_plots = mPlotInfo->getPlots();
-
-        for (auto plot_info : info_plots)
+        for (const auto& plotInfo : mPlotInfo)
         {
-            std::unique_ptr<cRappPointCloud> plotPointCloud = std::make_unique<cRappPointCloud>(pointCloud);
+            update_progress(mID, static_cast<int>((100.0 * i++) / n));
 
-            plotPointCloud->trim_outside(plot_info->getBoundingBox());
+            const auto& bounds = plotInfo.getBounds();
+            bool hasSubPlot = bounds.hasSubPlots();
 
-            plotPointCloud->trim_outside(plot_info->getPlotBounds());
+            const auto& method = plotInfo.getIsolationMethod();
 
-            if (mEnableFrameIDs)
-                plotPointCloud->enableFrameIDs();
-            else
-                plotPointCloud->disableFrameIDs();
+            switch (method.getMethod())
+            {
+            case ePlotIsolationMethod::NONE:
+            {
+                {
+                    auto plotPointCloud = isolate_basic(pointCloud, bounds.getBoundingBox());
 
-            if (mEnablePixelInfo)
-                plotPointCloud->enablePixelInfo();
-            else
-                plotPointCloud->disablePixelInfo();
+                    cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
 
-            cRappPlot* plot = new cRappPlot(plot_info->getPlotNumber());
+                    fillPlotInformation(plot, plotInfo);
 
-            plot->setPlotName(plot_info->getPlotName());
-            plot->setEvent(plot_info->getEvent());
-            plot->setDescription(plot_info->getDescription());
-            plot->setPointCloud(*plotPointCloud);
+                    plot->setPointCloud(plotPointCloud);
 
-            mPlots.push_back(plot);
+                    mPlots.push_back(plot);
+                }
+
+                if (hasSubPlot)
+                {
+                    auto plotPointClouds = isolate_basic(pointCloud, bounds.getBoundingBox(), 
+                        bounds.getNumOfSubPlots(), bounds.getSubPlotOrientation(), 
+                        method.getPlotWidth_mm(), method.getPlotLength_mm());
+
+                    int subPlotId = 0;
+                    for (const auto& plotPointCloud : plotPointClouds)
+                    {
+                        cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
+
+                        fillPlotInformation(plot, plotInfo);
+
+                        plot->setPointCloud(plotPointCloud);
+
+                        mPlots.push_back(plot);
+
+                    }
+
+                }
+                break;
+            }
+            case ePlotIsolationMethod::CENTER_OF_HEIGHT:
+            {
+                if (hasSubPlot)
+                {
+                    {
+                        auto plotPointCloud = isolate_basic(pointCloud, bounds.getBoundingBox());
+
+                        cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
+
+                        fillPlotInformation(plot, plotInfo);
+
+                        plot->setPointCloud(plotPointCloud);
+
+                        mPlots.push_back(plot);
+                    }
+
+                    auto plotPointClouds = isolate_center_of_height(pointCloud, bounds.getBoundingBox(),
+                        bounds.getNumOfSubPlots(), bounds.getSubPlotOrientation(),
+                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct());
+
+                    int subPlotId = 0;
+                    for (const auto& plotPointCloud : plotPointClouds)
+                    {
+                        cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
+
+                        fillPlotInformation(plot, plotInfo);
+
+                        plot->setPointCloud(plotPointCloud);
+
+                        mPlots.push_back(plot);
+
+                    }
+                }
+                else
+                {
+                    auto plotPointCloud = isolate_center_of_height(pointCloud, bounds.getBoundingBox(),
+                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct());
+
+                    cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
+
+                    fillPlotInformation(plot, plotInfo);
+
+                    plot->setPointCloud(plotPointCloud);
+
+                    mPlots.push_back(plot);
+                }
+            }
+            }
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::fillPlotInformation(cRappPlot* plot, const cPlotConfigPlotInfo& info)
+{
+    if (!plot) return;
+
+    plot->setPlotName(info.getPlotName());
+    plot->setEvent(info.getEvent());
+    plot->setDescription(info.getDescription());
+    plot->setSpecies(info.getSpecies());
+    plot->setCultivar(info.getCultivar());
+    plot->setConstructName(info.getConstructName());
+    plot->setPotLabel(info.getPotLabel());
+    plot->setSeedGeneration(info.getSeedGeneration());
+    plot->setCopyNumber(info.getCopyNumber());
 }
 
 //-----------------------------------------------------------------------------
@@ -396,7 +481,11 @@ void cFileProcessor::savePlotFile()
         plotInfoSerializer.setBufferCapacity(plot->data().size() * sizeof(cRappPlot::value_type));
 
         update_progress(mID, static_cast<int>((100.0 * i++) / n));
-        plotInfoSerializer.writeID(plot->id());
+
+        if (plot->subPlotId() > 0)
+            plotInfoSerializer.writeID(plot->id(), plot->subPlotId());
+        else
+            plotInfoSerializer.writeID(plot->id());
 
         if (!plot->name().empty())
             plotInfoSerializer.writeName(plot->name());
@@ -407,7 +496,24 @@ void cFileProcessor::savePlotFile()
         if (!plot->description().empty())
             plotInfoSerializer.writeDescription(plot->description());
 
-        plotInfoSerializer.writeDescription(plot->description());
+        if (!plot->species().empty())
+            plotInfoSerializer.writeSpecies(plot->species());
+
+        if (!plot->cultivar().empty())
+            plotInfoSerializer.writeCultivar(plot->cultivar());
+
+        if (!plot->constructName().empty())
+            plotInfoSerializer.writeConstructName(plot->constructName());
+
+        if (!plot->potLabel().empty())
+            plotInfoSerializer.writePotLabel(plot->potLabel());
+
+        if (!plot->seedGeneration().empty())
+            plotInfoSerializer.writeSeedGeneration(plot->seedGeneration());
+
+        if (!plot->copyNumber().empty())
+            plotInfoSerializer.writeCopyNumber(plot->copyNumber());
+
 
         if (plot->pointCloud().hasPixelInfo())
         {
@@ -485,7 +591,10 @@ void cFileProcessor::savePlotFiles()
 
         writeExperimentInfo(experimentSerializer);
 
-        plotInfoSerializer.writeID(plot->id());
+        if (plot->subPlotId() > 0)
+            plotInfoSerializer.writeID(plot->id(), plot->subPlotId());
+        else
+            plotInfoSerializer.writeID(plot->id());
 
         if (!plot->name().empty())
             plotInfoSerializer.writeName(plot->name());
@@ -496,7 +605,24 @@ void cFileProcessor::savePlotFiles()
         if (!plot->description().empty())
             plotInfoSerializer.writeDescription(plot->description());
 
-        plotInfoSerializer.writeDescription(plot->description());
+        if (!plot->species().empty())
+            plotInfoSerializer.writeSpecies(plot->species());
+
+        if (!plot->cultivar().empty())
+            plotInfoSerializer.writeCultivar(plot->cultivar());
+
+        if (!plot->constructName().empty())
+            plotInfoSerializer.writeConstructName(plot->constructName());
+
+        if (!plot->potLabel().empty())
+            plotInfoSerializer.writePotLabel(plot->potLabel());
+
+        if (!plot->seedGeneration().empty())
+            plotInfoSerializer.writeSeedGeneration(plot->seedGeneration());
+
+        if (!plot->copyNumber().empty())
+            plotInfoSerializer.writeCopyNumber(plot->copyNumber());
+
 
         if (plot->pointCloud().hasPixelInfo())
         {
@@ -549,6 +675,12 @@ void cFileProcessor::savePlyFiles()
         std::string filename = mOutputFile.string();
         filename += "_Plot";
         filename += std::to_string(plot->id());
+
+        if (plot->subPlotId() > 0)
+        {
+            filename += ".";
+            filename += std::to_string(plot->subPlotId());
+        }
 
         if (!plot->name().empty())
         {

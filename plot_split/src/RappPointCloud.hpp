@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <cassert>
+#include <string>
 
 
 /**
@@ -42,6 +43,9 @@ public:
 
 	cRappPointCloud& operator=(const cRappPointCloud& pc) = default;
 
+	const std::string& name() const;
+	void setName(const std::string&);
+
 	int id() const;
 
 	bool hasFrameIDs() const;
@@ -57,6 +61,7 @@ public:
 
 	size_type size() const;
 
+	void push_back(const value_type& value);
 	void addPoint(const rfm::sPoint3D_t& cloudPoint);
 
 	const cRappPointCloud& operator+=(const cRappPointCloud& pc);
@@ -79,9 +84,12 @@ public:
 
 	rfm::sPoint3D_t getPoint(int x_mm, int y_mm, int r_mm) const;
 
+	bool contains(const rfm::sPlotBoundingBox_t& box);
+
 	void rotate(double yaw_deg, double pitch_deg, double roll_deg);
 	void translate(int dx_mm, int dy_mm, int dz_mm);
 
+	void trim_outside(const rfm::sPlotBoundingBox_t& box);
 	void trim_outside(pointcloud::sBoundingBox_t box);
 
 	void trim_below(int z_mm);
@@ -103,7 +111,8 @@ public:
 	const_reverse_iterator rend() const { return mCloud.rend(); }
 	const_reverse_iterator crend() { return mCloud.crend(); }
 
-	rfm::sPoint3D_t operator[](int i) const { return mCloud[i]; }
+	rfm::sPoint3D_t& operator[](int i)       { return mCloud[i]; }
+	rfm::sPoint3D_t  operator[](int i) const { return mCloud[i]; }
 
     const vCloud_t& data() const { return mCloud; }
 
@@ -128,6 +137,8 @@ private:
 
 	int mMinZ_mm = 0;
 	int mMaxZ_mm = 0;
+
+	std::string mName;
 
 	rfm::sCentroid_t mCentroid;
 

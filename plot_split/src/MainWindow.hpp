@@ -9,6 +9,7 @@
 #endif
 
 #include "ConfigFileData.hpp"
+#include "PlotConfigFile.hpp"
 
 #include "../wxCustomWidgets/FileProgressCtrl.hpp"
 
@@ -33,6 +34,7 @@ public:
 	// event handlers (these functions should _not_ be virtual)
 
 protected:
+	void OnComplete(wxCommandEvent& event);
 	void OnValidateSrc(wxFocusEvent& event);
 	void OnSrcBrowse(wxCommandEvent& event);
 	void OnDstBrowse(wxCommandEvent& event);
@@ -80,7 +82,8 @@ private:
 	wxString mDstDirectory;
 	wxString mConfigFileName;
 
-	std::unique_ptr<cConfigFileData> mConfigData;
+//	std::unique_ptr<cConfigFileData> mConfigData;
+	cPlotConfigFile mConfigData;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

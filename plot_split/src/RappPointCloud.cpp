@@ -141,6 +141,17 @@ cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_S
 	mHasPixelInfo = true;
 }
 
+const std::string& cRappPointCloud::name() const
+{
+	return mName;
+}
+
+void cRappPointCloud::setName(const std::string& name)
+{
+	mName = name;
+}
+
+
 int cRappPointCloud::id() const { return mID; }
 
 bool cRappPointCloud::hasFrameIDs() const { return mHasFrameIDs && mEnableFrameIDs; }
@@ -168,6 +179,7 @@ void cRappPointCloud::enablePixelInfo()
 
 void cRappPointCloud::clear()
 {
+	mName.clear();
 	mCloud.clear();
 
 	mMinX_mm = 0.0;
@@ -207,12 +219,10 @@ std::size_t cRappPointCloud::size() const
 	return mCloud.size(); 
 }
 
-/*
 void cRappPointCloud::push_back(const value_type& value)
 {
 	mCloud.push_back(value);
 }
-*/
 
 int cRappPointCloud::minX_mm() const { return mMinX_mm; }
 int cRappPointCloud::maxX_mm() const { return mMaxX_mm; }
@@ -417,6 +427,26 @@ rfm::sPoint3D_t cRappPointCloud::getPoint(int x_mm, int y_mm, int r_mm) const
 	return result;
 }
 
+bool cRappPointCloud::contains(const rfm::sPlotBoundingBox_t& box)
+{
+	if ((box.northEastCorner.x_mm < mMinX_mm)
+		|| (box.northWestCorner.x_mm < mMinX_mm))
+		return false;
+
+	if ((box.southEastCorner.x_mm > mMaxX_mm)
+		|| (box.southWestCorner.x_mm > mMaxX_mm))
+		return false;
+
+	if ((box.northWestCorner.y_mm < mMinY_mm)
+		|| (box.southWestCorner.y_mm < mMinY_mm))
+		return false;
+
+	if ((box.northEastCorner.y_mm > mMaxY_mm)
+		|| (box.southEastCorner.y_mm > mMaxY_mm))
+		return false;
+
+	return true;
+}
 
 void cRappPointCloud::rotate(double yaw_deg, double pitch_deg, double roll_deg)
 {
@@ -458,6 +488,25 @@ void cRappPointCloud::translate(int dx_mm, int dy_mm, int dz_mm)
 	}
 
 	recomputeBounds();
+}
+
+void cRappPointCloud::trim_outside(const rfm::sPlotBoundingBox_t& box)
+{
+	pointcloud::sBoundingBox_t temp;
+
+	temp.points[0].X_m = box.northEastCorner.x_mm * nConstants::MM_TO_M;
+	temp.points[0].Y_m = box.northEastCorner.y_mm * nConstants::MM_TO_M;
+
+	temp.points[1].X_m = box.northWestCorner.x_mm * nConstants::MM_TO_M;
+	temp.points[1].Y_m = box.northWestCorner.y_mm * nConstants::MM_TO_M;
+
+	temp.points[2].X_m = box.southEastCorner.x_mm * nConstants::MM_TO_M;
+	temp.points[2].Y_m = box.southEastCorner.y_mm * nConstants::MM_TO_M;
+
+	temp.points[3].X_m = box.southWestCorner.x_mm * nConstants::MM_TO_M;
+	temp.points[3].Y_m = box.southWestCorner.y_mm * nConstants::MM_TO_M;
+
+	trim_outside(temp);
 }
 
 void cRappPointCloud::trim_outside(pointcloud::sBoundingBox_t box)

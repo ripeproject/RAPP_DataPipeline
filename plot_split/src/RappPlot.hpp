@@ -28,15 +28,23 @@ public:
 
 public:
 	explicit cRappPlot(int plotId);
+	cRappPlot(int plotId, int subPlotId);
 	cRappPlot(const cRappPlot& pc) = default;
 	~cRappPlot();
 
 	int id() const;
+	int subPlotId() const;
 
 	const std::string& name() const;
 
 	const std::string& event() const;
 	const std::string& description() const;
+	const std::string& species() const;
+	const std::string& cultivar() const;
+	const std::string& constructName() const;
+	const std::string& potLabel() const;
+	const std::string& seedGeneration() const;
+	const std::string& copyNumber() const;
 
 	const cRappPointCloud& pointCloud() const { return mCloud; }
 	cRappPointCloud& pointCloud() { return mCloud; }
@@ -47,6 +55,12 @@ public:
 
 	void setEvent(const std::string& event);
 	void setDescription(const std::string& description);
+	void setSpecies(const std::string& species);
+	void setCultivar(const std::string& cultivar);
+	void setConstructName(const std::string& constructName);
+	void setPotLabel(const std::string& potLabel);
+	void setSeedGeneration(const std::string& seedGeneration);
+	void setCopyNumber(const std::string& copyNumber);
 
 	void setPointCloud(const cRappPointCloud& pointCloud);
 
@@ -75,13 +89,19 @@ public:
 
 private:
 	int mID;
+	int mSubID = 0;
 
 	std::string mName;
 	std::string mDescription;
 
 	std::string mEvent;
+	std::string mSpecies;
+	std::string mCultivar;
+	std::string mConstructName;
+	std::string mPotLabel;
+	std::string mSeedGeneration;
+	std::string mCopyNumber;
 
-	
 	cRappPointCloud mCloud;
 };
 
