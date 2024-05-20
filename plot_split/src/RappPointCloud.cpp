@@ -235,6 +235,20 @@ int cRappPointCloud::maxZ_mm() const { return mMaxZ_mm; }
 
 void cRappPointCloud::recomputeBounds()
 {
+	if (mCloud.empty())
+	{
+		mMinX_mm = 0.0;
+		mMaxX_mm = 0.0;
+
+		mMinY_mm = 0.0;
+		mMaxY_mm = 0.0;
+
+		mMinZ_mm = 0.0;
+		mMaxZ_mm = 0.0;
+
+		return;
+	}
+
 	auto minX_mm = std::numeric_limits<int>::max();
 	auto maxX_mm = std::numeric_limits<int>::min();
 

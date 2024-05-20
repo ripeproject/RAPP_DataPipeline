@@ -512,15 +512,22 @@ void cMainWindow::stopDataProcessing()
 
 wxThread::ExitCode cMainWindow::Entry()
 {
-	while (mFileProcessors.size() > 0)
+	try
 	{
-		if (GetThread()->TestDestroy())
-			break;
+		while (mFileProcessors.size() > 0)
+		{
+			if (GetThread()->TestDestroy())
+				break;
 
-		auto* fp = mFileProcessors.front();
-		fp->process_file();
-		mFileProcessors.pop();
-		delete fp;
+			auto* fp = mFileProcessors.front();
+			fp->process_file();
+			mFileProcessors.pop();
+			delete fp;
+		}
+	}
+	catch (const std::exception& e)
+	{
+		e.what();
 	}
 
 	wxString msg = "Finished processing ";

@@ -345,6 +345,9 @@ void cFileProcessor::doPlotSplit()
                 {
                     auto plotPointCloud = isolate_basic(pointCloud, bounds.getBoundingBox());
 
+                    if (plotPointCloud.empty())
+                        continue;
+
                     cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
 
                     fillPlotInformation(plot, plotInfo);
@@ -363,6 +366,9 @@ void cFileProcessor::doPlotSplit()
                     int subPlotId = 0;
                     for (const auto& plotPointCloud : plotPointClouds)
                     {
+                        if (plotPointCloud.empty())
+                            continue;
+
                         cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
 
                         fillPlotInformation(plot, plotInfo);
@@ -383,6 +389,9 @@ void cFileProcessor::doPlotSplit()
                     {
                         auto plotPointCloud = isolate_basic(pointCloud, bounds.getBoundingBox());
 
+                        if (plotPointCloud.empty())
+                            continue;
+
                         cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
 
                         fillPlotInformation(plot, plotInfo);
@@ -399,6 +408,9 @@ void cFileProcessor::doPlotSplit()
                     int subPlotId = 0;
                     for (const auto& plotPointCloud : plotPointClouds)
                     {
+                        if (plotPointCloud.empty())
+                            continue;
+
                         cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
 
                         fillPlotInformation(plot, plotInfo);
@@ -413,6 +425,9 @@ void cFileProcessor::doPlotSplit()
                 {
                     auto plotPointCloud = isolate_center_of_height(pointCloud, bounds.getBoundingBox(),
                         method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct());
+
+                    if (plotPointCloud.empty())
+                        continue;
 
                     cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
 
