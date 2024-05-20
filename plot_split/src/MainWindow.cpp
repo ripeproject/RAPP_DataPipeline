@@ -528,6 +528,7 @@ wxThread::ExitCode cMainWindow::Entry()
 	catch (const std::exception& e)
 	{
 		const char* msg = e.what();
+		wxLogError(msg);
 	}
 
 	wxString msg = "Finished processing ";
