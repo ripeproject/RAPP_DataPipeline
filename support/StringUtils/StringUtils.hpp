@@ -6,6 +6,19 @@
 
 namespace nStringUtils
 {
+	// trim from start (in place)
+	void ltrim(std::string& s);
+
+	// trim from end (in place)
+	void rtrim(std::string& s);
+
+	// trim from both ends (in place)
+	inline void trim(std::string& s) 
+	{
+		rtrim(s);
+		ltrim(s);
+	}
+
 	/**
 	 * Case insensitive compare of two strings
 	 */
