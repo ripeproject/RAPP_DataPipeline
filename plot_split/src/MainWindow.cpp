@@ -527,7 +527,7 @@ wxThread::ExitCode cMainWindow::Entry()
 	}
 	catch (const std::exception& e)
 	{
-		e.what();
+		const char* msg = e.what();
 	}
 
 	wxString msg = "Finished processing ";
