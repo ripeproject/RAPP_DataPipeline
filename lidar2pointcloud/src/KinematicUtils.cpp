@@ -179,6 +179,9 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
         double dz = it->Z_mm - previous.z_mm;
 
         double dt_us = (it->timestamp - startTimestamp) * 0.1;
+        if (dt_us < 0.0)
+            continue;
+
         entry.timestamp_us = dt_us;
 
         double dt = (dt_us - previous.timestamp_us) * nConstants::US_TO_SEC;
@@ -228,6 +231,10 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
         update_progress(id, progress_pct);
 
         double dt_s = (it->timestamp_s - startTimestamp_s);
+
+        if (dt_s < 0)
+            continue;
+
         entry.timestamp_us = dt_s * nConstants::SEC_TO_US;
 
         height_m = it->Height_m - it->Undulation_m;
@@ -291,6 +298,9 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
         auto& previous = result.back();
 
         double dt_s = (it->timestamp_s - startTimestamp_s);
+        if (dt_s < 0.0)
+            continue;
+
         entry.timestamp_us = dt_s * nConstants::SEC_TO_US;
 
         dt_s = (it->timestamp_s - prevTimestamp_s);
@@ -542,7 +552,8 @@ void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const 
         else
         {
             // We want the dolly orientation just before the dolly position entry
-            --it;
+            if (it != orientation.begin())
+                --it;
 
             auto atitude = *it;
 
