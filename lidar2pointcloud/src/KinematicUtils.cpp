@@ -313,7 +313,12 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
     }
 
     if (scan_time_sec)
-        *scan_time_sec = prevTimestamp_s - startTimestamp_s;
+    {
+        double time_sec = prevTimestamp_s - startTimestamp_s;
+
+        if (time_sec > 0)
+            *scan_time_sec = time_sec;
+    }
 
     return result;
 }
