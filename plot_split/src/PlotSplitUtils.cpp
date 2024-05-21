@@ -4,7 +4,6 @@
 #include "PointCloudUtils.hpp"
 
 
-
 double distance_mm(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2)
 {
 	double dx = p1.x_mm - p2.x_mm;

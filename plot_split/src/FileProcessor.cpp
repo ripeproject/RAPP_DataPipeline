@@ -346,7 +346,13 @@ void cFileProcessor::doPlotSplit()
                     auto plotPointCloud = isolate_basic(pointCloud, bounds.getBoundingBox());
 
                     if (plotPointCloud.empty())
+                    {
+                        std::string msg = "Point cloud \"";
+                        msg += pointCloud.name();
+                        msg += "\" is empty!";
+                        console_message(msg);
                         continue;
+                    }
 
                     cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
 
@@ -367,7 +373,13 @@ void cFileProcessor::doPlotSplit()
                     for (const auto& plotPointCloud : plotPointClouds)
                     {
                         if (plotPointCloud.empty())
+                        {
+                            std::string msg = "Point cloud \"";
+                            msg += pointCloud.name();
+                            msg += "\" is empty!";
+                            console_message(msg);
                             continue;
+                        }
 
                         cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
 
@@ -390,7 +402,13 @@ void cFileProcessor::doPlotSplit()
                         auto plotPointCloud = isolate_basic(pointCloud, bounds.getBoundingBox());
 
                         if (plotPointCloud.empty())
+                        {
+                            std::string msg = "Point cloud \"";
+                            msg += pointCloud.name();
+                            msg += "\" is empty!";
+                            console_message(msg);
                             continue;
+                        }
 
                         cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
 
@@ -409,7 +427,13 @@ void cFileProcessor::doPlotSplit()
                     for (const auto& plotPointCloud : plotPointClouds)
                     {
                         if (plotPointCloud.empty())
+                        {
+                            std::string msg = "Point cloud \"";
+                            msg += pointCloud.name();
+                            msg += "\" is empty!";
+                            console_message(msg);
                             continue;
+                        }
 
                         cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
 
@@ -427,7 +451,13 @@ void cFileProcessor::doPlotSplit()
                         method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct());
 
                     if (plotPointCloud.empty())
+                    {
+                        std::string msg = "Point cloud \"";
+                        msg += pointCloud.name();
+                        msg += "\" is empty!";
+                        console_message(msg);
                         continue;
+                    }
 
                     cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
 
@@ -493,7 +523,8 @@ void cFileProcessor::savePlotFile()
 
     for (auto plot : mPlots)
     {
-        plotInfoSerializer.setBufferCapacity(plot->data().size() * sizeof(cRappPlot::value_type));
+        std::size_t buffersize = std::max(plot->data().size() * sizeof(cRappPlot::value_type), 4096ULL);
+        plotInfoSerializer.setBufferCapacity(buffersize);
 
         update_progress(mID, static_cast<int>((100.0 * i++) / n));
 
