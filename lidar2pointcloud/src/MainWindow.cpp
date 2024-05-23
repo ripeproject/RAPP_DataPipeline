@@ -393,6 +393,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		if (input.has_parent_path())
 		{
 			month_dir = input.filename().string();
+			if (!isMonthDirectory(month_dir))
+				month_dir.clear();
 		}
 
 		// Scan input directory for all CERES files to operate on
