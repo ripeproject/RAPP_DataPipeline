@@ -468,7 +468,7 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 		wxLogMessage(msg);
 	}
 
-	if (!output_dir.exists() && (numFilesToProcess > 1))
+	if (!output_dir.exists() && (numFilesToProcess > 0))
 	{
 		std::filesystem::create_directories(output_dir);
 	}

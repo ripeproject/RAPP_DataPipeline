@@ -8,7 +8,6 @@
 	#include <wx/wx.h>
 #endif
 
-#include "ConfigFileData.hpp"
 #include "PlotConfigFile.hpp"
 
 #include "../wxCustomWidgets/FileProgressCtrl.hpp"

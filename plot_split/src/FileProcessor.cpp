@@ -4,7 +4,6 @@
 #include "ProcessingInfoLoader.hpp"
 #include "PointCloudLoader.hpp"
 
-#include "PlotBoundaries.hpp"
 #include "PlotConfigScan.hpp"
 
 #include "PlotSplitUtils.hpp"

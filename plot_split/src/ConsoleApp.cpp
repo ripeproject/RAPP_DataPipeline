@@ -3,9 +3,11 @@
 
 #include "FileProcessor.hpp"
 
-#include "ConfigFileData.hpp"
+#include "PlotConfigFile.hpp"
 
 #include "TextProgressBar.hpp"
+
+#include "StringUtils.hpp"
 
 #include <lyra/lyra.hpp>
 
@@ -69,10 +71,12 @@ int main(int argc, char** argv)
 	std::cerr << argc << std::endl;
 
 	using namespace std::filesystem;
+	using namespace nStringUtils;
 
+
+	bool isFile = false;
 	bool showHelp = false;
 	std::string config_file;
-	std::unique_ptr<cConfigFileData> pConfigData;
 
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
@@ -84,6 +88,10 @@ int main(int argc, char** argv)
 		["-c"]["--config"]
 		("Configuration file to set the options in generating the plot data.")
 		.required()
+		| lyra::opt(isFile)
+		["-f"]["--file"]
+		("Operate on a single file instead of directory.")
+		.optional()
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")
@@ -111,9 +119,19 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	pConfigData = std::make_unique<cConfigFileData>(config_file);
+	// Bail out if the input data does not exist
+	if (!std::filesystem::exists(input_directory))
+	{
+		if (isFile)
+			std::cerr << "Input file " << input_directory << " does not exists." << std::endl;
+		else
+			std::cerr << "Input directory " << input_directory << " does not exists." << std::endl;
+		return 1;
+	}
 
-	if (!pConfigData->load())
+	// Bail out if we can't load the configuration data
+	cPlotConfigFile configData;
+	if (!configData.open(config_file))
 	{
 		std::cerr << "Error in configuration file: " << config_file << std::endl;
 		std::cerr << std::endl;
@@ -124,42 +142,52 @@ int main(int argc, char** argv)
 		output_directory = input_directory;
 
 	const std::filesystem::path input{ input_directory };
-	const std::filesystem::path output{ output_directory };
 
-	std::filesystem::directory_entry output_dir = std::filesystem::directory_entry{ output };
+	std::vector<directory_entry> files_to_process;
 
-	if (!output_dir.exists())
+	std::string month_dir;
+
+	/*
+	 * Create list of files to process
+	 */
+	if (isFile)
 	{
-		std::filesystem::create_directories(output_dir);
-	}
+		auto dir_entry = std::filesystem::directory_entry{ input };
 
-	std::vector<directory_entry> lidar_data_files_to_process;
-
-	// Scan input directory for all CERES files to operate on
-	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
-	{
 		if (!dir_entry.is_regular_file())
-			continue;
+			return 2;
 
-		// Don't process any ceres files!
-		if (dir_entry.path().extension() == ".ceres")
-			continue;
+		if (dir_entry.path().extension() != ".ceres")
+			return 3;
 
-		// Test for the lidar_data extension...
-		if (dir_entry.path().extension() == ".lidar_data")
+		if (!isCeresFile(dir_entry.path().string()))
+			return 4;
+
+		files_to_process.push_back(dir_entry);
+	}
+	else
+	{
+		if (input.has_parent_path())
 		{
-			// If there is already a file by the same name in
-			// the output directory with a ceres extension,
-			// skip the file!
-			auto test = output;
-			test /= dir_entry.path().filename();
-			test.replace_extension("ceres");
-			if (std::filesystem::exists(test))
-				continue;
-
-			lidar_data_files_to_process.push_back(dir_entry);
+			month_dir = input.filename().string();
+			if (!nStringUtils::isMonthDirectory(month_dir))
+				month_dir.clear();
 		}
 
+		// Scan input directory for all CERES files to operate on
+		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
+		{
+			if (!dir_entry.is_regular_file())
+				continue;
+
+			if (dir_entry.path().extension() != ".ceres")
+				continue;
+
+			if (!isCeresFile(dir_entry.path().string()))
+				continue;
+
+			files_to_process.push_back(dir_entry);
+		}
 	}
 
 	int max_threads = std::thread::hardware_concurrency();
@@ -171,30 +199,85 @@ int main(int argc, char** argv)
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
-	if (n ==1)
+/*
+	if (n == 1)
 		std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
 	else
 		std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+*/
+
+	/*
+	 * Setup the output directory
+	 */
+
+	std::filesystem::path output{ output_directory };
+	std::filesystem::directory_entry output_dir;
+
+	if (isFile && output.has_extension())
+	{
+		output_dir = std::filesystem::directory_entry{ output.parent_path() };
+	}
+	else
+	{
+		if (!month_dir.empty())
+		{
+			std::string last_dir;
+			if (output.has_parent_path())
+			{
+				last_dir = output.filename().string();
+			}
+
+			if (month_dir != last_dir)
+			{
+				output /= month_dir;
+			}
+		}
+
+		output_dir = std::filesystem::directory_entry{ output };
+	}
 
 	std::vector<cFileProcessor*> file_processors;
 
-	//=====================================================
-	// Convert Lidar_Data files...
-	//=====================================================
-	for (auto& in_file : lidar_data_files_to_process)
+	/*
+	 * Add all of the files to process to the thread pool
+	 */
+	const auto& options = configData.getOptions();
+
+	for (auto& in_file : files_to_process)
 	{
-		std::filesystem::path out_file = output;
-		out_file /= in_file.path().filename();
-		out_file.replace_extension("ceres");
+		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-		cFileProcessor* fp = nullptr;	// new cLidarData2CeresConverter();
+		std::filesystem::path out_file = output_dir;
 
-//		pool.push_task(&cFileProcessor::process_file, fp, in_file, out_file);
+		out_file /= fe.filename;
+
+		auto it = configData.find_by_filename(in_file.path().filename().string());
+		if (it == configData.end())
+			continue;
+
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file, *it);
+
+		numFilesToProcess += 1;
+
+		fp->savePlotsInSingleFile(options.getSavePlotsInSingleFile());
+		fp->savePlyFiles(options.getSavePlyFiles());
+		fp->plyUseBinaryFormat(options.getPlysUseBinaryFormat());
+		fp->enableSavingFrameIDs(options.getSaveFrameIds());
+		fp->enableSavingPixelInfo(options.getSavePixelInfo());
+
+		pool.push_task(&cFileProcessor::process_file, fp);
 
 		file_processors.push_back(fp);
 	}
 
-	lidar_data_files_to_process.clear();
+	if (!output_dir.exists() && (numFilesToProcess > 0))
+	{
+		std::filesystem::create_directories(output_dir);
+	}
+
+	progress_bar.setMaxID(numFilesToProcess);
+
+	files_to_process.clear();
 
 	pool.wait_for_tasks();
 

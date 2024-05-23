@@ -14,12 +14,6 @@ set(PLOT_SPLIT_COMMON_FILES
 	RappPlot.hpp
 	RappPlot.cpp
 
-	PlotBoundaries.hpp
-	PlotBoundaries.cpp
-
-	ConfigFileData.hpp
-	ConfigFileData.cpp
-
 	FileProcessor.hpp
 	FileProcessor.cpp
 
