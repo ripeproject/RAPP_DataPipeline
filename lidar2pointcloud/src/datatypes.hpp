@@ -12,6 +12,11 @@ namespace pointcloud
 }
 
 
+enum class eKinematicModel { CONSTANT_SPEED, SPIDERCAM, GPS_SPEEDS };
+
+enum class eOrientationModel { CONSTANT, MOVEMENT, IMU };
+
+
 namespace rfm
 {
 	constexpr std::int32_t INVALID_HEIGHT = -999999;

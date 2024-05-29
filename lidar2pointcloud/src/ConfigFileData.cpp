@@ -11,45 +11,45 @@
 extern void console_message(const std::string& msg);
 
 
-cConfigFileData::cConfigFileData(const std::string& filename)
+cConfigFileData_::cConfigFileData_(const std::string& filename)
 	: mConfigFilename(filename)
 {
 }
 
-cConfigFileData::~cConfigFileData()
+cConfigFileData_::~cConfigFileData_()
 {}
 
-bool cConfigFileData::empty() const
+bool cConfigFileData_::empty() const
 {
 	return mParameters.empty();
 }
 
-bool cConfigFileData::saveCompactPointCloud() const
+bool cConfigFileData_::saveCompactPointCloud() const
 {
 	return mSaveCompactPointCloud;
 }
 
-bool cConfigFileData::saveFrameIds() const
+bool cConfigFileData_::saveFrameIds() const
 {
 	return mSaveFrameIDs;
 }
 
-bool cConfigFileData::savePixelInfo() const
+bool cConfigFileData_::savePixelInfo() const
 {
 	return mSavePixelInfo;
 }
 
-bool cConfigFileData::savePlyFiles() const
+bool cConfigFileData_::savePlyFiles() const
 {
 	return mSavePlyFiles;
 }
 
-bool cConfigFileData::plyUseBinaryFormat() const
+bool cConfigFileData_::plyUseBinaryFormat() const
 {
 	return mPlyUseBinaryFormat;
 }
 
-std::optional<nConfigFileData::sParameters_t> cConfigFileData::getParameters(const std::string& experiment_filename)
+std::optional<nConfigFileData::sParameters_t> cConfigFileData_::getParameters(const std::string& experiment_filename)
 {
 	using namespace nStringUtils;
 
@@ -64,7 +64,7 @@ std::optional<nConfigFileData::sParameters_t> cConfigFileData::getParameters(con
 	return it->second;
 }
 
-bool cConfigFileData::load()
+bool cConfigFileData_::load()
 {
 	using namespace nConfigFileData;
 	using namespace nStringUtils;

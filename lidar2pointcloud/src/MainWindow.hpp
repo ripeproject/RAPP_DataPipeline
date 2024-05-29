@@ -9,7 +9,8 @@
 	#include <wx/valnum.h>
 #endif
 
-#include "ConfigFileData.hpp"
+//#include "ConfigFileData.hpp"
+#include "LidarMapConfigFile.hpp"
 
 #include "../wxCustomWidgets/FileProgressCtrl.hpp"
 
@@ -92,7 +93,8 @@ private:
 	wxString mDestination;
 	wxString mCfgFilename;
 
-	std::unique_ptr<cConfigFileData> mConfigData;
+//	std::unique_ptr<cConfigFileData> mConfigData;
+	std::unique_ptr<cLidarMapConfigFile> mConfigData;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

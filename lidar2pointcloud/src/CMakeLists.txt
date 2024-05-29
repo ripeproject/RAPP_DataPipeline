@@ -6,6 +6,15 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
 	datatypes.hpp
 
+	LidarMapConfigScan.hpp
+	LidarMapConfigScan.cpp
+	LidarMapConfigOptions.hpp
+	LidarMapConfigOptions.cpp
+	LidarMapConfigDefaults.hpp
+	LidarMapConfigDefaults.cpp
+	LidarMapConfigFile.hpp
+	LidarMapConfigFile.cpp
+
 	ConfigFileData.hpp
 	ConfigFileData.cpp
 

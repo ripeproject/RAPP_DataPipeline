@@ -7,7 +7,8 @@
 
 #include "GroundModelUtils.hpp"
 
-#include "ConfigFileData.hpp"
+//#include "ConfigFileData.hpp"
+#include "LidarMapConfigFile.hpp"
 
 #include "TextProgressBar.hpp"
 
@@ -156,9 +157,12 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	cConfigFileData configData(config_file);
+//	cConfigFileData configData(config_file);
+	cLidarMapConfigFile configData;
 
-	if (!configData.load())
+
+//	if (!configData.load())
+	if (!configData.open(config_file))
 	{
 		std::cerr << "Error: " << config_file << " could not be loaded." << std::endl;
 		return 1;
@@ -258,6 +262,9 @@ int main(int argc, char** argv)
 		output_dir = std::filesystem::directory_entry{ output };
 	}
 
+	const auto& options = configData.getOptions();
+	const auto& defaults = configData.getDefaults();
+
 	/*
 	 * Add all of the files to process to the thread pool
 	 */
@@ -279,25 +286,44 @@ int main(int argc, char** argv)
 			}
 		}
 
+/*
 		auto options = configData.getParameters(in_file.path().filename().string());
 
 		if (!options.has_value())
 			continue;
 
 		nConfigFileData::sParameters_t parameters = options.value();
+*/
+
+		auto it = configData.find_by_filename(in_file.path().filename().string());
+
+		if (it == configData.end())
+			continue;
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
 
 		numFilesToProcess += 1;
 
+
+/*
 		fp->saveCompactPointCloud(configData.saveCompactPointCloud());
 		fp->saveFrameIds(configData.saveFrameIds());
 		fp->savePixelInfo(configData.savePixelInfo());
 
 		fp->savePlyFiles(configData.savePlyFiles());
 		fp->plyUseBinaryFormat(configData.plyUseBinaryFormat());
+*/
 
-		fp->setDefaults(parameters);
+		fp->saveCompactPointCloud(options.getSaveCompactDataFile());
+		fp->saveFrameIds(options.getSaveFrameIds());
+		fp->savePixelInfo(options.getSavePixelInfo());
+
+		fp->savePlyFiles(options.getSavePlyFiles());
+		fp->plyUseBinaryFormat(options.getPlysUseBinaryFormat());
+
+//		fp->setDefaults(parameters);
+		fp->setDefaults(defaults);
+		fp->setParameters(*it);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 

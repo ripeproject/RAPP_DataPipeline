@@ -56,11 +56,11 @@ namespace nConfigFileData
 }
 
 
-class cConfigFileData
+class cConfigFileData_
 {
 public:
-	explicit cConfigFileData(const std::string& filename);
-	~cConfigFileData();
+	explicit cConfigFileData_(const std::string& filename);
+	~cConfigFileData_();
 
 	/**
 	 * Load any parameters from the configuration file.

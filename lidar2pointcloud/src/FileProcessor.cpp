@@ -18,6 +18,7 @@
 #include <iostream>
 #include <mutex>
 #include <numbers>
+#include <optional>
 
 
 extern void console_message(const std::string& msg);
@@ -26,6 +27,17 @@ extern void update_prefix_progress(const int id, std::string prefix, const int p
 extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id);
 
+namespace
+{
+    template<typename T>
+    T to_value(std::optional<T> value, T default_value)
+    {
+        if (value.has_value())
+            return value.value();
+
+        return default_value;
+    }
+}
 
 cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
@@ -64,9 +76,21 @@ void cFileProcessor::plyUseBinaryFormat(bool binaryFormat)
     mPlyUseBinaryFormat = binaryFormat;
 }
 
+/*
 void cFileProcessor::setDefaults(const nConfigFileData::sParameters_t& defaults)
 {
     mDefaults = defaults;
+}
+*/
+
+void cFileProcessor::setDefaults(const cLidarMapConfigDefaults& defaults)
+{
+    mDefaults = defaults;
+}
+
+void cFileProcessor::setParameters(const cLidarMapConfigScan& parameters)
+{
+    mParameters = parameters;
 }
 
 void cFileProcessor::process_file()
@@ -75,6 +99,7 @@ void cFileProcessor::process_file()
 
     std::unique_ptr<cLidar2PointCloud> converter = std::make_unique<cLidar2PointCloud>(mID);
 
+/*
     converter->setValidRange_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
     converter->setAzimuthWindow_deg(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
     converter->setAltitudeWindow_deg(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
@@ -100,6 +125,117 @@ void cFileProcessor::process_file()
 
     converter->enableTranslateToGround(mHasGroundData && mDefaults.translateToGround, mDefaults.translateThreshold_pct);
     converter->enableRotateToGround(mHasGroundData && mDefaults.rotateToGround, mDefaults.rotateThreshold_pct);
+*/
+
+    const auto& limits = mDefaults.getSensorLimits();
+
+    converter->setValidRange_m(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()),
+        to_value(mParameters.getMaxDistance_m(), limits.getMaxDistance_m()));
+
+    converter->setAzimuthWindow_deg(to_value(mParameters.getMinAzimuth_deg(), limits.getMinAzimuth_deg()),
+        to_value(mParameters.getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
+
+    converter->setAltitudeWindow_deg(to_value(mParameters.getMinAltitude_deg(), limits.getMinAltitude_deg()),
+        to_value(mParameters.getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
+
+    double startX_m = mParameters.getStart_X_m().has_value() ? mParameters.getStart_X_m().value() : -10.0;
+    double startY_m = mParameters.getStart_Y_m().has_value() ? mParameters.getStart_Y_m().value() : -10.0;
+    double startZ_m = mParameters.getStart_Z_m().has_value() ? mParameters.getStart_Z_m().value() : -10.0;
+
+    double endX_m = mParameters.getEnd_X_m().has_value() ? mParameters.getEnd_X_m().value() : startX_m;
+    double endY_m = mParameters.getEnd_Y_m().has_value() ? mParameters.getEnd_Y_m().value() : startY_m;
+    double endZ_m = mParameters.getEnd_Z_m().has_value() ? mParameters.getEnd_Z_m().value() : startZ_m;
+
+    const auto& height = mDefaults.getDollyHeight();
+
+    switch (height.getHeightAxis())
+    {
+    case cLidarMapConfigDefaults_DollyHeight::eHeightAxis::X:
+        if (startX_m < -5.0) startX_m = height.getHeight_m();
+        if (endX_m < -5.0) endX_m = height.getHeight_m();
+        break;
+    case cLidarMapConfigDefaults_DollyHeight::eHeightAxis::Y:
+        if (startY_m < -5.0) startY_m = height.getHeight_m();
+        if (endY_m < -5.0) endY_m = height.getHeight_m();
+        break;
+    case cLidarMapConfigDefaults_DollyHeight::eHeightAxis::Z:
+        if (startZ_m < -5.0) startZ_m = height.getHeight_m();
+        if (endZ_m < -5.0) endZ_m = height.getHeight_m();
+        break;
+    }
+
+    converter->setInitialPosition_m(startX_m, startY_m, startZ_m);
+    converter->setFinalPosition_m(endX_m, endY_m, endZ_m);
+
+    const auto& speeds = mDefaults.getDollySpeeds();
+
+    converter->setDollySpeed(to_value<double>(mParameters.getVx_mmps(), speeds.getVx_mmps()), 
+        to_value<double>(mParameters.getVy_mmps(), speeds.getVy_mmps()),
+        to_value<double>(mParameters.getVz_mmps(), speeds.getVz_mmps()));
+
+
+    auto om = mParameters.getOrientationModel();
+    if (om.has_value())
+    {
+        switch (om.value())
+        {
+        case eOrientationModel::CONSTANT:
+            converter->setOrientationOffset_deg(to_value(mParameters.getSensorYawOffset_deg(), 0.0),
+                to_value(mParameters.getSensorPitchOffset_deg(), 0.0), 
+                to_value(mParameters.getSensorRollOffset_deg(), 0.0));
+            break;
+
+        case eOrientationModel::MOVEMENT:
+            converter->setInitialOffset_deg(to_value(mParameters.getStartYawOffset_deg(), 0.0),
+                to_value(mParameters.getStartPitchOffset_deg(), 0.0), 
+                to_value(mParameters.getStartRollOffset_deg(), 0.0));
+
+            converter->setFinalOffset_deg(to_value(mParameters.getEndYawOffset_deg(), 0.0),
+                to_value(mParameters.getEndPitchOffset_deg(), 0.0), 
+                to_value(mParameters.getEndRollOffset_deg(), 0.0));
+
+            break;
+
+        case eOrientationModel::IMU:
+            break;
+        }
+    }
+    else
+    {
+        if ((mParameters.getEndPitchOffset_deg() == mParameters.getEndPitchOffset_deg())
+            && (mParameters.getEndRollOffset_deg() == mParameters.getEndRollOffset_deg())
+            && (mParameters.getEndYawOffset_deg() == mParameters.getEndYawOffset_deg()))
+        {
+            converter->setOrientationOffset_deg(to_value(mParameters.getSensorYawOffset_deg(), 0.0),
+                to_value(mParameters.getSensorPitchOffset_deg(), 0.0),
+                to_value(mParameters.getSensorRollOffset_deg(), 0.0));
+        }
+        else
+        {
+            converter->setInitialOffset_deg(to_value(mParameters.getStartYawOffset_deg(), 0.0),
+                to_value(mParameters.getStartPitchOffset_deg(), 0.0),
+                to_value(mParameters.getStartRollOffset_deg(), 0.0));
+
+            converter->setFinalOffset_deg(to_value(mParameters.getEndYawOffset_deg(), 0.0),
+                to_value(mParameters.getEndPitchOffset_deg(), 0.0),
+                to_value(mParameters.getEndRollOffset_deg(), 0.0));
+        }
+    }
+
+    const auto& orientation = mDefaults.getSensorOrientation();
+
+    converter->setSensorMountOrientation(to_value(mParameters.getSensorMountYaw_deg(), orientation.getYaw_deg()),
+        to_value(mParameters.getSensorMountPitch_deg(), orientation.getPitch_deg()),
+        to_value(mParameters.getSensorMountRoll_deg(), orientation.getRoll_deg()));
+
+    const auto& options = mDefaults.getOptions();
+
+    converter->enableTranslateToGround(mHasGroundData && to_value(mParameters.getTranslateToGround(), options.getTranslateToGround()),
+        to_value(mParameters.getTranslateThreshold_pct(), options.getTranslationThreshold_pct()));
+
+    converter->enableRotateToGround(mHasGroundData && to_value(mParameters.getRotateToGround(), options.getRotateToGround()),
+        to_value(mParameters.getRotateThreshold_pct(), options.getRotationThreshold_pct()));
+
 
     // Start by loading the field scan data into memory
     new_file_progress(mID, mInputFile.string());
@@ -165,9 +301,23 @@ void cFileProcessor::process_file()
 
         auto dolly_path = converter->getComputedDollyPath();
         saver->setKinematicModel(converter->getKinematicModel(), dolly_path);
+
+/*
         saver->setRangeWindow_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
         saver->setAzimuthWindow_deg(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
         saver->setAltitudeWindow_deg(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
+*/
+
+        const auto& limits = mDefaults.getSensorLimits();
+
+        saver->setRangeWindow_m(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()),
+            to_value(mParameters.getMaxDistance_m(), limits.getMaxDistance_m()));
+
+        saver->setAzimuthWindow_deg(to_value(mParameters.getMinAzimuth_deg(), limits.getMinAzimuth_deg()),
+            to_value(mParameters.getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
+
+        saver->setAltitudeWindow_deg(to_value(mParameters.getMinAltitude_deg(), limits.getMinAltitude_deg()),
+            to_value(mParameters.getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
 
         saver->save(mFlattenPointCloud);
     }
@@ -220,9 +370,22 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
 
     pointCloudSerializer.write(data.getKinematicModel());
 
+/*
     pointCloudSerializer.writeDistanceWindow(mDefaults.minDistance_m, mDefaults.maxDistance_m);
     pointCloudSerializer.writeAzimuthWindow(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
     pointCloudSerializer.writeAltitudeWindow(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
+*/
+
+    const auto& limits = mDefaults.getSensorLimits();
+
+    pointCloudSerializer.writeDistanceWindow(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()), 
+        to_value(mParameters.getMaxDistance_m(), limits.getMaxDistance_m()));
+
+    pointCloudSerializer.writeAzimuthWindow(to_value(mParameters.getMinAzimuth_deg(), limits.getMinAzimuth_deg()),
+        to_value(mParameters.getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
+
+    pointCloudSerializer.writeAltitudeWindow(to_value(mParameters.getMinAltitude_deg(), limits.getMinAltitude_deg()),
+        to_value(mParameters.getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
 
     const auto& path = data.getComputedDollyPath();
     if (!path.empty())

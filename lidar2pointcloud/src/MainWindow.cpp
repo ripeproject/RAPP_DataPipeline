@@ -326,9 +326,12 @@ void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
 
 	std::string config_file = dlg.GetPath().ToStdString();
 
-	mConfigData = std::make_unique<cConfigFileData>(config_file);
+//	mConfigData = std::make_unique<cConfigFileData>(config_file);
+	mConfigData = std::make_unique<cLidarMapConfigFile>();
 
-	if (!mConfigData->load())
+//	if (!mConfigData->load())
+
+	if (!mConfigData->open(config_file))
 	{
 		mpLoadCfgFile->SetValue("");
 		mpComputeButton->Disable();
@@ -339,12 +342,23 @@ void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
 
 	mCfgFilename = dlg.GetPath();
 
+/*
 	mpSaveCompactFile->SetValue(mConfigData->saveCompactPointCloud());
 	mpSaveLidarFrameIds->SetValue(mConfigData->saveFrameIds());
 	mpSaveLidarPixelInfo->SetValue(mConfigData->savePixelInfo());
 
 	mpSavePlyFiles->SetValue(mConfigData->savePlyFiles());
 	mpPlyUseBinaryFormat->SetValue(mConfigData->plyUseBinaryFormat());
+*/
+
+	const auto& options = mConfigData->getOptions();
+
+	mpSaveCompactFile->SetValue(options.getSaveCompactDataFile());
+	mpSaveLidarFrameIds->SetValue(options.getSaveFrameIds());
+	mpSaveLidarPixelInfo->SetValue(options.getSavePixelInfo());
+
+	mpSavePlyFiles->SetValue(options.getSavePlyFiles());
+	mpPlyUseBinaryFormat->SetValue(options.getPlysUseBinaryFormat());
 
 	if (!mDestination.IsEmpty() && !mSource.IsEmpty())
 		mpComputeButton->Enable();
@@ -473,12 +487,19 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 			}
 		}
 
+/*
 		auto options = mConfigData->getParameters(in_file.path().filename().string());
 
 		if (!options.has_value())
 			continue;
 
 		nConfigFileData::sParameters_t parameters = options.value();
+*/
+
+		auto it = mConfigData->find_by_filename(in_file.path().filename().string());
+
+		if (it == mConfigData->end())
+			continue;
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
 
@@ -490,7 +511,10 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		fp->savePlyFiles(savePlyFiles);
 		fp->plyUseBinaryFormat(plyUseBinaryFormat);
-		fp->setDefaults(parameters);
+//		fp->setDefaults(parameters);
+
+		fp->setDefaults(mConfigData->getDefaults());
+		fp->setParameters(*it);
 
 		mFileProcessors.push(fp);
 	}
