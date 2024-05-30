@@ -7,7 +7,6 @@
 
 #include "GroundModelUtils.hpp"
 
-//#include "ConfigFileData.hpp"
 #include "LidarMapConfigFile.hpp"
 
 #include "TextProgressBar.hpp"
@@ -157,11 +156,9 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-//	cConfigFileData configData(config_file);
 	cLidarMapConfigFile configData;
 
 
-//	if (!configData.load())
 	if (!configData.open(config_file))
 	{
 		std::cerr << "Error: " << config_file << " could not be loaded." << std::endl;
@@ -286,14 +283,6 @@ int main(int argc, char** argv)
 			}
 		}
 
-/*
-		auto options = configData.getParameters(in_file.path().filename().string());
-
-		if (!options.has_value())
-			continue;
-
-		nConfigFileData::sParameters_t parameters = options.value();
-*/
 
 		auto it = configData.find_by_filename(in_file.path().filename().string());
 
@@ -305,15 +294,6 @@ int main(int argc, char** argv)
 		numFilesToProcess += 1;
 
 
-/*
-		fp->saveCompactPointCloud(configData.saveCompactPointCloud());
-		fp->saveFrameIds(configData.saveFrameIds());
-		fp->savePixelInfo(configData.savePixelInfo());
-
-		fp->savePlyFiles(configData.savePlyFiles());
-		fp->plyUseBinaryFormat(configData.plyUseBinaryFormat());
-*/
-
 		fp->saveCompactPointCloud(options.getSaveCompactDataFile());
 		fp->saveFrameIds(options.getSaveFrameIds());
 		fp->savePixelInfo(options.getSavePixelInfo());
@@ -321,7 +301,6 @@ int main(int argc, char** argv)
 		fp->savePlyFiles(options.getSavePlyFiles());
 		fp->plyUseBinaryFormat(options.getPlysUseBinaryFormat());
 
-//		fp->setDefaults(parameters);
 		fp->setDefaults(defaults);
 		fp->setParameters(*it);
 

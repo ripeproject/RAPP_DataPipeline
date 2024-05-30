@@ -15,9 +15,6 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	LidarMapConfigFile.hpp
 	LidarMapConfigFile.cpp
 
-	ConfigFileData.hpp
-	ConfigFileData.cpp
-
 	OusterInfo.hpp
 	OusterInfo.cpp
 	OusterInfoLoader.hpp

@@ -5,7 +5,7 @@
 #include "StringUtils.hpp"
 #include "GroundModelUtils.hpp"
 
-#include "ConfigFileData.hpp"
+#include "LidarMapConfigFile.hpp"
 
 #include <wx/thread.h>
 #include <wx/msgdlg.h>
@@ -342,14 +342,6 @@ void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
 
 	mCfgFilename = dlg.GetPath();
 
-/*
-	mpSaveCompactFile->SetValue(mConfigData->saveCompactPointCloud());
-	mpSaveLidarFrameIds->SetValue(mConfigData->saveFrameIds());
-	mpSaveLidarPixelInfo->SetValue(mConfigData->savePixelInfo());
-
-	mpSavePlyFiles->SetValue(mConfigData->savePlyFiles());
-	mpPlyUseBinaryFormat->SetValue(mConfigData->plyUseBinaryFormat());
-*/
 
 	const auto& options = mConfigData->getOptions();
 

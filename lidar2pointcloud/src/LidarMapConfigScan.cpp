@@ -384,13 +384,13 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 		auto pos = jdoc["end position"];
 
 		if (pos.contains("x (m)"))
-			mStart_X_m = pos["x (m)"];
+			mEnd_X_m = pos["x (m)"];
 
 		if (pos.contains("y (m)"))
-			mStart_Y_m = pos["y (m)"];
+			mEnd_Y_m = pos["y (m)"];
 
 		if (pos.contains("z (m)"))
-			mStart_Z_m = pos["z (m)"];
+			mEnd_Z_m = pos["z (m)"];
 	}
 
 	if (jdoc.contains("Vx (mm/s)"))

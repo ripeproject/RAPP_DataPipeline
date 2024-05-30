@@ -1,7 +1,6 @@
 
 #pragma once
 
-//#include "ConfigFileData.hpp"
 #include "LidarMapConfigFile.hpp"
 
 #include "ProcessingInfoSerializer.hpp"
@@ -42,7 +41,6 @@ public:
 	 * Some of the defaults are not used depending on the data in the 
 	 * Ceres file.
 	 */
-//	void setDefaults(const nConfigFileData::sParameters_t& defaults);
 	void setDefaults(const cLidarMapConfigDefaults& defaults);
 	void setParameters(const cLidarMapConfigScan& parameters);
 
@@ -69,7 +67,6 @@ private:
 	bool mHasGroundData = false;
 	bool mFlattenPointCloud = true;
 
-//	nConfigFileData::sParameters_t mDefaults;
 	cLidarMapConfigDefaults mDefaults;
 	cLidarMapConfigScan mParameters;
 

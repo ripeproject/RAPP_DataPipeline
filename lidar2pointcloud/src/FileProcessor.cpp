@@ -76,13 +76,6 @@ void cFileProcessor::plyUseBinaryFormat(bool binaryFormat)
     mPlyUseBinaryFormat = binaryFormat;
 }
 
-/*
-void cFileProcessor::setDefaults(const nConfigFileData::sParameters_t& defaults)
-{
-    mDefaults = defaults;
-}
-*/
-
 void cFileProcessor::setDefaults(const cLidarMapConfigDefaults& defaults)
 {
     mDefaults = defaults;
@@ -99,33 +92,6 @@ void cFileProcessor::process_file()
 
     std::unique_ptr<cLidar2PointCloud> converter = std::make_unique<cLidar2PointCloud>(mID);
 
-/*
-    converter->setValidRange_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
-    converter->setAzimuthWindow_deg(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
-    converter->setAltitudeWindow_deg(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
-
-    converter->setInitialPosition_m(mDefaults.startX_m, mDefaults.startY_m, mDefaults.startZ_m);
-    converter->setFinalPosition_m(mDefaults.endX_m, mDefaults.endY_m, mDefaults.endZ_m);
-
-    converter->setDollySpeed(mDefaults.Vx_mmps, mDefaults.Vy_mmps, mDefaults.Vz_mmps);
-
-    converter->setSensorMountOrientation(mDefaults.sensorMountYaw_deg, mDefaults.sensorMountPitch_deg, mDefaults.sensorMountRoll_deg);
-
-    if ((mDefaults.startPitchOffset_deg == mDefaults.endPitchOffset_deg)
-        && (mDefaults.startRollOffset_deg == mDefaults.endRollOffset_deg)
-        && (mDefaults.startYawOffset_deg == mDefaults.endYawOffset_deg))
-    {
-        converter->setOrientationOffset_deg(mDefaults.sensorYawOffset_deg, mDefaults.sensorPitchOffset_deg, mDefaults.sensorRollOffset_deg);
-    }
-    else
-    {
-        converter->setInitialOffset_deg(mDefaults.startYawOffset_deg, mDefaults.startPitchOffset_deg, mDefaults.startRollOffset_deg);
-        converter->setFinalOffset_deg(mDefaults.endYawOffset_deg, mDefaults.endPitchOffset_deg, mDefaults.endRollOffset_deg);
-    }
-
-    converter->enableTranslateToGround(mHasGroundData && mDefaults.translateToGround, mDefaults.translateThreshold_pct);
-    converter->enableRotateToGround(mHasGroundData && mDefaults.rotateToGround, mDefaults.rotateThreshold_pct);
-*/
 
     const auto& limits = mDefaults.getSensorLimits();
 
@@ -302,12 +268,6 @@ void cFileProcessor::process_file()
         auto dolly_path = converter->getComputedDollyPath();
         saver->setKinematicModel(converter->getKinematicModel(), dolly_path);
 
-/*
-        saver->setRangeWindow_m(mDefaults.minDistance_m, mDefaults.maxDistance_m);
-        saver->setAzimuthWindow_deg(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
-        saver->setAltitudeWindow_deg(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
-*/
-
         const auto& limits = mDefaults.getSensorLimits();
 
         saver->setRangeWindow_m(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()),
@@ -370,11 +330,6 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
 
     pointCloudSerializer.write(data.getKinematicModel());
 
-/*
-    pointCloudSerializer.writeDistanceWindow(mDefaults.minDistance_m, mDefaults.maxDistance_m);
-    pointCloudSerializer.writeAzimuthWindow(mDefaults.minAzimuth_deg, mDefaults.maxAzimuth_deg);
-    pointCloudSerializer.writeAltitudeWindow(mDefaults.minAltitude_deg, mDefaults.maxAltitude_deg);
-*/
 
     const auto& limits = mDefaults.getSensorLimits();
 

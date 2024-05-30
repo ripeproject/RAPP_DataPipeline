@@ -99,11 +99,11 @@ void cLidarMapConfigOptions::load(const nlohmann::json& jdoc)
 	if (options.contains("plys use binary format"))
 		mPlysUseBinaryFormat = options["plys use binary format"];
 
-	if (options.contains("save frame id info"))
-		mSaveFrameIds = options["save frame id info"];
+	if (options.contains("save lidar frame ids"))
+		mSaveFrameIds = options["save lidar frame ids"];
 
-	if (options.contains("save pixel info"))
-		mSavePixelInfo = options["save pixel info"];
+	if (options.contains("save lidar pixel info"))
+		mSavePixelInfo = options["save lidar pixel info"];
 }
 
 nlohmann::json cLidarMapConfigOptions::save()
@@ -111,8 +111,8 @@ nlohmann::json cLidarMapConfigOptions::save()
 	nlohmann::json options;
 
 	options["save compact data file"] = mSaveCompactDataFile;
-	options["save frame id info"] = mSaveFrameIds;
-	options["save pixel info"] = mSavePixelInfo;
+	options["save lidar frame ids"] = mSaveFrameIds;
+	options["save lidar pixel info"] = mSavePixelInfo;
 
 	options["create plys"] = mSavePlyFiles;
 	options["plys use binary format"] = mPlysUseBinaryFormat;
