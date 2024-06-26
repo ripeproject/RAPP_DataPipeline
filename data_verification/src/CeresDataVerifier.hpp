@@ -4,9 +4,11 @@
 #pragma once
 
 #include <cbdf/BlockDataFile.hpp>
+#include <cbdf/ExperimentInfo.hpp>
 
 #include <filesystem>
 #include <string>
+#include <memory>
 
 
 class cCeresDataVerifier 
@@ -34,8 +36,10 @@ protected:
 private:
 	const int mID;
 
-	std::uintmax_t mFileSize;
+	std::uintmax_t mFileSize = 0;
     cBlockDataFileReader mFileReader;
+
+	std::shared_ptr<cExperimentInfo> mExperimentInfo;
 
 	std::filesystem::path mInvalidDirectory;
 	std::filesystem::path mFileToCheck;

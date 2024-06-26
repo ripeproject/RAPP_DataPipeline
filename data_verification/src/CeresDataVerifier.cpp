@@ -4,9 +4,9 @@
 #include "OusterVerificationParser.hpp"
 #include "AxisCommunicationsVerificationParser.hpp"
 
+#include <cbdf/ExperimentInfoLoader.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 
-#include <memory>
 #include <string>
 #include <atomic>
 
@@ -41,6 +41,8 @@ cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::path invalid_dir
     mID(id)
 {
     mInvalidDirectory = invalid_dir;
+
+    mExperimentInfo = std::make_shared<cExperimentInfo>();
 }
 
 cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::directory_entry file_to_check,
@@ -56,6 +58,8 @@ cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::directory_entry 
     {
         throw std::logic_error(mFileToCheck.string());
     }
+
+    mExperimentInfo = std::make_shared<cExperimentInfo>();
 }
 
 cCeresDataVerifier::~cCeresDataVerifier()
@@ -100,6 +104,7 @@ void cCeresDataVerifier::run()
         throw std::logic_error("No file is open for verification.");
     }
 
+    auto info = std::make_unique<cExperimentInfoLoader>(mExperimentInfo);
     auto ouster = std::make_unique<cOusterVerificationParser>();
     auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
 
@@ -174,6 +179,33 @@ void cCeresDataVerifier::run()
 
             return;
         }
+    }
+
+    // Check the experiment information to see is the most basic information is there...
+    if (mExperimentInfo->title().empty())
+    {
+        std::string msg = mFileToCheck.string();
+        msg += ": Missing experiment title!";
+        console_message(msg);
+
+        moveFileToInvalid();
+
+        complete_file_progress(mID, "Data Invalid");
+
+        return;
+    }
+
+    if (mExperimentInfo->experimentDoc().empty())
+    {
+        std::string msg = mFileToCheck.string();
+        msg += ": Missing experiment document!";
+        console_message(msg);
+
+        moveFileToInvalid();
+
+        complete_file_progress(mID, "Data Invalid");
+
+        return;
     }
 
     complete_file_progress(mID, "Passed");

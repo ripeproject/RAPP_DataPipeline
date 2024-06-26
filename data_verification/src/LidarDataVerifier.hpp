@@ -31,7 +31,7 @@ protected:
 private:
 	const int mID;
 
-	std::uintmax_t mFileSize;
+	std::uintmax_t mFileSize = 0;
 	v1::cBlockDataFileReader mFileReader;
 
 	std::filesystem::path mInvalidDirectory;
