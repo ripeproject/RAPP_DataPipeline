@@ -85,6 +85,104 @@ bool cDataRepair::open(std::filesystem::path file_to_repair)
 //-----------------------------------------------------------------------------
 cDataRepair::eResult cDataRepair::pass1()
 {
+    update_prefix_progress(mID, "Checking Info Block", 0);
+
+    mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
+    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len) { this->processBlock(id, buf, len); });
+
+    mFileReader.attach(mOusterRepairParser.get());
+
+    try
+    {
+        while (!mFileReader.eof())
+        {
+            if (mFileReader.fail())
+            {
+                mFileReader.close();
+                mFileWriter.close();
+                return eResult::INVALID_FILE;
+            }
+
+            mFileReader.processBlock();
+
+            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            file_pos = 100.0 * (file_pos / mFileSize);
+            update_progress(mID, static_cast<int>(file_pos));
+        }
+    }
+    catch (const bdf::invalid_data& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": Invalid data, ";
+        msg += e.what();
+        console_message(msg);
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_DATA;
+    }
+    catch (const bdf::stream_error& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": Stream Error, ";
+        msg += e.what();
+        console_message(msg);
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_FILE;
+    }
+    catch (const bdf::crc_error& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": CRC Error, ";
+        msg += e.what();
+        console_message(msg);
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_FILE;
+    }
+    catch (const bdf::unexpected_eof& e)
+    {
+        std::string msg = mCurrentFile.string();
+        msg += ": Unexpected EOF, ";
+        msg += e.what();
+        console_message(msg);
+
+        mFileReader.close();
+        mFileWriter.close();
+
+        return eResult::INVALID_FILE;
+    }
+    catch (const std::exception& e)
+    {
+        if (!mFileReader.eof())
+        {
+            std::string msg = mCurrentFile.string();
+            msg += ": Failed due to ";
+            msg += e.what();
+            console_message(msg);
+
+            mFileReader.close();
+            mFileWriter.close();
+
+            return eResult::INVALID_FILE;
+        }
+    }
+
+    mFileReader.close();
+    mFileWriter.close();
+
+    return eResult::VALID;
+}
+
+//-----------------------------------------------------------------------------
+cDataRepair::eResult cDataRepair::pass2()
+{
     update_prefix_progress(mID, "Repairing", 0);
 
     mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
@@ -182,7 +280,7 @@ cDataRepair::eResult cDataRepair::pass1()
 }
 
 //-----------------------------------------------------------------------------
-cDataRepair::eResult cDataRepair::pass2()
+cDataRepair::eResult cDataRepair::pass3()
 {
     update_prefix_progress(mID, "Verifing", 0);
 

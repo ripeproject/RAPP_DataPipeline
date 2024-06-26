@@ -74,7 +74,30 @@ void cFileProcessor::process_file()
 
 void cFileProcessor::run()
 {
+    // Read header data to check for missing data...
     auto result = mDataRepair->pass1();
+
+    if (result == cDataRepair::eResult::INVALID_FILE)
+    {
+        mDataRepair->deleteTemporaryFile();
+
+        ::create_directory(mFailedDirectory);
+
+        std::filesystem::path dest = mFailedDirectory / mFileToRepair.filename();
+        std::filesystem::rename(mFileToRepair, dest);
+
+        ++g_num_failed_files;
+
+        complete_file_progress(mID, "Complete", "Failed");
+
+        return;
+    }
+    else if (result == cDataRepair::eResult::INVALID_DATA)
+    {
+    }
+
+    // Try to repaired data in file...
+    result = mDataRepair->pass2();
 
     if (result == cDataRepair::eResult::INVALID_FILE)
     {
@@ -101,7 +124,7 @@ void cFileProcessor::run()
     }
 
     // Validate the repaired file...
-    result = mDataRepair->pass2();
+    result = mDataRepair->pass3();
 
     if (result == cDataRepair::eResult::INVALID_FILE)
     {

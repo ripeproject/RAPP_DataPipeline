@@ -8,6 +8,9 @@ set(DATA_REPAIR_COMMON_FILES
 
 	ParserExceptions.hpp
 
+	ExperimentInfoRepairParser.hpp
+	ExperimentInfoRepairParser.cpp
+
 	AxisCommunicationsRepairParser.hpp
 	AxisCommunicationsRepairParser.cpp
 
@@ -44,6 +47,7 @@ target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
+target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
@@ -115,6 +119,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
+	target_link_libraries(gui_app PRIVATE cbdf::info)
 	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)

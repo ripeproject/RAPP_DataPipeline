@@ -15,7 +15,7 @@
 class cDataRepair
 {
 public:
-	enum class eResult { VALID, INVALID_DATA, INVALID_FILE };
+	enum class eResult { VALID, INVALID_DATA, INVALID_FILE, MISSING_DATA };
 
 public:
 	explicit cDataRepair(int id, std::filesystem::path temporary_dir);
@@ -29,11 +29,14 @@ public:
 
 	bool open(std::filesystem::path file_to_repair);
 
-	// Repair data in the recovered file if possible
+	// Check for missing experiment data
 	eResult pass1();
 
-	// Validate the repaired file
+	// Repair data in the recovered file if possible
 	eResult pass2();
+
+	// Validate the repaired file
+	eResult pass3();
 
 	void deleteTemporaryFile();
 
