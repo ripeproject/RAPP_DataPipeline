@@ -2,6 +2,9 @@
 #include "CeresDataVerifier.hpp"
 #include "LidarDataVerifier.hpp"
 #include "BS_thread_pool.hpp"
+#include "StringUtils.hpp"
+
+#include <nlohmann/json.hpp>
 
 #include "TextProgressBar.hpp"
 
@@ -13,17 +16,68 @@
 #include <iostream>
 #include <mutex>
 #include <atomic>
-
+#include <map>
 
 std::mutex g_console_mutex;
 
 std::atomic<uint32_t> g_num_failed_files = 0;
 std::atomic<uint32_t> g_num_invalid_files = 0;
+std::atomic<uint32_t> g_num_missing_data = 0;
 
 namespace
 {
 	int numFilesToProcess = 0;
 	cTextProgressBar progress_bar;
+
+	void load_experiments(std::filesystem::directory_iterator dir_it, std::map<std::string, std::filesystem::directory_entry>& exp_files)
+	{
+		for (auto entry : dir_it)
+		{
+			if (entry.is_directory())
+			{
+				load_experiments(std::filesystem::directory_iterator(entry), exp_files);
+			}
+
+			if (entry.is_regular_file())
+			{
+				try
+				{
+					std::ifstream in;
+					in.open(entry.path().string());
+
+					if (!in.is_open())
+					{
+						in.close();
+						continue;
+					}
+
+					nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
+
+					std::string exp_name;
+					if (jsonDoc.contains("experiment name"))
+						exp_name = jsonDoc["experiment name"];
+
+					if (jsonDoc.contains("experiment_name"))
+						exp_name = jsonDoc["experiment_name"];
+
+					if (exp_name.empty())
+					{
+						in.close();
+						continue;
+					}
+
+					in.close();
+					auto filename = nStringUtils::safeFilename(exp_name);
+
+					exp_files.insert(std::make_pair(filename, entry));
+				}
+				catch (const std::exception& e)
+				{
+				}
+			}
+		}
+
+	}
 }
 
 void console_message(const std::string& msg)
@@ -57,6 +111,7 @@ int main(int argc, char** argv)
 	bool showHelp = false;
 
 	std::string input_directory = current_path().string();
+	std::string experiment_directory;
 
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
@@ -64,6 +119,10 @@ int main(int argc, char** argv)
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for verification.")
+		.optional()
+		| lyra::opt(experiment_directory, "experiment directory")
+		["-e"]["--exp_dir"]
+		("The path to the experiment configuration files used in verification.")
 		.optional()
 		| lyra::arg(input_directory, "input directory")
 		("The path to input directory for verification of ceres data.");
@@ -109,6 +168,11 @@ int main(int argc, char** argv)
 		lidar_files_to_check.push_back(dir_entry);
 	}
 
+	if (ceres_files_to_check.empty() && lidar_files_to_check.empty())
+	{
+		return 0;
+	}
+
 	int max_threads = std::thread::hardware_concurrency();
 
 	num_of_threads = std::max(num_of_threads, 0);
@@ -118,16 +182,43 @@ int main(int argc, char** argv)
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
+/*
 	if (n == 1)
 		std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
 	else
 		std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+*/
+
+	// Load experiment files for filename lookup
+	std::map<std::string, std::filesystem::directory_entry> exp_files;
+
+	if (!experiment_directory.empty())
+	{
+		const std::filesystem::path exp_dir = experiment_directory;
+		load_experiments(std::filesystem::directory_iterator{ exp_dir }, exp_files);
+	}
 
 	std::vector<cCeresDataVerifier*> ceres_data_verifiers;
 
 	for (auto& file : ceres_files_to_check)
 	{
-		cCeresDataVerifier* dv = new cCeresDataVerifier(numFilesToProcess++, invalid_dir);
+		auto file_info = nStringUtils::removeMeasurementTimestamp(file.path().filename().string());
+
+		std::filesystem::path exp_file;
+
+		if (!exp_files.empty())
+		{
+			auto it = exp_files.find(file_info.filename);
+
+			if (it != exp_files.end())
+				exp_file = it->second;
+			else
+			{
+				exp_file.clear();
+			}
+		}
+
+		cCeresDataVerifier* dv = new cCeresDataVerifier(numFilesToProcess++, invalid_dir, exp_file);
 		dv->setFileToCheck(file);
 
 		pool.push_task(&cCeresDataVerifier::process_file, dv);

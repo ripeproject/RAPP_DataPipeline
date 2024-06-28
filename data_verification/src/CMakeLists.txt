@@ -11,6 +11,9 @@ set(DATA_VERIFICATOR_COMMON_FILES
 
 	ParserExceptions.hpp
 
+	ExperimentInfoFromJson.hpp
+	ExperimentInfoFromJson.cpp
+
 	OusterTypes.hpp
 	OusterVerificationParser.hpp
 	OusterVerificationParser.cpp

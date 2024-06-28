@@ -14,10 +14,10 @@
 class cCeresDataVerifier 
 {
 public:
-	explicit cCeresDataVerifier(int id, std::filesystem::path invalid_dir);
+	cCeresDataVerifier(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file);
 
 	cCeresDataVerifier(int id, std::filesystem::directory_entry file_to_check,
-		std::filesystem::path invalid_dir);
+		std::filesystem::path invalid_dir, std::filesystem::path exp_file);
 
     ~cCeresDataVerifier();
 
@@ -43,5 +43,6 @@ private:
 
 	std::filesystem::path mInvalidDirectory;
 	std::filesystem::path mFileToCheck;
+	std::filesystem::path mExperimentFile;
 };
 

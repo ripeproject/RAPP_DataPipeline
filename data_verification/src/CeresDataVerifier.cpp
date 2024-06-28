@@ -3,6 +3,7 @@
 #include "ParserExceptions.hpp"
 #include "OusterVerificationParser.hpp"
 #include "AxisCommunicationsVerificationParser.hpp"
+#include "ExperimentInfoFromJson.hpp"
 
 #include <cbdf/ExperimentInfoLoader.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
@@ -13,6 +14,7 @@
 
 extern std::atomic<uint32_t> g_num_failed_files;
 extern std::atomic<uint32_t> g_num_invalid_files;
+extern std::atomic<uint32_t> g_num_missing_data;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -36,22 +38,25 @@ namespace
 }
 
 //-----------------------------------------------------------------------------
-cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::path invalid_dir)
+cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file)
 :
     mID(id)
 {
     mInvalidDirectory = invalid_dir;
+    mExperimentFile = exp_file;
 
     mExperimentInfo = std::make_shared<cExperimentInfo>();
 }
 
 cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::directory_entry file_to_check,
-    std::filesystem::path invalid_dir)
+    std::filesystem::path invalid_dir, std::filesystem::path exp_file)
 :
     mID(id)
 {
-    mInvalidDirectory = invalid_dir;
     mFileToCheck = file_to_check;
+    mInvalidDirectory = invalid_dir;
+    mExperimentFile = exp_file;
+
     mFileReader.open(file_to_check.path().string());
 
     if (!mFileReader.isOpen())
@@ -108,6 +113,7 @@ void cCeresDataVerifier::run()
     auto ouster = std::make_unique<cOusterVerificationParser>();
     auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
 
+    mFileReader.attach(info.get());
     mFileReader.attach(ouster.get());
     mFileReader.attach(axis.get());
 
@@ -182,30 +188,90 @@ void cCeresDataVerifier::run()
     }
 
     // Check the experiment information to see is the most basic information is there...
-    if (mExperimentInfo->title().empty())
+    if (!mExperimentInfo->experimentDoc().empty())
     {
-        std::string msg = mFileToCheck.string();
-        msg += ": Missing experiment title!";
-        console_message(msg);
+        cExperimentInfoFromJson info;
+        info.parse(mExperimentInfo->experimentDoc());
 
-        moveFileToInvalid();
+        if (info != *mExperimentInfo)
+        {
+            std::string msg = mFileToCheck.string();
+            msg += ": Missing experiment information!";
+            console_message(msg);
 
-        complete_file_progress(mID, "Data Invalid");
+            moveFileToInvalid();
 
+            complete_file_progress(mID, "Data Invalid");
+
+            return;
+        }
+
+        complete_file_progress(mID, "Passed");
         return;
     }
-
-    if (mExperimentInfo->experimentDoc().empty())
+    else
     {
-        std::string msg = mFileToCheck.string();
-        msg += ": Missing experiment document!";
-        console_message(msg);
+        if (mExperimentFile.empty())
+        {
+            if (mExperimentInfo->title().empty())
+            {
+                std::string msg = mFileToCheck.string();
+                msg += ": Missing experiment title!";
+                console_message(msg);
 
-        moveFileToInvalid();
+                moveFileToInvalid();
 
-        complete_file_progress(mID, "Data Invalid");
+                complete_file_progress(mID, "Data Invalid");
 
-        return;
+                return;
+            }
+        }
+        else
+        {
+            std::ifstream in;
+            in.open(mExperimentFile.string());
+
+            if (!in.is_open())
+            {
+                in.close();
+
+                // We could not open the experiment file so we can only check the title
+                if (mExperimentInfo->title().empty())
+                {
+                    std::string msg = mFileToCheck.string();
+                    msg += ": Missing experiment title!";
+                    console_message(msg);
+
+                    moveFileToInvalid();
+
+                    complete_file_progress(mID, "Data Invalid");
+
+                    return;
+                }
+            }
+            else
+            {
+                nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
+
+                in.close();
+
+                cExperimentInfoFromJson info;
+                info.parse(jsonDoc);
+
+                if (info != *mExperimentInfo)
+                {
+                    std::string msg = mFileToCheck.string();
+                    msg += ": Missing experiment information!";
+                    console_message(msg);
+
+                    moveFileToInvalid();
+
+                    complete_file_progress(mID, "Data Invalid");
+
+                    return;
+                }
+            }
+        }
     }
 
     complete_file_progress(mID, "Passed");

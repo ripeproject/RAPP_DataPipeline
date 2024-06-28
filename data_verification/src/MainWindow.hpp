@@ -34,6 +34,7 @@ public:
 protected:
 	void OnSourceDirectory(wxCommandEvent& event);
 	void OnInvalidDirectory(wxCommandEvent& event);
+	void OnExperimentDirectory(wxCommandEvent& event);
 	void OnVerify(wxCommandEvent& event);
 
 
@@ -51,6 +52,9 @@ private:
 	wxTextCtrl* mpInvalidDataCtrl = nullptr;
 	wxButton* mpInvalidDataDirButton = nullptr;
 
+	wxTextCtrl* mpExperimentCtrl = nullptr;
+	wxButton* mpExperimentDirButton = nullptr;
+
 	wxButton* mpVerifyButton = nullptr;
 
 	cFileProgressCtrl* mpProgressCtrl = nullptr;
@@ -63,6 +67,7 @@ private:
 
 	wxString mSourceDataDirectory;
 	wxString mInvalidDataDirectory;
+	wxString mExperimentDirectory;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();
