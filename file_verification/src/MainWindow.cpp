@@ -5,10 +5,12 @@
 #include "StringUtils.hpp"
 
 #include <wx/thread.h>
+#include <wx/config.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
 #include <filesystem>
+#include <memory>
 
 using namespace std::filesystem;
 
@@ -102,6 +104,22 @@ cMainWindow::cMainWindow(wxWindow* parent)
 {
 	mpHandler = GetEventHandler();
 
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("CeresFileChecker");
+
+	config->Read("SourceDataDirectory", &mSourceDataDirectory);
+
+	if (!config->Read("FailedDataDirectory", &mFailedDataDirectory))
+	{
+		if (!mSourceDataDirectory.empty())
+		{
+
+			std::filesystem::path source_dir{ mSourceDataDirectory.ToStdString() };
+			auto failed_dir = source_dir / "failed_files";
+
+			mFailedDataDirectory = failed_dir.string();
+		}
+	}
+
 	CreateControls();
 	CreateLayout();
 }
@@ -112,16 +130,23 @@ cMainWindow::~cMainWindow()
 
 	delete mpOriginalLog;
 	mpOriginalLog = nullptr;
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("CeresFileChecker");
+
+	config->Write("SourceDataDirectory", mSourceDataDirectory);
+	config->Write("FailedDataDirectory", mFailedDataDirectory);
 }
 
 void cMainWindow::CreateControls()
 {
 	mpSourceCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpSourceCtrl->SetValue(mSourceDataDirectory);
 
 	mpSourceDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpSourceDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSourceDirectory, this);
 
 	mpFailedCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpFailedCtrl->SetValue(mFailedDataDirectory);
 
 	mpFailedDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpFailedDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnFailedDirectory, this);
