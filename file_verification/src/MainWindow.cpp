@@ -11,6 +11,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <atomic>
 
 using namespace std::filesystem;
 
@@ -18,6 +19,8 @@ namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
 }
+
+std::atomic<uint32_t> g_num_failed_files = 0;
 
 void console_message(const std::string& msg)
 {
@@ -331,6 +334,8 @@ void cMainWindow::stopDataProcessing()
 
 wxThread::ExitCode cMainWindow::Entry()
 {
+	g_num_failed_files = 0;
+
 	while (mFileProcessors.size() > 0)
 	{
 		if (GetThread()->TestDestroy())
@@ -342,9 +347,27 @@ wxThread::ExitCode cMainWindow::Entry()
 		delete fp;
 	}
 
-	wxString msg = "Finished processing ";
-	msg += mSourceDataDirectory;
-	wxLogMessage(msg);
+	if (g_num_failed_files == 0)
+	{
+		wxString msg = "Finished processing ";
+		msg += mSourceDataDirectory;
+		wxLogMessage(msg);
+	}
+	else
+	{
+		wxString msg = "Finished processing ";
+		msg += mSourceDataDirectory;
+		if (g_num_failed_files == 1)
+			msg += ", 1 file failed!";
+		else
+		{
+			msg += ", ";
+			int i = g_num_failed_files;
+			msg += wxString::Format(wxT("%d"), i);
+			msg += " files failed!";
+		}
+		wxLogError(msg);
+	}
 
 	return (wxThread::ExitCode) 0;
 }
