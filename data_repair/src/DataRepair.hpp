@@ -3,6 +3,7 @@
  */
 #pragma once
 
+#include "ExperimentInfoRepairParser.hpp"
 #include "OusterRepairParser.hpp"
 
 #include <cbdf/BlockDataFile.hpp>
@@ -18,10 +19,12 @@ public:
 	enum class eResult { VALID, INVALID_DATA, INVALID_FILE, MISSING_DATA };
 
 public:
-	explicit cDataRepair(int id, std::filesystem::path temporary_dir);
+	explicit cDataRepair(int id, std::filesystem::path temporary_dir, 
+				std::filesystem::path exp_file);
 
     cDataRepair(int id, std::filesystem::path file_to_repair,
-				std::filesystem::path temporary_dir);
+				std::filesystem::path temporary_dir, 
+				std::filesystem::path exp_file);
 
     ~cDataRepair();
 
@@ -57,7 +60,9 @@ private:
 	std::filesystem::path mTemporaryDirectory;
 	std::filesystem::path mCurrentFile;
 	std::filesystem::path mTemporaryFile;
+	std::filesystem::path mExperimentFile;
 
-	std::unique_ptr<cOusterRepairParser> mOusterRepairParser;
+	std::unique_ptr<cExperimentInfoRepairParser>	mExperimentInfoRepairParser;
+	std::unique_ptr<cOusterRepairParser>			mOusterRepairParser;
 };
 

@@ -37,6 +37,7 @@ protected:
 	void OnSourceDirectory(wxCommandEvent& event);
 	void OnRepairDirectory(wxCommandEvent& event);
 	void OnFailedDirectory(wxCommandEvent& event);
+	void OnExperimentDirectory(wxCommandEvent& event);
 	void OnRepair(wxCommandEvent& event);
 
 
@@ -57,6 +58,9 @@ private:
 	wxTextCtrl* mpFailedCtrl = nullptr;
 	wxButton* mpFailedDirButton = nullptr;
 
+	wxTextCtrl* mpExperimentCtrl = nullptr;
+	wxButton* mpExperimentDirButton = nullptr;
+
 	wxButton* mpRepairButton = nullptr;
 
 	cFileProgressCtrl* mpProgressCtrl = nullptr;
@@ -70,6 +74,7 @@ private:
 	wxString mSourceDataDirectory;
 	wxString mFailedDataDirectory;
 	wxString mRepairedDataDirectory;
+	wxString mExperimentDataDirectory;
 
 	std::filesystem::path mTemporaryDir;
 

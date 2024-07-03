@@ -13,7 +13,8 @@ class cFileProcessor
 public:
 	cFileProcessor(int id, std::filesystem::path temp_dir,
 		std::filesystem::path failed_dir,
-		std::filesystem::path repaired_dir);
+		std::filesystem::path repaired_dir,
+		std::filesystem::path exp_file);
 
 	~cFileProcessor();
 
@@ -32,6 +33,7 @@ private:
 
 	const std::filesystem::path mRepairedDirectory;
 	const std::filesystem::path mFailedDirectory;
+	const std::filesystem::path mExperimentFile;
 
 	std::filesystem::path mFileToRepair;
 

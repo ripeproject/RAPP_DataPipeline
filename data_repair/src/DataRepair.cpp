@@ -2,6 +2,8 @@
 #include "DataRepair.hpp"
 #include "ParserExceptions.hpp"
 
+#include "ExperimentInfoFromJson.hpp"
+
 #include <cbdf/BlockDataFileExceptions.hpp>
 
 #include <memory>
@@ -19,17 +21,19 @@ extern void complete_file_progress(const int id, std::string prefix, std::string
 
 
 //-----------------------------------------------------------------------------
-cDataRepair::cDataRepair(int id, std::filesystem::path temporary_dir)
+cDataRepair::cDataRepair(int id, std::filesystem::path temporary_dir, std::filesystem::path exp_file)
     : mID(id)
 {
     mTemporaryDirectory = temporary_dir;
+    mExperimentFile = exp_file;
 
+    mExperimentInfoRepairParser = std::make_unique<cExperimentInfoRepairParser>();
     mOusterRepairParser = std::make_unique<cOusterRepairParser>();
 }
 
 cDataRepair::cDataRepair(int id, std::filesystem::path file_to_repair,
-                        std::filesystem::path temporary_dir)
-    : cDataRepair(id, temporary_dir)
+                        std::filesystem::path temporary_dir, std::filesystem::path exp_file)
+    : cDataRepair(id, temporary_dir, exp_file)
 {
     mCurrentFile = file_to_repair;
 
@@ -85,27 +89,31 @@ bool cDataRepair::open(std::filesystem::path file_to_repair)
 //-----------------------------------------------------------------------------
 cDataRepair::eResult cDataRepair::pass1()
 {
+    cBlockDataFileReader fileReader;
+    fileReader.open(mCurrentFile.string());
+
+    if (!fileReader.isOpen())
+    {
+        return eResult::INVALID_FILE;
+    }
+
     update_prefix_progress(mID, "Checking Info Block", 0);
 
-    mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
-    mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len) { this->processBlock(id, buf, len); });
-
-    mFileReader.attach(mOusterRepairParser.get());
+    fileReader.attach(mExperimentInfoRepairParser.get());
 
     try
     {
-        while (!mFileReader.eof())
+        while (!fileReader.eof())
         {
-            if (mFileReader.fail())
+            if (fileReader.fail())
             {
-                mFileReader.close();
-                mFileWriter.close();
+                fileReader.close();
                 return eResult::INVALID_FILE;
             }
 
-            mFileReader.processBlock();
+            fileReader.processBlock();
 
-            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            auto file_pos = static_cast<double>(fileReader.filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
             update_progress(mID, static_cast<int>(file_pos));
         }
@@ -117,8 +125,7 @@ cDataRepair::eResult cDataRepair::pass1()
         msg += e.what();
         console_message(msg);
 
-        mFileReader.close();
-        mFileWriter.close();
+        fileReader.close();
 
         return eResult::INVALID_DATA;
     }
@@ -129,8 +136,7 @@ cDataRepair::eResult cDataRepair::pass1()
         msg += e.what();
         console_message(msg);
 
-        mFileReader.close();
-        mFileWriter.close();
+        fileReader.close();
 
         return eResult::INVALID_FILE;
     }
@@ -141,8 +147,7 @@ cDataRepair::eResult cDataRepair::pass1()
         msg += e.what();
         console_message(msg);
 
-        mFileReader.close();
-        mFileWriter.close();
+        fileReader.close();
 
         return eResult::INVALID_FILE;
     }
@@ -153,29 +158,57 @@ cDataRepair::eResult cDataRepair::pass1()
         msg += e.what();
         console_message(msg);
 
-        mFileReader.close();
-        mFileWriter.close();
+        fileReader.close();
 
         return eResult::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
-        if (!mFileReader.eof())
+        if (!fileReader.eof())
         {
             std::string msg = mCurrentFile.string();
             msg += ": Failed due to ";
             msg += e.what();
             console_message(msg);
 
-            mFileReader.close();
-            mFileWriter.close();
+            fileReader.close();
 
             return eResult::INVALID_FILE;
         }
     }
 
-    mFileReader.close();
-    mFileWriter.close();
+    fileReader.close();
+
+    // Check the experiment information to see is the most basic information is there...
+    if (!mExperimentFile.empty())
+    {
+        std::ifstream in;
+        in.open(mExperimentFile.string());
+
+        if (!in.is_open())
+        {
+            in.close();
+        }
+        else
+        {
+            try
+            {
+                cExperimentInfoFromJson info;
+
+                nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
+                info.parse(jsonDoc);
+
+                in.close();
+
+                mExperimentInfoRepairParser->setReferenceInfo(info);
+            }
+            catch (const std::exception& e)
+            {
+                auto msg = e.what();
+                console_message(msg);
+            }
+        }
+    }
 
     return eResult::VALID;
 }
@@ -188,7 +221,10 @@ cDataRepair::eResult cDataRepair::pass2()
     mFileReader.registerCallback([this](const cBlockID& id) { this->processBlock(id); });
     mFileReader.registerCallback([this](const cBlockID& id, const std::byte* buf, std::size_t len) { this->processBlock(id, buf, len); });
 
+    mFileReader.attach(mExperimentInfoRepairParser.get());
     mFileReader.attach(mOusterRepairParser.get());
+
+    mExperimentInfoRepairParser->attach(&mFileWriter);
     mOusterRepairParser->attach(&mFileWriter);
 
     try

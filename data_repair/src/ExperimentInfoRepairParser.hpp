@@ -8,10 +8,17 @@
 #include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/ExperimentInfoTypes.hpp>
 
+#include <nlohmann/json.hpp>
+
+
 #include <string>
 #include <optional>
 #include <vector>
 #include <memory>
+
+// Forward Declarations
+class cExperimentInfoFromJson;
+
 
 class cExperimentInfoRepairParser : public cExperimentParser
 {
@@ -19,8 +26,12 @@ public:
 	explicit cExperimentInfoRepairParser();
 	virtual ~cExperimentInfoRepairParser();
 
+	const std::string& experimentDoc() const;
+
 	void attach(cBlockDataFileWriter* pDataFile);
 	cBlockDataFileWriter* detach();
+
+	void setReferenceInfo(const cExperimentInfoFromJson& info);
 
 protected:
 	void onBeginHeader() override;
@@ -78,6 +89,8 @@ protected:
 
 
 private:
+	bool mNeedsUpdating = false;
+
 	std::string mTitle;
 	std::string mExperimentDoc;
 	std::vector<std::string> mComments;
@@ -97,14 +110,6 @@ private:
 
 	std::optional<nExpTypes::sDateDoy_t> mPlantingDate;
 	std::optional<nExpTypes::sDateDoy_t> mHarvestDate;
-
-	std::optional<nExpTypes::sDate_t> mFileDate;
-	std::optional<nExpTypes::sTime_t> mFileTime;
-
-	std::optional<std::uint16_t> mDayOfYear;
-
-	std::optional<nExpTypes::sExperimentDateTime_t> mStartTime;
-	std::optional<nExpTypes::sExperimentDateTime_t> mEndTime;
 
 private:
 	cExperimentSerializer mSerializer;

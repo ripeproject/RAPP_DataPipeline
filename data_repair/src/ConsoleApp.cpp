@@ -61,6 +61,7 @@ int main(int argc, char** argv)
 	bool showHelp = false;
 
 	std::string input_directory = current_path().string();
+	std::string experiment_directory;
 
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
@@ -114,6 +115,7 @@ int main(int argc, char** argv)
 
 	const std::filesystem::path failed_dir = input / "failed_files";
 	const std::filesystem::path repaired_dir = input / "repaired_data_files";
+	const std::filesystem::path experiment_dir = experiment_directory;
 
 	int max_threads = std::thread::hardware_concurrency();
 
@@ -134,7 +136,7 @@ int main(int argc, char** argv)
 	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, temporary_dir, failed_dir, repaired_dir);
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, temporary_dir, failed_dir, repaired_dir, experiment_dir);
 		
 		if (fp->setFileToRepair(file))
 		{

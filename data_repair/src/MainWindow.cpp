@@ -3,17 +3,72 @@
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
 
+#include <nlohmann/json.hpp>
+
 #include <wx/thread.h>
+#include <wx/config.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
 #include <filesystem>
+#include <atomic>
+#include <memory>
+#include <map>
 
 using namespace std::filesystem;
 
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
+
+	void load_experiments(std::filesystem::directory_iterator dir_it, std::map<std::string, std::filesystem::directory_entry>& exp_files)
+	{
+		for (auto entry : dir_it)
+		{
+			if (entry.is_directory())
+			{
+				load_experiments(std::filesystem::directory_iterator(entry), exp_files);
+			}
+
+			if (entry.is_regular_file())
+			{
+				try
+				{
+					std::ifstream in;
+					in.open(entry.path().string());
+
+					if (!in.is_open())
+					{
+						in.close();
+						continue;
+					}
+
+					nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
+
+					std::string exp_name;
+					if (jsonDoc.contains("experiment name"))
+						exp_name = jsonDoc["experiment name"];
+
+					if (jsonDoc.contains("experiment_name"))
+						exp_name = jsonDoc["experiment_name"];
+
+					if (exp_name.empty())
+					{
+						in.close();
+						continue;
+					}
+
+					in.close();
+					auto filename = nStringUtils::safeFilename(exp_name);
+
+					exp_files.insert(std::make_pair(filename, entry));
+				}
+				catch (const std::exception& e)
+				{
+				}
+			}
+		}
+	}
 }
 
 void console_message(const std::string& msg)
@@ -100,6 +155,21 @@ cMainWindow::cMainWindow(wxWindow* parent)
 {
 	mpHandler = GetEventHandler();
 
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("CeresDataRepair");
+
+	if (config->Read("SourceDataDirectory", &mSourceDataDirectory))
+	{
+		std::filesystem::path source_dir{ mSourceDataDirectory.ToStdString() };
+		auto base_dir = source_dir.parent_path();
+		auto repair_dir = base_dir / "repaired_data_files";
+		auto failed_dir = base_dir / "failed_files";
+
+		mRepairedDataDirectory = repair_dir.string();
+		mFailedDataDirectory = failed_dir.string();
+	}
+
+	config->Read("ExperimentDirectory", &mExperimentDataDirectory);
+
 	CreateControls();
 	CreateLayout();
 }
@@ -110,24 +180,39 @@ cMainWindow::~cMainWindow()
 
 	delete mpOriginalLog;
 	mpOriginalLog = nullptr;
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("CeresDataRepair");
+
+	config->Write("SourceDataDirectory", mSourceDataDirectory);
+//	config->Write("InvalidDataDirectory", mInvalidDataDirectory);
+	config->Write("ExperimentDirectory", mExperimentDataDirectory);
 }
 
 void cMainWindow::CreateControls()
 {
 	mpSourceCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpSourceCtrl->SetValue(mSourceDataDirectory);
 
 	mpSourceDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpSourceDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnSourceDirectory, this);
 
 	mpRepairCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpRepairCtrl->SetValue(mRepairedDataDirectory);
 
 	mpRepairDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpRepairDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnRepairDirectory, this);
 
 	mpFailedCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpFailedCtrl->SetValue(mFailedDataDirectory);
 
 	mpFailedDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpFailedDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnFailedDirectory, this);
+
+	mpExperimentCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpExperimentCtrl->SetValue(mExperimentDataDirectory);
+
+	mpExperimentDirButton = new wxButton(this, wxID_ANY, "Browse");
+	mpExperimentDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExperimentDirectory, this);
 
 
 	mpRepairButton = new wxButton(this, wxID_ANY, "Repair");
@@ -164,6 +249,10 @@ void cMainWindow::CreateLayout()
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Failed Directory: "), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpFailedCtrl, 1, wxEXPAND);
 	grid_sizer->Add(mpFailedDirButton, 0, wxALIGN_CENTER_VERTICAL);
+
+	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Experiment Directory: "), 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpExperimentCtrl, 1, wxEXPAND);
+	grid_sizer->Add(mpExperimentDirButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 
@@ -230,6 +319,17 @@ void cMainWindow::OnFailedDirectory(wxCommandEvent& WXUNUSED(event))
 	mpFailedCtrl->SetValue(mFailedDataDirectory);
 }
 
+void cMainWindow::OnExperimentDirectory(wxCommandEvent& WXUNUSED(event))
+{
+	wxDirDialog dlg(NULL, "Select directory containing the experiment configuration files", mExperimentDataDirectory, wxDD_DEFAULT_STYLE);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mExperimentDataDirectory = dlg.GetPath().ToStdString();
+	mpExperimentCtrl->SetValue(mExperimentDataDirectory);
+}
+
 void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 {
 	const std::filesystem::path source_dir = mSourceDataDirectory.ToStdString();
@@ -252,19 +352,44 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 		return;
 	}
 
+	// Load experiment files for filename lookup
+	std::map<std::string, std::filesystem::directory_entry> exp_files;
+
+	if (!mExperimentDataDirectory.empty())
+	{
+		const std::filesystem::path exp_dir = mExperimentDataDirectory.ToStdString();
+		load_experiments(std::filesystem::directory_iterator{ exp_dir }, exp_files);
+	}
+
 	mTemporaryDir = source_dir / "tmp";
 	if (!std::filesystem::exists(mTemporaryDir))
 	{
 		std::filesystem::create_directory(mTemporaryDir);
 	}
 
-	const std::filesystem::path repaired_dir = mRepairedDataDirectory.ToStdString();
-	const std::filesystem::path failed_dir   = mFailedDataDirectory.ToStdString();
+	const std::filesystem::path repaired_dir	= mRepairedDataDirectory.ToStdString();
+	const std::filesystem::path failed_dir		= mFailedDataDirectory.ToStdString();
 
 	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, mTemporaryDir, failed_dir, repaired_dir);
+		auto file_info = nStringUtils::removeMeasurementTimestamp(file.path().filename().string());
+
+		std::filesystem::path exp_file;
+
+		if (!exp_files.empty())
+		{
+			auto it = exp_files.find(file_info.filename);
+
+			if (it != exp_files.end())
+				exp_file = it->second;
+			else
+			{
+				exp_file.clear();
+			}
+		}
+
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, mTemporaryDir, failed_dir, repaired_dir, exp_file);
 
 		if (fp->setFileToRepair(file))
 		{

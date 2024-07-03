@@ -37,9 +37,11 @@ namespace
 
 cFileProcessor::cFileProcessor(int id, std::filesystem::path temp_dir, 
                                         std::filesystem::path failed_dir,
-                                        std::filesystem::path repaired_dir)
+                                        std::filesystem::path repaired_dir,
+                                        std::filesystem::path exp_file)
 :
-    mID(id), mTemporaryDirectory(temp_dir), mFailedDirectory(failed_dir), mRepairedDirectory(repaired_dir)
+    mID(id), mTemporaryDirectory(temp_dir), mFailedDirectory(failed_dir), 
+    mRepairedDirectory(repaired_dir), mExperimentFile(exp_file)
 {
 }
 
@@ -60,7 +62,7 @@ bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_re
 
 void cFileProcessor::process_file()
 {
-    mDataRepair = std::make_unique<cDataRepair>(mID, mTemporaryDirectory);
+    mDataRepair = std::make_unique<cDataRepair>(mID, mTemporaryDirectory, mExperimentFile);
 
     if (mDataRepair->open(mFileToRepair))
     {
@@ -94,6 +96,15 @@ void cFileProcessor::run()
     }
     else if (result == cDataRepair::eResult::INVALID_DATA)
     {
+        mDataRepair->deleteTemporaryFile();
+
+        complete_file_progress(mID, "Complete", "Invalid Data");
+
+        return;
+    }
+    else if (result == cDataRepair::eResult::MISSING_DATA)
+    {
+
     }
 
     // Try to repaired data in file...
