@@ -85,10 +85,12 @@ target_compile_features(utilities PRIVATE cxx_std_20)
 
 target_sources(utilities
 PUBLIC
+	DateTimeUtils.hpp
 	TextProgressBar.hpp
 	
 PRIVATE
 
+	DateTimeUtils.cpp
 	TextProgressBar.cpp
 )
 
