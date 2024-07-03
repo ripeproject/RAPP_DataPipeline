@@ -1,6 +1,8 @@
 
 #include "ExperimentInfoFromJson.hpp"
 
+#include "DateTimeUtils.hpp"
+
 #include <cbdf/ExperimentInfo.hpp>
 
 namespace
@@ -48,7 +50,6 @@ void cExperimentInfoFromJson::clear()
 	mHarvestDate.reset();
 }
 
-
 bool cExperimentInfoFromJson::operator!=(const cExperimentInfo& rhs) const
 {
 	return (mTitle != rhs.title()) ||
@@ -62,6 +63,11 @@ bool cExperimentInfoFromJson::operator!=(const cExperimentInfo& rhs) const
 		(mTreatments != rhs.treatments()) ||
 		(mFieldDesign != rhs.fieldDesign()) ||
 		(mPermit != rhs.permit());
+}
+
+bool cExperimentInfoFromJson::operator==(const cExperimentInfo& rhs) const
+{
+	return !operator!=(rhs);
 }
 
 const std::string& cExperimentInfoFromJson::title() const
@@ -141,12 +147,24 @@ const std::optional<nExpTypes::sDateDoy_t>& cExperimentInfoFromJson::harvestDate
 ***********************************************************/
 void cExperimentInfoFromJson::parse(const std::string& jdoc)
 {
-	nlohmann::json jsonDoc = nlohmann::json::parse(jdoc, nullptr, false, true);
-	parse(jsonDoc);
+	try
+	{
+		nlohmann::json jsonDoc = nlohmann::json::parse(jdoc, nullptr, false, true);
+		parse(jsonDoc);
+	}
+	catch (const nlohmann::json::parse_error& e)
+	{
+	}
+	catch (const std::exception& e)
+	{
+	}
 }
 
 void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 {
+	using namespace nlohmann;
+
+	mExperimentDoc = to_string(jdoc);
 
 	if (jdoc.contains("experiment name"))
 		mTitle = jdoc["experiment name"];
@@ -258,7 +276,7 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		date.month = std::stoi(month);
 		date.day = std::stoi(day);
 		date.year = std::stoi(year);
-		date.doy = 0;
+		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mPlantingDate = date;
 	}
@@ -272,7 +290,7 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		date.month = std::stoi(month);
 		date.day = std::stoi(day);
 		date.year = std::stoi(year);
-		date.doy = 0;
+		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mPlantingDate = date;
 	}
@@ -286,7 +304,7 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		date.month = std::stoi(month);
 		date.day = std::stoi(day);
 		date.year = std::stoi(year);
-		date.doy = 0;
+		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mPlantingDate = date;
 	}
@@ -300,7 +318,7 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		date.month = std::stoi(month);
 		date.day = std::stoi(day);
 		date.year = std::stoi(year);
-		date.doy = 0;
+		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mHarvestDate = date;
 	}
@@ -314,7 +332,7 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		date.month = std::stoi(month);
 		date.day = std::stoi(day);
 		date.year = std::stoi(year);
-		date.doy = 0;
+		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mHarvestDate = date;
 	}
@@ -328,7 +346,7 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		date.month = std::stoi(month);
 		date.day = std::stoi(day);
 		date.year = std::stoi(year);
-		date.doy = 0;
+		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mHarvestDate = date;
 	}

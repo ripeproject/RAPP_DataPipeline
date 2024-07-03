@@ -251,24 +251,42 @@ void cCeresDataVerifier::run()
             }
             else
             {
-                nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
-
-                in.close();
-
-                cExperimentInfoFromJson info;
-                info.parse(jsonDoc);
-
-                if (info != *mExperimentInfo)
+                try
                 {
-                    std::string msg = mFileToCheck.string();
-                    msg += ": Missing experiment information!";
-                    console_message(msg);
+                    cExperimentInfoFromJson info;
 
-                    moveFileToInvalid();
+                    nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
+                    info.parse(jsonDoc);
 
-                    complete_file_progress(mID, "Data Invalid");
+                    in.close();
 
-                    return;
+                    if (info != *mExperimentInfo)
+                    {
+                        std::string msg = mFileToCheck.string();
+                        msg += ": Missing experiment information!";
+                        console_message(msg);
+
+                        moveFileToInvalid();
+
+                        complete_file_progress(mID, "Data Invalid");
+
+                        return;
+                    }
+                }
+                catch (const std::exception& e)
+                {
+                    if (mExperimentInfo->title().empty())
+                    {
+                        std::string msg = mFileToCheck.string();
+                        msg += ": Missing experiment title!";
+                        console_message(msg);
+
+                        moveFileToInvalid();
+
+                        complete_file_progress(mID, "Data Invalid");
+
+                        return;
+                    }
                 }
             }
         }

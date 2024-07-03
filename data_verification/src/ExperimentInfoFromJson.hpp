@@ -47,6 +47,7 @@ public:
 
 private:
 	std::string mTitle;
+	std::string mExperimentDoc;
 	std::vector<std::string> mComments;
 
 	std::string mPrincipalInvestigator;
