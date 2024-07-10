@@ -153,6 +153,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 find_package(lyra REQUIRED)
 find_package(Catch2 QUIET)
 find_package(nlohmann_json REQUIRED)
+find_package(exiv2 REQUIRED CONFIG NAMES exiv2)
 find_package(wxWidgets QUIET COMPONENTS core base)
 
 # Find and include my libraries for data collection

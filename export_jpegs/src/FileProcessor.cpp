@@ -2,6 +2,8 @@
 #include "FileProcessor.hpp"
 #include "export_jpegs.hpp"
 
+#include "StringUtils.hpp"
+
 #include <cbdf/BlockDataFileExceptions.hpp>
 
 #include <filesystem>
@@ -34,7 +36,12 @@ cFileProcessor::~cFileProcessor()
 bool cFileProcessor::open(std::filesystem::path out)
 {
     std::filesystem::path outFile  = out.replace_extension();
-    std::filesystem::path testFile = outFile;
+
+    auto temp = nStringUtils::removeMeasurementTimestamp(mInputFile.filename().string());
+
+    std::string root_filename = temp.filename;
+
+    std::filesystem::path testFile = outFile / root_filename;
 
     testFile.replace_extension(".0.jpeg");
 
@@ -44,6 +51,7 @@ bool cFileProcessor::open(std::filesystem::path out)
     }
 
     mConverter->setOutputPath(outFile);
+    mConverter->setRootFileName(root_filename);
 
     mFileReader.open(mInputFile.string());
 
@@ -69,6 +77,7 @@ void cFileProcessor::run()
 
     cExportJpegs* p = mConverter.get();
 	mFileReader.attach(static_cast<cAxisCommunicationsParser*>(p));
+    mFileReader.attach(static_cast<cSsnxParser*>(p));
 
 	try
     {

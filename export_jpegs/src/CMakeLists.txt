@@ -32,9 +32,11 @@ PRIVATE
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE "../support/StringUtils")
+target_include_directories(console_app PRIVATE "../support/common")
 
+target_link_libraries(console_app PRIVATE Exiv2::exiv2lib)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
-target_link_libraries(console_app PRIVATE cbdf::rgb)
+target_link_libraries(console_app PRIVATE cbdf::rgb cbdf::gps)
 target_link_libraries(console_app PRIVATE string_utils)
 
 
@@ -91,11 +93,13 @@ if(wxWidgets_FOUND)
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
+	target_include_directories(gui_app PRIVATE "../support/common")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
+	target_link_libraries(gui_app PRIVATE Exiv2::exiv2lib)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
-	target_link_libraries(gui_app PRIVATE cbdf::rgb)
+	target_link_libraries(gui_app PRIVATE cbdf::rgb cbdf::gps)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 

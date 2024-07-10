@@ -139,7 +139,7 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), "", "",
+	wxFileDialog dlg(this, _("Open file"), mSource, "",
 		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -158,7 +158,7 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", "",
+	wxDirDialog dlg(NULL, "Choose directory", mSource,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -177,7 +177,7 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnDestinationDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose Destination Directory", "",
+	wxDirDialog dlg(NULL, "Choose Destination Directory", mDestinationDataDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
