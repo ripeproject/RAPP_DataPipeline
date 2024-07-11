@@ -14,7 +14,7 @@ namespace pointcloud
 
 enum class eKinematicModel { CONSTANT_SPEED, SPIDERCAM, GPS_SPEEDS };
 
-enum class eOrientationModel { CONSTANT, MOVEMENT, IMU };
+enum class eOrientationModel { CONSTANT, LINEAR, INTREP_CURVE, IMU };
 
 
 namespace rfm
@@ -86,6 +86,14 @@ namespace rfm
 		double pitchRate_dps = 0.0;
 		double rollRate_dps = 0.0;
 		double yawRate_dps = 0.0;
+	};
+
+	struct sOrientationInterpPoint_t
+	{
+		double distance_pct = 0.0;
+		double pitch_deg = 0.0;
+		double roll_deg = 0.0;
+		double yaw_deg = 0.0;
 	};
 
 	/*

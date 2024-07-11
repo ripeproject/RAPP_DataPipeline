@@ -173,6 +173,8 @@ private:
 	std::optional<double> mEnd_Y_m;
 	std::optional<double> mEnd_Z_m;
 
+	std::vector<rfm::sOrientationInterpPoint_t> mOrientationTable;
+
 	friend class cLidarMapConfigFile;
 };
 

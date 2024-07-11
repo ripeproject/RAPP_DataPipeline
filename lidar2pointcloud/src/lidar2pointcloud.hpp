@@ -30,6 +30,8 @@ struct sPoint_t
 };
 
 
+typedef std::vector<rfm::sOrientationInterpPoint_t> InterpTable_t;
+
 class cLidar2PointCloud : public cFieldScanDataModel
 {
 public:
@@ -82,6 +84,8 @@ public:
 	void setInitialOffset_deg(double yaw_deg, double pitch_deg, double roll_deg);
 	void setFinalOffset_deg(double yaw_deg, double pitch_deg, double roll_deg);
 
+	void setInterpolationTable(const InterpTable_t& table);
+
 	void enableTranslateToGround(bool enable, double threshold_pct);
 	void enableRotateToGround(bool enable, double threshold_pct);
 
@@ -103,6 +107,7 @@ private:
 
 	void computeDollyOrientation_Constant();
 	void computeDollyOrientation_ConstantSpeed();
+	void computeDollyOrientation_InterpTable();
 	void computeDollyOrientation_IMU();
 
 private:
@@ -142,6 +147,8 @@ private:
 	double mEndPitchOffset_deg = 0.0;
 	double mEndRollOffset_deg = 0.0;
 	double mEndYawOffset_deg = 0.0;
+
+	InterpTable_t mOrientationInterpTable;
 
 	bool   mTranslateToGround = true;
 	double mTranslateThreshold_pct = 1.0;

@@ -411,9 +411,77 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
 	}
 
-	if (jdoc.contains("sensor start orientation offset"))
+	if (jdoc.contains("sensor orientation table"))
 	{
-		mOrientationModel = eOrientationModel::MOVEMENT;
+		mOrientationModel = eOrientationModel::INTREP_CURVE;
+
+		auto points = jdoc["sensor orientation table"];
+
+		if (points.empty())
+		{
+			rfm::sOrientationInterpPoint_t point;
+
+			mOrientationTable.push_back(point);
+			point.distance_pct = 100.0;
+			mOrientationTable.push_back(point);
+		}
+		else
+		{
+			for (const auto& point : points)
+			{
+				rfm::sOrientationInterpPoint_t p;
+
+				if (!point.contains("distance (%)"))
+					continue;
+
+				p.distance_pct = point["distance (%)"];
+
+				if (point.contains("pitch (deg)"))
+					p.pitch_deg = point["pitch (deg)"];
+
+				if (point.contains("roll (deg)"))
+					p.roll_deg = point["roll (deg)"];
+
+				if (point.contains("yaw (deg)"))
+					p.yaw_deg = point["yaw (deg)"];
+
+				mOrientationTable.push_back(p);
+			}
+
+			std::sort(mOrientationTable.begin(), mOrientationTable.end(), [](const auto& a, const auto& b)
+				{
+					return a.distance_pct < b.distance_pct;
+				});
+
+			if (mOrientationTable.empty())
+			{
+				rfm::sOrientationInterpPoint_t point;
+
+				mOrientationTable.push_back(point);
+				point.distance_pct = 100.0;
+				mOrientationTable.push_back(point);
+			}
+			else
+			{
+				auto point = mOrientationTable.front();
+				if (point.distance_pct > 0.0)
+				{
+					point.distance_pct = 0.0;
+					mOrientationTable.insert(mOrientationTable.begin(), point);
+				}
+
+				point = mOrientationTable.back();
+				if (point.distance_pct < 100.0)
+				{
+					point.distance_pct = 100.0;
+					mOrientationTable.push_back(point);
+				}
+			}
+		}
+	}
+	else if (jdoc.contains("sensor start orientation offset"))
+	{
+		mOrientationModel = eOrientationModel::LINEAR;
 
 		auto orientation = jdoc["sensor start orientation offset"];
 
@@ -584,7 +652,7 @@ nlohmann::json cLidarMapConfigScan::save()
 				scanDoc["sensor orientation offset"] = orientation;
 			}
 		}
-		else if (mOrientationModel == eOrientationModel::MOVEMENT)
+		else if (mOrientationModel == eOrientationModel::LINEAR)
 		{
 			if (mStartPitchOffset_deg.has_value() || mStartRollOffset_deg.has_value() || mStartYawOffset_deg.has_value())
 			{
@@ -617,6 +685,24 @@ nlohmann::json cLidarMapConfigScan::save()
 
 				scanDoc["sensor final orientation offset"] = orientation;
 			}
+		}
+		else if (mOrientationModel == eOrientationModel::INTREP_CURVE)
+		{
+			nlohmann::json points;
+
+			for (const auto& point : mOrientationTable)
+			{
+				nlohmann::json orientation;
+
+				orientation["distance (%)"] = point.distance_pct;
+				orientation["pitch (deg)"] = point.pitch_deg;
+				orientation["roll (deg)"] = point.roll_deg;
+				orientation["yaw (deg)"] = point.yaw_deg;
+
+				points.push_back(orientation);
+			}
+
+			scanDoc["sensor orientation table"] = points;
 		}
 	}
 

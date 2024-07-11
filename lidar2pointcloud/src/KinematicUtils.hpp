@@ -33,6 +33,9 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 	rfm::sDollyAtitude_t start, rfm::sDollyAtitude_t end, double scan_time_sec);
 
 std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+	std::vector<rfm::sOrientationInterpPoint_t> table, double scan_time_sec);
+
+std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
 	const std::deque<nOusterTypes::imu_data_t>& imu, nOusterTypes::imu_intrinsics_2_t transform);
 
 void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const std::vector<rfm::sDollyOrientation_t>& orientation);

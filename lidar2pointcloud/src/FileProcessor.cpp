@@ -151,7 +151,7 @@ void cFileProcessor::process_file()
                 to_value(mParameters.getSensorRollOffset_deg(), 0.0));
             break;
 
-        case eOrientationModel::MOVEMENT:
+        case eOrientationModel::LINEAR:
             converter->setInitialOffset_deg(to_value(mParameters.getStartYawOffset_deg(), 0.0),
                 to_value(mParameters.getStartPitchOffset_deg(), 0.0), 
                 to_value(mParameters.getStartRollOffset_deg(), 0.0));
@@ -160,6 +160,9 @@ void cFileProcessor::process_file()
                 to_value(mParameters.getEndPitchOffset_deg(), 0.0), 
                 to_value(mParameters.getEndRollOffset_deg(), 0.0));
 
+            break;
+
+        case eOrientationModel::INTREP_CURVE:
             break;
 
         case eOrientationModel::IMU:

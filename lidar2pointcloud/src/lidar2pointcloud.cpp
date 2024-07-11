@@ -137,6 +137,11 @@ void cLidar2PointCloud::setFinalOffset_deg(double yaw_deg, double pitch_deg, dou
 	mEndYawOffset_deg = yaw_deg;
 }
 
+void cLidar2PointCloud::setInterpolationTable(const InterpTable_t& table)
+{
+	mOrientationInterpTable = table;
+}
+
 void cLidar2PointCloud::enableTranslateToGround(bool enable, double threshold_pct)
 {
 	mTranslateToGround = enable;
@@ -193,16 +198,23 @@ bool cLidar2PointCloud::computeDollyOrientation()
 {
 	update_prefix_progress(mID, "Computing Dolly Orientation...", 0);
 
-	bool orientationConstant = ((mStartPitchOffset_deg == mEndPitchOffset_deg)
-		&& (mStartRollOffset_deg == mEndRollOffset_deg) && (mStartYawOffset_deg == mEndYawOffset_deg));
-
-	if (orientationConstant)
+	if (mOrientationInterpTable.empty())
 	{
-		computeDollyOrientation_Constant();
+		bool orientationConstant = ((mStartPitchOffset_deg == mEndPitchOffset_deg)
+			&& (mStartRollOffset_deg == mEndRollOffset_deg) && (mStartYawOffset_deg == mEndYawOffset_deg));
+
+		if (orientationConstant)
+		{
+			computeDollyOrientation_Constant();
+		}
+		else
+		{
+			computeDollyOrientation_ConstantSpeed();
+		}
 	}
 	else
 	{
-		computeDollyOrientation_ConstantSpeed();
+		computeDollyOrientation_InterpTable();
 	}
 
 	return mDollyOrientation.size() > 0;
@@ -368,6 +380,17 @@ void cLidar2PointCloud::computeDollyOrientation_ConstantSpeed()
 	mDollyOrientation = computeDollyOrientationKinematics(mID, mSensorMountPitch_deg,
 		mSensorMountRoll_deg, mSensorMountYaw_deg,
 		start, end, scanTime_sec);
+}
+
+void cLidar2PointCloud::computeDollyOrientation_InterpTable()
+{
+	mKinematicModel = add_sensor_rotation(mKinematicModel);
+
+	double scanTime_sec = getScanTime_sec();
+
+	mDollyOrientation = computeDollyOrientationKinematics(mID, mSensorMountPitch_deg,
+		mSensorMountRoll_deg, mSensorMountYaw_deg,
+		mOrientationInterpTable, scanTime_sec);
 }
 
 void cLidar2PointCloud::computeDollyOrientation_IMU()

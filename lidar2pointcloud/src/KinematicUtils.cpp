@@ -415,6 +415,108 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 
 
 std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+    std::vector<rfm::sOrientationInterpPoint_t> table, double scan_time_sec)
+{
+    std::vector<rfm::sDollyOrientation_t> result;
+
+    if ((scan_time_sec <= 0.0) || (table.empty()))
+        return result;
+
+    if (table.size() == 1)
+    {
+        auto point = table.front();
+
+        rfm::sDollyOrientation_t entry;
+        entry.timestamp_us = 0;
+        entry.pitch_deg = point.pitch_deg;
+        entry.roll_deg = point.roll_deg;
+        entry.yaw_deg = point.yaw_deg;
+
+        entry.pitchRate_dps = 0;
+        entry.rollRate_dps = 0;
+        entry.yawRate_dps = 0;
+
+        result.push_back(entry);
+
+        entry.timestamp_us = scan_time_sec * nConstants::SEC_TO_US;
+        result.push_back(entry);
+
+        result.push_back(entry);
+
+        return result;
+    }
+
+    // Make sure the table is sorted from 0% to 100%
+    std::sort(table.begin(), table.end(), [](const auto& a, const auto& b)
+        {
+            return a.distance_pct < b.distance_pct;
+        });
+
+    auto point = table.front();
+    if (point.distance_pct > 0.0)
+    {
+        point.distance_pct = 0.0;
+        table.insert(table.begin(), point);
+    }
+
+    point = table.back();
+    if (point.distance_pct < 100.0)
+    {
+        point.distance_pct = 100.0;
+        table.push_back(point);
+    }
+
+    auto n = table.size() - 1;
+
+    for (int i = 0; i < n; ++i)
+    {
+        auto start = table[i];
+        auto start_pitch = nMathUtils::wrap_neg_180_to_180(mount_pitch_deg + start.pitch_deg);
+        auto start_roll = nMathUtils::wrap_neg_180_to_180(mount_roll_deg + start.roll_deg);
+        auto start_yaw = nMathUtils::wrap_0_to_360(mount_yaw_deg + start.yaw_deg);
+
+        auto end = table[i + 1];
+        auto end_pitch = nMathUtils::wrap_neg_180_to_180(mount_pitch_deg + end.pitch_deg);
+        auto end_roll = nMathUtils::wrap_neg_180_to_180(mount_roll_deg + end.roll_deg);
+        auto end_yaw = nMathUtils::wrap_0_to_360(mount_yaw_deg + end.yaw_deg);
+
+        double delta_time_sec = scan_time_sec * (end.distance_pct / 100.0) - scan_time_sec * (start.distance_pct / 100.0);
+        auto pitch_rate = (end_pitch - start_pitch) / delta_time_sec;
+        auto roll_rate = (end_roll - start_roll) / delta_time_sec;
+        auto yaw_rate = (end_yaw - start_yaw) / delta_time_sec;
+
+        rfm::sDollyOrientation_t entry;
+        entry.timestamp_us = (scan_time_sec * (start.distance_pct / 100.0)) * nConstants::SEC_TO_US;
+        entry.pitch_deg = start_pitch;
+        entry.roll_deg = start_roll;
+        entry.yaw_deg = start_yaw;
+
+        entry.pitchRate_dps = pitch_rate;
+        entry.rollRate_dps = roll_rate;
+        entry.yawRate_dps = yaw_rate;
+
+        result.push_back(entry);
+    }
+
+    auto last = table.back();
+
+    rfm::sDollyOrientation_t entry;
+    entry.timestamp_us = scan_time_sec * nConstants::SEC_TO_US;
+    entry.pitch_deg = nMathUtils::wrap_neg_180_to_180(mount_pitch_deg + last.pitch_deg);;
+    entry.roll_deg = nMathUtils::wrap_neg_180_to_180(mount_roll_deg + last.roll_deg);
+    entry.yaw_deg = nMathUtils::wrap_0_to_360(mount_yaw_deg + last.yaw_deg);
+
+    entry.pitchRate_dps = 0;
+    entry.rollRate_dps = 0;
+    entry.yawRate_dps = 0;
+
+    result.push_back(entry);
+
+    return result;
+}
+
+
+std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
     const std::deque<nOusterTypes::imu_data_t>& imu, nOusterTypes::imu_intrinsics_2_t transform)
 {
     std::vector<rfm::sDollyOrientation_t> result;
