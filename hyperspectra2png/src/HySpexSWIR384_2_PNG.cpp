@@ -15,7 +15,7 @@ cHySpexSWIR384_2_Png::~cHySpexSWIR384_2_Png()
 
     std::string ext;
 
-    ext += ".vnir.png";
+    ext += ".swir.png";
 
     filename += ext;
 

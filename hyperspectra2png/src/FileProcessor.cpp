@@ -79,6 +79,8 @@ void cFileProcessor::run()
         throw std::logic_error("No file is open for reading.");
 	}
 
+    mFileReader.attach(static_cast<cExperimentParser*>(this));
+
     cHySpexVNIR3000N_2_Png* pVnir = mVnirConverter.get();
 	mFileReader.attach(static_cast<cHySpexVNIR_3000N_Parser*>(pVnir));
     mFileReader.attach(static_cast<cSpidercamParser*>(pVnir));
@@ -133,3 +135,62 @@ void cFileProcessor::run()
 }
 
 
+void cFileProcessor::onBeginHeader() {}
+void cFileProcessor::onEndOfHeader() {}
+
+void cFileProcessor::onBeginFooter() {}
+void cFileProcessor::onEndOfFooter() {}
+
+void cFileProcessor::onTitle(const std::string& title) {}
+void cFileProcessor::onPrincipalInvestigator(const std::string& investigator) {}
+
+void cFileProcessor::onBeginResearcherList() {}
+void cFileProcessor::onEndOfResearcherList() {}
+void cFileProcessor::onResearcher(const std::string& researcher) {}
+
+void cFileProcessor::onSpecies(const std::string& species) {}
+void cFileProcessor::onCultivar(const std::string& cultivar) {}
+void cFileProcessor::onPermitInfo(const std::string& permit) {}
+void cFileProcessor::onExperimentDoc(const std::string& doc) {}
+
+void cFileProcessor::onBeginTreatmentList() {}
+void cFileProcessor::onEndOfTreatmentList() {}
+void cFileProcessor::onTreatment(const std::string& treatment) {}
+
+void cFileProcessor::onConstructName(const std::string& name) {}
+
+void cFileProcessor::onBeginEventNumberList() {}
+void cFileProcessor::onEndOfEventNumberList() {}
+void cFileProcessor::onEventNumber(const std::string& event) {}
+
+void cFileProcessor::onFieldDesign(const std::string& design) {}
+void cFileProcessor::onPlantingDate(std::uint16_t year, std::uint8_t month, std::uint8_t day, std::uint16_t doy) {}
+void cFileProcessor::onHarvestDate(std::uint16_t year, std::uint8_t month, std::uint8_t day, std::uint16_t doy) {}
+
+void cFileProcessor::onBeginCommentList() {}
+void cFileProcessor::onEndOfCommentList() {}
+void cFileProcessor::onComment(const std::string& comment) {}
+
+void cFileProcessor::onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) {}
+void cFileProcessor::onFileTime(std::uint8_t hour, std::uint8_t minute, std::uint8_t seconds) {}
+
+void cFileProcessor::onDayOfYear(std::uint16_t day_of_year) {}
+
+void cFileProcessor::onBeginSensorList() {}
+void cFileProcessor::onEndOfSensorList() {}
+void cFileProcessor::onSensorBlockInfo(uint16_t class_id, const std::string& name) {}
+
+void cFileProcessor::onStartTime(sExperimentTime_t time) {}
+void cFileProcessor::onEndTime(sExperimentTime_t time) {}
+
+void cFileProcessor::onStartRecordingTimestamp(uint64_t timestamp_ns)
+{
+    auto x = timestamp_ns;
+}
+
+void cFileProcessor::onEndRecordingTimestamp(uint64_t timestamp_ns) 
+{
+    auto x = timestamp_ns;
+}
+
+void cFileProcessor::onHeartbeatTimestamp(uint64_t timestamp_ns) {}
