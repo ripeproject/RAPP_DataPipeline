@@ -269,3 +269,36 @@ bool nStringUtils::isMonthDirectory(const std::string& dir)
 	return false;
 }
 
+std::string nStringUtils::make_temp_filename(const std::string& filename)
+{
+	std::filesystem::path tmp = filename;
+	std::string tmp_file_name = "~" + tmp.filename().string();
+	tmp.replace_filename(tmp_file_name);
+	return tmp.string();
+}
+
+bool nStringUtils::is_temp_filename(const std::string& filename)
+{
+	std::filesystem::path tmp = filename;
+	std::string tmp_file_name = tmp.filename().string();
+	if (tmp_file_name.empty())
+		return false;
+
+	return tmp_file_name[0] == '~';
+}
+
+std::string nStringUtils::convert_temp_filename(const std::string& filename)
+{
+	std::filesystem::path tmp = filename;
+	std::string tmp_file_name = tmp.filename().string();
+
+	if (!tmp_file_name.empty() && (tmp_file_name[0] == '~'))
+	{
+		tmp_file_name.erase(0, 1);
+	}
+
+	tmp.replace_filename(tmp_file_name);
+	return tmp.string();
+
+}
+

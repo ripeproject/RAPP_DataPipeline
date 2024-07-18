@@ -81,4 +81,26 @@ namespace nStringUtils
 	 */
 	bool isMonthDirectory(const std::string& dir);
 
+	/**
+	 * Make a temporary filename from a filename
+	 *
+	 * The filename: d:\test\long_file_name.extension -> d:\test\~long_file_name.extension
+	 */
+	std::string make_temp_filename(const std::string& filename);
+
+	/**
+	 * Checks to see if a filename is a temporary filename (starts with '~')
+	 *
+	 * The filename: d:\test\long_file_name.extension ->  return false
+	 *				 d:\test\~long_file_name.extension -> return true;
+	 */
+	bool is_temp_filename(const std::string& filename);
+
+	/**
+	 * Convert temporary filename to filename
+	 *
+	 * The filename: d:\test\~long_file_name.extension -> d:\test\long_file_name.extension
+	 */
+	std::string convert_temp_filename(const std::string& filename);
+
 } // End of Namespace nStringUtils
