@@ -3,7 +3,8 @@
 
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
-#include "PlotBoundaries.hpp"
+#include "PlotConfigBoundary.hpp"
+
 
 #include <wx/aui/framemanager.h>
 #include <wx/aui/auibook.h>
