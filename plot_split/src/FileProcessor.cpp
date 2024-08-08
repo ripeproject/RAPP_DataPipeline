@@ -522,7 +522,7 @@ void cFileProcessor::savePlotFile()
 
     for (auto plot : mPlots)
     {
-        std::size_t buffersize = std::max(plot->data().size() * sizeof(cRappPlot::value_type), 4096ULL);
+        std::size_t buffersize = std::max<std::size_t>(plot->data().size() * sizeof(cRappPlot::value_type), 4096ULL);
         plotInfoSerializer.setBufferCapacity(buffersize);
 
         update_progress(mID, static_cast<int>((100.0 * i++) / n));
