@@ -11,6 +11,12 @@ public:
 
 	void clear();
 
+	bool quietMode() const;
+	void setQuietMode(bool quiet_mode);
+
+	bool verboseMode() const;
+	void setVerboseMode(bool verbose_mode);
+
 	void setMaxID(int max_id);
 
 	void setFillChars(char half_full, char full);
@@ -30,6 +36,9 @@ public:
 
 private:
 	int mMaxID = -1;
+
+	bool mQuietMode = false;
+	bool mVerboseMode = false;
 
 	uint8_t mProgressLength = 50;
 

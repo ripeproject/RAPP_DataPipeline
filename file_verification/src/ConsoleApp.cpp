@@ -59,8 +59,11 @@ int main(int argc, char** argv)
 	// The default is to use only one thread as this application is I/O limited.
 	int num_of_threads = 1;
 	bool showHelp = false;
+	bool verboseMode = false;
+	bool quietMode = false;
 
 	std::string input_directory = current_path().string();
+	std::string failed_directory;
 
 	auto cli = lyra::cli()
 		| lyra::help(showHelp)
@@ -69,7 +72,18 @@ int main(int argc, char** argv)
 		["-t"]["--threads"]
 		("The number of threads to use for verification.")
 		.optional()
+		| lyra::opt(verboseMode, "verbose mode")
+		["-v"]["--verbose"]
+		("Enable verbose mode.")
+		.optional()
+		| lyra::opt(quietMode, "quiet mode")
+		["-q"]["--quiet"]
+		("Enable quiet mode: no status output to screen.")
+		.optional()
 		| lyra::arg(input_directory, "input directory")
+		("The path to input directory for verification of ceres data.")
+		.optional()
+		| lyra::arg(failed_directory, "input directory")
 		("The path to input directory for verification of ceres data.");
 
 	auto result = cli.parse({argc, argv});
@@ -87,7 +101,12 @@ int main(int argc, char** argv)
 	}
 
 	const std::filesystem::path input{ input_directory };
-	const std::filesystem::path failed = input / "failed_files";
+	std::filesystem::path failed{ failed_directory };
+
+	if (failed_directory.empty())
+	{
+		failed = input / "failed_files";
+	}
 
 	std::vector<directory_entry> ceres_files_to_check;
 	for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
@@ -153,6 +172,8 @@ int main(int argc, char** argv)
 		lidar_file_verifiers.push_back(fv);
 	}
 
+	progress_bar.setQuietMode(quietMode);
+	progress_bar.setVerboseMode(verboseMode);
 	progress_bar.setMaxID(numFilesToProcess);
 
 	pool.wait_for_tasks();

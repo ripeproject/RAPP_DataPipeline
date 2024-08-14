@@ -24,6 +24,26 @@ void cTextProgressBar::clear()
     mProgressEntries.clear();
 }
 
+bool cTextProgressBar::quietMode() const
+{
+    return mQuietMode;
+}
+
+void cTextProgressBar::setQuietMode(bool quiet_mode)
+{
+    mQuietMode = quiet_mode;
+}
+
+bool cTextProgressBar::verboseMode() const
+{
+    return mVerboseMode;
+}
+
+void cTextProgressBar::setVerboseMode(bool verbose_mode)
+{
+    mVerboseMode = verbose_mode;
+}
+
 void cTextProgressBar::setMaxID(int max_id)
 {
     mMaxID = max_id;
@@ -42,6 +62,9 @@ void cTextProgressBar::setLength(uint8_t length)
 
 void cTextProgressBar::addProgressEntry(int id, const std::string& filename)
 {
+    if (mQuietMode)
+        return;
+
     std::string str = nStringUtils::compactFilename(filename, 50);
     mProgressEntries[id] = { 0, str };
 
@@ -50,12 +73,20 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename)
     if (mMaxID > 0)
         line = format("({}/{}): ", id+1, mMaxID);
 
-    line += format("{:50s}   0% [", str);
+    if (mVerboseMode)
+    {
+        line += format("{:50s}   0% [", str);
 
-    for (int i = 0; i < mProgressLength; ++i)
-        line += mEmptyChar;
+        for (int i = 0; i < mProgressLength; ++i)
+            line += mEmptyChar;
 
-    line += "]";
+        line += "]";
+    }
+    else
+    {
+//        line += format("{:50s}   0%", str);
+        line += format("{:50s}   ", str);
+    }
 
     mProgressEntries[id].max_length = line.size();
 
@@ -64,6 +95,9 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename)
 
 void cTextProgressBar::addProgressEntry(int id, const std::string& filename, const std::string& prefix)
 {
+    if (mQuietMode)
+        return;
+
     std::string str = nStringUtils::compactFilename(filename, 50);
     mProgressEntries[id] = { 0, str, prefix };
 
@@ -72,12 +106,20 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename, con
     if (mMaxID > 0)
         line = format("({}/{}): ", id + 1, mMaxID);
 
-    line += format("{:50s}  <{:^10s}>   0% [", str, prefix);
+    if (mVerboseMode)
+    {
+        line += format("{:50s}  <{:^10s}>   0% [", str, prefix);
 
-    for (int i = 0; i < mProgressLength; ++i)
-        line += mEmptyChar;
+        for (int i = 0; i < mProgressLength; ++i)
+            line += mEmptyChar;
 
-    line += "]";
+        line += "]";
+    }
+    else
+    {
+//        line += format("{:50s}  <{:^10s}>   0%", str, prefix);
+        line += format("{:50s}  <{:^10s}>   ", str, prefix);
+    }
 
     mProgressEntries[id].max_length = line.size();
 
@@ -86,6 +128,9 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename, con
 
 void cTextProgressBar::addProgressEntry(int id, const std::string& filename, const std::string& prefix, const std::string& suffix)
 {
+    if (mQuietMode)
+        return;
+
     std::string str = nStringUtils::compactFilename(filename, 50);
     mProgressEntries[id] = { 0, str, prefix, suffix };
 
@@ -94,12 +139,21 @@ void cTextProgressBar::addProgressEntry(int id, const std::string& filename, con
     if (mMaxID > 0)
         line = format("({}/{}): ", id + 1, mMaxID);
 
-    line += format("{:50s}  <{:^10s}>   0% [", str, prefix);
+    if (mVerboseMode)
+    {
+        line += format("{:50s}  <{:^10s}>   0% [", str, prefix);
 
-    for (int i = 0; i < mProgressLength; ++i)
-        line += mEmptyChar;
+        for (int i = 0; i < mProgressLength; ++i)
+            line += mEmptyChar;
 
-    line += "] " + suffix;
+        line += "] " + suffix;
+    }
+    else
+    {
+//        line += format("{:50s}  <{:^10s}>   0%", str, prefix);
+        line += format("{:50s}  <{:^10s}>   ", str, prefix);
+        line += "  " + suffix;
+    }
 
     mProgressEntries[id].max_length = line.size();
 
@@ -126,6 +180,9 @@ void cTextProgressBar::updateProgressEntry(int id, const std::string& prefix, co
 
 void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
 {
+    if (mQuietMode)
+        return;
+
     auto& entry = mProgressEntries[id];
 
     float integer = 0.0f;
@@ -151,24 +208,40 @@ void cTextProgressBar::updateProgressEntry(int id, float progress_pct)
     if (mMaxID > 0)
         line += format("({}/{}): ", id + 1, mMaxID);
 
-    if (entry.prefix.empty())
-        line += format("{:50s} {:3}% [", entry.filename, static_cast<int>(progress_pct));
-    else
-        line += format("{:50s}  <{:^10s}> {:3}% [", entry.filename, entry.prefix, static_cast<int>(progress_pct));
-
-    for (int i = 0; i < num_fill_char; ++i)
-        line += mFullChar;
-
-    if (needs_half_fill)
+    if (mVerboseMode)
     {
-        line += mHalfChar;
-        ++num_fill_char;
+        if (entry.prefix.empty())
+            line += format("{:50s} {:3}% [", entry.filename, static_cast<int>(progress_pct));
+        else
+            line += format("{:50s}  <{:^10s}> {:3}% [", entry.filename, entry.prefix, static_cast<int>(progress_pct));
+
+        for (int i = 0; i < num_fill_char; ++i)
+            line += mFullChar;
+
+        if (needs_half_fill)
+        {
+            line += mHalfChar;
+            ++num_fill_char;
+        }
+
+        for (int i = 0; i < (mProgressLength - num_fill_char); ++i)
+            line += mEmptyChar;
+
+        line += "]";
     }
-
-    for (int i = 0; i < (mProgressLength - num_fill_char); ++i)
-        line += mEmptyChar;
-
-    line += "]";
+    else
+    {
+        if (entry.prefix.empty())
+        {
+//            line += format("{:50s} {:3}% ", entry.filename, static_cast<int>(progress_pct));
+            line += format("{:50s}  ", entry.filename);
+        }
+        else
+        {
+//            line += format("{:50s}  <{:^10s}> {:3}% ", entry.filename, entry.prefix, static_cast<int>(progress_pct));
+            line += format("{:50s}  <{:^10s}>  ", entry.filename, entry.prefix);
+        }
+    }
 
     if (!entry.suffix.empty())
     {
@@ -206,6 +279,9 @@ void cTextProgressBar::finishProgressEntry(int id, const std::string& prefix, co
 
 void cTextProgressBar::finishProgressEntry(int id)
 {
+    if (mQuietMode)
+        return;
+
     auto entry = mProgressEntries[id];
 
     std::string line = "\r";
@@ -213,15 +289,25 @@ void cTextProgressBar::finishProgressEntry(int id)
     if (mMaxID > 0)
         line += format("({}/{}): ", id + 1, mMaxID);
 
-    if (entry.prefix.empty())
-        line += format("{:50s}      [", entry.filename);
+    if (mVerboseMode)
+    {
+        if (entry.prefix.empty())
+            line += format("{:50s}      [", entry.filename);
+        else
+            line += format("{0:50s}   <{1:^10s}>  [", entry.filename, entry.prefix);
+
+        for (int i = 0; i < mProgressLength; ++i)
+            line += mFullChar;
+
+        line += "]";
+    }
     else
-        line += format("{0:50s}   <{1:^10s}>  [", entry.filename, entry.prefix);
-
-    for (int i = 0; i < mProgressLength; ++i)
-        line += mFullChar;
-
-    line += "]";
+    {
+        if (entry.prefix.empty())
+            line += format("{:50s}", entry.filename);
+        else
+            line += format("{0:50s}   <{1:^10s}>", entry.filename, entry.prefix);
+    }
 
     if (!entry.suffix.empty())
     {
