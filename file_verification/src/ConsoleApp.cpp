@@ -83,8 +83,8 @@ int main(int argc, char** argv)
 		| lyra::arg(input_directory, "input directory")
 		("The path to input directory for verification of ceres data.")
 		.optional()
-		| lyra::arg(failed_directory, "input directory")
-		("The path to input directory for verification of ceres data.");
+		| lyra::arg(failed_directory, "failed directory")
+		("The path to output directory for ceres datas that fail verification.");
 
 	auto result = cli.parse({argc, argv});
 
