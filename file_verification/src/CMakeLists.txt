@@ -114,6 +114,63 @@ if(wxWidgets_FOUND)
 
 endif()
 
+if(UNIX AND NOT APPLE)
+	add_executable(service)
+
+	set_target_properties(service PROPERTIES LANGUAGE CXX)
+	set_target_properties(service PROPERTIES OUTPUT_NAME "FileCheckerDaemon")
+
+	target_compile_features(service PRIVATE cxx_std_20)
+
+	target_sources(service
+	PRIVATE
+
+		BS_thread_pool.hpp
+
+		${FILE_VERIFICATOR_COMMON_FILES}
+
+		Service_Linux.cpp
+	)
+
+
+	target_include_directories(service PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(service PRIVATE "../support/Utilities")
+	target_include_directories(service PRIVATE "../support/StringUtils")
+
+	target_link_libraries(service PRIVATE BlockDataFile_v1)
+	target_link_libraries(service PRIVATE cbdf::cbdf)
+	target_link_libraries(service PRIVATE string_utils)
+	target_link_libraries(service PRIVATE utilities)
+endif()
+
+if(WIN32)
+	add_executable(service)
+
+	set_target_properties(service PROPERTIES LANGUAGE CXX)
+	set_target_properties(service PROPERTIES OUTPUT_NAME "FileCheckerService")
+
+	target_compile_features(service PRIVATE cxx_std_20)
+
+	target_sources(service
+	PRIVATE
+
+		BS_thread_pool.hpp
+
+		${FILE_VERIFICATOR_COMMON_FILES}
+
+		Service_Windows.cpp
+	)
+
+
+	target_include_directories(service PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(service PRIVATE "../support/Utilities")
+	target_include_directories(service PRIVATE "../support/StringUtils")
+
+	target_link_libraries(service PRIVATE BlockDataFile_v1)
+	target_link_libraries(service PRIVATE cbdf::cbdf)
+	target_link_libraries(service PRIVATE string_utils)
+	target_link_libraries(service PRIVATE utilities)
+endif()
 
 
 #******************************************************************************
