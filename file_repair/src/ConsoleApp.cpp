@@ -174,6 +174,18 @@ int main(int argc, char** argv)
 		std::filesystem::remove(temporary_dir);
 	}
 
-	return 0;
+	if (!quietMode)
+	{
+		if (g_num_failed_files == 0)
+		{
+			std::cout << "All " << numFilesToProcess << " files repaired!" << std::endl;
+		}
+		else
+		{
+			std::cout << (numFilesToProcess - g_num_failed_files) << " files repaired , " << g_num_failed_files << " could not be repaired!" << std::endl;
+		}
+	}
+
+	return g_num_failed_files;
 }
 

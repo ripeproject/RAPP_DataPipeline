@@ -189,6 +189,17 @@ int main(int argc, char** argv)
 		delete file_verifier;
 	}
 
+	if (!quietMode)
+	{
+		if (g_num_failed_files == 0)
+			std::cout << "All " << numFilesToProcess << " files passed!" << std::endl;
+		else
+		{
+			std::cout << numFilesToProcess << " files checked, " << g_num_failed_files << " failed failed!" << std::endl;
+			std::cout << "Please run the FileRepair application to try and repair the files." << std::endl;
+		}
+	}
+
 	return g_num_failed_files;
 }
 
