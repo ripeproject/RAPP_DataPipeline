@@ -118,7 +118,7 @@ if(UNIX AND NOT APPLE)
 	add_executable(service)
 
 	set_target_properties(service PROPERTIES LANGUAGE CXX)
-	set_target_properties(service PROPERTIES OUTPUT_NAME "FileCheckerDaemon")
+	set_target_properties(service PROPERTIES OUTPUT_NAME "ceres_file_verifier_d")
 
 	target_compile_features(service PRIVATE cxx_std_20)
 
