@@ -93,8 +93,8 @@ cMainFrame::cMainFrame()
 	SetBackgroundStyle(wxBG_STYLE_SYSTEM);
 
 	auto size = GetBestSize();
-	size.IncBy(350);
-	size.SetHeight(650);
+	size.IncBy(250);
+	size.SetHeight(450);
 	SetMinSize(size);
 
 	Centre();
