@@ -141,12 +141,13 @@ int main(int argc, char** argv)
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
-/*
-	if (n == 1)
-		std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
-	else
-		std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
-*/
+	if (verboseMode)
+	{
+		if (n == 1)
+			std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
+		else
+			std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+	}
 
 	std::vector<cCeresFileVerifier*> ceres_file_verifiers;
 

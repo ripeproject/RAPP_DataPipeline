@@ -109,6 +109,8 @@ int main(int argc, char** argv)
 	// The default is to use only one thread as this application is I/O limited.
 	int num_of_threads = 1;
 	bool showHelp = false;
+	bool verboseMode = false;
+	bool quietMode = false;
 
 	std::string input_directory = current_path().string();
 	std::string experiment_directory;
@@ -119,6 +121,14 @@ int main(int argc, char** argv)
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for verification.")
+		.optional()
+		| lyra::opt(verboseMode, "verbose mode")
+		["-v"]["--verbose"]
+		("Enable verbose mode.")
+		.optional()
+		| lyra::opt(quietMode, "quiet mode")
+		["-q"]["--quiet"]
+		("Enable quiet mode: no status output to screen.")
 		.optional()
 		| lyra::opt(experiment_directory, "experiment directory")
 		["-e"]["--exp_dir"]
@@ -182,12 +192,13 @@ int main(int argc, char** argv)
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
-/*
-	if (n == 1)
-		std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
-	else
-		std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
-*/
+	if (verboseMode)
+	{
+		if (n == 1)
+			std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
+		else
+			std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+	}
 
 	// Load experiment files for filename lookup
 	std::map<std::string, std::filesystem::directory_entry> exp_files;
@@ -238,6 +249,8 @@ int main(int argc, char** argv)
 		lidar_data_verifiers.push_back(dv);
 	}
 
+	progress_bar.setQuietMode(quietMode);
+	progress_bar.setVerboseMode(verboseMode);
 	progress_bar.setMaxID(numFilesToProcess);
 
 	pool.wait_for_tasks();
