@@ -59,6 +59,8 @@ int main(int argc, char** argv)
 	// The default is one thread because this application in I/O bound.
 	int num_of_threads = 1;
 	bool showHelp = false;
+	bool verboseMode = false;
+	bool quietMode = false;
 
 	std::string input_directory = current_path().string();
 	std::string experiment_directory;
@@ -69,6 +71,14 @@ int main(int argc, char** argv)
 		| lyra::opt(num_of_threads, "threads")
 		["-t"]["--threads"]
 		("The number of threads to use for repairing data files.")
+		.optional()
+		| lyra::opt(verboseMode, "verbose mode")
+		["-v"]["--verbose"]
+		("Enable verbose mode.")
+		.optional()
+		| lyra::opt(quietMode, "quiet mode")
+		["-q"]["--quiet"]
+		("Enable quiet mode: no status output to screen.")
 		.optional()
 		| lyra::arg(input_directory, "input directory")
 		("The path to input directory for repairing of ceres data.");
@@ -126,10 +136,13 @@ int main(int argc, char** argv)
 	BS::thread_pool pool(num_of_threads);
 	int n = pool.get_thread_count();
 
-	if (n == 1)
-		std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
-	else
-		std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+	if (verboseMode)
+	{
+		if (n == 1)
+			std::cout << "Using " << n << " thread of a possible " << max_threads << std::endl;
+		else
+			std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
+	}
 
 	std::vector<cFileProcessor*> file_processors;
 
@@ -146,6 +159,8 @@ int main(int argc, char** argv)
 		file_processors.push_back(fp);
 	}
 
+	progress_bar.setQuietMode(quietMode);
+	progress_bar.setVerboseMode(verboseMode);
 	progress_bar.setMaxID(numFilesToProcess);
 
 	pool.wait_for_tasks();
@@ -158,6 +173,18 @@ int main(int argc, char** argv)
 	if (std::filesystem::is_empty(temporary_dir))
 	{
 		std::filesystem::remove(temporary_dir);
+	}
+
+	if (!quietMode)
+	{
+		if (g_num_failed_files == 0)
+		{
+			std::cout << "All " << numFilesToProcess << " files repaired!" << std::endl;
+		}
+		else
+		{
+			std::cout << (numFilesToProcess - g_num_failed_files) << " files repaired , " << g_num_failed_files << " could not be repaired!" << std::endl;
+		}
 	}
 
 	return 0;

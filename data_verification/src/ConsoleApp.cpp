@@ -265,9 +265,16 @@ int main(int argc, char** argv)
 		delete data_verifier;
 	}
 
-	if (g_num_failed_files != 0)
+	if (!quietMode)
 	{
-		std::cout << "Detected " << g_num_failed_files << " invalid files.  Please run FileChecker and FileRepair on this directory!" << std::endl;
+		if (g_num_failed_files == 0)
+			std::cout << "All " << numFilesToProcess << " files passed!" << std::endl;
+		else
+		{
+			std::cout << "Detected " << g_num_failed_files << " invalid files." << std::endl;
+			std::cout << "First, run FileChecker and FileRepair on this directory." << std::endl;
+			std::cout << "Next, run DataRepair on this directory." << std::endl;
+		}
 	}
 
 	return g_num_invalid_files;
