@@ -91,8 +91,21 @@ namespace nStringUtils
 	/**
 	 * Checks to see if a filename is a temporary filename (starts with '~')
 	 *
-	 * The filename: d:\test\long_file_name.extension ->  return false
+	 * The filename: d:\test\file_name.extension
+	 *					and d:\test\~file_name.extension does not exist ->  return false
+	 * 
+	 *				 d:\test\file_name.extension
+	 *					and d:\test\~file_name.extension does exist ->  return true
+	 *
 	 *				 d:\test\~long_file_name.extension -> return true;
+	 */
+	bool has_temp_filename(const std::string& filename);
+
+	/**
+	 * Checks to see if a filename is a temporary filename (starts with '~')
+	 *
+	 * The filename: d:\test\file_name.extension ->  return false
+	 *				 d:\test\~file_name.extension -> return true;
 	 */
 	bool is_temp_filename(const std::string& filename);
 

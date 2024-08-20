@@ -277,6 +277,19 @@ std::string nStringUtils::make_temp_filename(const std::string& filename)
 	return tmp.string();
 }
 
+bool nStringUtils::has_temp_filename(const std::string& filename)
+{
+	if (filename.empty())
+		return false;
+
+	if (is_temp_filename(filename))
+		return true;
+
+	std::filesystem::path tmp = make_temp_filename(filename);
+
+	return std::filesystem::exists(tmp);
+}
+
 bool nStringUtils::is_temp_filename(const std::string& filename)
 {
 	std::filesystem::path tmp = filename;
