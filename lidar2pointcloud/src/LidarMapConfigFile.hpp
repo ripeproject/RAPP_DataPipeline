@@ -23,6 +23,7 @@ public:
 	~cLidarMapConfigFile();
 
 	const std::string& getFileName() const;
+	const std::string& getTemporaryFileName() const;
 
 	bool isDirty() const;
 
@@ -33,6 +34,9 @@ public:
 	void save();
 
 	void save_as(const std::string& file_name);
+
+	bool open_temporary_file(const std::string& file_name);
+	void save_temporary_file();
 
 	const cLidarMapConfigOptions& getOptions() const;
 	cLidarMapConfigOptions& getOptions();
@@ -68,6 +72,7 @@ public:
 
 private:
 	std::string mFileName;
+	std::string mTmpFileName;
 
 	cLidarMapConfigOptions  mOptions;
 	cLidarMapConfigDefaults mDefaults;

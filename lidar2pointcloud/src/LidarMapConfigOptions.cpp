@@ -83,6 +83,11 @@ void cLidarMapConfigOptions::setSavePixelInfo(bool option)
 	mSavePixelInfo = option;
 }
 
+void cLidarMapConfigOptions::setDirty(bool dirty)
+{
+	mDirty = dirty;
+}
+
 void cLidarMapConfigOptions::load(const nlohmann::json& jdoc)
 {
 	if (!jdoc.contains("options"))

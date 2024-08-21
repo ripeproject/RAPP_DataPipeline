@@ -20,6 +20,11 @@ const std::string& cLidarMapConfigFile::getFileName() const
 	return mFileName;
 }
 
+const std::string& cLidarMapConfigFile::getTemporaryFileName() const
+{
+	return mTmpFileName;
+}
+
 bool cLidarMapConfigFile::isDirty() const
 {
 	for (const auto& scan : mScans)
@@ -36,11 +41,17 @@ void cLidarMapConfigFile::clear()
 	mFileName.clear();
 	mOptions.clear();
 	mScans.clear();
+	mTmpFileName = "~newfile.lidar2pointcloud.json";
 }
 
 bool cLidarMapConfigFile::open(const std::string& file_name)
 {
+	using namespace nStringUtils;
+
 	if (file_name.empty()) return false;
+
+	if (is_temp_filename(file_name))
+		return open_temporary_file(file_name);
 
 	std::ifstream in;
 	in.open(file_name);
@@ -63,15 +74,16 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 	}
 
 	mFileName = file_name;
+	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
 
-	if (configDoc.contains("experiments"))
+	if (configDoc.contains("scans"))
 	{
-		const auto& experiments = configDoc["experiments"];
+		const auto& scans = configDoc["scans"];
 
-		for (const auto& entry : experiments)
+		for (const auto& entry : scans)
 		{
 
 			cLidarMapConfigScan scan;
@@ -110,6 +122,16 @@ void cLidarMapConfigFile::save()
 		return;
 
 	out << std::setw(4) << configDoc << std::endl;
+
+	if (out.good())
+	{
+		// Remove the temporary file
+		std::filesystem::path tmp = mTmpFileName;
+		if (std::filesystem::exists(tmp))
+		{
+			std::filesystem::remove(tmp);
+		}
+	}
 }
 
 void cLidarMapConfigFile::save_as(const std::string& file_name)
@@ -135,7 +157,107 @@ void cLidarMapConfigFile::save_as(const std::string& file_name)
 
 	out << std::setw(4) << configDoc << std::endl;
 
+	if (out.good())
+	{
+		// Remove the temporary file
+		std::filesystem::path tmp = mTmpFileName;
+		if (std::filesystem::exists(tmp))
+		{
+			std::filesystem::remove(tmp);
+		}
+	}
+
 	mFileName = file_name;
+	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
+}
+
+bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
+{
+	if (file_name.empty()) return false;
+	if (!nStringUtils::is_temp_filename(file_name)) return false;
+
+	std::ifstream in;
+	in.open(file_name);
+	if (!in.is_open())
+		return false;
+
+	nlohmann::json configDoc;
+	try
+	{
+		in >> configDoc;
+	}
+	catch (const nlohmann::json::parse_error& e)
+	{
+		auto msg = e.what();
+		return false;
+	}
+	catch (const std::exception& e)
+	{
+		return false;
+	}
+
+	mTmpFileName = file_name;
+
+	mFileName = nStringUtils::convert_temp_filename(mTmpFileName);
+
+	if (mFileName.find("newfile") != std::string::npos)
+	{
+		mFileName.clear();
+	}
+
+	mOptions.load(configDoc);
+	mDefaults.load(configDoc);
+
+	if (configDoc.contains("scans"))
+	{
+		const auto& scans = configDoc["scans"];
+
+		for (const auto& entry : scans)
+		{
+
+			cLidarMapConfigScan scan;
+
+			scan.load(entry);
+
+			mScans.push_back(std::move(scan));
+		}
+	}
+
+	mOptions.setDirty(true);
+
+	return true;
+}
+
+void cLidarMapConfigFile::save_temporary_file()
+{
+	nlohmann::json configDoc;
+
+	bool options_dirty = mOptions.isDirty();
+	configDoc["options"] = mOptions.save();
+	mOptions.setDirty(options_dirty);
+
+	bool defaults_dirty = mDefaults.isDirty();
+	configDoc["defaults"] = mDefaults.save();
+	mDefaults.setDirty(defaults_dirty);
+
+	nlohmann::json scansDoc;
+
+	for (auto& scan : mScans)
+	{
+		bool scan_dirty = scan.isDirty();
+		scansDoc.push_back(scan.save());
+		scan.setDirty(scan_dirty);
+	}
+
+	if (!scansDoc.is_null())
+		configDoc["scans"] = scansDoc;
+
+	std::ofstream out;
+	out.open(mTmpFileName, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	out << std::setw(4) << configDoc << std::endl;
 }
 
 const cLidarMapConfigOptions& cLidarMapConfigFile::getOptions() const

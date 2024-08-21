@@ -36,6 +36,8 @@ public:
 	void setPlysUseBinaryFormat(bool option);
 
 protected:
+	void setDirty(bool dirty);
+
 	void load(const nlohmann::json& jdoc);
 	nlohmann::json save();
 

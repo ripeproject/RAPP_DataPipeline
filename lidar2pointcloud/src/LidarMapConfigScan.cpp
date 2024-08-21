@@ -60,6 +60,8 @@ const std::optional<double>& cLidarMapConfigScan::getEndPitchOffset_deg() const 
 const std::optional<double>& cLidarMapConfigScan::getEndRollOffset_deg() const { return mEndRollOffset_deg; }
 const std::optional<double>& cLidarMapConfigScan::getEndYawOffset_deg() const { return mEndYawOffset_deg; }
 
+const std::vector<rfm::sOrientationInterpPoint_t>& cLidarMapConfigScan::getOrientationTable() const { return mOrientationTable; }
+
 const std::optional<bool>&   cLidarMapConfigScan::getTranslateToGround() const { return mTranslateToGround; }
 const std::optional<double>& cLidarMapConfigScan::getTranslateThreshold_pct() const { return mTranslateThreshold_pct; }
 const std::optional<bool>&   cLidarMapConfigScan::getRotateToGround() const { return mRotateToGround; }
@@ -91,6 +93,45 @@ void cLidarMapConfigScan::setOrientationModel(const std::optional<eOrientationMo
 {
 	mDirty |= (mOrientationModel != model);
 	mOrientationModel = model;
+}
+
+void cLidarMapConfigScan::reset(std::optional<double>& var)
+{
+	if (var.has_value())
+	{
+		var.reset();
+		mDirty = true;
+	}
+}
+
+void cLidarMapConfigScan::resetMinDistance_m()
+{
+	reset(mMinDistance_m);
+}
+
+void cLidarMapConfigScan::resetMaxDistance_m()
+{
+	reset(mMaxDistance_m);
+}
+
+void cLidarMapConfigScan::resetMinAzimuth_deg()
+{
+	reset(mMinAzimuth_deg);
+}
+
+void cLidarMapConfigScan::resetMaxAzimuth_deg()
+{
+	reset(mMaxAzimuth_deg);
+}
+
+void cLidarMapConfigScan::resetMinAltitude_deg()
+{
+	reset(mMinAltitude_deg);
+}
+
+void cLidarMapConfigScan::resetMaxAltitude_deg()
+{
+	reset(mMaxAltitude_deg);
 }
 
 void cLidarMapConfigScan::setMinDistance_m(const std::optional<double>& dist_m)
@@ -145,6 +186,21 @@ void cLidarMapConfigScan::setVz_mmps(const std::optional<double>& vz_mmps)
 {
 	mDirty |= (mVz_mmps != vz_mmps);
 	mVz_mmps = vz_mmps;
+}
+
+void cLidarMapConfigScan::resetSensorMountPitch_deg()
+{
+	reset(mSensorMountPitch_deg);
+}
+
+void cLidarMapConfigScan::resetSensorMountRoll_deg()
+{
+	reset(mSensorMountRoll_deg);
+}
+
+void cLidarMapConfigScan::resetSensorMountYaw_deg()
+{
+	reset(mSensorMountYaw_deg);
 }
 
 void cLidarMapConfigScan::setSensorMountPitch_deg(const std::optional<double>& pitch_deg)
@@ -217,6 +273,16 @@ void cLidarMapConfigScan::setEndYawOffset_deg(const std::optional<double>& offse
 {
 	mDirty |= (mEndYawOffset_deg != offset_deg);
 	mEndYawOffset_deg = offset_deg;
+}
+
+void cLidarMapConfigScan::clearOrientationTable()
+{
+	mOrientationTable.clear();
+}
+
+void cLidarMapConfigScan::setOrientationTable(const std::vector<rfm::sOrientationInterpPoint_t>& table)
+{
+	mOrientationTable = table;
 }
 
 void cLidarMapConfigScan::setTranslateToGround(const std::optional<bool>& enable)
@@ -339,6 +405,10 @@ void cLidarMapConfigScan::setEnd_Z_mm(const std::optional<double>& z_mm)
 	setEnd_Z_m(z_m);
 }
 
+void cLidarMapConfigScan::setDirty(bool dirty)
+{
+	mDirty = dirty;
+}
 
 
 void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
@@ -538,7 +608,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 			mMinAzimuth_deg = sensor_limits["min azimuth (deg)"].get<double>();
 
 		if (sensor_limits.contains("max azimuth (deg)"))
-			mMinAzimuth_deg = sensor_limits["max azimuth (deg)"].get<double>();
+			mMaxAzimuth_deg = sensor_limits["max azimuth (deg)"].get<double>();
 
 		if (sensor_limits.contains("min altitude (deg)"))
 			mMinAltitude_deg = sensor_limits["min altitude (deg)"].get<double>();

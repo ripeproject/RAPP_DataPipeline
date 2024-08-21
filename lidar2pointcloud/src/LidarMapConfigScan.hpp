@@ -54,6 +54,8 @@ public:
 	const std::optional<double>& getEndRollOffset_deg() const;
 	const std::optional<double>& getEndYawOffset_deg() const;
 
+	const std::vector<rfm::sOrientationInterpPoint_t>& getOrientationTable() const;
+
 	const std::optional<bool>&   getTranslateToGround() const;
 	const std::optional<double>& getTranslateThreshold_pct() const;
 	const std::optional<bool>&   getRotateToGround() const;
@@ -73,16 +75,27 @@ public:
 	void setKinematicModel(const std::optional<eKinematicModel>& model);
 	void setOrientationModel(const std::optional<eOrientationModel>& model);
 
-	void setMinDistance_m(const std::optional<double>& );
-	void setMaxDistance_m(const std::optional<double>&);
-	void setMinAzimuth_deg(const std::optional<double>&);
-	void setMaxAzimuth_deg(const std::optional<double>&);
-	void setMinAltitude_deg(const std::optional<double>&);
-	void setMaxAltitude_deg(const std::optional<double>&);
+	void resetMinDistance_m();
+	void resetMaxDistance_m();
+	void resetMinAzimuth_deg();
+	void resetMaxAzimuth_deg();
+	void resetMinAltitude_deg();
+	void resetMaxAltitude_deg();
+
+	void setMinDistance_m(const std::optional<double>& dist_m);
+	void setMaxDistance_m(const std::optional<double>& dist_m);
+	void setMinAzimuth_deg(const std::optional<double>& az_deg);
+	void setMaxAzimuth_deg(const std::optional<double>& az_deg);
+	void setMinAltitude_deg(const std::optional<double>& alt_deg);
+	void setMaxAltitude_deg(const std::optional<double>& alt_deg);
 
 	void setVx_mmps(const std::optional<double>& );
 	void setVy_mmps(const std::optional<double>& );
 	void setVz_mmps(const std::optional<double>& );
+
+	void resetSensorMountPitch_deg();
+	void resetSensorMountRoll_deg();
+	void resetSensorMountYaw_deg();
 
 	void setSensorMountPitch_deg(const std::optional<double>&);
 	void setSensorMountRoll_deg(const std::optional<double>&);
@@ -99,6 +112,9 @@ public:
 	void setEndPitchOffset_deg(const std::optional<double>&);
 	void setEndRollOffset_deg(const std::optional<double>&);
 	void setEndYawOffset_deg(const std::optional<double>&);
+
+	void clearOrientationTable();
+	void setOrientationTable(const std::vector<rfm::sOrientationInterpPoint_t>& table);
 
 	void setTranslateToGround(const std::optional<bool>&);
 	void setTranslateThreshold_pct(const std::optional<double>&);
@@ -122,8 +138,13 @@ public:
 	void setEnd_Z_mm(const std::optional<double>& z_mm);
 
 protected:
+	void setDirty(bool dirty);
+
 	void load(const nlohmann::json& jdoc);
 	nlohmann::json save();
+
+private:
+	void reset(std::optional<double>& var);
 
 private:
 	bool mDirty = false;

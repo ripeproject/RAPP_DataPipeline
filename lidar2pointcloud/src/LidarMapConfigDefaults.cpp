@@ -53,6 +53,11 @@ cLidarMapConfigDefaults_SensorLimits& cLidarMapConfigDefaults::getSensorLimits()
 const cLidarMapConfigDefaults_Options& cLidarMapConfigDefaults::getOptions() const { return mOptions; }
 cLidarMapConfigDefaults_Options& cLidarMapConfigDefaults::getOptions() { return mOptions; }
 
+void cLidarMapConfigDefaults::setDirty(bool dirty)
+{
+	mDirty = dirty;
+}
+
 void cLidarMapConfigDefaults::load(const nlohmann::json& jdoc)
 {
 	if (!jdoc.contains("defaults"))
