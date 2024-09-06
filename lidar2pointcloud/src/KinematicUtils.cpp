@@ -696,7 +696,7 @@ void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const 
 
 bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, 
                 ouster::matrix_col_major<rfm::sPoint3D_t>& cloud,
-                std::vector<rfm::sDollyInfo_t>* pComputedPath)
+                std::vector<rfm::sDollyInfo_t>* pComputedPath, double* displacement_mm)
 {
     if (path.empty()) return false;
     if (time_us < 0.0) return false;
@@ -737,6 +737,14 @@ bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path,
 
     // The dolly y movement is the east/west direction
     double eastPos_mm = dolly.y_mm + dolly.vy_mmps * dtime_sec;
+
+    if (displacement_mm)
+    {
+        double dx = dolly.vx_mmps * dtime_sec;
+        double dy = dolly.vy_mmps * dtime_sec;
+        double d = sqrt(dx*dx + dy*dy);
+        *displacement_mm += d;
+    }
 
     double heightPos_m = dolly.z_mm + dolly.vz_mmps * dtime_sec;
 

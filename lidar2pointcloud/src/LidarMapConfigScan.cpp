@@ -32,6 +32,8 @@ const std::string& cLidarMapConfigScan::getExperimentName() const
 
 const std::optional<eKinematicModel>& cLidarMapConfigScan::getKinematicModel() const { return mKinematicModel; }
 const std::optional<eOrientationModel>& cLidarMapConfigScan::getOrientationModel() const { return mOrientationModel; }
+const std::optional<eTranslateToGroundModel>& cLidarMapConfigScan::getTranslateToGroundModel() const { return mTranslateToGroundModel; }
+const std::optional<eRotateToGroundModel>& cLidarMapConfigScan::getRotateToGroundModel() const { return mRotateToGroundModel; }
 
 const std::optional<double>& cLidarMapConfigScan::getMinDistance_m() const { return mMinDistance_m; }
 const std::optional<double>& cLidarMapConfigScan::getMaxDistance_m() const { return mMaxDistance_m; }
@@ -63,9 +65,17 @@ const std::optional<double>& cLidarMapConfigScan::getEndYawOffset_deg() const { 
 const std::vector<rfm::sOrientationInterpPoint_t>& cLidarMapConfigScan::getOrientationTable() const { return mOrientationTable; }
 
 const std::optional<bool>&   cLidarMapConfigScan::getTranslateToGround() const { return mTranslateToGround; }
+const std::optional<double>& cLidarMapConfigScan::getTranslateDistance_m() const { return mTranslateDistance_m; }
 const std::optional<double>& cLidarMapConfigScan::getTranslateThreshold_pct() const { return mTranslateThreshold_pct; }
+
+const std::vector<rfm::sTranslationInterpPoint_t>& cLidarMapConfigScan::getTranslateTable() const { return mTranslateTable; }
+
 const std::optional<bool>&   cLidarMapConfigScan::getRotateToGround() const { return mRotateToGround; }
+const std::optional<double>& cLidarMapConfigScan::getRotatePitch_deg() const { return mRotatePitch_deg; }
+const std::optional<double>& cLidarMapConfigScan::getRotateRoll_deg() const { return mRotateRoll_deg; }
 const std::optional<double>& cLidarMapConfigScan::getRotateThreshold_pct() const { return mRotateThreshold_pct; }
+
+const std::vector<rfm::sRotationInterpPoint_t>& cLidarMapConfigScan::getRotateTable() const { return mRotateTable; }
 
 const std::optional<double>& cLidarMapConfigScan::getStart_X_m() const { return mStart_X_m; }
 const std::optional<double>& cLidarMapConfigScan::getStart_Y_m() const { return mStart_Y_m; }
@@ -93,6 +103,18 @@ void cLidarMapConfigScan::setOrientationModel(const std::optional<eOrientationMo
 {
 	mDirty |= (mOrientationModel != model);
 	mOrientationModel = model;
+}
+
+void cLidarMapConfigScan::setTranslateToGroundModel(const std::optional<eTranslateToGroundModel>& model)
+{
+	mDirty |= (mTranslateToGroundModel != model);
+	mTranslateToGroundModel = model;
+}
+
+void cLidarMapConfigScan::setRotateToGroundModel(const std::optional<eRotateToGroundModel>& model)
+{
+	mDirty |= (mRotateToGroundModel != model);
+	mRotateToGroundModel = model;
 }
 
 void cLidarMapConfigScan::reset(std::optional<double>& var)
@@ -277,11 +299,32 @@ void cLidarMapConfigScan::setEndYawOffset_deg(const std::optional<double>& offse
 
 void cLidarMapConfigScan::clearOrientationTable()
 {
+	mDirty |= !mOrientationTable.empty();
 	mOrientationTable.clear();
 }
 
 void cLidarMapConfigScan::setOrientationTable(const std::vector<rfm::sOrientationInterpPoint_t>& table)
 {
+	if (!mDirty)
+	{
+		if (mOrientationTable.size() != table.size())
+		{
+			mDirty = true;
+		}
+		else
+		{
+			auto n = mOrientationTable.size();
+			for (size_t i = 0; i < n; ++i)
+			{
+				if (mOrientationTable[i] != table[i])
+				{
+					mDirty = true;
+					break;
+				}
+			}
+		}
+	}
+
 	mOrientationTable = table;
 }
 
@@ -291,10 +334,47 @@ void cLidarMapConfigScan::setTranslateToGround(const std::optional<bool>& enable
 	mTranslateToGround = enable;
 }
 
+void cLidarMapConfigScan::setTranslateDistance_m(const std::optional<double>& dist_m)
+{
+	mDirty |= (mTranslateDistance_m != dist_m);
+	mTranslateDistance_m = dist_m;
+}
+
 void cLidarMapConfigScan::setTranslateThreshold_pct(const std::optional<double>& threshold_pct)
 {
 	mDirty |= (mTranslateThreshold_pct != threshold_pct);
 	mTranslateThreshold_pct = threshold_pct;
+}
+
+void cLidarMapConfigScan::clearTranslateTable()
+{
+	mDirty |= !mTranslateTable.empty();
+	mTranslateTable.clear();
+}
+
+void cLidarMapConfigScan::setTranslateTable(const std::vector<rfm::sTranslationInterpPoint_t>& table)
+{
+	if (!mDirty)
+	{
+		if (mTranslateTable.size() != table.size())
+		{
+			mDirty = true;
+		}
+		else
+		{
+			auto n = mTranslateTable.size();
+			for (size_t i = 0; i < n; ++i)
+			{
+				if (mTranslateTable[i] != table[i])
+				{
+					mDirty = true;
+					break;
+				}
+			}
+		}
+	}
+
+	mTranslateTable = table;
 }
 
 void cLidarMapConfigScan::setRotateToGround(const std::optional<bool>& enable)
@@ -303,10 +383,48 @@ void cLidarMapConfigScan::setRotateToGround(const std::optional<bool>& enable)
 	mRotateToGround = enable;
 }
 
+void cLidarMapConfigScan::setRotateAngles_deg(const std::optional<double>& pitch_deg, const std::optional<double>& roll_deg)
+{
+	mDirty |= (mRotatePitch_deg != pitch_deg) || (mRotateRoll_deg != roll_deg);
+	mRotatePitch_deg = pitch_deg;
+	mRotateRoll_deg = roll_deg;
+}
+
 void cLidarMapConfigScan::setRotateThreshold_pct(const std::optional<double>& threshold_pct)
 {
 	mDirty |= (mRotateThreshold_pct != threshold_pct);
 	mRotateThreshold_pct = threshold_pct;
+}
+
+void cLidarMapConfigScan::clearRotateTable()
+{
+	mDirty |= !mRotateTable.empty();
+	mRotateTable.clear();
+}
+
+void cLidarMapConfigScan::setRotateTable(const std::vector<rfm::sRotationInterpPoint_t>& table)
+{
+	if (!mDirty)
+	{
+		if (mRotateTable.size() != table.size())
+		{
+			mDirty = true;
+		}
+		else
+		{
+			auto n = mRotateTable.size();
+			for (size_t i = 0; i < n; ++i)
+			{
+				if (mRotateTable[i] != table[i])
+				{
+					mDirty = true;
+					break;
+				}
+			}
+		}
+	}
+
+	mRotateTable = table;
 }
 
 void cLidarMapConfigScan::setStart_X_m(const std::optional<double>& x_m)
@@ -621,17 +739,150 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 	{
 		auto options = jdoc["options"];
 
-		if (options.contains("translate to ground"))
-			mTranslateToGround = options["translate to ground"];
+
+		if (options.contains("translation distance (m)"))
+		{
+			mTranslateToGroundModel = eTranslateToGroundModel::CONSTANT;
+			mTranslateDistance_m = options["translation distance (m)"].get<double>();
+		}
 
 		if (options.contains("translation threshold (%)"))
+		{
+			mTranslateToGroundModel = eTranslateToGroundModel::FIT;
 			mTranslateThreshold_pct = options["translation threshold (%)"].get<double>();
+		}
 
-		if (options.contains("rotation to ground"))
-			mRotateToGround = options["rotation to ground"];
+		if (options.contains("translation table"))
+		{
+			mTranslateToGroundModel = eTranslateToGroundModel::INTREP_CURVE;
+
+			auto points = jdoc["translation table"];
+
+			if (points.empty())
+			{
+				rfm::sTranslationInterpPoint_t point;
+
+				mTranslateTable.push_back(point);
+				point.displacement_m = 0.0;
+				mTranslateTable.push_back(point);
+			}
+			else
+			{
+				for (const auto& point : points)
+				{
+					rfm::sTranslationInterpPoint_t p;
+
+					if (!point.contains("displacement (m)"))
+						continue;
+
+					p.displacement_m = point["displacement (m)"];
+
+					if (point.contains("height (m)"))
+						p.height_m = point["height (m)"];
+
+					mTranslateTable.push_back(p);
+				}
+
+				std::sort(mTranslateTable.begin(), mTranslateTable.end(), [](const auto& a, const auto& b)
+					{
+						return a.displacement_m < b.displacement_m;
+					});
+
+				if (mTranslateTable.empty())
+				{
+					rfm::sTranslationInterpPoint_t point;
+
+					mTranslateTable.push_back(point);
+					point.displacement_m = 0.0;
+					mTranslateTable.push_back(point);
+				}
+				else
+				{
+					auto point = mTranslateTable.front();
+					if (point.displacement_m > 0.0)
+					{
+						point.displacement_m = 0.0;
+						mTranslateTable.insert(mTranslateTable.begin(), point);
+					}
+				}
+			}
+		}
+
+		if (options.contains("rotation pitch (deg)") || options.contains("rotation roll (deg)"))
+		{
+			mRotateToGroundModel = eRotateToGroundModel::CONSTANT;
+
+			if (options.contains("rotation pitch (deg)"))
+				mRotatePitch_deg = options["rotation pitch (deg)"];
+
+			if (options.contains("rotation roll (deg)"))
+				mRotateRoll_deg = options["rotation roll (deg)"];
+		}
 
 		if (options.contains("rotation threshold (%)"))
+		{
+			mRotateToGroundModel = eRotateToGroundModel::FIT;
 			mRotateThreshold_pct = options["rotation threshold (%)"].get<double>();
+		}
+
+		if (options.contains("rotation table"))
+		{
+			mRotateToGroundModel = eRotateToGroundModel::INTREP_CURVE;
+
+			auto points = jdoc["rotation table"];
+
+			if (points.empty())
+			{
+				rfm::sRotationInterpPoint_t point;
+
+				mRotateTable.push_back(point);
+				point.displacement_m = 0.0;
+				mRotateTable.push_back(point);
+			}
+			else
+			{
+				for (const auto& point : points)
+				{
+					rfm::sRotationInterpPoint_t p;
+
+					if (!point.contains("displacement (m)"))
+						continue;
+
+					p.displacement_m = point["displacement (m)"];
+
+					if (point.contains("pitch (deg)"))
+						p.pitch_deg = point["pitch (deg)"];
+
+					if (point.contains("roll (deg)"))
+						p.roll_deg = point["roll (deg)"];
+
+					mRotateTable.push_back(p);
+				}
+
+				std::sort(mRotateTable.begin(), mRotateTable.end(), [](const auto& a, const auto& b)
+					{
+						return a.displacement_m < b.displacement_m;
+					});
+
+				if (mRotateTable.empty())
+				{
+					rfm::sRotationInterpPoint_t point;
+
+					mRotateTable.push_back(point);
+					point.displacement_m = 0.0;
+					mRotateTable.push_back(point);
+				}
+				else
+				{
+					auto point = mRotateTable.front();
+					if (point.displacement_m > 0.0)
+					{
+						point.displacement_m = 0.0;
+						mRotateTable.insert(mRotateTable.begin(), point);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -802,22 +1053,82 @@ nlohmann::json cLidarMapConfigScan::save()
 		scanDoc["sensor limits"] = sensor_limits;
 	}
 
-	if (mTranslateToGround.has_value() || mTranslateThreshold_pct.has_value()
-		|| mRotateToGround.has_value() || mRotateThreshold_pct.has_value())
+	if (mTranslateToGroundModel.has_value() || mRotateToGroundModel.has_value())
 	{
 		nlohmann::json options;
 
-		if (mTranslateToGround.has_value())
-			options["translate to ground"] = mTranslateToGround.value();
+		if (mTranslateToGroundModel.has_value())
+		{
+			auto model = mTranslateToGroundModel.value();
 
-		if (mTranslateThreshold_pct.has_value())
-			options["translation threshold (%)"] = mTranslateThreshold_pct.value();
+			switch (model)
+			{
+			case eTranslateToGroundModel::NONE:
+				break;
+			case eTranslateToGroundModel::CONSTANT:
+				if (mTranslateDistance_m.has_value())
+					options["translation distance (m)"] = mTranslateDistance_m.value();
+				break;
+			case eTranslateToGroundModel::FIT:
+				if (mTranslateThreshold_pct.has_value())
+					options["translation threshold (%)"] = mTranslateThreshold_pct.value();
+				break;
+			case eTranslateToGroundModel::INTREP_CURVE:
 
-		if (mRotateToGround.has_value())
-			options["rotate to ground"] = mRotateToGround.value();
+				nlohmann::json points;
 
-		if (mRotateThreshold_pct.has_value())
-			options["rotation threshold (%)"] = mRotateThreshold_pct.value();
+				for (const auto& point : mTranslateTable)
+				{
+					nlohmann::json table;
+
+					table["displacement (m)"] = point.displacement_m;
+					table["height (m)"]		  = point.height_m;
+
+					points.push_back(table);
+				}
+
+				options["translation table"] = points;
+				break;
+			}
+		}
+
+		if (mRotateToGroundModel.has_value())
+		{
+			auto model = mRotateToGroundModel.value();
+
+			switch (model)
+			{
+			case eRotateToGroundModel::NONE:
+				break;
+			case eRotateToGroundModel::CONSTANT:
+				if (mRotatePitch_deg.has_value())
+					options["rotation pitch (deg)"] = mRotatePitch_deg.value();
+				if (mRotateRoll_deg.has_value())
+					options["rotation roll (deg)"] = mRotateRoll_deg.value();
+				break;
+			case eRotateToGroundModel::FIT:
+				if (mRotateThreshold_pct.has_value())
+					options["rotation threshold (%)"] = mRotateThreshold_pct.value();
+				break;
+			case eRotateToGroundModel::INTREP_CURVE:
+
+				nlohmann::json points;
+
+				for (const auto& point : mRotateTable)
+				{
+					nlohmann::json table;
+
+					table["displacement (m)"] = point.displacement_m;
+					table["pitch (deg)"] = point.pitch_deg;
+					table["roll (deg)"] = point.roll_deg;
+
+					points.push_back(table);
+				}
+
+				options["rotation table"] = points;
+				break;
+			}
+		}
 
 		scanDoc["options"] = options;
 	}

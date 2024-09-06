@@ -199,11 +199,69 @@ void cFileProcessor::process_file()
 
     const auto& options = mDefaults.getOptions();
 
-    converter->enableTranslateToGround(mHasGroundData && to_value(mParameters.getTranslateToGround(), options.getTranslateToGround()),
-        to_value(mParameters.getTranslateThreshold_pct(), options.getTranslationThreshold_pct()));
+    if (mHasGroundData)
+    {
+        eTranslateToGroundModel translateModel = eTranslateToGroundModel::NONE;
+        
+        if (mParameters.getTranslateToGroundModel().has_value())
+        {
+            translateModel = mParameters.getTranslateToGroundModel().value();
+        }
+        else
+        {
+            if (options.getTranslateToGround())
+                translateModel = eTranslateToGroundModel::FIT;
+        }
 
-    converter->enableRotateToGround(mHasGroundData && to_value(mParameters.getRotateToGround(), options.getRotateToGround()),
-        to_value(mParameters.getRotateThreshold_pct(), options.getRotationThreshold_pct()));
+
+        converter->setTranslateToGroundModel(translateModel);
+
+        switch (translateModel)
+        {
+        case eTranslateToGroundModel::CONSTANT:
+            converter->setTranslateDistance_m(to_value(mParameters.getTranslateDistance_m(), 0.0));
+            break;
+        case eTranslateToGroundModel::FIT:
+            converter->setTranslateThreshold_pct(to_value(mParameters.getTranslateThreshold_pct(), options.getTranslationThreshold_pct()));
+            break;
+        case eTranslateToGroundModel::INTREP_CURVE:
+            converter->setTranslateInterpTable(mParameters.getTranslateTable());
+            break;
+        }
+
+        eRotateToGroundModel rotateModel = eRotateToGroundModel::NONE;
+        
+        if (mParameters.getRotateToGroundModel().has_value())
+        {
+            rotateModel = mParameters.getRotateToGroundModel().value();
+        }
+        else
+        {
+            if (options.getRotateToGround())
+                rotateModel = eRotateToGroundModel::FIT;
+        }
+
+
+        converter->setRotationToGroundModel(rotateModel);
+
+        switch (rotateModel)
+        {
+        case eRotateToGroundModel::CONSTANT:
+            converter->setRotationAngles_deg(to_value(mParameters.getRotatePitch_deg(), 0.0), to_value(mParameters.getRotateRoll_deg(), 0.0));
+            break;
+        case eRotateToGroundModel::FIT:
+            converter->setRotationThreshold_pct(to_value(mParameters.getRotateThreshold_pct(), options.getRotationThreshold_pct()));
+            break;
+        case eRotateToGroundModel::INTREP_CURVE:
+            converter->setRotateInterpTable(mParameters.getRotateTable());
+            break;
+        }
+    }
+    else
+    {
+        converter->setTranslateToGroundModel(eTranslateToGroundModel::NONE);
+        converter->setRotationToGroundModel(eRotateToGroundModel::NONE);
+    }
 
 
     // Start by loading the field scan data into memory

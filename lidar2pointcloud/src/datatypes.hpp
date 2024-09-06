@@ -16,6 +16,10 @@ enum class eKinematicModel { CONSTANT_SPEED, SPIDERCAM, GPS_SPEEDS };
 
 enum class eOrientationModel { CONSTANT, LINEAR, INTREP_CURVE, IMU };
 
+enum class eTranslateToGroundModel { NONE, CONSTANT, FIT, INTREP_CURVE };
+
+enum class eRotateToGroundModel { NONE, CONSTANT, FIT, INTREP_CURVE };
+
 
 namespace rfm
 {
@@ -94,6 +98,51 @@ namespace rfm
 		double pitch_deg = 0.0;
 		double roll_deg = 0.0;
 		double yaw_deg = 0.0;
+
+		bool operator==(const sOrientationInterpPoint_t& rhs)
+		{
+			return (distance_pct == rhs.distance_pct) && (pitch_deg == rhs.pitch_deg)
+				&& (roll_deg == rhs.roll_deg) && (yaw_deg == rhs.yaw_deg);
+		}
+
+		bool operator!=(const sOrientationInterpPoint_t& rhs)
+		{
+			return !operator==(rhs);
+		}
+	};
+
+	struct sTranslationInterpPoint_t
+	{
+		double displacement_m = 0.0;
+		double height_m = 0.0;
+
+		bool operator==(const sTranslationInterpPoint_t& rhs)
+		{
+			return (displacement_m == rhs.displacement_m) && (height_m == rhs.height_m);
+		}
+
+		bool operator!=(const sTranslationInterpPoint_t& rhs)
+		{
+			return !operator==(rhs);
+		}
+	};
+
+	struct sRotationInterpPoint_t
+	{
+		double displacement_m = 0.0;
+		double pitch_deg = 0.0;
+		double roll_deg = 0.0;
+
+		bool operator==(const sRotationInterpPoint_t& rhs)
+		{
+			return (displacement_m == rhs.displacement_m) && (pitch_deg == rhs.pitch_deg)
+				&& (roll_deg == rhs.roll_deg);
+		}
+
+		bool operator!=(const sRotationInterpPoint_t& rhs)
+		{
+			return !operator==(rhs);
+		}
 	};
 
 	/*

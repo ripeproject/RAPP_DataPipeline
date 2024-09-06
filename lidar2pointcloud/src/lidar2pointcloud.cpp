@@ -142,16 +142,56 @@ void cLidar2PointCloud::setInterpolationTable(const InterpTable_t& table)
 	mOrientationInterpTable = table;
 }
 
-void cLidar2PointCloud::enableTranslateToGround(bool enable, double threshold_pct)
+
+void cLidar2PointCloud::setTranslateToGroundModel(eTranslateToGroundModel model)
 {
-	mTranslateToGround = enable;
-	mTranslateThreshold_pct = threshold_pct;
+	mTranslateToGroundModel = model;
 }
 
-void cLidar2PointCloud::enableRotateToGround(bool enable, double threshold_pct)
+void cLidar2PointCloud::setTranslateDistance_m(double distance_m)
 {
-	mRotateToGround = enable;
-	mRotateThreshold_pct = threshold_pct;
+	mTranslationDistance_m = distance_m;
+}
+
+void cLidar2PointCloud::setTranslateThreshold_pct(double threshold_pct)
+{
+	if (threshold_pct < 1.0)
+		mTranslationThreshold_pct = 1.0;
+	else if (threshold_pct > 100.0)
+		mTranslationThreshold_pct = 100.0;
+	else
+		mTranslationThreshold_pct = threshold_pct;
+}
+
+void cLidar2PointCloud::setTranslateInterpTable(const std::vector<rfm::sTranslationInterpPoint_t>& table)
+{
+	mTranslateInterpTable = table;
+}
+
+void cLidar2PointCloud::setRotationToGroundModel(eRotateToGroundModel model)
+{
+	mRotateToGroundModel = model;
+}
+
+void cLidar2PointCloud::setRotationAngles_deg(double pitch_deg, double roll_deg)
+{
+	mRotationPitch_deg = pitch_deg;
+	mRotationRoll_deg = roll_deg;
+}
+
+void cLidar2PointCloud::setRotationThreshold_pct(double threshold_pct)
+{
+	if (threshold_pct < 1.0)
+		mRotationThreshold_pct = 1.0;
+	else if (threshold_pct > 100.0)
+		mRotationThreshold_pct = 100.0;
+	else
+		mRotationThreshold_pct = threshold_pct;
+}
+
+void cLidar2PointCloud::setRotateInterpTable(const std::vector<rfm::sRotationInterpPoint_t>& table)
+{
+	mRotateInterpTable = table;
 }
 
 pointcloud::eKINEMATIC_MODEL cLidar2PointCloud::getKinematicModel() const
@@ -231,11 +271,37 @@ bool cLidar2PointCloud::computePointCloud()
 	pPointCloudBenerator->setAzimuthWindow_deg(mMinAzimuth_deg, mMaxAzimuth_deg);
 	pPointCloudBenerator->setAltitudeWindow_deg(mMinAltitude_deg, mMaxAltitude_deg);
 
-	pPointCloudBenerator->enableTranslateToGroundData(mTranslateToGround);
-	pPointCloudBenerator->setTranslateThreshold_pct(mTranslateThreshold_pct);
 
-	pPointCloudBenerator->enableRotationToGroundData(mRotateToGround);
-	pPointCloudBenerator->setRotationThreshold_pct(mRotateThreshold_pct);
+	pPointCloudBenerator->setTranslateToGroundModel(mTranslateToGroundModel);
+
+	switch (mTranslateToGroundModel)
+	{
+	case eTranslateToGroundModel::CONSTANT:
+		pPointCloudBenerator->setTranslateDistance_m(mTranslationDistance_m);
+		break;
+	case eTranslateToGroundModel::FIT:
+		pPointCloudBenerator->setTranslateThreshold_pct(mTranslationThreshold_pct);
+		break;
+	case eTranslateToGroundModel::INTREP_CURVE:
+		pPointCloudBenerator->setTranslateInterpTable(mTranslateInterpTable);
+		break;
+	}
+
+
+	pPointCloudBenerator->setRotationToGroundModel(mRotateToGroundModel);
+
+	switch (mRotateToGroundModel)
+	{
+	case eRotateToGroundModel::CONSTANT:
+		pPointCloudBenerator->setRotationAngles_deg(mRotationPitch_deg, mRotationRoll_deg);
+		break;
+	case eRotateToGroundModel::FIT:
+		pPointCloudBenerator->setRotationThreshold_pct(mRotationThreshold_pct);
+		break;
+	case eRotateToGroundModel::INTREP_CURVE:
+		pPointCloudBenerator->setRotateInterpTable(mRotateInterpTable);
+		break;
+	}
 
 	pPointCloudBenerator->setDollyPath(mDollyMovement);
 

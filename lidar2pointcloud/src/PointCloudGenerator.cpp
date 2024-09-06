@@ -174,6 +174,16 @@ double cPointCloudGenerator::getScanTime_sec() const
     return (mLidarData.back().timestamp_ns() - mLidarData.front().timestamp_ns()) * nConstants::NS_TO_SEC;
 }
 
+double	cPointCloudGenerator::getComputedStartYaw_deg() const
+{
+    return mComputedStartYaw_deg;
+}
+
+double	cPointCloudGenerator::getComputedEndYaw_deg() const
+{
+    return mComputedEndYaw_deg;
+}
+
 const std::vector<rfm::sDollyInfo_t>& cPointCloudGenerator::getComputedDollyPath() const
 {
     return mComputedDollyPath;
@@ -182,6 +192,77 @@ const std::vector<rfm::sDollyInfo_t>& cPointCloudGenerator::getComputedDollyPath
 const cRappPointCloud& cPointCloudGenerator::getPointCloud() const
 {
     return mPointCloud;
+}
+
+bool cPointCloudGenerator::recordingFittingData() const
+{
+    return mRecordFittingData;
+}
+
+void cPointCloudGenerator::recordFittingData(bool record)
+{
+    mRecordFittingData = record;
+}
+
+double cPointCloudGenerator::getAvgTranslationHeight_m() const
+{
+    if (mHeights.empty())
+        return 0.0;
+        
+    double height_mm = 0;
+
+    for (const auto& info : mHeights)
+    {
+        height_mm += info.height_mm;
+    }
+
+    height_mm /= mHeights.size();
+
+    return height_mm * nConstants::MM_TO_M;
+}
+
+const std::vector<cPointCloudGenerator::sTranslationInfo_t>& cPointCloudGenerator::getHeights() const
+{
+    return mHeights;
+}
+
+double cPointCloudGenerator::getAvgRotationPitch_deg() const
+{
+    if (mAngles.empty())
+        return 0.0;
+
+    double pitch_deg = 0;
+
+    for (const auto& info : mAngles)
+    {
+        pitch_deg += info.pitch_deg;
+    }
+
+    pitch_deg /= mAngles.size();
+
+    return pitch_deg;
+}
+
+double cPointCloudGenerator::getAvgRotationRoll_deg() const
+{
+    if (mAngles.empty())
+        return 0.0;
+
+    double roll_deg = 0;
+
+    for (const auto& info : mAngles)
+    {
+        roll_deg += info.roll_deg;
+    }
+
+    roll_deg /= mAngles.size();
+
+    return roll_deg;
+}
+
+const std::vector<cPointCloudGenerator::sRotationInfo_t>& cPointCloudGenerator::getAngles() const
+{
+    return mAngles;
 }
 
 void cPointCloudGenerator::fixTimestampInfo(double updateRate_Hz, uint64_t start_timestamp_ns)
@@ -216,6 +297,11 @@ void cPointCloudGenerator::setValidRange_m(double min_dist_m, double max_dist_m)
     mMaxDistance_mm = std::min(max_dist_m, 1000.0) * nConstants::M_TO_MM;
 }
 
+std::pair<double, double> cPointCloudGenerator::getValidRange_m() const
+{
+    return std::make_pair(mMinDistance_mm * nConstants::MM_TO_M, mMaxDistance_mm * nConstants::MM_TO_M);
+}
+
 void cPointCloudGenerator::resetAltitudeWindow()
 {
     mMinAltitude_rad = -std::numbers::pi;
@@ -230,6 +316,11 @@ void cPointCloudGenerator::setAltitudeWindow_deg(double min_altitude_deg, double
     mMaxAltitude_rad = max_altitude_deg * nConstants::DEG_TO_RAD;
     mAltitudeRangeValid = (max_altitude_deg - min_altitude_deg) > 3.0;
     mAllowRotationToGroundData = mAltitudeRangeValid && mAzimuthRangeValid;
+}
+
+std::pair<double, double> cPointCloudGenerator::getAltitudeWindow_deg() const
+{
+    return std::make_pair(mMinAltitude_rad * nConstants::RAD_TO_DEG, mMaxAltitude_rad * nConstants::RAD_TO_DEG);
 }
 
 void cPointCloudGenerator::resetAzimuthWindow()
@@ -248,9 +339,19 @@ void cPointCloudGenerator::setAzimuthWindow_deg(double min_azimuth_deg, double m
     mAllowRotationToGroundData = mAltitudeRangeValid && mAzimuthRangeValid;
 }
 
-void cPointCloudGenerator::enableTranslateToGroundData(bool enable)
+std::pair<double, double> cPointCloudGenerator::getAzimuthWindow_deg() const
 {
-    mEnableTranslateToGroundData = enable;
+    return std::make_pair(mMinEncoder_rad * nConstants::RAD_TO_DEG, mMaxEncoder_rad * nConstants::RAD_TO_DEG);
+}
+
+void cPointCloudGenerator::setTranslateToGroundModel(eTranslateToGroundModel model)
+{
+    mTranslateToGroundModel = model;
+}
+
+void cPointCloudGenerator::setTranslateDistance_m(double distance_m)
+{
+    mTranslationDistance_m = distance_m;
 }
 
 void cPointCloudGenerator::setTranslateThreshold_pct(double threshold_pct)
@@ -263,9 +364,20 @@ void cPointCloudGenerator::setTranslateThreshold_pct(double threshold_pct)
         mTranslationThreshold_pct = threshold_pct;
 }
 
-void cPointCloudGenerator::enableRotationToGroundData(bool enable)
+void cPointCloudGenerator::setTranslateInterpTable(const std::vector<rfm::sTranslationInterpPoint_t>& table)
 {
-    mEnableRotationToGroundData = enable;
+    mTranslateInterpTable = table;
+}
+
+void cPointCloudGenerator::setRotationToGroundModel(eRotateToGroundModel model)
+{
+    mRotateToGroundModel = model;
+}
+
+void cPointCloudGenerator::setRotationAngles_deg(double pitch_deg, double roll_deg)
+{
+    mRotationPitch_deg = pitch_deg;
+    mRotationRoll_deg = roll_deg;
 }
 
 void cPointCloudGenerator::setRotationThreshold_pct(double threshold_pct)
@@ -278,13 +390,49 @@ void cPointCloudGenerator::setRotationThreshold_pct(double threshold_pct)
         mRotationThreshold_pct = threshold_pct;
 }
 
+void cPointCloudGenerator::setRotateInterpTable(const std::vector<rfm::sRotationInterpPoint_t>& table)
+{
+    mRotateInterpTable = table;
+}
+
+void cPointCloudGenerator::enableAutomaticYawCorrection(bool enable)
+{
+    mEnableAutomaticYawCorrection = enable;
+}
+
+void cPointCloudGenerator::setPlantHeightThreshold_pct(double threshold_pct)
+{
+    mPlantHeightThreshold_pct = threshold_pct;
+}
+
+void cPointCloudGenerator::setNearestNeighborThreshold_mm(double threshold_mm)
+{
+    mMaxSeparation_mm = threshold_mm;
+}
+
+void cPointCloudGenerator::setComputedYawLimits(double lower_limit_deg, double upper_limit_deg)
+{
+    mLowerLimitYaw_deg = lower_limit_deg;
+    mUpperLimitYaw_deg = upper_limit_deg;
+
+    if (mUpperLimitYaw_deg < mLowerLimitYaw_deg)
+        std::swap(mLowerLimitYaw_deg, mUpperLimitYaw_deg);
+}
+
 void cPointCloudGenerator::setDollyPath(const std::vector<rfm::sDollyInfo_t>& path)
 {
     mDollyPath = path;
 }
 
+//void cPointCloudGenerator::abort()
+//{
+//    mAbort = true;
+//}
+
 void cPointCloudGenerator::clear()
 {
+    mAbort = false;
+
     mPointCloud.clear();
     mComputedDollyPath.clear();
 
@@ -301,6 +449,9 @@ void cPointCloudGenerator::clear()
 
     mAzimuthAngles_rad.clear();
     mAltitudeAngles_rad.clear();
+
+    mComputedStartYaw_deg = 0.0;
+    mComputedEndYaw_deg = 0.0;
 
     mLidarToSensorTransform.clear();
 
@@ -463,8 +614,22 @@ bool cPointCloudGenerator::computePointCloud(int id)
     ouster::matrix_col_major<rfm::sPoint3D_t> cloud_frame;
     cloud_frame.resize(mPixelsPerColumn, mColumnsPerFrame);
 
+    if (mAbort)
+    {
+        return false;
+    }
+
+    double displacement_mm = 0.0;
+    mHeights.clear();
+    mAngles.clear();
+
     for (auto& lidar_frame : mLidarData)
     {
+        if (mAbort)
+        {
+            return false;
+        }
+
         update_progress(id, (100.0 * i++) / n);
 
         frameID = lidar_frame.frame_id();
@@ -526,7 +691,7 @@ bool cPointCloudGenerator::computePointCloud(int id)
             }
         }
 
-        if (!transform(time_us, mDollyPath, cloud_frame,  &mComputedDollyPath))
+        if (!transform(time_us, mDollyPath, cloud_frame, &mComputedDollyPath, &displacement_mm))
         {
             return true;
         }
@@ -552,35 +717,415 @@ bool cPointCloudGenerator::computePointCloud(int id)
         }
         pointCloud.recomputeBounds();
 
-        if (mEnableTranslateToGroundData)
+        double height_mm = 0.0;
+
+        switch (mTranslateToGroundModel)
+        {
+        case eTranslateToGroundModel::NONE:
+            break;
+        case eTranslateToGroundModel::CONSTANT:
+            pointCloud.translate(0, 0, static_cast<int>(mTranslationDistance_m * nConstants::M_TO_MM));
+            break;
+        case eTranslateToGroundModel::FIT:
         {
             auto offset = computePcToGroundMeshDistanceUsingGrid_mm(pointCloud, mTranslationThreshold_pct);
             if (offset.valid)
             {
                 pointCloud.translate(0, 0, offset.offset_mm);
+                height_mm = offset.offset_mm;
             }
+            break;
         }
-
-        if (mEnableRotationToGroundData && mAllowRotationToGroundData)
+        case eTranslateToGroundModel::INTREP_CURVE:
         {
-            auto angles = computePcToGroundMeshRotationUsingGrid_deg(pointCloud, mRotationThreshold_pct);
-            if (angles.valid)
+            double lowerDisplacement_m = 0.0;
+            double upperDisplacemant_m = 0.0;
+            double lowerHeight_m = 0.0;
+            double upperHeight_m = 0.0;
+            double h_mm = 0.0;
+
+            double displacement_m = displacement_mm * nConstants::MM_TO_M;
+
+            for (const auto& point : mTranslateInterpTable)
             {
-                pointCloud.rotate(0, angles.pitch_deg, angles.roll_deg);
+                if (displacement_m >= point.displacement_m)
+                {
+                    lowerDisplacement_m = upperDisplacemant_m = point.displacement_m;
+                    lowerHeight_m = upperHeight_m = point.height_m;
+                }
+                else
+                {
+                    upperDisplacemant_m = point.displacement_m;
+                    upperHeight_m = point.height_m;
+                    break;
+                }
+            }
+
+            if (lowerDisplacement_m == upperDisplacemant_m)
+            {
+                h_mm = lowerHeight_m * nConstants::M_TO_MM;
+            }
+            else
+            {
+                double m = (upperHeight_m - lowerHeight_m)/(upperDisplacemant_m - lowerDisplacement_m);
+
+                h_mm = m * (displacement_m - lowerDisplacement_m) + lowerHeight_m;
+                h_mm *= nConstants::M_TO_MM;
+            }
+
+            pointCloud.translate(0, 0, h_mm);
+            break;
+        }
+        }
+
+        if (mAllowRotationToGroundData)
+        {
+
+            switch (mRotateToGroundModel)
+            {
+            case eRotateToGroundModel::NONE:
+                break;
+            case eRotateToGroundModel::CONSTANT:
+                pointCloud.rotate(0, mRotationPitch_deg, mRotationRoll_deg);
+                break;
+            case eRotateToGroundModel::FIT:
+            {
+                auto angles = computePcToGroundMeshRotationUsingGrid_deg(pointCloud, mRotationThreshold_pct);
+                if (angles.valid)
+                {
+                    pointCloud.rotate(0, angles.pitch_deg, angles.roll_deg);
+
+                    if (mRecordFittingData)
+                    {
+                        mAngles.push_back({ displacement_mm, angles.pitch_deg, angles.roll_deg });
+                    }
+                }
+                break;
+            }
+            case eRotateToGroundModel::INTREP_CURVE:
+            {
+                double lowerDisplacement_m = 0.0;
+                double upperDisplacemant_m = 0.0;
+                double lowerPitch_deg = 0.0;
+                double upperPitch_deg = 0.0;
+                double lowerRoll_deg = 0.0;
+                double upperRoll_deg = 0.0;
+                double pitch_deg = 0.0;
+                double roll_deg = 0.0;
+
+                double displacement_m = displacement_mm * nConstants::MM_TO_M;
+
+                for (const auto& point : mRotateInterpTable)
+                {
+                    if (displacement_m >= point.displacement_m)
+                    {
+                        lowerDisplacement_m = upperDisplacemant_m = point.displacement_m;
+                        lowerPitch_deg = upperPitch_deg = point.pitch_deg;
+                        lowerRoll_deg  = upperRoll_deg  = point.roll_deg;
+                    }
+                    else
+                    {
+                        upperDisplacemant_m = point.displacement_m;
+                        upperPitch_deg = point.pitch_deg;
+                        upperRoll_deg = point.roll_deg;
+                        break;
+                    }
+                }
+
+                if (lowerDisplacement_m == upperDisplacemant_m)
+                {
+                    pitch_deg = lowerPitch_deg;
+                    roll_deg  = lowerRoll_deg;
+                }
+                else
+                {
+                    double mp = (upperPitch_deg - lowerPitch_deg) / (upperDisplacemant_m - lowerDisplacement_m);
+                    double mr = (upperRoll_deg  - lowerRoll_deg)  / (upperDisplacemant_m - lowerDisplacement_m);
+
+                    pitch_deg = mp * (displacement_m - lowerDisplacement_m) + lowerPitch_deg;
+                    roll_deg  = mr * (displacement_m - lowerDisplacement_m) + lowerRoll_deg;
+                }
+
+                pointCloud.rotate(0, pitch_deg, roll_deg);
+                break;
+            }
             }
         }
 
-        if (mEnableTranslateToGroundData)
+        if (mTranslateToGroundModel == eTranslateToGroundModel::FIT)
         {
             auto offset = computePcToGroundMeshDistanceUsingGrid_mm(pointCloud, mTranslationThreshold_pct);
             if (offset.valid)
             {
                 pointCloud.translate(0, 0, offset.offset_mm);
+                height_mm += offset.offset_mm;
             }
         }
 
-        mPointCloud += pointCloud;
+        if (mRecordFittingData)
+        {
+            mHeights.push_back({ displacement_mm, height_mm });
+        }
+        else
+        {
+            mPointCloud += pointCloud;
+        }
     }
+
+    return true;
+}
+
+bool cPointCloudGenerator::computeYawCorrections()
+{
+    using namespace nMathUtils;
+
+    double dx = mDollyPath.back().x_mm - mDollyPath.front().x_mm;
+    double dy = mDollyPath.back().y_mm - mDollyPath.front().y_mm;
+
+    double groundTrack_deg = wrap_0_to_360(atan2(dy, dx) * nConstants::RAD_TO_DEG);
+
+    int32_t tolerance_mm = 10;
+
+    auto scan_cutoff = threshold(mPointCloud.minZ_mm(), mPointCloud.maxZ_mm(), mPlantHeightThreshold_pct);
+
+    mComputedStartYaw_deg = 0.0;
+    mComputedEndYaw_deg = 0.0;
+
+    if (((88.0 < groundTrack_deg) && (groundTrack_deg < 92.0)) ||
+        ((268.0 < groundTrack_deg) && (groundTrack_deg < 272.0)))
+    {
+        std::vector<rfm::rappPoint_t> east;
+        std::vector<rfm::rappPoint_t> west;
+
+        // Find the east and west boundaries
+        double dx = (mPointCloud.maxX_mm() - mPointCloud.minX_mm()) / 100.0;
+        double x = mPointCloud.minX_mm() + dx;
+
+        auto east_limit = threshold(mPointCloud.minY_mm(), mPointCloud.maxY_mm(), 75.0);
+        auto west_limit = threshold(mPointCloud.minY_mm(), mPointCloud.maxY_mm(), 25.0);
+
+        std::size_t i = 0;
+
+        for (; x < mPointCloud.maxX_mm(); x += dx)
+        {
+//            emit progressUpdated(i++);
+
+            auto slice = pointcloud::sliceAtGivenX(mPointCloud.data(), x, tolerance_mm);
+
+            std::sort(slice.begin(), slice.end(), [](auto a, auto b)
+                {
+                    return a.y_mm < b.y_mm;
+                });
+
+            // Start by looking for the west boundary
+            int32_t y_west = -1;
+            for (auto point : slice)
+            {
+                if (point.y_mm > west_limit)
+                    break;
+
+                if (point.z_mm > scan_cutoff)
+                {
+                    y_west = point.y_mm;
+                    break;
+                }
+            }
+
+            if (y_west > 0)
+            {
+                west.emplace_back(static_cast<int32_t>(x), y_west, scan_cutoff);
+            }
+
+            // Looking for the east boundary
+            int32_t y_east = -1;
+            for (auto it = slice.rbegin(); it != slice.rend(); ++it)
+            {
+                auto point = *it;
+
+                if (point.y_mm < east_limit)
+                    break;
+
+                if (point.z_mm > scan_cutoff)
+                {
+                    y_east = point.y_mm;
+                    break;
+                }
+            }
+
+            if (y_east > 0)
+            {
+                east.emplace_back(static_cast<int32_t>(x), y_east, scan_cutoff);
+            }
+        }
+
+        if (east.size() > 5)
+        {
+            std::vector<rfm::rappPoint2_t> nearest;
+
+            rfm::rappPoint2_t point;
+            for (int i = 0; i < (east.size() - 1); ++i)
+            {
+                point.x_mm = east[i].x_mm;
+                point.y_mm = east[i].y_mm;
+                point.z_mm = east[i].z_mm;
+
+                point.h_mm = std::abs(east[i + 1].y_mm - east[i].y_mm);
+
+                nearest.push_back(point);
+            }
+
+            point.x_mm = east.back().x_mm;
+            point.y_mm = east.back().y_mm;
+            point.z_mm = east.back().z_mm;
+            nearest.push_back(point);
+
+            std::sort(nearest.begin(), nearest.end(), [](auto a, auto b) { return a.h_mm < b.h_mm; });
+
+            double min_d = nearest.front().h_mm;
+            double max_d = nearest.back().h_mm;
+
+            double spread = max_d - min_d;
+
+            if (spread > mMaxSeparation_mm)
+            {
+                east.clear();
+                for (auto point : nearest)
+                {
+                    if (point.h_mm > mMaxSeparation_mm)
+                        break;
+
+                    east.emplace_back(point.x_mm, point.y_mm, point.z_mm);
+                }
+            }
+
+            auto east_side = fitHorizontalLine(east);
+            mComputedEndYaw_deg = -1 * atan(east_side.m) * nConstants::RAD_TO_DEG;
+
+            mComputedEndYaw_deg = bound(mComputedEndYaw_deg, mLowerLimitYaw_deg, mUpperLimitYaw_deg);
+        }
+
+        if (west.size() > 5)
+        {
+            std::vector<rfm::rappPoint2_t> nearest;
+
+            rfm::rappPoint2_t point;
+            for (int i = 0; i < (west.size() - 1); ++i)
+            {
+                point.x_mm = west[i].x_mm;
+                point.y_mm = west[i].y_mm;
+                point.z_mm = west[i].z_mm;
+
+                point.h_mm = std::abs(west[i + 1].y_mm - west[i].y_mm);
+
+                nearest.push_back(point);
+            }
+
+            point.x_mm = west.back().x_mm;
+            point.y_mm = west.back().y_mm;
+            point.z_mm = west.back().z_mm;
+            nearest.push_back(point);
+
+            std::sort(nearest.begin(), nearest.end(), [](auto a, auto b) { return a.h_mm < b.h_mm; });
+
+            double min_d = nearest.front().h_mm;
+            double max_d = nearest.back().h_mm;
+
+            double spread = max_d - min_d;
+
+            if (spread > mMaxSeparation_mm)
+            {
+                west.clear();
+                for (auto point : nearest)
+                {
+                    if (point.h_mm > mMaxSeparation_mm)
+                        break;
+
+                    west.emplace_back(point.x_mm, point.y_mm, point.z_mm);
+                }
+
+            }
+
+            auto west_side = fitHorizontalLine(west);
+            mComputedStartYaw_deg = -1 * atan(west_side.m) * nConstants::RAD_TO_DEG;
+
+            mComputedStartYaw_deg = bound(mComputedStartYaw_deg, mLowerLimitYaw_deg, mUpperLimitYaw_deg);
+        }
+
+        if (groundTrack_deg > 180)
+            std::swap(mComputedStartYaw_deg, mComputedEndYaw_deg);
+
+/*
+        QString text = "Starting yaw = ";
+        text += QString::number(mComputedStartYaw_deg, 'f', 3);
+        text += " degrees, ending yaw = ";
+        text += QString::number(mComputedEndYaw_deg, 'f', 3);
+        text += " degrees.";
+
+        emit statusUpdate(text);
+*/
+    }
+    else
+    {
+        std::vector<rfm::rappPoint_t> north;
+        std::vector<rfm::rappPoint_t> south;
+
+        // Find the north and south boundaries
+        double dy = (mPointCloud.maxY_mm() - mPointCloud.minY_mm()) / 100.0;
+        double y = mPointCloud.minY_mm() + dy;
+
+        auto north_limit = threshold(mPointCloud.minX_mm(), mPointCloud.maxX_mm(), 25.0);
+        auto south_limit = threshold(mPointCloud.minX_mm(), mPointCloud.maxX_mm(), 75.0);
+
+        for (; y < mPointCloud.maxY_mm(); y += dy)
+        {
+            auto slice = pointcloud::sliceAtGivenY(mPointCloud.data(), y, tolerance_mm);
+
+            std::sort(slice.begin(), slice.end(), [](auto a, auto b)
+                {
+                    return a.x_mm < b.x_mm;
+                });
+
+            // Start by looking for the north boundary
+            int32_t x_north = -1;
+            for (auto point : slice)
+            {
+                if (point.x_mm > north_limit)
+                    break;
+
+                if (point.z_mm > scan_cutoff)
+                {
+                    x_north = point.x_mm;
+                    break;
+                }
+            }
+
+            if (x_north < 0)
+                continue;
+
+            // Looking for the south boundary
+            int32_t x_south = -1;
+            for (auto it = slice.rbegin(); it != slice.rend(); ++it)
+            {
+                auto point = *it;
+
+                if (point.x_mm < south_limit)
+                    break;
+
+                if (point.z_mm > scan_cutoff)
+                {
+                    x_south = point.x_mm;
+                    break;
+                }
+            }
+
+            if (x_south > 0)
+            {
+                north.emplace_back(x_north, static_cast<int32_t>(y), scan_cutoff);
+                south.emplace_back(x_south, static_cast<int32_t>(y), scan_cutoff);
+            }
+        }
+    }
+
 
     return true;
 }
@@ -594,6 +1139,11 @@ bool cPointCloudGenerator::shiftPointCloudToAGL()
 
     for (auto& point : mPointCloud)
     {
+        if (mAbort)
+        {
+            return false;
+        }
+        
         double progress_pct = (100.0 * i++) / n;
 
         if (progress_pct > previousProgress_pct)
@@ -613,3 +1163,25 @@ bool cPointCloudGenerator::shiftPointCloudToAGL()
     return true;
 }
 
+bool cPointCloudGenerator::updateDollyPath()
+{
+    auto start = mDollyPath.front();
+    auto end = mDollyPath.back();
+
+    double scan_time_sec = (end.timestamp_us - start.timestamp_us) * nConstants::US_TO_SEC;
+
+    double start_yaw = nMathUtils::wrap_0_to_360(start.yaw_deg + mComputedStartYaw_deg);
+    double end_yaw = nMathUtils::wrap_0_to_360(end.yaw_deg + mComputedEndYaw_deg);
+
+    auto yaw_rate = (end_yaw - start_yaw) / scan_time_sec;
+
+    // Update the yaw information
+    for (auto& pos : mDollyPath)
+    {
+        double time_sec = pos.timestamp_us * nConstants::US_TO_SEC;
+        pos.yaw_deg = start_yaw + yaw_rate * time_sec;
+        pos.yawRate_dps = yaw_rate;
+    }
+
+    return true;
+}

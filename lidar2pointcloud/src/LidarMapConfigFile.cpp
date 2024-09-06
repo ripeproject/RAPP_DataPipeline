@@ -41,7 +41,7 @@ void cLidarMapConfigFile::clear()
 	mFileName.clear();
 	mOptions.clear();
 	mScans.clear();
-	mTmpFileName = "~newfile.lidar2pointcloud.json";
+	mTmpFileName = "~newfile.lidar2pointcloud";
 }
 
 bool cLidarMapConfigFile::open(const std::string& file_name)

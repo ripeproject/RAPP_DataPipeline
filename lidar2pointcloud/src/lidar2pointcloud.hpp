@@ -86,8 +86,15 @@ public:
 
 	void setInterpolationTable(const InterpTable_t& table);
 
-	void enableTranslateToGround(bool enable, double threshold_pct);
-	void enableRotateToGround(bool enable, double threshold_pct);
+	void setTranslateToGroundModel(eTranslateToGroundModel model);
+	void setTranslateDistance_m(double distance_m);
+	void setTranslateThreshold_pct(double threshold_pct);
+	void setTranslateInterpTable(const std::vector<rfm::sTranslationInterpPoint_t>& table);
+
+	void setRotationToGroundModel(eRotateToGroundModel model);
+	void setRotationAngles_deg(double pitch_deg, double roll_deg);
+	void setRotationThreshold_pct(double threshold_pct);
+	void setRotateInterpTable(const std::vector<rfm::sRotationInterpPoint_t>& table);
 
 	pointcloud::eKINEMATIC_MODEL getKinematicModel() const;
 
@@ -150,10 +157,16 @@ private:
 
 	InterpTable_t mOrientationInterpTable;
 
-	bool   mTranslateToGround = true;
-	double mTranslateThreshold_pct = 1.0;
-	bool   mRotateToGround = true;
-	double mRotateThreshold_pct = 1.0;
+	eTranslateToGroundModel	mTranslateToGroundModel = eTranslateToGroundModel::NONE;
+	double	mTranslationDistance_m = 0.0;
+	double	mTranslationThreshold_pct = 1.0;
+	std::vector<rfm::sTranslationInterpPoint_t> mTranslateInterpTable;
+
+	eRotateToGroundModel	mRotateToGroundModel = eRotateToGroundModel::NONE;
+	double	mRotationPitch_deg = 0.0;
+	double	mRotationRoll_deg = 0.0;
+	double	mRotationThreshold_pct = 1.0;
+	std::vector<rfm::sRotationInterpPoint_t>    mRotateInterpTable;
 
 private:
 	std::vector<rfm::sDollyInfo_t>			mDollyMovement;
