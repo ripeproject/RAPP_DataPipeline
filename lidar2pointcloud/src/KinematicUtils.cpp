@@ -415,7 +415,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 
 
 std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
-    std::vector<rfm::sOrientationInterpPoint_t> table, double scan_time_sec)
+    std::vector<rfm::sDollyOrientationInterpPoint_t> table, double scan_time_sec)
 {
     std::vector<rfm::sDollyOrientation_t> result;
 

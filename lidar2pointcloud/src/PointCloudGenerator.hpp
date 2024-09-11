@@ -28,7 +28,7 @@ public:
 
 	struct sRotationInfo_t
 	{
-		double displacement_m = 0;
+		double displacement_mm = 0;
 		double pitch_deg = 0;
 		double roll_deg = 0;
 	};
@@ -97,14 +97,14 @@ public:
 	void setTranslateToGroundModel(eTranslateToGroundModel model);
 	void setTranslateDistance_m(double distance_m);
 	void setTranslateThreshold_pct(double threshold_pct);
-	void setTranslateInterpTable(const std::vector<rfm::sTranslationInterpPoint_t>& table);
+	void setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table);
 
 	/**
 	 */
 	void setRotationToGroundModel(eRotateToGroundModel model);
 	void setRotationAngles_deg(double pitch_deg, double roll_deg);
 	void setRotationThreshold_pct(double threshold_pct);
-	void setRotateInterpTable(const std::vector<rfm::sRotationInterpPoint_t>& table);
+	void setRotateInterpTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table);
 
 	/**
 	 */
@@ -196,13 +196,13 @@ private:
 	eTranslateToGroundModel	mTranslateToGroundModel = eTranslateToGroundModel::NONE;
 	double	mTranslationDistance_m = 0.0;
 	double	mTranslationThreshold_pct = 1.0;
-	std::vector<rfm::sTranslationInterpPoint_t> mTranslateInterpTable;
+	std::vector<rfm::sPointCloudTranslationInterpPoint_t> mTranslateInterpTable;
 
 	eRotateToGroundModel	mRotateToGroundModel = eRotateToGroundModel::NONE;
 	double	mRotationPitch_deg = 0.0;
 	double	mRotationRoll_deg = 0.0;
 	double	mRotationThreshold_pct = 1.0;
-	std::vector<rfm::sRotationInterpPoint_t>    mRotateInterpTable;
+	std::vector<rfm::sPointCloudRotationInterpPoint_t>    mRotateInterpTable;
 
 	bool	mEnableAutomaticYawCorrection = false;
 	double  mPlantHeightThreshold_pct = 50.0;

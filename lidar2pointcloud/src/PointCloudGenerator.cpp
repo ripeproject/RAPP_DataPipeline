@@ -364,7 +364,7 @@ void cPointCloudGenerator::setTranslateThreshold_pct(double threshold_pct)
         mTranslationThreshold_pct = threshold_pct;
 }
 
-void cPointCloudGenerator::setTranslateInterpTable(const std::vector<rfm::sTranslationInterpPoint_t>& table)
+void cPointCloudGenerator::setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table)
 {
     mTranslateInterpTable = table;
 }
@@ -390,7 +390,7 @@ void cPointCloudGenerator::setRotationThreshold_pct(double threshold_pct)
         mRotationThreshold_pct = threshold_pct;
 }
 
-void cPointCloudGenerator::setRotateInterpTable(const std::vector<rfm::sRotationInterpPoint_t>& table)
+void cPointCloudGenerator::setRotateInterpTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table)
 {
     mRotateInterpTable = table;
 }

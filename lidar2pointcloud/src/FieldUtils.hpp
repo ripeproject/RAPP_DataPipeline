@@ -25,11 +25,26 @@ sLineParameters_t fitVerticalLine(const std::vector<rfm::rappPoint_t>& points);
 
 sLineParameters_t fitLine(const std::vector<rfm::rappPoint_t>& points, const std::vector<rfm::rappPoint_t>& line);
 
-struct sOffset_t
+
+struct sOffsetInterpTable_t
 {
-	double offset_mm = 0;
+	std::vector<rfm::sPointCloudTranslationInterpPoint_t> offset_m;
+	double R = 0;
 	bool valid = false;
 };
+
+sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps);
+
+
+struct sAnglesInterpTable_t
+{
+	std::vector<rfm::sPointCloudRotationInterpPoint_t> angles_deg;
+	double R = 0;
+	bool valid = false;
+};
+
+sAnglesInterpTable_t fitPointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps);
+
 
 struct sPitchAndRoll_t
 {
@@ -39,7 +54,8 @@ struct sPitchAndRoll_t
 	bool valid = false;
 };
 
-sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc);
+sPitchAndRoll_t fitPointCloudPitchRollToGroundMesh(const cRappPointCloud& pc);
+
 
 struct sPitch_t
 {
@@ -59,6 +75,12 @@ struct sRoll_t
 
 sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc);
 
+
+struct sOffset_t
+{
+	double offset_mm = 0;
+	bool valid = false;
+};
 
 sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc);
 sOffset_t computePcToGroundMeshDistance_mm(const cRappPointCloud& pc, double threshold_pct);

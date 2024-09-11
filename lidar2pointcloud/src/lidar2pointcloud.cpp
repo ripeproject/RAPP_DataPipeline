@@ -163,7 +163,7 @@ void cLidar2PointCloud::setTranslateThreshold_pct(double threshold_pct)
 		mTranslationThreshold_pct = threshold_pct;
 }
 
-void cLidar2PointCloud::setTranslateInterpTable(const std::vector<rfm::sTranslationInterpPoint_t>& table)
+void cLidar2PointCloud::setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table)
 {
 	mTranslateInterpTable = table;
 }
@@ -189,7 +189,7 @@ void cLidar2PointCloud::setRotationThreshold_pct(double threshold_pct)
 		mRotationThreshold_pct = threshold_pct;
 }
 
-void cLidar2PointCloud::setRotateInterpTable(const std::vector<rfm::sRotationInterpPoint_t>& table)
+void cLidar2PointCloud::setRotateInterpTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table)
 {
 	mRotateInterpTable = table;
 }

@@ -92,54 +92,54 @@ namespace rfm
 		double yawRate_dps = 0.0;
 	};
 
-	struct sOrientationInterpPoint_t
+	struct sDollyOrientationInterpPoint_t
 	{
 		double distance_pct = 0.0;
 		double pitch_deg = 0.0;
 		double roll_deg = 0.0;
 		double yaw_deg = 0.0;
 
-		bool operator==(const sOrientationInterpPoint_t& rhs)
+		bool operator==(const sDollyOrientationInterpPoint_t& rhs)
 		{
 			return (distance_pct == rhs.distance_pct) && (pitch_deg == rhs.pitch_deg)
 				&& (roll_deg == rhs.roll_deg) && (yaw_deg == rhs.yaw_deg);
 		}
 
-		bool operator!=(const sOrientationInterpPoint_t& rhs)
+		bool operator!=(const sDollyOrientationInterpPoint_t& rhs)
 		{
 			return !operator==(rhs);
 		}
 	};
 
-	struct sTranslationInterpPoint_t
+	struct sPointCloudTranslationInterpPoint_t
 	{
 		double displacement_m = 0.0;
 		double height_m = 0.0;
 
-		bool operator==(const sTranslationInterpPoint_t& rhs)
+		bool operator==(const sPointCloudTranslationInterpPoint_t& rhs)
 		{
 			return (displacement_m == rhs.displacement_m) && (height_m == rhs.height_m);
 		}
 
-		bool operator!=(const sTranslationInterpPoint_t& rhs)
+		bool operator!=(const sPointCloudTranslationInterpPoint_t& rhs)
 		{
 			return !operator==(rhs);
 		}
 	};
 
-	struct sRotationInterpPoint_t
+	struct sPointCloudRotationInterpPoint_t
 	{
 		double displacement_m = 0.0;
 		double pitch_deg = 0.0;
 		double roll_deg = 0.0;
 
-		bool operator==(const sRotationInterpPoint_t& rhs)
+		bool operator==(const sPointCloudRotationInterpPoint_t& rhs)
 		{
 			return (displacement_m == rhs.displacement_m) && (pitch_deg == rhs.pitch_deg)
 				&& (roll_deg == rhs.roll_deg);
 		}
 
-		bool operator!=(const sRotationInterpPoint_t& rhs)
+		bool operator!=(const sPointCloudRotationInterpPoint_t& rhs)
 		{
 			return !operator==(rhs);
 		}

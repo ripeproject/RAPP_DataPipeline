@@ -34,6 +34,25 @@ namespace
 
         return static_cast<T>((max - min) * (level_pct / 100.0)) + min;
     }
+
+    double deltaAngle(double angle1_deg, double angle2_deg)
+    {
+        double delta = angle1_deg - angle2_deg;
+
+        if (std::abs(delta) > 180.0)
+        {
+            if (delta > 0.0)
+            {
+                delta = 360.0 - delta;
+            }
+            else
+            {
+
+            }
+        }
+
+        return delta;
+    }
 }
 
 
@@ -179,19 +198,23 @@ std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>
 
     pts->Delete();
 
-    return std::move(data);
+    return data;
 }
 
 //-----------------------------------------------------------------------------
 typedef dlib::matrix<double, 4, 1> input_vector;
 typedef dlib::matrix<double, 1, 1> input_one_variable;
+typedef dlib::matrix<double, 2, 1> input_two_variable;
 typedef dlib::matrix<double, 3, 1> input_three_variables;
-typedef dlib::matrix<double, 2, 1> parameter_vector;
+typedef dlib::matrix<double, 2, 1> slope_interslope_vector;
+typedef dlib::matrix<double, 2, 1> pitch_roll_vector;
 typedef dlib::matrix<double, 1, 1> pitch_vector;
 typedef dlib::matrix<double, 1, 1> roll_vector;
+typedef dlib::matrix<double, 20, 1> height_interp_table_vector;
+typedef dlib::matrix<double, 30, 1> angle_interp_table_vector;
 
 
-double modelLine(const input_one_variable& input, const parameter_vector& params)
+double modelLine(const input_one_variable& input, const slope_interslope_vector& params)
 {
     const double m = params(0);
     const double b = params(1);
@@ -203,7 +226,7 @@ double modelLine(const input_one_variable& input, const parameter_vector& params
     return c;
 }
 
-double residualLine(const std::pair<input_one_variable, double>& data, const parameter_vector& params)
+double residualLine(const std::pair<input_one_variable, double>& data, const slope_interslope_vector& params)
 {
     return modelLine(data.first, params) - data.second;
 }
@@ -217,7 +240,7 @@ sLineParameters_t fitHorizontalLine(const std::vector<rfm::rappPoint_t>& points)
         return sLineParameters_t();
     }
 
-    parameter_vector line;
+    slope_interslope_vector line;
     line(0) = 0.0;  // Horizontal line has zero slope
 
     // The intercept will be the average y value
@@ -260,7 +283,7 @@ sLineParameters_t fitVerticalLine(const std::vector<rfm::rappPoint_t>& points)
 {
     using namespace dlib;
 
-    parameter_vector line;
+    slope_interslope_vector line;
     line = 1;
 
 
@@ -299,7 +322,457 @@ sLineParameters_t fitLine(const std::vector<rfm::rappPoint_t>& points, const std
     return result;
 }
 
-double groundheight_pitch_roll(const input_three_variables& input, const parameter_vector& params)
+//-----------------------------------------------------------------------------
+double modelHeightTable(const input_one_variable& input, const height_interp_table_vector& params)
+{
+    const double x = input(0);
+
+    double d0 = params(0);
+    double h0 = params(1);
+
+    double d1 = d0;
+    double h1 = h0;
+
+    std::size_t i = 2;
+    std::size_t n = params.size();
+    for (; i < n; i += 2)
+    {
+        d1 = params(i);
+        h1 = params(i + 1);
+
+        if (x <= d1)
+            break;
+
+        d0 = d1;
+        h0 = h1;
+    }
+
+    if (i >= n)
+    {
+        d0 = params(n - 4);
+        h0 = params(n - 3);
+        d1 = params(n - 2);
+        h1 = params(n - 1);
+    }
+
+    const double d = (d1 - d0);
+
+    const double m = (h1 - h0) / d;
+
+    double h = m * x + h0;
+
+    return h;
+}
+
+double residualHeightTable(const std::pair<input_one_variable, double>& data, const height_interp_table_vector& params)
+{
+    auto r = modelHeightTable(data.first, params) - data.second;
+
+    if (std::isnan(r))
+    {
+        r = 0.0;
+    }
+
+    return r;
+}
+
+height_interp_table_vector residualHeightTable_derivative(const std::pair<input_one_variable, double>& data, const height_interp_table_vector& params)
+{
+    const double delta_h = 0.0001;
+
+    height_interp_table_vector derivative;
+    derivative = 0.00000000001;
+
+    const double x = data.first(0);
+
+    std::size_t i = 0;
+    double d0 = params(i);
+    double h0 = params(i+1);
+    double d1 = d0;
+    double h1 = h0;
+
+    std::size_t n = params.size();
+    for (i = 2; i < n; i += 2)
+    {
+        d1 = params(i);
+        h1 = params(i + 1);
+
+        if (x <= d1)
+            break;
+
+        d0 = d1;
+        h0 = h1;
+    }
+
+    if (i >= n)
+    {
+        d0 = params(n - 4);
+        h0 = params(n - 3);
+        d1 = params(n - 2);
+        h1 = params(n - 1);
+    }
+
+    const double delta_d = (d1 - d0);
+
+    const double m = (h1 - h0) / delta_d;
+    const double m0 = (h1 - (h0 + delta_h)) / delta_d;
+    const double m1 = ((h1 + delta_h) - h0) / delta_d;
+
+    const double y  = m * x + h0;
+    const double y0 = m0 * x + (h0 + delta_h);
+    const double y1 = m1 * x + h0;
+
+    const auto r  = y  - data.second;
+    const auto r0 = y0 - data.second;
+    const auto r1 = y1 - data.second;
+
+    auto delta_r0 = (r0 - r) / delta_h;
+    auto delta_r1 = (r1 - r) / delta_h;
+
+    derivative(i - 1) = delta_r0;
+    derivative(i + 1) = delta_r1;
+
+    return derivative;
+}
+
+sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps)
+{
+    using namespace dlib;
+
+    if (heights.empty())
+    {
+        return sOffsetInterpTable_t();
+    }
+
+    std::sort(heights.begin(), heights.end(), [](rfm::sPointCloudTranslationInterpPoint_t a, rfm::sPointCloudTranslationInterpPoint_t b)
+        {
+            return (a.displacement_m < b.displacement_m);
+        });
+
+    height_interp_table_vector table;
+    table = 1;
+
+    double d0 = heights.front().displacement_m;
+    double d1 = heights.back().displacement_m;
+
+    double delta = 0.0;
+    
+    if (steps > 1)
+        delta = (d1 - d0) / (steps - 1);
+    else
+        delta = (d1 - d0);
+
+    std::size_t n = 2 * steps;
+    for (std::size_t i = 0; i < n; i += 2)
+    {
+        table(i) = d0;
+        d0 += delta;
+    }
+
+    // Make sure the last displacement entry is the last height displacement
+    table(n - 2) = d1;
+
+    std::vector<std::pair<input_one_variable, double>> samples;
+
+    input_one_variable input;
+
+    for (auto& point : heights)
+    {
+        input(0) = point.displacement_m;
+
+        const double output = point.height_m;
+
+        // save the pair
+        samples.push_back(std::make_pair(input, output));
+    }
+
+    // Before we do anything, let's make sure that our derivative function defined above matches
+    // the approximate derivative computed using central differences (via derivative()).  
+    // If this value is big then it means we probably typed the derivative function incorrectly.
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50), //.be_verbose(),
+        residualHeightTable,
+        residualHeightTable_derivative,
+        samples,
+        table);
+
+    sOffsetInterpTable_t result;
+
+    for (std::size_t i = 0; i < n; i += 2)
+    {
+        rfm::sPointCloudTranslationInterpPoint_t point;
+        point.displacement_m = table(i);
+        point.height_m = table(i + 1);
+        result.offset_m.push_back(point);
+    }
+
+    input(0) = heights.front().displacement_m;
+    auto h0 = modelHeightTable(input, table);
+
+    input(0) = heights.back().displacement_m;
+    auto h1 = modelHeightTable(input, table);
+
+    result.offset_m.front().displacement_m = heights.front().displacement_m;
+    result.offset_m.front().height_m = h0;
+    result.offset_m.back().displacement_m  = heights.back().displacement_m;
+    result.offset_m.back().height_m = h1;
+
+    result.R = sqrt(R2);
+
+    result.valid = true;
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+
+struct sAngles_t
+{
+    double pitch_deg = 0;
+    double roll_deg = 0;
+};
+
+sAngles_t modelAngleTable(const input_one_variable& input, const angle_interp_table_vector& params)
+{
+    const double x = input(0);
+
+    double d0 = params(0);
+    double p0 = params(1);
+    double r0 = params(2);
+
+    double d1 = d0;
+    double p1 = p0;
+    double r1 = r0;
+
+    std::size_t i = 3;
+    std::size_t n = params.size();
+    for (; i < n; i += 3)
+    {
+        d1 = params(i);
+        p1 = params(i + 1);
+        r1 = params(i + 2);
+
+        if (x <= d1)
+            break;
+
+        d0 = d1;
+        p0 = p1;
+        r0 = r1;
+    }
+
+    if (i >= n)
+    {
+        d0 = params(n - 7);
+        p0 = params(n - 6);
+        r0 = params(n - 5);
+        d1 = params(n - 3);
+        p1 = params(n - 2);
+        r1 = params(n - 1);
+    }
+
+    const double d = (d1 - d0);
+
+    const double mp = deltaAngle(p1, p0) / d;
+    const double mr = deltaAngle(r1, r0) / d;
+
+    double p = mp * x + p0;
+    double r = mr * x + r0;
+
+    return { p, r };
+}
+
+double residualAngleTable(const std::pair<input_one_variable, sAngles_t>& data, const angle_interp_table_vector& params)
+{
+    auto angles = modelAngleTable(data.first, params);
+    
+    auto r = (angles.pitch_deg - data.second.pitch_deg) + (angles.roll_deg - data.second.roll_deg);
+
+    if (std::isnan(r))
+    {
+        r = 0.0;
+    }
+
+    return r;
+}
+
+angle_interp_table_vector residualAngleTable_derivative(const std::pair<input_one_variable, sAngles_t>& data, const angle_interp_table_vector& params)
+{
+    const double delta_angle = 0.0001;
+
+    angle_interp_table_vector derivative;
+    derivative = 0.00000000001;
+
+    const double x = data.first(0);
+
+    std::size_t i = 0;
+    double d0 = params(i);
+    double p0 = params(i + 1);
+    double r0 = params(i + 2);
+
+    double d1 = d0;
+    double p1 = p0;
+    double r1 = r0;
+
+    std::size_t n = params.size();
+    for (i = 3; i < n; i += 3)
+    {
+        d1 = params(i);
+        p1 = params(i + 1);
+        r1 = params(i + 2);
+
+        if (x <= d1)
+            break;
+
+        d0 = d1;
+        p0 = p1;
+        r0 = r1;
+    }
+
+    if (i >= n)
+    {
+        d0 = params(n - 6);
+        p0 = params(n - 5);
+        r0 = params(n - 4);
+        d1 = params(n - 3);
+        p1 = params(n - 2);
+        r1 = params(n - 1);
+    }
+
+    const double delta_d = (d1 - d0);
+
+    const double mp   = deltaAngle(p1, p0) / delta_d;
+    const double mp_0 = deltaAngle(p1, (p0 + delta_angle)) / delta_d;
+    const double mp_1 = deltaAngle((p1 + delta_angle), p0) / delta_d;
+
+    const double mr   = deltaAngle(r1, r0) / delta_d;
+    const double mr_0 = deltaAngle(r1, (r0 + delta_angle)) / delta_d;
+    const double mr_1 = deltaAngle((r1 + delta_angle), r0) / delta_d;
+
+    const double yp   = mp * x + p0;
+    const double yp_0 = mp_0 * x + (p0 + delta_angle);
+    const double yp_1 = mp_1 * x + p0;
+
+    const double yr   = mr * x + r0;
+    const double yr_0 = mr_0 * x + (r0 + delta_angle);
+    const double yr_1 = mr_1 * x + r0;
+
+    const auto rp  = yp - data.second.pitch_deg;
+    const auto rp0 = yp_0 - data.second.pitch_deg;
+    const auto rp1 = yp_1 - data.second.pitch_deg;
+
+    const auto rr  = yr - data.second.roll_deg;
+    const auto rr0 = yr_0 - data.second.roll_deg;
+    const auto rr1 = yr_1 - data.second.roll_deg;
+
+    auto delta_p0 = (rp0 - rp) / delta_angle;
+    auto delta_p1 = (rp1 - rp) / delta_angle;
+
+    auto delta_r0 = (rr0 - rr) / delta_angle;
+    auto delta_r1 = (rr1 - rr) / delta_angle;
+
+    derivative(i - 2) = delta_p0;
+    derivative(i - 1) = delta_r0;
+    derivative(i + 1) = delta_p1;
+    derivative(i + 2) = delta_r1;
+
+    return derivative;
+}
+
+sAnglesInterpTable_t fitPointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps)
+{
+    using namespace dlib;
+
+    if (angles.empty())
+    {
+        return sAnglesInterpTable_t();
+    }
+
+    std::sort(angles.begin(), angles.end(), [](rfm::sPointCloudRotationInterpPoint_t a, rfm::sPointCloudRotationInterpPoint_t b)
+        {
+            return (a.displacement_m < b.displacement_m);
+        });
+
+    angle_interp_table_vector table;
+    table = 1;
+
+    double d0 = angles.front().displacement_m;
+    double d1 = angles.back().displacement_m;
+
+    double delta = 0.0;
+
+    if (steps > 1)
+        delta = (d1 - d0) / (steps - 1);
+    else
+        delta = (d1 - d0);
+
+    std::size_t n = 3 * steps;
+    for (std::size_t i = 0; i < n; i += 3)
+    {
+        table(i) = d0;
+        d0 += delta;
+    }
+
+    // Make sure the last displacement entry is the last height displacement
+    table(n - 3) = d1;
+
+    std::vector<std::pair<input_one_variable, sAngles_t>> samples;
+
+    input_one_variable input;
+
+    for (auto& point : angles)
+    {
+        input(0) = point.displacement_m;
+
+        sAngles_t output;
+        output.pitch_deg = point.pitch_deg;
+        output.roll_deg  = point.roll_deg;
+
+        // save the pair
+        samples.push_back(std::make_pair(input, output));
+    }
+
+    // Before we do anything, let's make sure that our derivative function defined above matches
+    // the approximate derivative computed using central differences (via derivative()).  
+    // If this value is big then it means we probably typed the derivative function incorrectly.
+    auto R2 = solve_least_squares_lm(objective_delta_stop_strategy(0.001, 50), //.be_verbose(),
+        residualAngleTable,
+        residualAngleTable_derivative,
+        samples,
+        table);
+
+    sAnglesInterpTable_t result;
+
+    for (std::size_t i = 0; i < n; i += 3)
+    {
+        rfm::sPointCloudRotationInterpPoint_t point;
+        point.displacement_m = table(i);
+        point.pitch_deg = table(i + 1);
+        point.roll_deg  = table(i + 2);
+        result.angles_deg.push_back(point);
+    }
+
+    input(0) = angles.front().displacement_m;
+    auto a0 = modelAngleTable(input, table);
+
+    input(0) = angles.back().displacement_m;
+    auto a1 = modelAngleTable(input, table);
+
+    result.angles_deg.front().displacement_m = angles.front().displacement_m;
+    result.angles_deg.front().pitch_deg = a0.pitch_deg;
+    result.angles_deg.front().roll_deg  = a0.roll_deg;
+
+    result.angles_deg.back().displacement_m = angles.back().displacement_m;
+    result.angles_deg.back().pitch_deg = a1.pitch_deg;
+    result.angles_deg.back().roll_deg  = a1.roll_deg;
+
+    result.R = sqrt(R2);
+
+    result.valid = true;
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+double groundheight_pitch_roll(const input_three_variables& input, const pitch_roll_vector& params)
 {
     const double pitch_rad = params(0) * nConstants::DEG_TO_RAD;
     const double roll_rad = params(1) * nConstants::DEG_TO_RAD;
@@ -375,7 +848,7 @@ double groundheight_roll(const input_three_variables& input, const roll_vector& 
 
 double residual_pitch_roll(
     const std::pair<input_three_variables, double>& data,
-    const parameter_vector& params
+    const pitch_roll_vector& params
 )
 {
     return groundheight_pitch_roll(data.first, params) - data.second;
@@ -402,11 +875,11 @@ double residual_roll(
 
 
 //-----------------------------------------------------------------------------
-sPitchAndRoll_t fitPointCloudToGroundMesh(const cRappPointCloud& pc)
+sPitchAndRoll_t fitPointCloudPitchRollToGroundMesh(const cRappPointCloud& pc)
 {
     using namespace dlib;
 
-    parameter_vector angles;
+    pitch_roll_vector angles;
     angles = 1;
 
     std::vector<std::pair<input_three_variables, double>> samples;
@@ -656,7 +1129,7 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc)
 
     cRappPointCloud temp(centroid, data);
 
-    return fitPointCloudToGroundMesh(temp);
+    return fitPointCloudPitchRollToGroundMesh(temp);
 }
 
 //-----------------------------------------------------------------------------
@@ -681,7 +1154,7 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, dou
 
     cRappPointCloud temp(centroid, data);
 
-    return fitPointCloudToGroundMesh(temp);
+    return fitPointCloudPitchRollToGroundMesh(temp);
 }
 
 //-----------------------------------------------------------------------------
@@ -782,7 +1255,7 @@ sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, d
 
     offset /= num;
 
-    return { offset,true };
+    return { offset, true };
 }
 
 //-----------------------------------------------------------------------------
@@ -809,7 +1282,7 @@ sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud
         y_bounds[i] = pc.minY_mm() + i * dy;
     }
 
-    for (auto point : pc)
+    for (const auto& point : pc)
     {
         int i = 0;
         for (; i < NUM_X_GRIDS; ++i)
@@ -869,7 +1342,7 @@ sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud
 
     cRappPointCloud temp(centroid, data);
 
-    return fitPointCloudToGroundMesh(temp);
+    return fitPointCloudPitchRollToGroundMesh(temp);
 }
 
 void shiftPointCloudToAGL(int id, cRappPointCloud& pc)

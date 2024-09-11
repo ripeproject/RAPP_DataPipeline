@@ -62,20 +62,20 @@ const std::optional<double>& cLidarMapConfigScan::getEndPitchOffset_deg() const 
 const std::optional<double>& cLidarMapConfigScan::getEndRollOffset_deg() const { return mEndRollOffset_deg; }
 const std::optional<double>& cLidarMapConfigScan::getEndYawOffset_deg() const { return mEndYawOffset_deg; }
 
-const std::vector<rfm::sOrientationInterpPoint_t>& cLidarMapConfigScan::getOrientationTable() const { return mOrientationTable; }
+const std::vector<rfm::sDollyOrientationInterpPoint_t>& cLidarMapConfigScan::getOrientationTable() const { return mOrientationTable; }
 
 const std::optional<bool>&   cLidarMapConfigScan::getTranslateToGround() const { return mTranslateToGround; }
 const std::optional<double>& cLidarMapConfigScan::getTranslateDistance_m() const { return mTranslateDistance_m; }
 const std::optional<double>& cLidarMapConfigScan::getTranslateThreshold_pct() const { return mTranslateThreshold_pct; }
 
-const std::vector<rfm::sTranslationInterpPoint_t>& cLidarMapConfigScan::getTranslateTable() const { return mTranslateTable; }
+const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& cLidarMapConfigScan::getTranslateTable() const { return mTranslateTable; }
 
 const std::optional<bool>&   cLidarMapConfigScan::getRotateToGround() const { return mRotateToGround; }
 const std::optional<double>& cLidarMapConfigScan::getRotatePitch_deg() const { return mRotatePitch_deg; }
 const std::optional<double>& cLidarMapConfigScan::getRotateRoll_deg() const { return mRotateRoll_deg; }
 const std::optional<double>& cLidarMapConfigScan::getRotateThreshold_pct() const { return mRotateThreshold_pct; }
 
-const std::vector<rfm::sRotationInterpPoint_t>& cLidarMapConfigScan::getRotateTable() const { return mRotateTable; }
+const std::vector<rfm::sPointCloudRotationInterpPoint_t>& cLidarMapConfigScan::getRotateTable() const { return mRotateTable; }
 
 const std::optional<double>& cLidarMapConfigScan::getStart_X_m() const { return mStart_X_m; }
 const std::optional<double>& cLidarMapConfigScan::getStart_Y_m() const { return mStart_Y_m; }
@@ -303,7 +303,7 @@ void cLidarMapConfigScan::clearOrientationTable()
 	mOrientationTable.clear();
 }
 
-void cLidarMapConfigScan::setOrientationTable(const std::vector<rfm::sOrientationInterpPoint_t>& table)
+void cLidarMapConfigScan::setOrientationTable(const std::vector<rfm::sDollyOrientationInterpPoint_t>& table)
 {
 	if (!mDirty)
 	{
@@ -352,7 +352,7 @@ void cLidarMapConfigScan::clearTranslateTable()
 	mTranslateTable.clear();
 }
 
-void cLidarMapConfigScan::setTranslateTable(const std::vector<rfm::sTranslationInterpPoint_t>& table)
+void cLidarMapConfigScan::setTranslateTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table)
 {
 	if (!mDirty)
 	{
@@ -402,7 +402,7 @@ void cLidarMapConfigScan::clearRotateTable()
 	mRotateTable.clear();
 }
 
-void cLidarMapConfigScan::setRotateTable(const std::vector<rfm::sRotationInterpPoint_t>& table)
+void cLidarMapConfigScan::setRotateTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table)
 {
 	if (!mDirty)
 	{
@@ -607,7 +607,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 
 		if (points.empty())
 		{
-			rfm::sOrientationInterpPoint_t point;
+			rfm::sDollyOrientationInterpPoint_t point;
 
 			mOrientationTable.push_back(point);
 			point.distance_pct = 100.0;
@@ -617,7 +617,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 		{
 			for (const auto& point : points)
 			{
-				rfm::sOrientationInterpPoint_t p;
+				rfm::sDollyOrientationInterpPoint_t p;
 
 				if (!point.contains("distance (%)"))
 					continue;
@@ -643,7 +643,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 
 			if (mOrientationTable.empty())
 			{
-				rfm::sOrientationInterpPoint_t point;
+				rfm::sDollyOrientationInterpPoint_t point;
 
 				mOrientationTable.push_back(point);
 				point.distance_pct = 100.0;
@@ -756,11 +756,11 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 		{
 			mTranslateToGroundModel = eTranslateToGroundModel::INTREP_CURVE;
 
-			auto points = jdoc["translation table"];
+			auto points = options["translation table"];
 
 			if (points.empty())
 			{
-				rfm::sTranslationInterpPoint_t point;
+				rfm::sPointCloudTranslationInterpPoint_t point;
 
 				mTranslateTable.push_back(point);
 				point.displacement_m = 0.0;
@@ -770,7 +770,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 			{
 				for (const auto& point : points)
 				{
-					rfm::sTranslationInterpPoint_t p;
+					rfm::sPointCloudTranslationInterpPoint_t p;
 
 					if (!point.contains("displacement (m)"))
 						continue;
@@ -790,7 +790,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 
 				if (mTranslateTable.empty())
 				{
-					rfm::sTranslationInterpPoint_t point;
+					rfm::sPointCloudTranslationInterpPoint_t point;
 
 					mTranslateTable.push_back(point);
 					point.displacement_m = 0.0;
@@ -829,11 +829,11 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 		{
 			mRotateToGroundModel = eRotateToGroundModel::INTREP_CURVE;
 
-			auto points = jdoc["rotation table"];
+			auto points = options["rotation table"];
 
 			if (points.empty())
 			{
-				rfm::sRotationInterpPoint_t point;
+				rfm::sPointCloudRotationInterpPoint_t point;
 
 				mRotateTable.push_back(point);
 				point.displacement_m = 0.0;
@@ -843,7 +843,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 			{
 				for (const auto& point : points)
 				{
-					rfm::sRotationInterpPoint_t p;
+					rfm::sPointCloudRotationInterpPoint_t p;
 
 					if (!point.contains("displacement (m)"))
 						continue;
@@ -866,7 +866,7 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 
 				if (mRotateTable.empty())
 				{
-					rfm::sRotationInterpPoint_t point;
+					rfm::sPointCloudRotationInterpPoint_t point;
 
 					mRotateTable.push_back(point);
 					point.displacement_m = 0.0;
