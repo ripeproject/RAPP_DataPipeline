@@ -58,7 +58,64 @@ void cPlotInfoParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::SUB_PLOT_ID:
         processSubPlotID(buffer);
         break;
+    case DataID::BEGIN_PLOT_INFO_LIST:
+        processBeginPlotInfoList(buffer);
+        break;
+    case DataID::END_PLOT_INFO_LIST:
+        processEndPlotInfoList(buffer);
+        break;
+    case DataID::BEGIN_PLOT_INFO_BLOCK:
+        processBeginPlotInfoBlock(buffer);
+        break;
+    case DataID::END_PLOT_INFO_BLOCK:
+        processEndPlotInfoBlock(buffer);
+        break;
+    case DataID::SPECIES:
+        processSpecies(buffer);
+        break;
+    case DataID::CULTIVAR:
+        processCultivar(buffer);
+        break;
+    case DataID::CONSTRUCT_NAME:
+        processConstructName(buffer);
+        break;
+    case DataID::COPY_NUMBER:
+        processCopyNumber(buffer);
+        break;
+    case DataID::BEGIN_TREATMENT_LIST:
+        break;
+    case DataID::END_OF_TREATMENT_LIST:
+        break;
+    case DataID::POT_LABEL:
+        processPotLabel(buffer);
+        break;
+    case DataID::SEED_GENERATION:
+         processSeedGeneration(buffer);
+       break;
+    case DataID::TREATMENT:
+        processTreatment(buffer);
+        break;
     }
+}
+
+void cPlotInfoParser::processBeginPlotInfoList(cDataBuffer& buffer)
+{
+    onBeginPlotInfoList();
+}
+
+void cPlotInfoParser::processEndPlotInfoList(cDataBuffer& buffer)
+{
+    onEndPlotInfoList();
+}
+
+void cPlotInfoParser::processBeginPlotInfoBlock(cDataBuffer& buffer)
+{
+    onBeginPlotInfoBlock();
+}
+
+void cPlotInfoParser::processEndPlotInfoBlock(cDataBuffer& buffer)
+{
+    onEndPlotInfoBlock();
 }
 
 void cPlotInfoParser::processPlotID(cDataBuffer& buffer)
@@ -90,6 +147,99 @@ void cPlotInfoParser::processName(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processName.");
 
     onName(name);
+}
+
+void cPlotInfoParser::processDescription(cDataBuffer& buffer)
+{
+    std::string event_description;
+    buffer >> event_description;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processDescription.");
+
+    onDescription(event_description);
+}
+
+void cPlotInfoParser::processSpecies(cDataBuffer& buffer)
+{
+    std::string species;
+    buffer >> species;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processSpecies.");
+
+    onSpecies(species);
+}
+
+void cPlotInfoParser::processCultivar(cDataBuffer& buffer)
+{
+    std::string cultivar;
+    buffer >> cultivar;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processCultivar.");
+
+    onCultivar(cultivar);
+}
+
+void cPlotInfoParser::processTreatment(cDataBuffer& buffer)
+{
+
+}
+
+void cPlotInfoParser::processConstructName(cDataBuffer& buffer)
+{
+    std::string name;
+    buffer >> name;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processConstructName.");
+
+    onConstructName(name);
+}
+
+void cPlotInfoParser::processEvent(cDataBuffer& buffer)
+{
+    std::string event_num;
+    buffer >> event_num;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processEvent.");
+
+    onEvent(event_num);
+}
+
+void cPlotInfoParser::processPotLabel(cDataBuffer& buffer)
+{
+    std::string label;
+    buffer >> label;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processPotLabel.");
+
+    onPotLabel(label);
+}
+
+void cPlotInfoParser::processSeedGeneration(cDataBuffer& buffer)
+{
+    std::string seed_gen;
+    buffer >> seed_gen;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processSeedGeneration.");
+
+    onSeedGeneration(seed_gen);
+}
+
+void cPlotInfoParser::processCopyNumber(cDataBuffer& buffer)
+{
+    std::string copy_num;
+    buffer >> copy_num;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processCopyNumber.");
+
+    onCopyNumber(copy_num);
 }
 
 void cPlotInfoParser::processDimensions(cDataBuffer& buffer)
@@ -190,28 +340,6 @@ void cPlotInfoParser::processPointCloudData_SensorInfo(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
 
     onPointCloudData(pointCloud);
-}
-
-void cPlotInfoParser::processEvent(cDataBuffer& buffer)
-{
-    std::string event_num;
-    buffer >> event_num;
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processEvent.");
-
-    onEvent(event_num);
-}
-
-void cPlotInfoParser::processDescription(cDataBuffer& buffer)
-{
-    std::string event_description;
-    buffer >> event_description;
-
-    if (buffer.underrun())
-        throw std::runtime_error("ERROR, Buffer under run in processDescription.");
-
-    onDescription(event_description);
 }
 
 
