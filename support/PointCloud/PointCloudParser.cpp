@@ -174,6 +174,9 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::END_POINT_CLOUD_LIST:
         processEndPointCloudList(buffer);
         break;
+    case DataID::REFERENCE_POINT:
+        processReferencePoint(buffer);
+        break;
     }
 }
 
@@ -285,6 +288,18 @@ void cPointCloudParser::processDimensions(cDataBuffer& buffer)
          throw std::runtime_error("ERROR, Buffer under run in processDimensions.");
 
      onDimensions(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
+}
+
+void cPointCloudParser::processReferencePoint(cDataBuffer& buffer)
+{
+    std::int32_t x_mm = buffer.get<std::int32_t>();
+    std::int32_t y_mm = buffer.get<std::int32_t>();
+    std::int32_t z_mm = buffer.get<std::int32_t>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processReferencePoint.");
+
+    onReferencePoint(x_mm, y_mm, z_mm);
 }
 
 /*

@@ -39,6 +39,7 @@ namespace pointcloud
         END_POINT_CLOUD_BLOCK,
         BEGIN_POINT_CLOUD_LIST,
         END_POINT_CLOUD_LIST,
+        REFERENCE_POINT,
     };
 }
 

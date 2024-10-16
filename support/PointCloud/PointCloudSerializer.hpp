@@ -92,6 +92,8 @@ public:
 	void writeAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg);
 	void writeAltitudeWindow(double min_altitude_deg, double max_altitude_deg);
 
+	void writeReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm);
+
 	void writeBeginSensorKinematics();
 	void writeEndSensorKinematics();
 	void writeSensorKinematicInfo(const pointcloud::sSensorKinematicInfo_t& point);

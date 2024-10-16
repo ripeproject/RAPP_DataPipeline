@@ -31,6 +31,8 @@ public:
 	virtual void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) = 0;
 	virtual void onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) = 0;
 
+	virtual void onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm) = 0;
+
 	virtual void onDimensions(double x_min_m, double x_max_m,
 								double y_min_m, double y_max_m,
 								double z_min_m, double z_max_m) = 0;
@@ -83,6 +85,7 @@ protected:
 	void processAzimuthWindow(cDataBuffer& buffer);
 	void processAltitudeWindow(cDataBuffer& buffer);
 	void processDimensions(cDataBuffer& buffer);
+	void processReferencePoint(cDataBuffer& buffer);
 
 	void processBeginSensorKinematics(cDataBuffer& buffer);
 	void processEndSensorKinematics(cDataBuffer& buffer);

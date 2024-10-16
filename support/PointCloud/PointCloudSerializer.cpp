@@ -336,6 +336,22 @@ void cPointCloudSerializer::writeAltitudeWindow(double min_altitude_deg, double 
     writeBlock(*mBlockID, mDataBuffer);
 }
 
+void cPointCloudSerializer::writeReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::REFERENCE_POINT);
+
+    mDataBuffer.clear();
+    mDataBuffer << x_mm;
+    mDataBuffer << y_mm;
+    mDataBuffer << z_mm;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing reference point data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
 void cPointCloudSerializer::writeBeginPointCloudList()
 {
     setVersion(1, 0);
