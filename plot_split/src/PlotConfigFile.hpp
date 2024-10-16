@@ -22,6 +22,7 @@ public:
 	~cPlotConfigFile();
 
 	const std::string& getFileName() const;
+	const std::string& getTemporaryFileName() const;
 
 	bool isDirty() const;
 
@@ -32,6 +33,9 @@ public:
 	void save();
 
 	void save_as(const std::string& file_name);
+
+	bool open_temporary_file(const std::string& file_name);
+	void save_temporary_file();
 
 	const cPlotConfigOptions& getOptions() const;
 	cPlotConfigOptions& getOptions();
@@ -53,8 +57,8 @@ public:
 	const_iterator	find_by_filename(const std::string& experiment_filename) const;
 	iterator		find_by_filename(const std::string& experiment_filename);
 
-	const_iterator	find(const std::string& name) const;
-	iterator		find(const std::string& name);
+	const_iterator	find_by_experiment_name(const std::string& name) const;
+	iterator		find_by_experiment_name(const std::string& name);
 
 	cPlotConfigScan& add(const std::string& name);
 	void remove(const std::string& name);
@@ -64,6 +68,7 @@ public:
 
 private:
 	std::string mFileName;
+	std::string mTmpFileName;
 
 	cPlotConfigOptions mOptions;
 

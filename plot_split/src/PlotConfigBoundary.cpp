@@ -36,6 +36,19 @@ bool cPlotConfigBoundary::isDirty() const
 	return mDirty;
 }
 
+cPlotConfigBoundary::operator rfm::sPlotBoundingBox_t() const
+{
+	rfm::sPlotBoundingBox_t box;
+
+	box.plotNumber = -1;
+	box.northEastCorner = mNorthEastCorner;
+	box.northWestCorner = mNorthWestCorner;
+	box.southEastCorner = mSouthEastCorner;
+	box.southWestCorner = mSouthWestCorner;
+
+	return box;
+}
+
 bool cPlotConfigBoundary::operator==(const cPlotConfigBoundary& rhs) const
 {
 	return (mNorthEastCorner.x_mm == rhs.mNorthEastCorner.x_mm)

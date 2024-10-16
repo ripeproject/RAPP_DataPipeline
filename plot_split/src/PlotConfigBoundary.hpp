@@ -45,6 +45,7 @@ public:
 	void setNumOfSubPlots(uint8_t num);
 	void setSubPlotOrientation(ePlotOrientation orientation);
 
+	operator rfm::sPlotBoundingBox_t() const;
 	bool operator==(const cPlotConfigBoundary& rhs) const;
 	bool operator!=(const cPlotConfigBoundary& rhs) const;
 

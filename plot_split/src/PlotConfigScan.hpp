@@ -91,6 +91,8 @@ public:
 	cPlotConfigPlotInfo(const cPlotConfigPlotInfo& rhs) = default;
 	const cPlotConfigPlotInfo& operator=(const cPlotConfigPlotInfo& rhs);
 
+	void clear();
+
 	bool isDirty() const;
 
 	uint32_t	getPlotNumber() const;

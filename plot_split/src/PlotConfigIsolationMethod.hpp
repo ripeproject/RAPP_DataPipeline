@@ -51,6 +51,8 @@ public:
 	void setDirtyFlag(bool dirty);
 
 protected:
+	void setDirty(bool dirty);
+
 	void load(const nlohmann::json& jdoc);
 	nlohmann::json save();
 

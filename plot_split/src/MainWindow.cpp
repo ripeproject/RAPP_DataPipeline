@@ -301,7 +301,7 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 	auto name = fullname.GetName();
 
 	wxFileDialog dlg(this, _("Open file"), path, name,
-		"Config files (*.json)|*.json", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+		"Plot Split Config files (*.plotsplit)|*.plotsplit", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...

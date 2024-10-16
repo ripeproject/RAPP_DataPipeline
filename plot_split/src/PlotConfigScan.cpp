@@ -238,7 +238,6 @@ nlohmann::json cPlotConfigScan::save()
 	return scanDoc;
 }
 
-
 const cPlotConfigPlotInfo& cPlotConfigPlotInfo::operator=(const cPlotConfigPlotInfo& rhs)
 {
 	mDirty |= rhs.mDirty;
@@ -259,6 +258,26 @@ const cPlotConfigPlotInfo& cPlotConfigPlotInfo::operator=(const cPlotConfigPlotI
 	mIsolationMethod = rhs.mIsolationMethod;
 
 	return *this;
+}
+
+void cPlotConfigPlotInfo::clear()
+{
+	mDirty = false;
+
+	mPlotNumber = 0;
+	mPlotName.clear();
+	mDescription.clear();
+	mSpecies.clear();
+	mCultivar.clear();
+	mEvent.clear();
+	mConstructName.clear();
+	mPotLabel.clear();
+	mSeedGeneration.clear();
+	mCopyNumber.clear();
+	mTreatments.clear();
+
+	mBounds.clear();
+	mIsolationMethod.clear();
 }
 
 bool cPlotConfigPlotInfo::isDirty() const

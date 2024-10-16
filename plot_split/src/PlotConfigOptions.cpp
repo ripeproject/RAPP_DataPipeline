@@ -83,6 +83,11 @@ void cPlotConfigOptions::setSavePixelInfo(bool option)
 	mSavePixelInfo = option;
 }
 
+void cPlotConfigOptions::setDirty(bool dirty)
+{
+	mDirty = dirty;
+}
+
 void cPlotConfigOptions::load(const nlohmann::json& jdoc)
 {
 	if (!jdoc.contains("options"))
