@@ -38,6 +38,11 @@ void cPointCloudLoader::onAltitudeWindow(double min_altitude_deg, double max_alt
     mInfo->setAltitudeWindow(min_altitude_deg, max_altitude_deg);
 }
 
+void cPointCloudLoader::onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm)
+{
+    mInfo->setReferencePoint(x_mm, y_mm, z_mm);
+}
+
 void cPointCloudLoader::onDimensions(double x_min_m, double x_max_m,
     double y_min_m, double y_max_m, double z_min_m, double z_max_m)
 {

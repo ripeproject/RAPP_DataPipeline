@@ -47,6 +47,13 @@ public:
 		double max_altitude_deg = 0.0;
 	};
 
+	struct sRappPoint_t
+	{
+		std::int32_t x_mm = 0;
+		std::int32_t y_mm = 0;
+		std::int32_t z_mm = 0;
+	};
+
 
 public:
 	cPointCloudInfo() = default;
@@ -84,6 +91,8 @@ protected:
 	void setAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg);
 	void setAltitudeWindow(double min_altitude_deg, double max_altitude_deg);
 
+	void setReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm);
+
 	void setImuData(pointcloud::imu_data_t data);
 
 	void clearPointCloudData();
@@ -112,6 +121,8 @@ private:
 	std::optional<sDistanceWindow_t> mDistanceWindow;
 	std::optional<sAzimuthWindow_t>  mAzimuthWindow;
 	std::optional<sAltitudeWindow_t> mAltitudeWindow;
+
+	std::optional<sRappPoint_t> mReferencePoint;
 
 	std::optional<pointcloud::imu_data_t> mImuData;
 

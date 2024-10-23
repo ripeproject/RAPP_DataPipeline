@@ -50,6 +50,12 @@ void cPointCloudInfoLoader::onAltitudeWindow(double min_altitude_deg, double max
 	mBlock.altitudeWindow = window;
 }
 
+void cPointCloudInfoLoader::onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm)
+{
+	sRappPoint_t point = { x_mm, y_mm, z_mm };
+	mBlock.referencePoint = point;
+}
+
 void cPointCloudInfoLoader::onDimensions(double x_min_m, double x_max_m,
 	double y_min_m, double y_max_m,
 	double z_min_m, double z_max_m) 

@@ -25,6 +25,8 @@ protected:
 	void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) override;
 	void onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) override;
 
+	void onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm) override;
+
 	void onDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
 

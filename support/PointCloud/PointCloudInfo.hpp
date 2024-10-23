@@ -36,6 +36,13 @@ struct sPointCloudDimensions_t
 	double z_max_m = 0.0;
 };
 
+struct sRappPoint_t
+{
+	std::int32_t x_mm = 0;
+	std::int32_t y_mm = 0;
+	std::int32_t z_mm = 0;
+};
+
 
 struct sPointCloudBlock
 {
@@ -45,6 +52,8 @@ struct sPointCloudBlock
 	std::optional<sDistanceWindow_t> distanceWindow;
 	std::optional<sAzimuthWindow_t>  azimuthWindow;
 	std::optional<sAltitudeWindow_t> altitudeWindow;
+
+	std::optional<sRappPoint_t> referencePoint;
 
 	std::optional<sPointCloudDimensions_t> dimensions;
 

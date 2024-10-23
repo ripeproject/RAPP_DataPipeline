@@ -130,6 +130,12 @@ void cPointCloudInfo::setAltitudeWindow(double min_altitude_deg, double max_alti
 	mAltitudeWindow = window;
 }
 
+void cPointCloudInfo::setReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm)
+{
+	sRappPoint_t ref_point = { x_mm, y_mm, z_mm };
+	mReferencePoint = ref_point;
+}
+
 void cPointCloudInfo::setImuData(pointcloud::imu_data_t data)
 {
 	mImuData = data;
