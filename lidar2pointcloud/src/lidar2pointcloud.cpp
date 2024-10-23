@@ -201,14 +201,14 @@ pointcloud::eKINEMATIC_MODEL cLidar2PointCloud::getKinematicModel() const
 
 const std::vector<rfm::sDollyInfo_t>& cLidar2PointCloud::getComputedDollyPath() const
 {
-	auto pPointCloudBenerator = getOusterInfo()->getPointCloudGenerator().lock();
-	return pPointCloudBenerator->getComputedDollyPath();
+	auto pPointCloudGenerator = getOusterInfo()->getPointCloudGenerator().lock();
+	return pPointCloudGenerator->getComputedDollyPath();
 }
 
 const cRappPointCloud& cLidar2PointCloud::getPointCloud() const
 {
-	auto pPointCloudBenerator = getOusterInfo()->getPointCloudGenerator().lock();
-	return pPointCloudBenerator->getPointCloud();
+	auto pPointCloudGenerator = getOusterInfo()->getPointCloudGenerator().lock();
+	return pPointCloudGenerator->getPointCloud();
 }
 
 bool cLidar2PointCloud::computeDollyMovement()
@@ -265,49 +265,78 @@ bool cLidar2PointCloud::computePointCloud()
 	update_prefix_progress(mID, "Merging Dolly Movement...", 0);
 	mergeDollyOrientation(mID, mDollyMovement, mDollyOrientation);
 
-	auto pPointCloudBenerator = getOusterInfo()->getPointCloudGenerator().lock();
+	auto pPointCloudGenerator = getOusterInfo()->getPointCloudGenerator().lock();
 
-	pPointCloudBenerator->setValidRange_m(mMinDistance_m, mMaxDistance_m);
-	pPointCloudBenerator->setAzimuthWindow_deg(mMinAzimuth_deg, mMaxAzimuth_deg);
-	pPointCloudBenerator->setAltitudeWindow_deg(mMinAltitude_deg, mMaxAltitude_deg);
+	pPointCloudGenerator->setValidRange_m(mMinDistance_m, mMaxDistance_m);
+	pPointCloudGenerator->setAzimuthWindow_deg(mMinAzimuth_deg, mMaxAzimuth_deg);
+	pPointCloudGenerator->setAltitudeWindow_deg(mMinAltitude_deg, mMaxAltitude_deg);
+
+	auto ssnx = getSsnxInfo();
+	if (ssnx)
+	{
+		const auto& gps = ssnx->getGeodeticPositions();
+
+		if (gps.size() > 0)
+		{
+			auto point = gps[0];
+
+			if (point.dataValid)
+			{
+				double height_m = point.Height_m - point.Undulation_m;
+				auto ref_point = rfb::fromGPS(point.Lat_rad, point.Lon_rad, height_m);
+				bool valid = point.HeightComputed && ((point.Mode == nSsnxTypes::eSolutionType::RTK_FIXED)
+					|| (point.Mode == nSsnxTypes::eSolutionType::RTK_FLOAT));
+
+				pPointCloudGenerator->setReferencePoint(ref_point, valid);
+			}
+		}
+	}
 
 
-	pPointCloudBenerator->setTranslateToGroundModel(mTranslateToGroundModel);
+	if (!pPointCloudGenerator->referencePointValid())
+	{
+		std::string msg = "File \"";
+		msg += getFileName();
+		msg += "\" does not contain a valid reference point.";
+		console_message(msg);
+	}
+
+	pPointCloudGenerator->setTranslateToGroundModel(mTranslateToGroundModel);
 
 	switch (mTranslateToGroundModel)
 	{
 	case eTranslateToGroundModel::CONSTANT:
-		pPointCloudBenerator->setTranslateDistance_m(mTranslationDistance_m);
+		pPointCloudGenerator->setTranslateDistance_m(mTranslationDistance_m);
 		break;
 	case eTranslateToGroundModel::FIT:
-		pPointCloudBenerator->setTranslateThreshold_pct(mTranslationThreshold_pct);
+		pPointCloudGenerator->setTranslateThreshold_pct(mTranslationThreshold_pct);
 		break;
 	case eTranslateToGroundModel::INTREP_CURVE:
-		pPointCloudBenerator->setTranslateInterpTable(mTranslateInterpTable);
+		pPointCloudGenerator->setTranslateInterpTable(mTranslateInterpTable);
 		break;
 	}
 
 
-	pPointCloudBenerator->setRotationToGroundModel(mRotateToGroundModel);
+	pPointCloudGenerator->setRotationToGroundModel(mRotateToGroundModel);
 
 	switch (mRotateToGroundModel)
 	{
 	case eRotateToGroundModel::CONSTANT:
-		pPointCloudBenerator->setRotationAngles_deg(mRotationPitch_deg, mRotationRoll_deg);
+		pPointCloudGenerator->setRotationAngles_deg(mRotationPitch_deg, mRotationRoll_deg);
 		break;
 	case eRotateToGroundModel::FIT:
-		pPointCloudBenerator->setRotationThreshold_pct(mRotationThreshold_pct);
+		pPointCloudGenerator->setRotationThreshold_pct(mRotationThreshold_pct);
 		break;
 	case eRotateToGroundModel::INTREP_CURVE:
-		pPointCloudBenerator->setRotateInterpTable(mRotateInterpTable);
+		pPointCloudGenerator->setRotateInterpTable(mRotateInterpTable);
 		break;
 	}
 
-	pPointCloudBenerator->setDollyPath(mDollyMovement);
+	pPointCloudGenerator->setDollyPath(mDollyMovement);
 
 	update_prefix_progress(mID, "Generating Point Cloud...", 0);
 
-	return pPointCloudBenerator->computePointCloud(mID);
+	return pPointCloudGenerator->computePointCloud(mID);
 }
 
 void cLidar2PointCloud::computeDollyMovement_ConstantSpeed()

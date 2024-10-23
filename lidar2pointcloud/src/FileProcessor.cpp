@@ -199,10 +199,10 @@ void cFileProcessor::process_file()
 
     const auto& options = mDefaults.getOptions();
 
+    eTranslateToGroundModel translateModel = eTranslateToGroundModel::NONE;
+
     if (mHasGroundData)
     {
-        eTranslateToGroundModel translateModel = eTranslateToGroundModel::NONE;
-        
         if (mParameters.getTranslateToGroundModel().has_value())
         {
             translateModel = mParameters.getTranslateToGroundModel().value();
@@ -311,6 +311,38 @@ void cFileProcessor::process_file()
     {
         update_prefix_progress(mID, "Flattening Point Cloud...", 0);
         shiftPointCloudToAGL(mID, pointCloud);
+
+        pointCloud.recomputeBounds();
+
+        sPitchAndRoll_t result = computePcToGroundMeshRotationUsingGrid_deg(pointCloud, mThreshold_pct);
+
+        if (result.valid && (std::abs(result.pitch_deg) < mMaxAngle_deg) && (std::abs(result.roll_deg) < mMaxAngle_deg))
+        {
+            pointCloud.rotate(0.0, result.pitch_deg, result.roll_deg);
+        }
+    }
+
+    // Shift the point cloud to match the reference point
+    auto ref_point = mParameters.getReferencePoint();
+    if (ref_point.has_value())
+    {
+        auto rp1 = ref_point.value();
+        
+        if (pointCloud.referenceValid())
+        {
+            auto rp2 = pointCloud.referencePoint();
+
+            auto dx_mm = rp2.x_mm - rp1.x_mm;
+            auto dy_mm = rp2.y_mm - rp1.y_mm;
+            auto dz_mm = rp2.z_mm - rp1.z_mm;
+
+            if (translateModel != eTranslateToGroundModel::INTREP_CURVE)
+            {
+                dz_mm = 0;
+            }
+
+            pointCloud.translate(dx_mm, dy_mm, dz_mm);
+        }
     }
 
     update_prefix_progress(mID, "Saving Point Cloud...", 0);

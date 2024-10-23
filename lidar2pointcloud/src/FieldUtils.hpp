@@ -33,7 +33,8 @@ struct sOffsetInterpTable_t
 	bool valid = false;
 };
 
-sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps);
+sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights);
+sOffsetInterpTable_t computePointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps);
 
 
 struct sAnglesInterpTable_t
@@ -44,6 +45,7 @@ struct sAnglesInterpTable_t
 };
 
 sAnglesInterpTable_t fitPointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps);
+sAnglesInterpTable_t computePointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps);
 
 
 struct sPitchAndRoll_t
@@ -90,7 +92,12 @@ sPitchAndRoll_t computePcToGroundMeshRotation_deg(const cRappPointCloud& pc, dou
 
 sOffset_t computePcToGroundMeshDistanceUsingGrid_mm(const cRappPointCloud& pc, double threshold_pct);
 sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud& pc, double threshold_pct);
+sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud::vCloud_t& pc, 
+	const double minX_mm, const double maxX_mm, const double minY_mm, const double maxY_mm, double threshold_pct);
 
 void shiftPointCloudToAGL(int id, cRappPointCloud& pc);
 void shiftPointCloudToAGL(int id, cRappPointCloud::vCloud_t& pc);
+
+void rotate(cRappPointCloud::vCloud_t& pc, double yaw_deg, double pitch_deg, double roll_deg);
+void translate(cRappPointCloud::vCloud_t& pc, int dx_mm, int dy_mm, int dz_mm);
 

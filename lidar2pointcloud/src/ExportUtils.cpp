@@ -3,6 +3,7 @@
 
 #include "datatypes.hpp"
 #include "Constants.hpp"
+#include "FieldUtils.hpp"
 
 #include <tinyply.h>
 
@@ -38,11 +39,22 @@ namespace
 // end of namespace
 
 
-void exportPointcloud2Ply(int id, const std::string& filename, const cRappPointCloud& pc, bool useBinaryFormat)
+void exportPointcloud2Ply(int id, const std::string& filename, const cRappPointCloud& pc, bool useBinaryFormat,
+    double max_angle, double threshold_pct)
 {
     using namespace tinyply;
 
     auto cloud_data = pc.data();
+
+    shiftPointCloudToAGL(id, cloud_data);
+
+    sPitchAndRoll_t result = computePcToGroundMeshRotationUsingGrid_deg(cloud_data, 
+        pc.minX_mm(), pc.maxX_mm(), pc.minY_mm(), pc.maxY_mm(), threshold_pct);
+
+    if (result.valid && (std::abs(result.pitch_deg) < max_angle) && (std::abs(result.roll_deg) < max_angle))
+    {
+        rotate(cloud_data, 0.0, result.pitch_deg, result.roll_deg);
+    }
 
     std::vector<position3> vertices;
     std::vector<range_t>   ranges;

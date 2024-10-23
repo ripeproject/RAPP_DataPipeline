@@ -1,4 +1,4 @@
-
+﻿
 #include "RappFieldBoundary.hpp"
 
 #include "Constants.hpp"
@@ -39,17 +39,17 @@ namespace
 			static_cast<std::int32_t>((mUIUC_TowerLocations[3].elevation_ft - mUIUC_ReferenceElevation_ft) * nConstants::FT_TO_MM)) };
 
 	/*
-	* 40.0635686�, -88.2081615�
-	* 40.0618528�, -88.2081656�
-	* 40.0618504�, -88.2059322�
-	* 40.0635664�, -88.2059295�
+	* 40.0635686°, -88.2081615°
+	* 40.0618528°, -88.2081656°
+	* 40.0618504°, -88.2059322°
+	* 40.0635664°, -88.2059295°
 	* 
 	*/
 	/*
-	 * Tower 1 : lat = 40.0635686�, lng = -88.2081615�
-	 * Tower 2 : lat = 40.0618528�, lng = -88.2081656�
-	 * Tower 3 : lat = 40.0618504�, lng = -88.2059322�
-	 * Tower 4 : lat = 40.0635664�, lng = -88.2059295�
+	 * Tower 1 : lat = 40.0635686°, lng = -88.2081615°
+	 * Tower 2 : lat = 40.0618528°, lng = -88.2081656°
+	 * Tower 3 : lat = 40.0618504°, lng = -88.2059322°
+	 * Tower 4 : lat = 40.0635664°, lng = -88.2059295°
 	 */
 
 	struct sLatLon_WGS84_t

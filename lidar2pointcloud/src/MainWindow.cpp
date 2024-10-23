@@ -403,6 +403,12 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 				month_dir.clear();
 		}
 
+		{
+			wxString msg = "Scanning input directory: ";
+			msg += mSource;
+			wxLogMessage(msg);
+		}
+
 		// Scan input directory for all CERES files to operate on
 		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 		{

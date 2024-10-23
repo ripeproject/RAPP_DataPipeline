@@ -9,6 +9,19 @@
 #include <algorithm>
 #include <stdexcept>
 
+namespace
+{
+	bool operator!=(const std::optional<rfm::rappPoint_t>& lhs, const std::optional<rfm::rappPoint_t>& rhs)
+	{
+		if (!lhs.has_value() && !rhs.has_value())
+			return false;
+
+		if (lhs.has_value() != rhs.has_value())
+			return true;
+
+		return lhs.value() != rhs.value();
+	}
+}
 
 cLidarMapConfigScan::cLidarMapConfigScan()
 {}
@@ -85,6 +98,7 @@ const std::optional<double>& cLidarMapConfigScan::getEnd_X_m() const { return mE
 const std::optional<double>& cLidarMapConfigScan::getEnd_Y_m() const { return mEnd_Y_m; }
 const std::optional<double>& cLidarMapConfigScan::getEnd_Z_m() const { return mEnd_Z_m; }
 
+const std::optional<rfm::rappPoint_t>& cLidarMapConfigScan::getReferencePoint() const { return mReferencePoint; }
 
 
 void cLidarMapConfigScan::setExperimentName(const std::string& name)
@@ -523,6 +537,12 @@ void cLidarMapConfigScan::setEnd_Z_mm(const std::optional<double>& z_mm)
 	setEnd_Z_m(z_m);
 }
 
+void cLidarMapConfigScan::setReferencePoint(const std::optional<rfm::rappPoint_t>& rp)
+{
+	mDirty |= (mReferencePoint != rp);
+	mReferencePoint = rp;
+}
+
 void cLidarMapConfigScan::setDirty(bool dirty)
 {
 	mDirty = dirty;
@@ -739,7 +759,6 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 	{
 		auto options = jdoc["options"];
 
-
 		if (options.contains("translation distance (m)"))
 		{
 			mTranslateToGroundModel = eTranslateToGroundModel::CONSTANT;
@@ -883,6 +902,18 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 				}
 			}
 		}
+	}
+
+	if (jdoc.contains("reference_point"))
+	{
+		auto reference_point = jdoc["reference_point"];
+
+		rfm::rappPoint_t p;
+		p.x_mm = reference_point["x (mm)"];
+		p.y_mm = reference_point["y (mm)"];
+		p.z_mm = reference_point["z (mm)"];
+
+		mReferencePoint = p;
 	}
 }
 
@@ -1131,6 +1162,20 @@ nlohmann::json cLidarMapConfigScan::save()
 		}
 
 		scanDoc["options"] = options;
+	}
+
+
+	if (mReferencePoint.has_value())
+	{
+		nlohmann::json reference_point;
+
+		rfm::rappPoint_t p = mReferencePoint.value();
+
+		reference_point["x (mm)"] = p.x_mm;
+		reference_point["y (mm)"] = p.y_mm;
+		reference_point["z (mm)"] = p.z_mm;
+
+		scanDoc["reference_point"] = reference_point;
 	}
 
 	mDirty = false;

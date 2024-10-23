@@ -207,12 +207,22 @@ std::size_t cRappPointCloud::size() const
 	return mCloud.size(); 
 }
 
-/*
-void cRappPointCloud::push_back(const value_type& value)
+bool cRappPointCloud::referenceValid() const
 {
-	mCloud.push_back(value);
+	return mReferencePointValid && (mReferencePoint.x_mm > 0) 
+		&& (mReferencePoint.y_mm > 0) && (mReferencePoint.z_mm > 0);
 }
-*/
+
+rfm::rappPoint_t cRappPointCloud::referencePoint() const
+{
+	return mReferencePoint;
+}
+
+void cRappPointCloud::setReferencePoint(rfm::rappPoint_t point, bool valid)
+{
+	mReferencePoint = point;
+	mReferencePointValid = valid;
+}
 
 int cRappPointCloud::minX_mm() const { return mMinX_mm; }
 int cRappPointCloud::maxX_mm() const { return mMaxX_mm; }
@@ -307,6 +317,12 @@ void cRappPointCloud::addPoint(const rfm::sPoint3D_t& cloudPoint)
 	}
 
 	mCloud.push_back(cloudPoint);
+}
+
+void cRappPointCloud::insert(const_iterator first, const_iterator last)
+{
+	mCloud.insert(mCloud.end(), first, last);
+	recomputeBounds();
 }
 
 const cRappPointCloud& cRappPointCloud::operator+=(const cRappPointCloud& pc)

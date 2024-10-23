@@ -71,7 +71,6 @@ public:
 
 	const std::vector<rfm::sPointCloudRotationInterpPoint_t>& getRotateTable() const;
 
-
 	const std::optional<double>& getStart_X_m() const;
 	const std::optional<double>& getStart_Y_m() const;
 	const std::optional<double>& getStart_Z_m() const;
@@ -80,6 +79,7 @@ public:
 	const std::optional<double>& getEnd_Y_m() const;
 	const std::optional<double>& getEnd_Z_m() const;
 
+	const std::optional<rfm::rappPoint_t>& getReferencePoint() const;
 
 	void setExperimentName(const std::string& name);
 
@@ -158,6 +158,8 @@ public:
 	void setEnd_X_mm(const std::optional<double>& x_mm);
 	void setEnd_Y_mm(const std::optional<double>& y_mm);
 	void setEnd_Z_mm(const std::optional<double>& z_mm);
+
+	void setReferencePoint(const std::optional<rfm::rappPoint_t>& p);
 
 protected:
 	void setDirty(bool dirty);
@@ -238,13 +240,18 @@ private:
 	// Rotate Model - Intrep Table: Data Points
 	std::vector<rfm::sPointCloudRotationInterpPoint_t> mRotateTable;
 
+	// Start position of the scan
 	std::optional<double> mStart_X_m;
 	std::optional<double> mStart_Y_m;
 	std::optional<double> mStart_Z_m;
 
+	// End position of the scan
 	std::optional<double> mEnd_X_m;
 	std::optional<double> mEnd_Y_m;
 	std::optional<double> mEnd_Z_m;
+
+	// Reference point to normalize scans
+	std::optional<rfm::rappPoint_t> mReferencePoint;
 
 	friend class cLidarMapConfigFile;
 };

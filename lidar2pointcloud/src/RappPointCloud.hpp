@@ -60,7 +60,13 @@ public:
 
 	size_type size() const;
 
+	bool referenceValid() const;
+	rfm::rappPoint_t referencePoint() const;
+	void setReferencePoint(rfm::rappPoint_t point, bool valid = true);
+
 	void addPoint(const rfm::sPoint3D_t& cloudPoint);
+
+	void insert(const_iterator first, const_iterator last);
 
 	const cRappPointCloud& operator+=(const cRappPointCloud& pc);
 
@@ -131,6 +137,9 @@ private:
 
 	int mMinZ_mm = 0;
 	int mMaxZ_mm = 0;
+
+	rfm::rappPoint_t mReferencePoint;
+	bool mReferencePointValid = false;
 
 	rfm::sCentroid_t mCentroid;
 

@@ -1,6 +1,9 @@
 
 #include "FieldUtils.hpp"
 
+
+#include <eigen3/Eigen/Eigen>
+
 #include <dlib/optimization.h>
 
 #include <pcl/point_types.h>
@@ -52,6 +55,22 @@ namespace
         }
 
         return delta;
+    }
+
+    template<typename T>
+    inline void _rotate(T& x, T& y, T& z, const Eigen::Matrix3d& r)
+    {
+        const auto& rX = r.col(0);
+        const auto& rY = r.col(1);
+        const auto& rZ = r.col(2);
+
+        double a = x * rX[0] + y * rX[1] + z * rX[2];
+        double b = x * rY[0] + y * rY[1] + z * rY[2];
+        double c = x * rZ[0] + y * rZ[1] + z * rZ[2];
+
+        x = static_cast<T>(a);
+        y = static_cast<T>(b);
+        z = static_cast<T>(c);
     }
 }
 
@@ -210,8 +229,12 @@ typedef dlib::matrix<double, 2, 1> slope_interslope_vector;
 typedef dlib::matrix<double, 2, 1> pitch_roll_vector;
 typedef dlib::matrix<double, 1, 1> pitch_vector;
 typedef dlib::matrix<double, 1, 1> roll_vector;
-typedef dlib::matrix<double, 20, 1> height_interp_table_vector;
-typedef dlib::matrix<double, 30, 1> angle_interp_table_vector;
+
+constexpr size_t NUM_HEIGHT_INTERP_POINTS = 10;
+typedef dlib::matrix<double, 2*NUM_HEIGHT_INTERP_POINTS, 1> height_interp_table_vector;
+
+constexpr size_t NUM_ANGLE_INTERP_POINTS = 10;
+typedef dlib::matrix<double, 3* NUM_ANGLE_INTERP_POINTS, 1> angle_interp_table_vector;
 
 
 double modelLine(const input_one_variable& input, const slope_interslope_vector& params)
@@ -359,7 +382,8 @@ double modelHeightTable(const input_one_variable& input, const height_interp_tab
 
     const double m = (h1 - h0) / d;
 
-    double h = m * x + h0;
+    // Shift the x value to be inside the interval d0 to d1
+    double h = m * (x - d0) + h0;
 
     return h;
 }
@@ -382,6 +406,7 @@ height_interp_table_vector residualHeightTable_derivative(const std::pair<input_
 
     height_interp_table_vector derivative;
     derivative = 0.00000000001;
+    derivative(0) = 0;
 
     const double x = data.first(0);
 
@@ -410,17 +435,18 @@ height_interp_table_vector residualHeightTable_derivative(const std::pair<input_
         h0 = params(n - 3);
         d1 = params(n - 2);
         h1 = params(n - 1);
+        i = n - 2;
     }
 
     const double delta_d = (d1 - d0);
 
-    const double m = (h1 - h0) / delta_d;
+    const double m  = (h1 - h0) / delta_d;
     const double m0 = (h1 - (h0 + delta_h)) / delta_d;
     const double m1 = ((h1 + delta_h) - h0) / delta_d;
 
-    const double y  = m * x + h0;
-    const double y0 = m0 * x + (h0 + delta_h);
-    const double y1 = m1 * x + h0;
+    const double y  = m  * (x - d0) + h0;
+    const double y0 = m0 * (x - d0) + (h0 + delta_h);
+    const double y1 = m1 * (x - d0) + h0;
 
     const auto r  = y  - data.second;
     const auto r0 = y0 - data.second;
@@ -430,12 +456,14 @@ height_interp_table_vector residualHeightTable_derivative(const std::pair<input_
     auto delta_r1 = (r1 - r) / delta_h;
 
     derivative(i - 1) = delta_r0;
+    derivative(i) = 0;
     derivative(i + 1) = delta_r1;
 
     return derivative;
 }
 
-sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps)
+//sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps)
+sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights)
 {
     using namespace dlib;
 
@@ -449,20 +477,20 @@ sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTransl
             return (a.displacement_m < b.displacement_m);
         });
 
-    height_interp_table_vector table;
-    table = 1;
-
     double d0 = heights.front().displacement_m;
     double d1 = heights.back().displacement_m;
 
     double delta = 0.0;
     
-    if (steps > 1)
-        delta = (d1 - d0) / (steps - 1);
+    if (NUM_HEIGHT_INTERP_POINTS > 1)
+        delta = (d1 - d0) / (NUM_HEIGHT_INTERP_POINTS - 1);
     else
         delta = (d1 - d0);
 
-    std::size_t n = 2 * steps;
+    height_interp_table_vector table;
+    table = 1;
+
+    std::size_t n = table.size();
     for (std::size_t i = 0; i < n; i += 2)
     {
         table(i) = d0;
@@ -523,6 +551,155 @@ sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTransl
     return result;
 }
 
+sOffsetInterpTable_t computePointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps)
+{
+    if (heights.empty())
+    {
+        return sOffsetInterpTable_t();
+    }
+
+    std::sort(heights.begin(), heights.end(), [](rfm::sPointCloudTranslationInterpPoint_t a, rfm::sPointCloudTranslationInterpPoint_t b)
+        {
+            return (a.displacement_m < b.displacement_m);
+        });
+
+    double d0 = heights.front().displacement_m;
+    double d1 = heights.back().displacement_m;
+
+    double delta = 0.0;
+
+    if (steps > 1)
+        delta = (d1 - d0) / (steps - 1);
+    else
+        delta = (d1 - d0);
+
+    sOffsetInterpTable_t result;
+
+    // Use 50% of point in the front of the samples
+    {
+        double lv = d0;
+        double uv = d0 + (0.5 * delta);
+
+        auto lb = std::lower_bound(heights.begin(), heights.end(), lv, [](const auto x, double bound)
+            {
+                return x.displacement_m < bound;
+            }
+        );
+
+        auto ub = std::upper_bound(heights.begin(), heights.end(), uv, [](double bound, const auto x)
+            {
+                return bound < x.displacement_m;
+            }
+        );
+
+        double avg_height = 0.0;
+        size_t n = 0;
+
+        for (; lb != ub; ++lb)
+        {
+            avg_height += lb->height_m;
+            ++n;
+        }
+
+        rfm::sPointCloudTranslationInterpPoint_t point;
+        point.displacement_m = d0;
+
+        if (n > 0)
+            point.height_m = (avg_height / n);
+        else
+            point.height_m = avg_height;
+
+        result.offset_m.push_back(point);
+
+        d0 += delta;
+    }
+
+    // Use the samples from 25% behind and 25% ahead to compute of height at the given point
+    for (std::size_t i = 1; i < (steps-1); ++i)
+    {
+        double lv = d0 - (0.25 * delta);
+        double uv = d0 + (0.25 * delta);
+
+        auto lb = std::lower_bound(heights.begin(), heights.end(), lv, [](const auto x, double bound)
+            {
+                return x.displacement_m < bound;
+            }
+        );
+
+        auto ub = std::upper_bound(heights.begin(), heights.end(), uv, [](double bound, const auto x)
+            {
+                return bound < x.displacement_m;
+            }
+        );
+
+        double avg_height = 0.0;
+        size_t n = 0;
+
+        for (; lb != ub; ++lb)
+        {
+            avg_height += lb->height_m;
+            ++n;
+        }
+
+        rfm::sPointCloudTranslationInterpPoint_t point;
+        point.displacement_m = d0;
+
+        if (n > 0)
+            point.height_m = (avg_height / n);
+        else
+            point.height_m = avg_height;
+
+        result.offset_m.push_back(point);
+
+        d0 += delta;
+    }
+
+    // Use 50% of point in the end of the samples
+    {
+        double lv = d0 - (0.5 * delta);
+        double uv = d0;
+
+        auto lb = std::lower_bound(heights.begin(), heights.end(), lv, [](const auto x, double bound)
+            {
+                return x.displacement_m < bound;
+            }
+        );
+
+        auto ub = std::upper_bound(heights.begin(), heights.end(), uv, [](double bound, const auto x)
+            {
+                return bound < x.displacement_m;
+            }
+        );
+
+        double avg_height = 0.0;
+        size_t n = 0;
+
+        for (; lb != ub; ++lb)
+        {
+            avg_height += lb->height_m;
+            ++n;
+        }
+
+        rfm::sPointCloudTranslationInterpPoint_t point;
+        point.displacement_m = d0;
+
+        if (n > 0)
+            point.height_m = (avg_height / n);
+        else
+            point.height_m = avg_height;
+
+        result.offset_m.push_back(point);
+
+        d0 += delta;
+    }
+
+    result.R = -1.0;
+
+    result.valid = true;
+
+    return result;
+}
+
 //-----------------------------------------------------------------------------
 
 struct sAngles_t
@@ -574,8 +751,8 @@ sAngles_t modelAngleTable(const input_one_variable& input, const angle_interp_ta
     const double mp = deltaAngle(p1, p0) / d;
     const double mr = deltaAngle(r1, r0) / d;
 
-    double p = mp * x + p0;
-    double r = mr * x + r0;
+    double p = mp * (x - d0) + p0;
+    double r = mr * (x - d0) + r0;
 
     return { p, r };
 }
@@ -600,6 +777,7 @@ angle_interp_table_vector residualAngleTable_derivative(const std::pair<input_on
 
     angle_interp_table_vector derivative;
     derivative = 0.00000000001;
+    derivative(0) = 0.0;
 
     const double x = data.first(0);
 
@@ -647,13 +825,13 @@ angle_interp_table_vector residualAngleTable_derivative(const std::pair<input_on
     const double mr_0 = deltaAngle(r1, (r0 + delta_angle)) / delta_d;
     const double mr_1 = deltaAngle((r1 + delta_angle), r0) / delta_d;
 
-    const double yp   = mp * x + p0;
-    const double yp_0 = mp_0 * x + (p0 + delta_angle);
-    const double yp_1 = mp_1 * x + p0;
+    const double yp   = mp   * (x - d0) + p0;
+    const double yp_0 = mp_0 * (x - d0) + (p0 + delta_angle);
+    const double yp_1 = mp_1 * (x - d0) + p0;
 
-    const double yr   = mr * x + r0;
-    const double yr_0 = mr_0 * x + (r0 + delta_angle);
-    const double yr_1 = mr_1 * x + r0;
+    const double yr   = mr   * (x - d0) + r0;
+    const double yr_0 = mr_0 * (x - d0) + (r0 + delta_angle);
+    const double yr_1 = mr_1 * (x - d0) + r0;
 
     const auto rp  = yp - data.second.pitch_deg;
     const auto rp0 = yp_0 - data.second.pitch_deg;
@@ -671,6 +849,7 @@ angle_interp_table_vector residualAngleTable_derivative(const std::pair<input_on
 
     derivative(i - 2) = delta_p0;
     derivative(i - 1) = delta_r0;
+    derivative(i)     = 0.0;
     derivative(i + 1) = delta_p1;
     derivative(i + 2) = delta_r1;
 
@@ -765,6 +944,181 @@ sAnglesInterpTable_t fitPointCloudAngleTable(std::vector<rfm::sPointCloudRotatio
     result.angles_deg.back().roll_deg  = a1.roll_deg;
 
     result.R = sqrt(R2);
+
+    result.valid = true;
+
+    return result;
+}
+
+sAnglesInterpTable_t computePointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps)
+{
+    using namespace dlib;
+
+    if (angles.empty())
+    {
+        return sAnglesInterpTable_t();
+    }
+
+    std::sort(angles.begin(), angles.end(), [](rfm::sPointCloudRotationInterpPoint_t a, rfm::sPointCloudRotationInterpPoint_t b)
+        {
+            return (a.displacement_m < b.displacement_m);
+        });
+
+    double d0 = angles.front().displacement_m;
+    double d1 = angles.back().displacement_m;
+
+    double delta = 0.0;
+
+    if (steps > 1)
+        delta = (d1 - d0) / (steps - 1);
+    else
+        delta = (d1 - d0);
+
+    sAnglesInterpTable_t result;
+
+    // Use 50% of point in the front of the samples
+    {
+        double lv = d0;
+        double uv = d0 + (0.5 * delta);
+
+        auto lb = std::lower_bound(angles.begin(), angles.end(), lv, [](const auto x, double bound)
+            {
+                return x.displacement_m < bound;
+            }
+        );
+
+        auto ub = std::upper_bound(angles.begin(), angles.end(), uv, [](double bound, const auto x)
+            {
+                return bound < x.displacement_m;
+            }
+        );
+
+        double avg_pitch = 0.0;
+        double avg_roll = 0.0;
+        size_t n = 0;
+
+        for (; lb != ub; ++lb)
+        {
+            avg_pitch += lb->pitch_deg;
+            avg_roll += lb->roll_deg;
+            ++n;
+        }
+
+        rfm::sPointCloudRotationInterpPoint_t point;
+        point.displacement_m = d0;
+
+        if (n > 0)
+        {
+            point.pitch_deg = (avg_pitch / n);
+            point.roll_deg  = (avg_roll / n);
+        }
+        else
+        {
+            point.pitch_deg = avg_pitch;
+            point.roll_deg  = avg_roll;
+        }
+
+        result.angles_deg.push_back(point);
+
+        d0 += delta;
+    }
+
+
+    for (std::size_t i = 1; i < (steps-1); ++i)
+    {
+        double lv = d0 - (0.25 * delta);
+        double uv = d0 + (0.25 * delta);
+
+        auto lb = std::lower_bound(angles.begin(), angles.end(), lv, [](const auto x, double bound)
+            {
+                return x.displacement_m < bound;
+            }
+        );
+
+        auto ub = std::upper_bound(angles.begin(), angles.end(), uv, [](double bound, const auto x)
+            {
+                return bound < x.displacement_m;
+            }
+        );
+
+        double avg_pitch = 0.0;
+        double avg_roll = 0.0;
+        size_t n = 0;
+
+        for (; lb != ub; ++lb)
+        {
+            avg_pitch += lb->pitch_deg;
+            avg_roll += lb->roll_deg;
+            ++n;
+        }
+
+        rfm::sPointCloudRotationInterpPoint_t point;
+        point.displacement_m = d0;
+
+        if (n > 0)
+        {
+            point.pitch_deg = (avg_pitch / n);
+            point.roll_deg = (avg_roll / n);
+        }
+        else
+        {
+            point.pitch_deg = avg_pitch;
+            point.roll_deg = avg_roll;
+        }
+
+        result.angles_deg.push_back(point);
+
+        d0 += delta;
+    }
+
+    // Use 50% of point in the back of the samples
+    {
+        double lv = d0 - (0.5 * delta);
+        double uv = d0;
+
+        auto lb = std::lower_bound(angles.begin(), angles.end(), lv, [](const auto x, double bound)
+            {
+                return x.displacement_m < bound;
+            }
+        );
+
+        auto ub = std::upper_bound(angles.begin(), angles.end(), uv, [](double bound, const auto x)
+            {
+                return bound < x.displacement_m;
+            }
+        );
+
+        double avg_pitch = 0.0;
+        double avg_roll = 0.0;
+        size_t n = 0;
+
+        for (; lb != ub; ++lb)
+        {
+            avg_pitch += lb->pitch_deg;
+            avg_roll += lb->roll_deg;
+            ++n;
+        }
+
+        rfm::sPointCloudRotationInterpPoint_t point;
+        point.displacement_m = d0;
+
+        if (n > 0)
+        {
+            point.pitch_deg = (avg_pitch / n);
+            point.roll_deg = (avg_roll / n);
+        }
+        else
+        {
+            point.pitch_deg = avg_pitch;
+            point.roll_deg = avg_roll;
+        }
+
+        result.angles_deg.push_back(point);
+
+        d0 += delta;
+    }
+
+    result.R = -1.0;
 
     result.valid = true;
 
@@ -1345,6 +1699,95 @@ sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud
     return fitPointCloudPitchRollToGroundMesh(temp);
 }
 
+//-----------------------------------------------------------------------------
+sPitchAndRoll_t computePcToGroundMeshRotationUsingGrid_deg(const cRappPointCloud::vCloud_t& pc,
+    const double minX_mm, const double maxX_mm, const double minY_mm, const double maxY_mm, double threshold_pct)
+{
+    const int NUM_X_GRIDS = 10;
+    const int NUM_Y_GRIDS = 10;
+
+    std::array<cRappPointCloud::vCloud_t, NUM_X_GRIDS* NUM_Y_GRIDS> grid_data;
+
+    std::array<int, NUM_X_GRIDS> x_bounds;
+    std::array<int, NUM_Y_GRIDS> y_bounds;
+
+    auto dx = (maxX_mm - minX_mm) / NUM_X_GRIDS;
+    auto dy = (maxY_mm - minY_mm) / NUM_Y_GRIDS;
+
+    for (int i = 0; i < NUM_X_GRIDS; ++i)
+    {
+        x_bounds[i] = minX_mm + i * dx;
+    }
+
+    for (int i = 0; i < NUM_Y_GRIDS; ++i)
+    {
+        y_bounds[i] = minY_mm + i * dy;
+    }
+
+    for (const auto& point : pc)
+    {
+        int i = 0;
+        for (; i < NUM_X_GRIDS; ++i)
+        {
+            if (point.x_mm < x_bounds[i])
+            {
+                break;
+            }
+        }
+        --i;
+
+        int j = 0;
+        for (; j < NUM_Y_GRIDS; ++j)
+        {
+            if (point.y_mm < y_bounds[j])
+            {
+                break;
+            }
+        }
+        --j;
+
+        int n = i * NUM_Y_GRIDS + j;
+
+        grid_data[n].push_back(point);
+    }
+
+    cRappPointCloud::vCloud_t data;
+
+    for (auto block : grid_data)
+    {
+        int minZ_mm = std::numeric_limits<int>::max();
+        int maxZ_mm = std::numeric_limits<int>::min();
+
+        for (auto& point : block)
+        {
+            minZ_mm = std::min(minZ_mm, point.z_mm);
+            maxZ_mm = std::max(maxZ_mm, point.z_mm);
+        }
+
+        int32_t z_threshold = threshold(minZ_mm, maxZ_mm, threshold_pct);
+
+        auto end_it = std::remove_if(block.begin(), block.end(), [z_threshold](rfm::sPoint3D_t a)
+            {
+                return (a.z_mm > z_threshold) || (a.h_mm == rfm::INVALID_HEIGHT);
+            });
+
+        block.erase(end_it, block.end());
+
+        data.insert(data.end(), block.begin(), block.end());
+    }
+
+    if (data.size() < MIN_SET_OF_POINTS)
+        return sPitchAndRoll_t();
+
+    // Compute the centroid of all of the points...
+    rfm::sCentroid_t centroid = computeCentroid(data);
+
+    cRappPointCloud temp(centroid, data);
+
+    return fitPointCloudPitchRollToGroundMesh(temp);
+}
+
+//-----------------------------------------------------------------------------
 void shiftPointCloudToAGL(int id, cRappPointCloud& pc)
 {
     int i = 0;
@@ -1390,5 +1833,64 @@ void shiftPointCloudToAGL(int id, cRappPointCloud::vCloud_t& pc)
             point.z_mm;
             point.h_mm = 0;
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void rotate(cRappPointCloud::vCloud_t& pc, double yaw_deg, double pitch_deg, double roll_deg)
+{
+    double pitch_rad = pitch_deg * nConstants::DEG_TO_RAD;
+    double roll_rad = roll_deg * nConstants::DEG_TO_RAD;
+    double yaw_rad = yaw_deg * nConstants::DEG_TO_RAD;
+
+    Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd yawAngle(yaw_rad, Eigen::Vector3d::UnitZ());
+    Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
+
+    //	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
+    Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
+    Eigen::Matrix3d rotationMatrix = q.matrix();
+
+    double sum_x = 0.0;
+    double sum_y = 0.0;
+    double sum_z = 0.0;
+
+    for (const auto& point : pc)
+    {
+        sum_x += point.x_mm;
+        sum_y += point.y_mm;
+        sum_z += point.z_mm;
+    }
+
+    auto n = pc.size();
+    double x_mm = sum_x / n;
+    double y_mm = sum_y / n;
+    double z_mm = sum_z / n;
+
+    rfm::sCentroid_t centroid = { x_mm , y_mm, z_mm };
+
+
+    for (auto& point : pc)
+    {
+        auto x = point.x_mm - centroid.x_mm;
+        auto y = point.y_mm - centroid.y_mm;
+        auto z = point.z_mm - centroid.z_mm;
+
+        ::_rotate(x, y, z, rotationMatrix);
+
+        point.x_mm = x + centroid.x_mm;
+        point.y_mm = y + centroid.y_mm;
+        point.z_mm = z + centroid.z_mm;
+    }
+}
+
+//-----------------------------------------------------------------------------
+void translate(cRappPointCloud::vCloud_t& pc, int dx_mm, int dy_mm, int dz_mm)
+{
+    for (auto& point : pc)
+    {
+        point.x_mm += dx_mm;
+        point.y_mm += dy_mm;
+        point.z_mm += dz_mm;
     }
 }

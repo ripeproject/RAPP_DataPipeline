@@ -194,6 +194,11 @@ const cRappPointCloud& cPointCloudGenerator::getPointCloud() const
     return mPointCloud;
 }
 
+cRappPointCloud& cPointCloudGenerator::getPointCloud()
+{
+    return mPointCloud;
+}
+
 bool cPointCloudGenerator::recordingFittingData() const
 {
     return mRecordFittingData;
@@ -263,6 +268,21 @@ double cPointCloudGenerator::getAvgRotationRoll_deg() const
 const std::vector<cPointCloudGenerator::sRotationInfo_t>& cPointCloudGenerator::getAngles() const
 {
     return mAngles;
+}
+
+bool cPointCloudGenerator::referencePointValid() const
+{
+    return mPointCloud.referenceValid();
+}
+
+rfm::rappPoint_t cPointCloudGenerator::referencePoint() const
+{
+    return mPointCloud.referencePoint();
+}
+
+void cPointCloudGenerator::setReferencePoint(rfm::rappPoint_t point, bool valid)
+{
+    mPointCloud.setReferencePoint(point, valid);
 }
 
 void cPointCloudGenerator::fixTimestampInfo(double updateRate_Hz, uint64_t start_timestamp_ns)
@@ -344,6 +364,11 @@ std::pair<double, double> cPointCloudGenerator::getAzimuthWindow_deg() const
     return std::make_pair(mMinEncoder_rad * nConstants::RAD_TO_DEG, mMaxEncoder_rad * nConstants::RAD_TO_DEG);
 }
 
+eTranslateToGroundModel cPointCloudGenerator::getTranslateToGroundModel() const
+{
+    return mTranslateToGroundModel;
+}
+
 void cPointCloudGenerator::setTranslateToGroundModel(eTranslateToGroundModel model)
 {
     mTranslateToGroundModel = model;
@@ -367,6 +392,11 @@ void cPointCloudGenerator::setTranslateThreshold_pct(double threshold_pct)
 void cPointCloudGenerator::setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table)
 {
     mTranslateInterpTable = table;
+}
+
+eRotateToGroundModel cPointCloudGenerator::getRotationToGroundModel() const
+{
+    return mRotateToGroundModel;
 }
 
 void cPointCloudGenerator::setRotationToGroundModel(eRotateToGroundModel model)

@@ -94,6 +94,8 @@ public:
 
 	/**
 	 */
+	eTranslateToGroundModel getTranslateToGroundModel() const;
+
 	void setTranslateToGroundModel(eTranslateToGroundModel model);
 	void setTranslateDistance_m(double distance_m);
 	void setTranslateThreshold_pct(double threshold_pct);
@@ -101,6 +103,8 @@ public:
 
 	/**
 	 */
+	eRotateToGroundModel getRotationToGroundModel() const;
+
 	void setRotationToGroundModel(eRotateToGroundModel model);
 	void setRotationAngles_deg(double pitch_deg, double roll_deg);
 	void setRotationThreshold_pct(double threshold_pct);
@@ -118,6 +122,7 @@ public:
 	const std::vector<rfm::sDollyInfo_t>& getComputedDollyPath() const;
 
 	const cRappPointCloud& getPointCloud() const;
+	cRappPointCloud& getPointCloud();
 
 	bool recordingFittingData() const;
 	void recordFittingData(bool record);
@@ -128,6 +133,10 @@ public:
 	double getAvgRotationPitch_deg() const;
 	double getAvgRotationRoll_deg() const;
 	const std::vector<sRotationInfo_t>& getAngles() const;
+
+	bool referencePointValid() const;
+	rfm::rappPoint_t referencePoint() const;
+	void setReferencePoint(rfm::rappPoint_t point, bool valid = true);
 
 	bool computePointCloud(int id);
 
