@@ -203,6 +203,17 @@ nStringUtils::sFilenameAndExtension nStringUtils::splitFilename(const std::strin
 	return { base, extension };
 }
 
+nStringUtils::sPathAndFilename nStringUtils::splitPathname(const std::string& pathname)
+{
+	std::filesystem::path fp = pathname;
+
+	std::string path = fp.parent_path().string();
+	std::string filename = fp.filename().string();
+
+	return { path, filename };
+}
+
+
 std::string nStringUtils::safeFilename(std::string filename)
 {
 	std::replace_if(filename.begin(), filename.end(),

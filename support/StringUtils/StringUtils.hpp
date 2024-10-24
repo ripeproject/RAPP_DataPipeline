@@ -62,6 +62,15 @@ namespace nStringUtils
 
 	sFilenameAndExtension splitFilename(const std::string& filename);
 
+
+	struct sPathAndFilename
+	{
+		std::string path;
+		std::string filename;
+	};
+
+	sPathAndFilename splitPathname(const std::string& pathname);
+
 	/**
 	 * Compacts a filename to a maximum length
 	 *
