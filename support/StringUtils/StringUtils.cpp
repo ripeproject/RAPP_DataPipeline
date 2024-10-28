@@ -280,6 +280,39 @@ bool nStringUtils::isMonthDirectory(const std::string& dir)
 	return false;
 }
 
+nStringUtils::eMonth nStringUtils::toMonth(const std::string& dir)
+{
+	if (dir.starts_with("Jan")) return eMonth::Jan;
+	if (dir.starts_with("Feb")) return eMonth::Feb;
+	if (dir.starts_with("Mar")) return eMonth::Mar;
+	if (dir.starts_with("Apr")) return eMonth::Apr;
+	if (dir.starts_with("May")) return eMonth::May;
+	if (dir.starts_with("June")) return eMonth::June;
+	if (dir.starts_with("July")) return eMonth::July;
+	if (dir.starts_with("Aug")) return eMonth::Aug;
+	if (dir.starts_with("Sept")) return eMonth::Sept;
+	if (dir.starts_with("Oct")) return eMonth::Oct;
+	if (dir.starts_with("Nov")) return eMonth::Nov;
+	if (dir.starts_with("Dec")) return eMonth::Dec;
+
+	return eMonth::Unknown;
+}
+
+
+int nStringUtils::toDay(const std::string& dir)
+{
+	auto month = toMonth(dir);
+	if (month == eMonth::Unknown)
+		return -1;
+
+	int i = 3;
+
+	if ((month == eMonth::June) || (month == eMonth::July) || (month == eMonth::Sept))
+		i = 4;
+
+	return std::stoi(dir.substr(i));
+}
+
 std::string nStringUtils::make_temp_filename(const std::string& filename)
 {
 	std::filesystem::path tmp = filename;
