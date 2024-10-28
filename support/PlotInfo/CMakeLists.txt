@@ -93,8 +93,15 @@ target_compile_features(plot_info PRIVATE cxx_std_20)
 
 target_sources(plot_info
 PUBLIC
+	PlotDataTypes.hpp
+
+	PlotPointCloud.hpp
 	PlotInfoParser.hpp
 	PlotInfoSerializer.hpp
+
+	PlotMetaData.hpp
+	PlotInfo.hpp
+	PlotInfoLoader.hpp
 	
 PRIVATE
 
@@ -102,8 +109,13 @@ PRIVATE
 	PlotInfoBlockId.cpp
 
 	PlotInfoDataIdentifiers.hpp
+	PlotPointCloud.cpp
 	PlotInfoParser.cpp
 	PlotInfoSerializer.cpp
+
+	PlotMetaData.cpp
+	PlotInfo.cpp
+	PlotInfoLoader.cpp
 )
 
 target_include_directories(plot_info PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
