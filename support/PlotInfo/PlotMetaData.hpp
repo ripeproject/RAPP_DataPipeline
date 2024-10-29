@@ -12,7 +12,9 @@ class cPlotMetaData
 {
 public:
 	explicit cPlotMetaData(int plotId);
-	~cPlotMetaData();
+	virtual ~cPlotMetaData();
+
+	cPlotMetaData(const cPlotMetaData&) = default;
 
 	int id() const;
 
