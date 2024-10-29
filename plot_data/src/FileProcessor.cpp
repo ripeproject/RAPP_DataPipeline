@@ -195,6 +195,10 @@ void cFileProcessor::computePlotHeights()
         doy = mExpInfo->dayOfYear().value();
     }
 
+    const auto& parameters = mConfigInfo.getHeightParameters();
+    int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
+    double heightPercentile = parameters.getHeightPercentile();
+
     auto n = mPlotInfo->size();
 
     for (std::size_t i = 0; i < n; ++i)
@@ -203,7 +207,7 @@ void cFileProcessor::computePlotHeights()
 
         const auto& plot = (*mPlotInfo)[i];
 
-        auto result = nPlotUtils::computePlotHeights(*plot, 100, 94, 95, 96);
+        auto result = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, 94, heightPercentile, 96);
 
         mResults.addPlotInfo(*plot);
         mResults.addPlotData(plot->id(), doy, result.height_mm, result.lowerHeight_mm, result.upperHeight_mm);

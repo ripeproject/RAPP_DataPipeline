@@ -12,6 +12,31 @@
 #include <filesystem>
 
 
+cPlotData::~cPlotData()
+{
+	for (auto plot : mpPlots)
+	{
+		delete plot;
+	}
+
+	mpPlots.clear();
+
+
+	for (auto& group : mGroups)
+	{
+/*
+		for (auto plot : group)
+		{
+			delete plot;
+		}
+*/
+
+		group.clear();
+	}
+
+	mGroups.clear();
+}
+
 void cPlotData::setExperimentInfo(const cExperimentInfo& info)
 {
 	mExperimentInfo = info;
@@ -19,13 +44,18 @@ void cPlotData::setExperimentInfo(const cExperimentInfo& info)
 
 void cPlotData::addPlotInfo(const cPlotMetaData& info)
 {
-	for (const auto& plot : mPlots)
+	for (const auto& plot : mpPlots)
 	{
-		if (plot.id() == info.id())
+		if (plot->id() == info.id())
 			return;
 	}
 
-	mPlots.push_back(info);
+	cPlotMetaData* pPlotInfo = new cPlotMetaData(info);
+	mpPlots.push_back(pPlotInfo);
+
+	std::sort(mpPlots.begin(), mpPlots.end(), [](const auto* a, const auto* b) { return a->id() < b->id(); });
+
+	splitIntoGroups(pPlotInfo);
 }
 
 void cPlotData::addPlotData(int id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm)
@@ -150,6 +180,84 @@ void cPlotData::write(const std::string& directory)
 
 	out << "\n\nPlot Information:\n";
 
+	for (const auto& plot : mpPlots)
+	{
+		out << "Plot Number: " << plot->id() << "\n";
+
+		if (!plot->name().empty())
+		{
+			out << "Name: " << plot->name() << "\n";
+		}
+
+		if (!plot->description().empty())
+		{
+			out << "Description: " << plot->description() << "\n";
+		}
+
+		if (!plot->species().empty())
+		{
+			out << "Species: " << plot->species() << "\n";
+		}
+
+		if (!plot->cultivar().empty())
+		{
+			out << "Cultivar: " << plot->cultivar() << "\n";
+		}
+
+		if (!plot->event().empty())
+		{
+			out << "Event: " << plot->event() << "\n";
+		}
+
+		if (!plot->constructName().empty())
+		{
+			out << "Construct Name: " << plot->constructName() << "\n";
+		}
+
+		if (!plot->seedGeneration().empty())
+		{
+			out << "Seed Generation: " << plot->seedGeneration() << "\n";
+		}
+
+		if (!plot->copyNumber().empty())
+		{
+			out << "Copy Number: " << plot->copyNumber() << "\n";
+		}
+
+		if (!plot->potLabel().empty())
+		{
+			out << "Pot Label: " << plot->potLabel() << "\n";
+		}
+
+		out << "\n\n";
+	}
+
 	out.close();
 
+}
+
+void cPlotData::splitIntoGroups(cPlotMetaData* pPlotInfo)
+{
+	// Check to see if the plot is already placed in a group
+	for (auto& group : mGroups)
+	{
+		for (auto plot : group)
+		{
+			if (plot->id() == pPlotInfo->id())
+				return;
+		}
+	}
+}
+
+bool cPlotData::group(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2)
+{
+	bool same = pPlotInfo1->event() == pPlotInfo2->event();
+	same &= pPlotInfo1->species() == pPlotInfo2->species();
+	same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
+	same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
+	same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
+	same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
+	same &= pPlotInfo1->potLabel() == pPlotInfo2->potLabel();
+
+	return same;
 }

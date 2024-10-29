@@ -14,7 +14,7 @@ class cPlotData
 {
 public:
 	cPlotData() = default;
-	~cPlotData() = default;
+	~cPlotData();
 
 	void setExperimentInfo(const cExperimentInfo& info);
 
@@ -23,10 +23,17 @@ public:
 
 	void write(const std::string& directory);
 
+protected:
+	void splitIntoGroups(cPlotMetaData* pPlotInfo);
+	bool group(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2);
+
 private:
 	cExperimentMetaData mExperimentInfo;
 
-	std::vector<cPlotMetaData> mPlots;
+	std::vector<cPlotMetaData*> mpPlots;
+
+	// Note: mGroups does not own the pointer
+	std::vector<std::vector<cPlotMetaData*>> mGroups;
 
 	struct sPlotHeightData_t
 	{

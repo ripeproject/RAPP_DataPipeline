@@ -22,8 +22,10 @@ public:
 	bool isDirty() const;
 
 	double getGroundLevelBound_mm() const;
+	double getHeightPercentile() const;
 
 	void setGroundLevelBound_mm(double ground_level_mm);
+	void setHeightPercentile(double height_percentile);
 
 protected:
 	void setDirty(bool dirty);
@@ -35,6 +37,8 @@ private:
 	bool mDirty = false;
 
 	double mGroundLevelBound_mm = 0.0;
+
+	double mHeightPercentile = 95.0;
 
 	friend class cPlotDataConfigFile;
 };
