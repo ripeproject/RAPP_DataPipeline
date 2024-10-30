@@ -58,6 +58,16 @@ void cPlotData::addPlotInfo(const cPlotMetaData& info)
 	splitIntoGroups(pPlotInfo);
 }
 
+void cPlotData::addDate(int month, int day, int year, int doy)
+{
+	sPlotDate_t date;
+	date.month = month;
+	date.day = day;
+	date.year = year;
+	date.doy = doy;
+	mDates.insert(date);
+}
+
 void cPlotData::addPlotData(int id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm)
 {
 	sPlotHeightData_t data;
@@ -70,7 +80,7 @@ void cPlotData::addPlotData(int id, int doy, double height_mm, double lowerBound
 	mPlotHeights[id].push_back(data);
 }
 
-void cPlotData::write(const std::string& directory)
+void cPlotData::write_metadata_file(const std::string& directory)
 {
 	std::filesystem::path meta_file = directory;
 
@@ -233,7 +243,53 @@ void cPlotData::write(const std::string& directory)
 	}
 
 	out.close();
+}
 
+void cPlotData::write_plot_height_file(const std::string& directory)
+{
+	if (mDates.empty())
+		return;
+
+	if (mPlotHeights.empty())
+		return;
+
+	std::filesystem::path plot_height_file = directory;
+
+	plot_height_file /= "test.plot_heights.csv";
+
+	std::ofstream out;
+	out.open(plot_height_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	auto doy_last = --(mDates.end());
+
+	out << "\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ",\t";
+	}
+	out << doy_last->doy << "\n";
+
+/*
+	auto last = mPlotHeights.end();
+	--last;
+
+	for (auto it = mPlotHeights.begin(); it != last; ++it)
+	{
+		out << it->second. << ",\t";
+
+	}
+*/
+
+	out.close();
 }
 
 void cPlotData::splitIntoGroups(cPlotMetaData* pPlotInfo)
@@ -247,9 +303,24 @@ void cPlotData::splitIntoGroups(cPlotMetaData* pPlotInfo)
 				return;
 		}
 	}
+
+	for (auto& group : mGroups)
+	{
+		if (inGroup(group.front(), pPlotInfo))
+		{
+			group.push_back(pPlotInfo);
+			std::sort(group.begin(), group.end(), [](const auto* a, const auto* b) { return a->id() < b->id(); });
+
+			return;
+		}
+	}
+
+	std::vector<cPlotMetaData*> group;
+	group.push_back(pPlotInfo);
+	mGroups.push_back(group);
 }
 
-bool cPlotData::group(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2)
+bool cPlotData::inGroup(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2)
 {
 	bool same = pPlotInfo1->event() == pPlotInfo2->event();
 	same &= pPlotInfo1->species() == pPlotInfo2->species();
@@ -257,7 +328,6 @@ bool cPlotData::group(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2)
 	same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
 	same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
 	same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
-	same &= pPlotInfo1->potLabel() == pPlotInfo2->potLabel();
 
 	return same;
 }

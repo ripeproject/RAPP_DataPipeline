@@ -124,6 +124,7 @@ if(wxWidgets_FOUND)
 	target_include_directories(gui_app PRIVATE "../support/PlotInfo")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
+	target_include_directories(gui_app PRIVATE "../support/Utilities")
 	target_include_directories(gui_app PRIVATE "../support/MathUtils")
 	target_include_directories(gui_app PRIVATE "../support/common")
 
@@ -136,8 +137,10 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE processing_info)
 	target_link_libraries(gui_app PRIVATE plot_info)
 	target_link_libraries(gui_app PRIVATE string_utils)
+	target_link_libraries(gui_app PRIVATE utilities)
 	target_link_libraries(gui_app PRIVATE math_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
+	target_link_libraries(gui_app PRIVATE fmt::fmt)
 	target_link_libraries(gui_app PRIVATE tinyply)
 
 	#

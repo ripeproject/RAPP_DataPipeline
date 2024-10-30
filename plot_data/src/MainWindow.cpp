@@ -569,7 +569,8 @@ wxThread::ExitCode cMainWindow::Entry()
 		wxLogError(msg);
 	}
 
-	mResults.write(mDstDirectory.ToStdString());
+	mResults.write_metadata_file(mDstDirectory.ToStdString());
+	mResults.write_plot_height_file(mDstDirectory.ToStdString());
 
 	wxString msg = "Finished processing ";
 	msg += mSrcDirectory;

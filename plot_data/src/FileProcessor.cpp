@@ -8,6 +8,7 @@
 #include "PlotDataUtils.hpp"
 
 #include "StringUtils.hpp"
+#include "DateTimeUtils.hpp"
 
 #include "ProcessingInfoSerializer.hpp"
 #include "PlotInfoSerializer.hpp"
@@ -189,11 +190,30 @@ bool cFileProcessor::loadFileData()
 void cFileProcessor::computePlotHeights()
 {
     int doy = 0;
+    int month = 0;
+    int day = 0;
+    int year = 0;
+
+    auto date = mExpInfo->fileDate();
+
+    if (date.has_value())
+    {
+        auto d = date.value();
+        month = d.month;
+        day = d.day;
+        year = d.year;
+    }
 
     if (mExpInfo->dayOfYear().has_value())
     {
         doy = mExpInfo->dayOfYear().value();
     }
+    else
+    {
+        doy = nDateUtils::to_day_of_year(month, day, year);
+    }
+
+    mResults.addDate(month, day, year, doy);
 
     const auto& parameters = mConfigInfo.getHeightParameters();
     int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
