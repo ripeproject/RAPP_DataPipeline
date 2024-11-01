@@ -40,11 +40,12 @@ private:
 	bool loadFileData();
 
 private:
+	void fillPlotInfo();
 	void computePlotHeights();
-
+	void computePlotBioMasses();
 
 private:
-
+	int mDayOfYear = 0;
 	cPlotData& mResults;
 
 	const cPlotDataConfigFile& mConfigInfo;

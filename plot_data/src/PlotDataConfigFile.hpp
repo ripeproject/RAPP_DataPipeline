@@ -2,6 +2,7 @@
 #pragma once
 
 #include "PlotDataConfigHeight.hpp"
+#include "PlotDataConfigBiomass.hpp"
 
 #include <vector>
 #include <string>
@@ -35,11 +36,15 @@ public:
 	const cPlotDataConfigHeight& getHeightParameters() const;
 	cPlotDataConfigHeight& getHeightParameters();
 
+	const cPlotDataConfigBiomass& getBiomassParameters() const;
+	cPlotDataConfigBiomass& getBiomassParameters();
+
 
 private:
 	std::string mFileName;
 	std::string mTmpFileName;
 
 	cPlotDataConfigHeight mHeightParameters;
+	cPlotDataConfigBiomass mBiomassParameters;
 };
 

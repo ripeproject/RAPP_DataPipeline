@@ -23,10 +23,18 @@ public:
 
 	void addDate(int month, int day, int year, int doy);
 
-	void addPlotData(int id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm);
+	void addPlotData(int plot_id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm);
+	void addPlotBiomass(int plot_id, int doy, double biomass);
 
-	void write_metadata_file(const std::string& directory);
-	void write_plot_height_file(const std::string& directory);
+	void computeReplicateData();
+
+	void write_metadata_file(const std::string& directory, const std::string& title);
+
+	void write_plot_height_file(const std::string& directory, const std::string& title);
+	void write_replicate_height_file(const std::string& directory, const std::string& title);
+
+	void write_plot_biomass_file(const std::string& directory, const std::string& title);
+	void write_replicate_biomass_file(const std::string& directory, const std::string& title);
 
 protected:
 	void splitIntoGroups(cPlotMetaData* pPlotInfo);
@@ -64,5 +72,31 @@ private:
 	};
 
 	std::map<int, std::vector<sPlotHeightData_t> > mPlotHeights;
+
+	struct sGroupHeightData_t
+	{
+		int doy = 0;
+		double avgHeight_mm = 0;
+		double stdHeight_mm = 0;
+	};
+
+	std::map<int, std::vector<sGroupHeightData_t> > mGroupHeights;
+
+	struct sPlotBioMassData_t
+	{
+		int doy = 0;
+		double biomass = 0;
+	};
+
+	std::map<int, std::vector<sPlotBioMassData_t> > mPlotBioMasses;
+
+	struct sGroupBioMassData_t
+	{
+		int doy = 0;
+		double avgBioMass = 0;
+		double stdBioMass = 0;
+	};
+
+	std::map<int, std::vector<sGroupBioMassData_t> > mGroupBioMasses;
 };
 

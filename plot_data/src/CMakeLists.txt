@@ -24,6 +24,9 @@ set(PLOT_DATA_COMMON_FILES
 	PlotDataConfigHeight.hpp
 	PlotDataConfigHeight.cpp
 
+	PlotDataConfigBiomass.hpp
+	PlotDataConfigBiomass.cpp
+
 	FileProcessor.hpp
 	FileProcessor.cpp
 )
@@ -47,6 +50,7 @@ PRIVATE
 )
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${PCL_INCLUDE_DIRS})
 target_include_directories(console_app PRIVATE "../support/PointCloud")
 target_include_directories(console_app PRIVATE "../support/ProcessingInfo")
 target_include_directories(console_app PRIVATE "../support/PlotInfo")
@@ -65,7 +69,9 @@ target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
 target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE fmt::fmt)
-target_link_libraries(console_app PRIVATE tinyply)
+target_link_libraries(console_app PRIVATE ${PCL_LIBRARIES} )
+target_link_libraries(console_app PRIVATE Eigen3::Eigen )
+#target_link_libraries(console_app PRIVATE Open3D::Open3D)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
@@ -119,6 +125,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${PCL_INCLUDE_DIRS})
 	target_include_directories(gui_app PRIVATE "../support/PointCloud")
 	target_include_directories(gui_app PRIVATE "../support/ProcessingInfo")
 	target_include_directories(gui_app PRIVATE "../support/PlotInfo")
@@ -141,7 +148,9 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE math_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 	target_link_libraries(gui_app PRIVATE fmt::fmt)
-	target_link_libraries(gui_app PRIVATE tinyply)
+	target_link_libraries(gui_app PRIVATE ${PCL_LIBRARIES} )
+	target_link_libraries(gui_app PRIVATE Eigen3::Eigen )
+#	target_link_libraries(gui_app PRIVATE Open3D::Open3D)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

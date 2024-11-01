@@ -569,8 +569,13 @@ wxThread::ExitCode cMainWindow::Entry()
 		wxLogError(msg);
 	}
 
-	mResults.write_metadata_file(mDstDirectory.ToStdString());
-	mResults.write_plot_height_file(mDstDirectory.ToStdString());
+	mResults.computeReplicateData();
+
+	mResults.write_metadata_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
+	mResults.write_plot_height_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
+	mResults.write_replicate_height_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
+
+	mResults.write_plot_biomass_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
 
 	wxString msg = "Finished processing ";
 	msg += mSrcDirectory;

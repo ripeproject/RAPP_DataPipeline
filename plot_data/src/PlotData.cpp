@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <filesystem>
+#include <valarray>
 
 
 cPlotData::~cPlotData()
@@ -68,7 +69,7 @@ void cPlotData::addDate(int month, int day, int year, int doy)
 	mDates.insert(date);
 }
 
-void cPlotData::addPlotData(int id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm)
+void cPlotData::addPlotData(int plot_id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm)
 {
 	sPlotHeightData_t data;
 
@@ -77,14 +78,83 @@ void cPlotData::addPlotData(int id, int doy, double height_mm, double lowerBound
 	data.lowerBound_mm = lowerBound_mm;
 	data.upperBount_mm = upperBount_mm;
 
-	mPlotHeights[id].push_back(data);
+	mPlotHeights[plot_id].push_back(data);
 }
 
-void cPlotData::write_metadata_file(const std::string& directory)
+void cPlotData::addPlotBiomass(int plot_id, int doy, double biomass)
+{
+	sPlotBioMassData_t data;
+
+	data.doy = doy;
+	data.biomass = biomass;
+
+	mPlotBioMasses[plot_id].push_back(data);
+}
+
+void cPlotData::computeReplicateData()
+{
+	for (auto& group : mGroupHeights)
+	{
+		group.second.clear();
+	}
+	mGroupHeights.clear();
+
+	for (int groupNum = 0; groupNum < mGroups.size(); ++groupNum)
+	{
+		auto& group = mGroups[groupNum];
+
+		std::vector<sGroupHeightData_t> data;
+
+		for (const auto& date : mDates)
+		{
+			std::valarray<double> heights(group.size());
+
+			int count = 0;
+
+			for (std::size_t i = 0; i < group.size(); ++i)
+			{
+				const auto& plot_heights = mPlotHeights[group[i]->id()];
+
+				for (const auto& plot_height : plot_heights)
+				{
+					if (plot_height.doy == date.doy)
+					{
+						heights[i] = plot_height.height_mm;
+						++count;
+						break;
+					}
+				}
+			}
+
+			if (count > 0)
+			{
+				double mean = heights.sum() / count;
+
+				heights -= mean;
+				auto h2 = std::pow(heights, 2);
+
+				double err = 0.0;
+
+				if (count > 1)
+				{
+					h2 /= (count - 1);
+					err = sqrt(h2.sum());
+				}
+
+				data.emplace_back(sGroupHeightData_t{ date.doy, mean, err });
+			}
+		}
+
+		mGroupHeights[groupNum] = data;
+	}
+}
+
+void cPlotData::write_metadata_file(const std::string& directory, const std::string& title)
 {
 	std::filesystem::path meta_file = directory;
 
-	meta_file /= "test.metadata";
+	meta_file /= title;
+	meta_file.replace_extension("metadata");
 
 	std::ofstream out;
 	out.open(meta_file, std::ios::trunc);
@@ -245,7 +315,7 @@ void cPlotData::write_metadata_file(const std::string& directory)
 	out.close();
 }
 
-void cPlotData::write_plot_height_file(const std::string& directory)
+void cPlotData::write_plot_height_file(const std::string& directory, const std::string& title)
 {
 	if (mDates.empty())
 		return;
@@ -255,7 +325,8 @@ void cPlotData::write_plot_height_file(const std::string& directory)
 
 	std::filesystem::path plot_height_file = directory;
 
-	plot_height_file /= "test.plot_heights.csv";
+	plot_height_file /= title;
+	plot_height_file.replace_extension("plot_heights.csv");
 
 	std::ofstream out;
 	out.open(plot_height_file, std::ios::trunc);
@@ -264,30 +335,226 @@ void cPlotData::write_plot_height_file(const std::string& directory)
 
 	auto doy_last = --(mDates.end());
 
-	out << "\t";
+	out << "Date,\t";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
 		out << it->month << "/" << it->day << "/" << it->year << ",\t";
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "\t";
+	out << "Day of Year,\t";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
 		out << it->doy << ",\t";
 	}
 	out << doy_last->doy << "\n";
 
-/*
-	auto last = mPlotHeights.end();
-	--last;
-
-	for (auto it = mPlotHeights.begin(); it != last; ++it)
+	for (const auto& plot : mPlotHeights)
 	{
-		out << it->second. << ",\t";
+		out << "Plot " << plot.first << ",\t";
 
+		const auto& heights = plot.second;
+
+		auto last = heights.end();
+		--last;
+
+		for (auto it = heights.begin(); it != last; ++it)
+		{
+			out << it->height_mm << ",\t";
+		}
+		out << last->height_mm << "\n";
 	}
-*/
+
+	out.close();
+}
+
+void cPlotData::write_replicate_height_file(const std::string& directory, const std::string& title)
+{
+	if (mDates.empty())
+		return;
+
+	if (mGroupHeights.empty())
+		return;
+
+	bool useEvent = true;
+	bool useSpecies = false;
+	bool useCultivar = false;
+	bool useConstructName= false;
+	bool useSeedGeneration = false;
+	bool useCopyNumber = false;
+
+	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
+	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
+	//useCultivar = false; same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
+	//useConstructName = false; same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
+	//useSeedGeneration = false; same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
+	//useCopyNumber = false; same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
+
+	std::filesystem::path height_file = directory;
+
+	height_file /= title;
+	height_file.replace_extension("heights.csv");
+
+	std::ofstream out;
+	out.open(height_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	auto doy_last = --(mDates.end());
+
+	out << "Date,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "Day of Year,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ",\t";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& group : mGroupHeights)
+	{
+		const auto& info = mGroups[group.first].front();
+
+		out << info->event() << ",\t";
+
+		const auto& heights = group.second;
+
+		auto last = heights.end();
+		--last;
+
+		for (auto it = heights.begin(); it != last; ++it)
+		{
+			out << it->avgHeight_mm << ", " << it->stdHeight_mm << ",\t";
+		}
+		out << last->avgHeight_mm << ", " << last->stdHeight_mm << "\n";
+	}
+
+	out.close();
+}
+
+void cPlotData::write_plot_biomass_file(const std::string& directory, const std::string& title)
+{
+	if (mDates.empty())
+		return;
+
+	if (mPlotBioMasses.empty())
+		return;
+
+	std::filesystem::path plot_biomass_file = directory;
+
+	plot_biomass_file /= title;
+	plot_biomass_file.replace_extension("plot_biomass.csv");
+
+	std::ofstream out;
+	out.open(plot_biomass_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	auto doy_last = --(mDates.end());
+
+	out << "Date,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "Day of Year,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ",\t";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& plot : mPlotBioMasses)
+	{
+		out << "Plot " << plot.first << ",\t";
+
+		const auto& heights = plot.second;
+
+		auto last = heights.end();
+		--last;
+
+		for (auto it = heights.begin(); it != last; ++it)
+		{
+			out << it->biomass << ",\t";
+		}
+		out << last->biomass << "\n";
+	}
+
+	out.close();
+}
+
+void cPlotData::write_replicate_biomass_file(const std::string& directory, const std::string& title)
+{
+	if (mDates.empty())
+		return;
+
+	if (mGroupHeights.empty())
+		return;
+
+	bool useEvent = true;
+	bool useSpecies = false;
+	bool useCultivar = false;
+	bool useConstructName = false;
+	bool useSeedGeneration = false;
+	bool useCopyNumber = false;
+
+	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
+	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
+	//useCultivar = false; same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
+	//useConstructName = false; same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
+	//useSeedGeneration = false; same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
+	//useCopyNumber = false; same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
+
+	std::filesystem::path height_file = directory;
+
+	height_file /= title;
+	height_file.replace_extension("heights.csv");
+
+	std::ofstream out;
+	out.open(height_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	auto doy_last = --(mDates.end());
+
+	out << "Date,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "Day of Year,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ",\t";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& group : mGroupHeights)
+	{
+		const auto& info = mGroups[group.first].front();
+
+		out << info->event() << ",\t";
+
+		const auto& heights = group.second;
+
+		auto last = heights.end();
+		--last;
+
+		for (auto it = heights.begin(); it != last; ++it)
+		{
+			out << it->avgHeight_mm << ", " << it->stdHeight_mm << ",\t";
+		}
+		out << last->avgHeight_mm << ", " << last->stdHeight_mm << "\n";
+	}
 
 	out.close();
 }

@@ -91,9 +91,13 @@ void cFileProcessor::run()
     }
 
     mResults.setExperimentInfo(*mExpInfo);
+    fillPlotInfo();
 
     update_prefix_progress(mID, "Computing Plot Heights...    ", 0);
     computePlotHeights();
+
+    update_prefix_progress(mID, "Computing Plot Digital Biomass...    ", 0);
+    computePlotBioMasses();
 
     update_prefix_progress(mID, "Saving...                ", 0);
 //    if (mSavePlotsInSingleFile)
@@ -187,9 +191,8 @@ bool cFileProcessor::loadFileData()
     return true;
 }
 
-void cFileProcessor::computePlotHeights()
+void cFileProcessor::fillPlotInfo()
 {
-    int doy = 0;
     int month = 0;
     int day = 0;
     int year = 0;
@@ -206,15 +209,25 @@ void cFileProcessor::computePlotHeights()
 
     if (mExpInfo->dayOfYear().has_value())
     {
-        doy = mExpInfo->dayOfYear().value();
+        mDayOfYear = mExpInfo->dayOfYear().value();
     }
     else
     {
-        doy = nDateUtils::to_day_of_year(month, day, year);
+        mDayOfYear = nDateUtils::to_day_of_year(month, day, year);
     }
 
-    mResults.addDate(month, day, year, doy);
+    mResults.addDate(month, day, year, mDayOfYear);
+    auto n = mPlotInfo->size();
 
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        const auto& plot = (*mPlotInfo)[i];
+        mResults.addPlotInfo(*plot);
+    }
+}
+
+void cFileProcessor::computePlotHeights()
+{
     const auto& parameters = mConfigInfo.getHeightParameters();
     int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
     double heightPercentile = parameters.getHeightPercentile();
@@ -227,10 +240,27 @@ void cFileProcessor::computePlotHeights()
 
         const auto& plot = (*mPlotInfo)[i];
 
-        auto result = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, 94, heightPercentile, 96);
+        auto height = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, 94, heightPercentile, 96);
+        mResults.addPlotData(plot->id(), mDayOfYear, height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
+    }
+}
 
-        mResults.addPlotInfo(*plot);
-        mResults.addPlotData(plot->id(), doy, result.height_mm, result.lowerHeight_mm, result.upperHeight_mm);
+void cFileProcessor::computePlotBioMasses()
+{
+    const auto& parameters = mConfigInfo.getBiomassParameters();
+    int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
+    double voxel_size_mm = parameters.getVoxelSize_mm();
+
+    auto n = mPlotInfo->size();
+
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        update_progress(mID, static_cast<int>((100.0 * i) / n));
+
+        const auto& plot = (*mPlotInfo)[i];
+
+        auto biomass = nPlotUtils::computeDigitalBiomass(*plot, groundLevelBound_mm, voxel_size_mm);
+        mResults.addPlotBiomass(plot->id(), mDayOfYear, biomass);
     }
 }
 
