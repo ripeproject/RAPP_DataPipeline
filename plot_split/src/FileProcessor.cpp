@@ -347,7 +347,15 @@ void cFileProcessor::doPlotSplit()
                     if (plotPointCloud.empty())
                     {
                         std::string msg = "Point cloud \"";
-                        msg += pointCloud.name();
+
+                        if (pointCloud.name().empty())
+                        {
+                            msg += mExpInfo->title();
+                        }
+                        else
+                        {
+                            msg += pointCloud.name();
+                        }
                         msg += "\" is empty!";
                         console_message(msg);
                         continue;
