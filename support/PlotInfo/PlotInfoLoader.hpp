@@ -39,13 +39,13 @@ protected:
 	void onSeedGeneration(const std::string& seed_generation) override;
 	void onCopyNumber(const std::string& copy_number) override;
 
-	void onDimensions(double x_min_m, double x_max_m,
-		double y_min_m, double y_max_m,
-		double z_min_m, double z_max_m) override;
+	void onPlotDimensions(double x_min_m, double x_max_m,
+						double y_min_m, double y_max_m,
+						double z_min_m, double z_max_m) override;
 
-	void onPointCloudData(cPointCloud pointCloud) override;
-	void onPointCloudData(cPointCloud_FrameId pointCloud) override;
-	void onPointCloudData(cPointCloud_SensorInfo pointCloud) override;
+	void onPlotPointCloudData(cPointCloud pointCloud) override;
+	void onPlotPointCloudData(cPointCloud_FrameId pointCloud) override;
+	void onPlotPointCloudData(cPointCloud_SensorInfo pointCloud) override;
 
 
 private:

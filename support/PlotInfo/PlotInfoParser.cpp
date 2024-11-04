@@ -254,7 +254,7 @@ void cPlotInfoParser::processDimensions(cDataBuffer& buffer)
     if (buffer.underrun())
         throw std::runtime_error("ERROR, Buffer under run in processDimensions.");
 
-    onDimensions(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
+    onPlotDimensions(x_min_m, x_max_m, y_min_m, y_max_m, z_min_m, z_max_m);
 }
 
 void cPlotInfoParser::processPointCloudData(cDataBuffer& buffer)
@@ -281,7 +281,7 @@ void cPlotInfoParser::processPointCloudData(cDataBuffer& buffer)
     if (buffer.underrun())
         throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_1_1.");
 
-    onPointCloudData(pointCloud);
+    onPlotPointCloudData(pointCloud);
 }
 
 void cPlotInfoParser::processPointCloudData_FrameId(cDataBuffer& buffer)
@@ -309,7 +309,7 @@ void cPlotInfoParser::processPointCloudData_FrameId(cDataBuffer& buffer)
     if (buffer.underrun())
         throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_FrameId.");
 
-    onPointCloudData(pointCloud);
+    onPlotPointCloudData(pointCloud);
 }
 
 void cPlotInfoParser::processPointCloudData_SensorInfo(cDataBuffer& buffer)
@@ -339,7 +339,7 @@ void cPlotInfoParser::processPointCloudData_SensorInfo(cDataBuffer& buffer)
     if (buffer.underrun())
         throw std::runtime_error("ERROR, Buffer under run in processPointCloudData_SensorInfo.");
 
-    onPointCloudData(pointCloud);
+    onPlotPointCloudData(pointCloud);
 }
 
 

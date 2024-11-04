@@ -49,13 +49,13 @@ public:
 	virtual void onSeedGeneration(const std::string& seed_generation) = 0;
 	virtual void onCopyNumber(const std::string& copy_number) = 0;
 
-	virtual void onDimensions(double x_min_m, double x_max_m,
+	virtual void onPlotDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m,
 		double z_min_m, double z_max_m) = 0;
 
-	virtual void onPointCloudData(cPointCloud pointCloud) = 0;
-	virtual void onPointCloudData(cPointCloud_FrameId pointCloud) = 0;
-	virtual void onPointCloudData(cPointCloud_SensorInfo pointCloud) = 0;
+	virtual void onPlotPointCloudData(cPointCloud pointCloud) = 0;
+	virtual void onPlotPointCloudData(cPointCloud_FrameId pointCloud) = 0;
+	virtual void onPlotPointCloudData(cPointCloud_SensorInfo pointCloud) = 0;
 
 protected:
 	void processData(BLOCK_MAJOR_VERSION_t major_version,

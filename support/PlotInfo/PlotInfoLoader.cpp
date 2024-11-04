@@ -102,14 +102,14 @@ void cPlotInfoLoader::onCopyNumber(const std::string& copy_number)
 		mPlot->setCopyNumber(copy_number);
 }
 
-void cPlotInfoLoader::onDimensions(double x_min_m, double x_max_m,
+void cPlotInfoLoader::onPlotDimensions(double x_min_m, double x_max_m,
 	double y_min_m, double y_max_m,
 	double z_min_m, double z_max_m)
 {
 	x_min_m;
 }
 
-void cPlotInfoLoader::onPointCloudData(cPointCloud pointCloud)
+void cPlotInfoLoader::onPlotPointCloudData(cPointCloud pointCloud)
 {
 	if (mPlot)
 	{
@@ -119,7 +119,7 @@ void cPlotInfoLoader::onPointCloudData(cPointCloud pointCloud)
 	}
 }
 
-void cPlotInfoLoader::onPointCloudData(cPointCloud_FrameId pointCloud)
+void cPlotInfoLoader::onPlotPointCloudData(cPointCloud_FrameId pointCloud)
 {
 	if (mPlot)
 	{
@@ -129,7 +129,7 @@ void cPlotInfoLoader::onPointCloudData(cPointCloud_FrameId pointCloud)
 	}
 }
 
-void cPlotInfoLoader::onPointCloudData(cPointCloud_SensorInfo pointCloud)
+void cPlotInfoLoader::onPlotPointCloudData(cPointCloud_SensorInfo pointCloud)
 {
 	if (mPlot)
 	{
