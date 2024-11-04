@@ -93,6 +93,9 @@ set(POINTCLOUD_2_PLY_VERSION "${POINTCLOUD_2_PLY_MAJOR}.${POINTCLOUD_2_PLY_MINOR
 project(pointcloud2ply VERSION "${POINTCLOUD_2_PLY_VERSION}" LANGUAGES C CXX)
 
 
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -201,6 +204,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 
 # Add the support library source code directory
 # Note: the support directory is a symlink 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PlotInfo)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PointCloud)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/Utilities)

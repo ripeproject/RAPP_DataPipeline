@@ -2,6 +2,7 @@
 #pragma once
 
 #include "PointCloudParser.hpp"
+#include "PlotInfoParser.hpp"
 #include "PointCloud.hpp"
 
 #include <cbdf/SpidercamParser.hpp>
@@ -12,7 +13,7 @@
 
 #define USE_FLOATS
 
-class cPointCloud2Ply : public cPointCloudParser, public cSpidercamParser
+class cPointCloud2Ply : public cPointCloudParser, public cPlotInfoParser, public cSpidercamParser
 {
 public:
     static bool mIndividualPlyFiles;
@@ -37,6 +38,8 @@ private:
     void onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) override;
     void onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) override;
 
+    void onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm) override;
+
     void onDimensions(double x_min_m, double x_max_m,
         double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
 
@@ -59,6 +62,39 @@ private:
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud) override;
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud) override;
 
+private:
+    void onBeginPlotInfoList() override;
+    void onEndPlotInfoList() override;
+
+    void onBeginPlotInfoBlock() override;
+    void onEndPlotInfoBlock() override;
+
+    void onPlotID(int id) override;
+    void onSubPlotID(int id) override;
+    void onName(const std::string& name) override;
+    void onDescription(const std::string& description) override;
+
+    void onSpecies(const std::string& species) override;
+    void onCultivar(const std::string& cultivar) override;
+
+    void onTreatment(const std::string& treatment) override;
+
+    void onConstructName(const std::string& name) override;
+    void onEvent(const std::string& event) override;
+
+    void onPotLabel(const std::string& pot_label) override;
+    void onSeedGeneration(const std::string& seed_generation) override;
+    void onCopyNumber(const std::string& copy_number) override;
+
+    void onPlotDimensions(double x_min_m, double x_max_m,
+        double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
+
+    void onPlotPointCloudData(cPointCloud pointCloud) override;
+    void onPlotPointCloudData(cPointCloud_FrameId pointCloud) override;
+    void onPlotPointCloudData(cPointCloud_SensorInfo pointCloud) override;
+
+
+private:
     void onPosition(spidercam::sPosition_1_t pos) override;
 
     void writePosition(std::filesystem::path filename);
@@ -68,6 +104,9 @@ private:
     std::filesystem::path mOutputPath;
 
     uint32_t    mFrameCount = 0;
+
+    int32_t    mPlotId = 0;
+    int32_t    mSubPlotId = 0;
 
 #ifdef USE_FLOATS
     typedef float range_t;

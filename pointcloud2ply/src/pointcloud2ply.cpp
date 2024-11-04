@@ -99,21 +99,19 @@ void cPointCloud2Ply::onDistanceWindow(double min_dist_m, double max_dist_m) {}
 void cPointCloud2Ply::onAzimuthWindow(double min_azimuth_deg, double max_azimuth_deg) {}
 void cPointCloud2Ply::onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) {}
 
+void cPointCloud2Ply::onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm) {}
+
 void cPointCloud2Ply::onDimensions(double x_min_m, double x_max_m,
     double y_min_m, double y_max_m, double z_min_m, double z_max_m) {}
 
 void cPointCloud2Ply::onBeginSensorKinematics()
-{
-
-}
+{}
 
 void cPointCloud2Ply::onEndSensorKinematics() 
 {}
 
 void cPointCloud2Ply::onSensorKinematicInfo(pointcloud::sSensorKinematicInfo_t point)
-{
-
-}
+{}
 
 void cPointCloud2Ply::onPointCloudData(cPointCloud pointCloud)
 {
@@ -611,7 +609,209 @@ void cPointCloud2Ply::onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, 
     ++mFrameCount;
 }
 
+/*
+ * Plot Info
+ */
+void cPointCloud2Ply::onBeginPlotInfoList() {}
+void cPointCloud2Ply::onEndPlotInfoList() {}
 
+void cPointCloud2Ply::onBeginPlotInfoBlock() {}
+void cPointCloud2Ply::onEndPlotInfoBlock() {}
+
+void cPointCloud2Ply::onPlotID(int id)
+{
+    mPlotId = id;
+}
+
+void cPointCloud2Ply::onSubPlotID(int id) 
+{
+    mSubPlotId = id;
+}
+
+void cPointCloud2Ply::onName(const std::string& name) {}
+void cPointCloud2Ply::onDescription(const std::string& description) {}
+
+void cPointCloud2Ply::onSpecies(const std::string& species) {}
+void cPointCloud2Ply::onCultivar(const std::string& cultivar) {}
+
+void cPointCloud2Ply::onTreatment(const std::string& treatment) {}
+
+void cPointCloud2Ply::onConstructName(const std::string& name) {}
+void cPointCloud2Ply::onEvent(const std::string& event) {}
+
+void cPointCloud2Ply::onPotLabel(const std::string& pot_label) {}
+void cPointCloud2Ply::onSeedGeneration(const std::string& seed_generation) {}
+void cPointCloud2Ply::onCopyNumber(const std::string& copy_number) {}
+
+void cPointCloud2Ply::onPlotDimensions(double x_min_m, double x_max_m,
+    double y_min_m, double y_max_m, double z_min_m, double z_max_m) {}
+
+void cPointCloud2Ply::onPlotPointCloudData(cPointCloud pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3>  vertices;
+    std::vector<range_t>    ranges;
+    std::vector<returns3>   returns;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.clear();
+
+    std::string pathname = mOutputPath.string();
+    pathname += "_Plot";
+    pathname += std::to_string(mPlotId);
+
+    if (mSubPlotId > 0)
+    {
+        pathname += ".";
+        pathname += std::to_string(mSubPlotId);
+    }
+
+    std::filesystem::path filename = pathname;
+    filename.replace_extension("ply");
+
+    writePointcloud(filename);
+}
+
+void cPointCloud2Ply::onPlotPointCloudData(cPointCloud_FrameId pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+
+    std::string pathname = mOutputPath.string();
+    pathname += "_Plot";
+    pathname += std::to_string(mPlotId);
+
+    if (mSubPlotId > 0)
+    {
+        pathname += ".";
+        pathname += std::to_string(mSubPlotId);
+    }
+
+    std::filesystem::path filename = pathname;
+    filename.replace_extension("ply");
+
+    writePointcloud(filename);
+}
+
+void cPointCloud2Ply::onPlotPointCloudData(cPointCloud_SensorInfo pointCloud)
+{
+    auto cloud_data = pointCloud.data();
+
+    std::vector<position3> vertices;
+    std::vector<range_t>   ranges;
+    std::vector<returns3>  returns;
+    std::vector<uint16_t>  frameIDs;
+    std::vector<pixel_loc> pixel_locs;
+
+    for (const auto& point : cloud_data)
+    {
+        if ((point.X_m == 0) && (point.Y_m == 0) && (point.Z_m == 0))
+            continue;
+
+        position3 xyz;
+        xyz.x = point.X_m;
+        xyz.y = point.Y_m;
+        xyz.z = point.Z_m;
+
+        vertices.push_back(xyz);
+
+        ranges.push_back(point.range_mm);
+
+        returns3 data;
+        data.a = point.nir;
+        data.s = point.signal;
+        data.r = point.reflectivity;
+        returns.push_back(data);
+
+        frameIDs.push_back(point.frameID);
+
+        pixel_loc ploc;
+        ploc.chn = point.chnNum;
+        ploc.pixel = point.pixelNum;
+        pixel_locs.push_back(ploc);
+    }
+
+    mVertices.insert(mVertices.end(), vertices.begin(), vertices.end());
+    mRanges.insert(mRanges.end(), ranges.begin(), ranges.end());
+    mReturns.insert(mReturns.end(), returns.begin(), returns.end());
+    mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
+    mPixelLocations.insert(mPixelLocations.end(), pixel_locs.begin(), pixel_locs.end());
+
+    std::string pathname = mOutputPath.string();
+    pathname += "_Plot";
+    pathname += std::to_string(mPlotId);
+
+    if (mSubPlotId > 0)
+    {
+        pathname += ".";
+        pathname += std::to_string(mSubPlotId);
+    }
+
+    std::filesystem::path filename = pathname;
+    filename.replace_extension("ply");
+
+    writePointcloud(filename);
+}
+
+/*
+ * Spidercam Info
+ */
 void cPointCloud2Ply::onPosition(spidercam::sPosition_1_t pos)
 {
     mResyncTimestamp = true;

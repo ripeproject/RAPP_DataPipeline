@@ -32,6 +32,7 @@ public:
 	// event handlers (these functions should _not_ be virtual)
 
 protected:
+	void OnComplete(wxCommandEvent& event);
 	void OnSourceFile(wxCommandEvent& event);
 	void OnSourceDirectory(wxCommandEvent& event);
 	void OnDestinationDirectory(wxCommandEvent& event);

@@ -5,6 +5,7 @@
 #include "StringUtils.hpp"
 
 #include <wx/thread.h>
+#include <wx/config.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -58,13 +59,27 @@ void complete_file_progress(const int id)
 }
 
 // ----------------------------------------------------------------------------
+// constants
+// ----------------------------------------------------------------------------
+
+// IDs for the controls and the menu commands
+enum
+{
+	// Custom submenu items
+	ID_COMPLETE = wxID_HIGHEST + 1,
+
+};
+
+// ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
+wxDEFINE_EVENT(COMPUTATION_COMPLETE, wxCommandEvent);
 
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 wxBEGIN_EVENT_TABLE(cMainWindow, wxPanel)
+EVT_COMMAND(wxID_ANY, COMPUTATION_COMPLETE, cMainWindow::OnComplete)
 wxEND_EVENT_TABLE()
 
 
@@ -77,14 +92,29 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 	CreateControls();
 	CreateLayout();
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("PointCloud2Ply");
+
+	config->Read("Files/Source", &mSource);
+	config->Read("Files/Destination", &mDestinationDataDirectory);
 }
 
 cMainWindow::~cMainWindow()
 {
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("PointCloud2Ply");
+
+	config->Write("Files/Source", mSource);
+	config->Write("Files/Destination", mDestinationDataDirectory);
+
 	g_pEventHandler = nullptr;
 
 	delete mpOriginalLog;
 	mpOriginalLog = nullptr;
+}
+
+void cMainWindow::OnComplete(wxCommandEvent& WXUNUSED(event))
+{
+	mpExportButton->Enable();
 }
 
 void cMainWindow::CreateControls()
@@ -170,7 +200,7 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), "", "",
+	wxFileDialog dlg(this, _("Open file"), mSource, "",
 		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -187,7 +217,7 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", "",
+	wxDirDialog dlg(NULL, "Choose directory", mSource,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -204,7 +234,7 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnDestinationDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose Destination Directory", "",
+	wxDirDialog dlg(NULL, "Choose Destination Directory", mDestinationDataDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -226,8 +256,11 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	cPointCloud2Ply::mUseBinaryFormat    = mpUseBinaryFormat->GetValue();
 
 	const std::filesystem::path input{ mSource.ToStdString() };
+	std::string output_directory = mDestinationDataDirectory.ToStdString();
 
 	std::vector<directory_entry> files_to_process;
+
+	std::string month_dir;
 
 	/*
 	 * Create list of files to process
@@ -249,6 +282,21 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	}
 	else
 	{
+		wxString msg = "Scanning directory: ";
+		msg += mSource;
+		wxLogMessage(msg);
+
+		/*
+		 * Create list of files to process
+		 */
+		if (input.has_parent_path())
+		{
+			month_dir = input.filename().string();
+			if (!isMonthDirectory(month_dir))
+				month_dir.clear();
+		}
+
+		// Scan input directory for all CERES files to operate on
 		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 		{
 			if (!dir_entry.is_regular_file())
@@ -271,6 +319,28 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		return;
 	}
 
+
+	std::filesystem::path output{ output_directory };
+	std::filesystem::directory_entry output_dir;
+
+	{
+		if (!month_dir.empty())
+		{
+			std::string last_dir;
+			if (output.has_parent_path())
+			{
+				last_dir = output.filename().string();
+			}
+
+			if (month_dir != last_dir)
+			{
+				output /= month_dir;
+			}
+		}
+
+		output_dir = std::filesystem::directory_entry{ output };
+	}
+
 	/*
 	 * Add all of the files to process
 	 */
@@ -278,17 +348,15 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	for (auto& in_file : files_to_process)
 	{
 		std::filesystem::path out_file;
-		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-//		if (mIsFile)
-//		{
-//			out_file = std::filesystem::path{ mDestinationDataDirectory.ToStdString()};
-//		}
+		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
 		if (out_file.empty())
 		{
 			std::string out_filename = fe.filename;
-			out_file = mDestinationDataDirectory.ToStdString();
+
+			out_file = output_dir;
+
 			out_file /= addProcessedTimestamp(out_filename);
 
 			if (!fe.extension.empty())
@@ -300,6 +368,22 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
 
 		mFileProcessors.push(fp);
+	}
+
+	mpExportButton->Disable();
+
+	if (numFilesToProcess > 1)
+	{
+		wxString msg = "Processing ";
+		msg += wxString::Format("%d", numFilesToProcess);
+		msg += " files from ";
+		msg += mSource;
+		wxLogMessage(msg);
+	}
+
+	if (!output_dir.exists() && (numFilesToProcess > 0))
+	{
+		std::filesystem::create_directories(output_dir);
 	}
 
 	startDataProcessing();
@@ -355,6 +439,10 @@ wxThread::ExitCode cMainWindow::Entry()
 	wxString msg = "Finished processing ";
 	msg += mSource;
 	wxLogMessage(msg);
+
+	auto event = new wxCommandEvent(COMPUTATION_COMPLETE);
+
+	wxQueueEvent(this, event);
 
 	return (wxThread::ExitCode) 0;
 }

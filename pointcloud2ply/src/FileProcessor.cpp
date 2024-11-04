@@ -74,6 +74,7 @@ void cFileProcessor::run()
 
     cPointCloud2Ply* p = mConverter.get();
 	mFileReader.attach(static_cast<cPointCloudParser*>(p));
+    mFileReader.attach(static_cast<cPlotInfoParser*>(p));
     mFileReader.attach(static_cast<cSpidercamParser*>(p));
 
 	try
