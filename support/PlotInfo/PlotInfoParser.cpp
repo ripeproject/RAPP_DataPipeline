@@ -95,6 +95,9 @@ void cPlotInfoParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::TREATMENT:
         processTreatment(buffer);
         break;
+    case DataID::VEGETATION_ONLY:
+        processVegetationOnly(buffer);
+        break;
     }
 }
 
@@ -240,6 +243,16 @@ void cPlotInfoParser::processCopyNumber(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processCopyNumber.");
 
     onCopyNumber(copy_num);
+}
+
+void cPlotInfoParser::processVegetationOnly(cDataBuffer& buffer)
+{
+    bool vegetation_only = buffer.get<bool>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processVegetationOnly.");
+
+    onVegetationOnly(vegetation_only);
 }
 
 void cPlotInfoParser::processDimensions(cDataBuffer& buffer)

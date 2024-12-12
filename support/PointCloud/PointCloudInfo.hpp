@@ -55,6 +55,8 @@ struct sPointCloudBlock
 
 	std::optional<sRappPoint_t> referencePoint;
 
+	bool vegetationOnly = false;
+
 	std::optional<sPointCloudDimensions_t> dimensions;
 
 	std::vector<pointcloud::sSensorKinematicInfo_t> path;

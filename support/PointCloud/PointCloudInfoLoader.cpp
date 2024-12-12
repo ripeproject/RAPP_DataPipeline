@@ -56,6 +56,11 @@ void cPointCloudInfoLoader::onReferencePoint(std::int32_t x_mm, std::int32_t y_m
 	mBlock.referencePoint = point;
 }
 
+void cPointCloudInfoLoader::onVegetationOnly(const bool vegetation_only)
+{
+	mBlock.vegetationOnly = vegetation_only;
+}
+
 void cPointCloudInfoLoader::onDimensions(double x_min_m, double x_max_m,
 	double y_min_m, double y_max_m,
 	double z_min_m, double z_max_m) 

@@ -49,6 +49,8 @@ public:
 	virtual void onSeedGeneration(const std::string& seed_generation) = 0;
 	virtual void onCopyNumber(const std::string& copy_number) = 0;
 
+	virtual void onVegetationOnly(const bool vegetation_only) = 0;
+
 	virtual void onPlotDimensions(double x_min_m, double x_max_m,
 		double y_min_m, double y_max_m,
 		double z_min_m, double z_max_m) = 0;
@@ -86,6 +88,8 @@ protected:
 	virtual void processPotLabel(cDataBuffer& buffer);
 	virtual void processSeedGeneration(cDataBuffer& buffer);
 	virtual void processCopyNumber(cDataBuffer& buffer);
+
+	virtual void processVegetationOnly(cDataBuffer& buffer);
 
 	void processDimensions(cDataBuffer& buffer);
 

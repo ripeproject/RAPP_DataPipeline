@@ -177,6 +177,9 @@ void cPointCloudParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::REFERENCE_POINT:
         processReferencePoint(buffer);
         break;
+    case DataID::VEGETATION_ONLY:
+        processVegetationOnly(buffer);
+        break;
     }
 }
 
@@ -300,6 +303,16 @@ void cPointCloudParser::processReferencePoint(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processReferencePoint.");
 
     onReferencePoint(x_mm, y_mm, z_mm);
+}
+
+void cPointCloudParser::processVegetationOnly(cDataBuffer& buffer)
+{
+    bool vegetation_only = buffer.get<bool>();
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processVegetationOnly.");
+
+    onVegetationOnly(vegetation_only);
 }
 
 /*

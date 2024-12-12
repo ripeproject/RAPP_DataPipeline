@@ -94,6 +94,8 @@ public:
 
 	void writeReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm);
 
+	void writeVegetationOnly(const bool vegetation_only);
+
 	void writeBeginSensorKinematics();
 	void writeEndSensorKinematics();
 	void writeSensorKinematicInfo(const pointcloud::sSensorKinematicInfo_t& point);

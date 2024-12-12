@@ -34,6 +34,7 @@ namespace plot_info
 		SEED_GENERATION,
 		COPY_NUMBER,
 		SUB_PLOT_ID,
+		VEGETATION_ONLY,
 	};
 }
 

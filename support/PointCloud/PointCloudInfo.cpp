@@ -14,6 +14,8 @@ void sPointCloudBlock::clear()
 
 	path.clear();
 	pointCloud.clear();
+
+	vegetationOnly = false;
 }
 
 void cPointCloudInfo::clear()

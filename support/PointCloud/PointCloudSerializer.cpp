@@ -352,6 +352,20 @@ void cPointCloudSerializer::writeReferencePoint(std::int32_t x_mm, std::int32_t 
     writeBlock(*mBlockID, mDataBuffer);
 }
 
+void cPointCloudSerializer::writeVegetationOnly(const bool vegetation_only)
+{
+    mBlockID->setVersion(1, 0);
+    mBlockID->dataID(DataID::VEGETATION_ONLY);
+
+    mDataBuffer.clear();
+    mDataBuffer << vegetation_only;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing vegetation only data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
 void cPointCloudSerializer::writeBeginPointCloudList()
 {
     setVersion(1, 0);

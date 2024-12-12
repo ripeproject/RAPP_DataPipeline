@@ -40,6 +40,7 @@ namespace pointcloud
         BEGIN_POINT_CLOUD_LIST,
         END_POINT_CLOUD_LIST,
         REFERENCE_POINT,
+        VEGETATION_ONLY,
     };
 }
 
