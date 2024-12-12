@@ -61,6 +61,8 @@ private:
 	wxTextCtrl* mpLoadConfigFile = nullptr;
 	wxButton* mpLoadConfigButton = nullptr;
 
+	wxCheckBox* mpSaveDataAsRowMajor = nullptr;
+
 	wxButton* mpComputeButton = nullptr;
 
 	cFileProgressCtrl* mpProgressCtrl = nullptr;

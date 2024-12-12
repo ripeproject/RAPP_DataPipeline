@@ -188,8 +188,7 @@ void cMainWindow::CreateControls()
 	mpLoadConfigButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadConfigButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgBrowse, this);
 
-//	mpSavePlyFiles = new wxCheckBox(this, wxID_ANY, "Save PLY Files");
-//	mpPlyUseBinaryFormat = new wxCheckBox(this, wxID_ANY, "Use Binary Format");
+	mpSaveDataAsRowMajor = new wxCheckBox(this, wxID_ANY, "Save Data In Row Major Format");
 
 	mpComputeButton = new wxButton(this, wxID_ANY, "Compute");
 	mpComputeButton->Disable();
@@ -227,23 +226,21 @@ void cMainWindow::CreateLayout()
 	grid_sizer->Add(mpLoadConfigButton, 0, wxALIGN_CENTER_VERTICAL);
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 
-	topsizer->AddSpacer(5);
+	topsizer->AddSpacer(10);
 
 	wxBoxSizer* op_sizer = new wxBoxSizer(wxHORIZONTAL);
 
-/*
 	{
 		wxStaticBoxSizer* options = new wxStaticBoxSizer(wxHORIZONTAL, this, "Save Options");
 		options->AddSpacer(5);
-		options->Add(mpSavePlotsInSingleFile, wxSizerFlags().Proportion(0).Expand());
-		options->AddSpacer(5);
-		options->Add(mpEnableFrameIDs, wxSizerFlags().Proportion(0).Expand());
-		options->AddSpacer(5);
-		options->Add(mpEnablePixelInfo, wxSizerFlags().Proportion(0).Expand());
 
+		options->Add(mpSaveDataAsRowMajor, wxSizerFlags().Proportion(0).Expand());
+
+		options->AddSpacer(5);
 		op_sizer->Add(options, wxSizerFlags().Proportion(0).Expand());
 	}
 
+/*
 	op_sizer->AddSpacer(10);
 
 	{
@@ -259,7 +256,7 @@ void cMainWindow::CreateLayout()
 
 	topsizer->Add(op_sizer, wxSizerFlags().Proportion(0).Expand());
 
-	topsizer->AddSpacer(5);
+	topsizer->AddSpacer(10);
 	topsizer->Add(mpComputeButton, wxSizerFlags().Proportion(0).Expand());
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpProgressCtrl, wxSizerFlags().Proportion(1).Expand());
@@ -292,7 +289,7 @@ void cMainWindow::OnSrcBrowse(wxCommandEvent& WXUNUSED(event))
 	mSrcDirectory = dlg.GetPath().ToStdString();
 	mpSrcDirTextCtrl->SetValue(mSrcDirectory);
 
-	if (!mDstDirectory.IsEmpty())
+	if (!mConfigFileName.IsEmpty() && !mDstDirectory.IsEmpty())
 		mpComputeButton->Enable();
 }
 
@@ -307,8 +304,7 @@ void cMainWindow::OnDstBrowse(wxCommandEvent& event)
 	mDstDirectory = dlg.GetPath().ToStdString();
 	mpLoadDstDir->SetValue(mDstDirectory);
 
-//	if ((mConfigData && !mConfigData->empty()) && (!mSrcDirectory.IsEmpty()))
-	if (!mSrcDirectory.IsEmpty())
+	if (!mConfigFileName.IsEmpty() && !mSrcDirectory.IsEmpty())
 		mpComputeButton->Enable();
 }
 
@@ -326,9 +322,6 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 
 	std::string config_file = dlg.GetPath().ToStdString();
 
-//	mConfigData = std::make_unique<cConfigFileData>(config_file);
-
-//	if (!mConfigData->load())
 	if (!mConfigData.open(config_file))
 	{
 		mpLoadConfigFile->SetValue("");
@@ -339,9 +332,7 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 	mConfigFileName = dlg.GetPath();
 	mpLoadConfigFile->SetValue(mConfigFileName);
 
-
-	const auto& height = mConfigData.getHeightParameters();
-
+	mpSaveDataAsRowMajor->SetValue(mConfigData.getOptions().getSaveDataRowMajor());
 
 	if (!mDstDirectory.IsEmpty() && !mSrcDirectory.IsEmpty())
 		mpComputeButton->Enable();
@@ -511,6 +502,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		std::filesystem::create_directories(output_dir);
 	}
 
+	mResults.saveRowMajor(mpSaveDataAsRowMajor->IsChecked());
+
 	startDataProcessing();
 }
 
@@ -576,6 +569,7 @@ wxThread::ExitCode cMainWindow::Entry()
 	mResults.write_replicate_height_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
 
 	mResults.write_plot_biomass_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
+	mResults.write_replicate_biomass_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
 
 	wxString msg = "Finished processing ";
 	msg += mSrcDirectory;

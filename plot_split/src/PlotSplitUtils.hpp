@@ -51,3 +51,6 @@ cRappPointCloud isolate_iterative(const cRappPointCloud& pc, rfm::sPlotBoundingB
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double tolerance_mm, double bound_pct = 50.0);
 
 cRappPointCloud isolate_pour(const cRappPointCloud& pc);
+
+cRappPointCloud isolate_find_center(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0);

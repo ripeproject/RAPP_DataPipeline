@@ -33,6 +33,7 @@ bool cPlotDataConfigFile::isDirty() const
 void cPlotDataConfigFile::clear()
 {
 	mFileName.clear();
+	mOptions.clear();
 	mHeightParameters.clear();
 	mBiomassParameters.clear();
 	mTmpFileName = "~newfile.plotdata";
@@ -70,6 +71,7 @@ bool cPlotDataConfigFile::open(const std::string& file_name)
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
+	mOptions.load(configDoc);
 	mHeightParameters.load(configDoc);
 	mBiomassParameters.load(configDoc);
 
@@ -82,6 +84,7 @@ void cPlotDataConfigFile::save()
 
 	nlohmann::json configDoc;
 
+	mOptions.save(configDoc);
 	mHeightParameters.save(configDoc);
 	mBiomassParameters.save(configDoc);
 
@@ -107,6 +110,7 @@ void cPlotDataConfigFile::save_as(const std::string& file_name)
 {
 	nlohmann::json configDoc;
 
+	mOptions.save(configDoc);
 	mHeightParameters.save(configDoc);
 	mBiomassParameters.save(configDoc);
 
@@ -165,6 +169,9 @@ bool cPlotDataConfigFile::open_temporary_file(const std::string& file_name)
 		mFileName.clear();
 	}
 
+	mOptions.load(configDoc);
+	mOptions.setDirty(true);
+
 	mHeightParameters.load(configDoc);
 	mHeightParameters.setDirty(true);
 
@@ -177,6 +184,10 @@ bool cPlotDataConfigFile::open_temporary_file(const std::string& file_name)
 void cPlotDataConfigFile::save_temporary_file()
 {
 	nlohmann::json configDoc;
+
+	bool options_dirty = mOptions.isDirty();
+	mOptions.save(configDoc);
+	mOptions.setDirty(options_dirty);
 
 	bool height_dirty = mHeightParameters.isDirty();
 	mHeightParameters.save(configDoc);
@@ -192,6 +203,17 @@ void cPlotDataConfigFile::save_temporary_file()
 		return;
 
 	out << std::setw(4) << configDoc << std::endl;
+}
+
+const cPlotDataConfigOptions& cPlotDataConfigFile::getOptions() const
+{
+	return mOptions;
+
+}
+
+cPlotDataConfigOptions& cPlotDataConfigFile::getOptions()
+{
+	return mOptions;
 }
 
 const cPlotDataConfigHeight& cPlotDataConfigFile::getHeightParameters() const

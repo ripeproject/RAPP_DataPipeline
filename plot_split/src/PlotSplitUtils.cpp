@@ -569,3 +569,38 @@ cRappPointCloud isolate_pour(const cRappPointCloud& pc)
 {
 	return pc;
 }
+
+
+cRappPointCloud isolate_find_center(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct)
+{
+	double half_width_mm = plot_width_mm / 2.0;
+	double half_length_mm = plot_length_mm / 2.0;
+
+	auto result = trim_outside(pc, box);
+	auto c1 = compute_center_of_height(result, height_threshold_pct);
+
+	std::int32_t north_mm = c1.x_mm - half_width_mm;
+	std::int32_t south_mm = c1.x_mm + half_width_mm;
+	std::int32_t east_mm = c1.y_mm + half_length_mm;
+	std::int32_t west_mm = c1.y_mm - half_length_mm;
+
+	rfm::sPlotBoundingBox_t plot;
+	plot.northWestCorner.x_mm = north_mm;
+	plot.northWestCorner.y_mm = west_mm;
+
+	plot.southWestCorner.x_mm = south_mm;
+	plot.southWestCorner.y_mm = west_mm;
+
+	plot.northEastCorner.x_mm = north_mm;
+	plot.northEastCorner.y_mm = east_mm;
+
+	plot.southEastCorner.x_mm = south_mm;
+	plot.southEastCorner.y_mm = east_mm;
+
+	result = trim_outside(pc, plot);
+	result.recomputeBounds();
+
+	return result;
+
+}

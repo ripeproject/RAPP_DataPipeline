@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "PlotDataConfigOptions.hpp"
 #include "PlotDataConfigHeight.hpp"
 #include "PlotDataConfigBiomass.hpp"
 
@@ -33,6 +34,9 @@ public:
 	bool open_temporary_file(const std::string& file_name);
 	void save_temporary_file();
 
+	const cPlotDataConfigOptions& getOptions() const;
+	cPlotDataConfigOptions& getOptions();
+
 	const cPlotDataConfigHeight& getHeightParameters() const;
 	cPlotDataConfigHeight& getHeightParameters();
 
@@ -44,7 +48,8 @@ private:
 	std::string mFileName;
 	std::string mTmpFileName;
 
-	cPlotDataConfigHeight mHeightParameters;
+	cPlotDataConfigOptions mOptions;
+	cPlotDataConfigHeight  mHeightParameters;
 	cPlotDataConfigBiomass mBiomassParameters;
 };
 

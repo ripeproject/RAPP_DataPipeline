@@ -43,7 +43,7 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Plot Split")
+	: wxFrame(NULL, wxID_ANY, "Plot Data")
 {
 	mpMainWindow = new cMainWindow(this);
 
@@ -132,19 +132,19 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	wxAboutDialogInfo info;
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
-	info.SetDescription(_("Convert older experimental data files to a Ceres data formatted file.     \n"));
-	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetDescription(_("Compute plot height and above ground biomass from plot based Ceres data file.     \n"));
+	info.SetCopyright(wxT("Copyright (c) 2024, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(PlotSplit));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the PlotSplit repository and source\n"
-		"distribution.  This includes PlotSplit’s source code, the examples, and\n"
+		"This license applies to all files in the PlotData repository and source\n"
+		"distribution.  This includes PlotData’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
-		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
+		"Copyright(c) 2024, Carl R.Woese Institute for Genomic Biology\n"
 		"All rights reserved.\n"
 		"\n"
 		"Redistribution and use in source and binary forms, with or without\n"

@@ -43,50 +43,48 @@ nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointClou
 }
 
 #ifdef USE_PCL
-double nPlotUtils::computeDigitalBiomass(const cPlotPointCloud& plot, int groundHeight_mm, double voxel_size)
-{
-    pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
-
-//    pcl::PCLPointCloud2::Ptr cloud(new pcl::PCLPointCloud2());
-
-    for (const auto& point : plot)
+    double nPlotUtils::computeDigitalBiomass(const cPlotPointCloud& plot, int groundHeight_mm, double voxel_size)
     {
-        if (point.z_mm > groundHeight_mm)
+        pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
+
+        for (const auto& point : plot)
         {
-            points->emplace_back(pcl::PointXYZ(point.x_mm, point.y_mm, point.z_mm));
+            if (point.z_mm > groundHeight_mm)
+            {
+                points->emplace_back(pcl::PointXYZ(point.x_mm, point.y_mm, point.z_mm));
+            }
         }
+
+        pcl::PCLPointCloud2::Ptr cloud(new pcl::PCLPointCloud2());
+
+        pcl::toPCLPointCloud2(*points, *cloud);
+
+        pcl::PCLPointCloud2::Ptr voxels(new pcl::PCLPointCloud2());
+
+        // Create the filtering object
+        pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
+        sor.setInputCloud(cloud);
+        sor.setLeafSize(voxel_size, voxel_size, voxel_size);
+        sor.filter(*voxels);
+
+        double single_voxel_volume = voxel_size * voxel_size * voxel_size;
+
+        auto n = voxels->height * voxels->width;
+
+        double volume = single_voxel_volume * n;
+
+        double dx = plot.maxX_mm() - plot.minX_mm();
+        double dy = plot.maxY_mm() - plot.minY_mm();
+
+        double area = dx * dy;
+
+        double biomass = 0;
+
+        if (area > 0.0)
+            biomass = volume / area;
+
+        return biomass;
     }
-
-    pcl::PCLPointCloud2::Ptr cloud(new pcl::PCLPointCloud2());
-
-    pcl::toPCLPointCloud2(*points, *cloud);
-
-    pcl::PCLPointCloud2::Ptr voxels(new pcl::PCLPointCloud2());
-
-    // Create the filtering object
-    pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
-    sor.setInputCloud(cloud);
-    sor.setLeafSize(voxel_size, voxel_size, voxel_size);
-    sor.filter(*voxels);
-
-    double single_voxel_volume = voxel_size * voxel_size * voxel_size;
-
-    auto n = voxels->height * voxels->width;
-
-    double volume = single_voxel_volume * n;
-
-    double dx = plot.maxX_mm() - plot.minX_mm();
-    double dy = plot.maxY_mm() - plot.minY_mm();
-
-    double area = dx * dy;
-
-    double biomass = 0;
-
-    if (area > 0.0)
-        biomass = volume / area;
-
-    return biomass;
-}
 #else
     double nPlotUtils::computeDigitalBiomass(const cPlotPointCloud& plot, int groundHeight_mm, double voxel_size)
     {

@@ -17,6 +17,9 @@ public:
 	cPlotData() = default;
 	~cPlotData();
 
+	bool saveRowMajor() const;
+	void saveRowMajor(bool row_major);
+
 	void setExperimentInfo(const cExperimentInfo& info);
 
 	void addPlotInfo(const cPlotMetaData& info);
@@ -37,6 +40,18 @@ public:
 	void write_replicate_biomass_file(const std::string& directory, const std::string& title);
 
 protected:
+	void write_plot_height_file_by_row(std::ofstream& out);
+	void write_plot_height_file_by_column(std::ofstream& out);
+
+	void write_replicate_height_file_by_row(std::ofstream& out);
+	void write_replicate_height_file_by_column(std::ofstream& out);
+
+	void write_plot_biomass_file_by_row(std::ofstream& out);
+	void write_plot_biomass_file_by_column(std::ofstream& out);
+
+	void write_replicate_biomass_file_by_row(std::ofstream& out);
+	void write_replicate_biomass_file_by_column(std::ofstream& out);
+
 	void splitIntoGroups(cPlotMetaData* pPlotInfo);
 	bool inGroup(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2);
 
@@ -44,6 +59,8 @@ private:
 	cExperimentMetaData mExperimentInfo;
 
 	std::vector<cPlotMetaData*> mpPlots;
+
+	bool mSaveRowMajor = false;
 
 	// Note: mGroups does not own the pointer
 	std::vector<std::vector<cPlotMetaData*>> mGroups;

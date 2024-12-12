@@ -22,20 +22,22 @@ cPlotData::~cPlotData()
 
 	mpPlots.clear();
 
-
 	for (auto& group : mGroups)
 	{
-/*
-		for (auto plot : group)
-		{
-			delete plot;
-		}
-*/
-
 		group.clear();
 	}
 
 	mGroups.clear();
+}
+
+bool cPlotData::saveRowMajor() const
+{
+	return mSaveRowMajor;
+}
+
+void cPlotData::saveRowMajor(bool row_major)
+{
+	mSaveRowMajor = row_major;
 }
 
 void cPlotData::setExperimentInfo(const cExperimentInfo& info)
@@ -93,6 +95,7 @@ void cPlotData::addPlotBiomass(int plot_id, int doy, double biomass)
 
 void cPlotData::computeReplicateData()
 {
+	// Compute Plot Height Data
 	for (auto& group : mGroupHeights)
 	{
 		group.second.clear();
@@ -146,6 +149,62 @@ void cPlotData::computeReplicateData()
 		}
 
 		mGroupHeights[groupNum] = data;
+	}
+
+	// Compute Biomass Data
+	for (auto& group : mGroupBioMasses)
+	{
+		group.second.clear();
+	}
+	mGroupBioMasses.clear();
+
+	for (int groupNum = 0; groupNum < mGroups.size(); ++groupNum)
+	{
+		auto& group = mGroups[groupNum];
+
+		std::vector<sGroupBioMassData_t> data;
+
+		for (const auto& date : mDates)
+		{
+			std::valarray<double> biomasses(group.size());
+
+			int count = 0;
+
+			for (std::size_t i = 0; i < group.size(); ++i)
+			{
+				const auto& plot_biomasses = mPlotBioMasses[group[i]->id()];
+
+				for (const auto& plot_biomass : plot_biomasses)
+				{
+					if (plot_biomass.doy == date.doy)
+					{
+						biomasses[i] = plot_biomass.biomass;
+						++count;
+						break;
+					}
+				}
+			}
+
+			if (count > 0)
+			{
+				double mean = biomasses.sum() / count;
+
+				biomasses -= mean;
+				auto h2 = std::pow(biomasses, 2);
+
+				double err = 0.0;
+
+				if (count > 1)
+				{
+					h2 /= (count - 1);
+					err = sqrt(h2.sum());
+				}
+
+				data.emplace_back(sGroupBioMassData_t{ date.doy, mean, err });
+			}
+		}
+
+		mGroupBioMasses[groupNum] = data;
 	}
 }
 
@@ -333,6 +392,16 @@ void cPlotData::write_plot_height_file(const std::string& directory, const std::
 	if (!out.is_open())
 		return;
 
+	if (mSaveRowMajor)
+		write_plot_height_file_by_row(out);
+	else
+		write_plot_height_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_plot_height_file_by_row(std::ofstream& out)
+{
 	auto doy_last = --(mDates.end());
 
 	out << "Date,\t";
@@ -342,7 +411,7 @@ void cPlotData::write_plot_height_file(const std::string& directory, const std::
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "Day of Year,\t";
+	out << "DayOfYear,\t";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
 		out << it->doy << ",\t";
@@ -351,7 +420,7 @@ void cPlotData::write_plot_height_file(const std::string& directory, const std::
 
 	for (const auto& plot : mPlotHeights)
 	{
-		out << "Plot " << plot.first << ",\t";
+		out << "Plot_" << plot.first << ",\t";
 
 		const auto& heights = plot.second;
 
@@ -364,8 +433,34 @@ void cPlotData::write_plot_height_file(const std::string& directory, const std::
 		}
 		out << last->height_mm << "\n";
 	}
+}
 
-	out.close();
+void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
+{
+	out << "Date,\t" << "DayOfYear,\t";
+
+	auto plot_last = --(mPlotHeights.end());
+	for (auto it = mPlotHeights.begin(); it != plot_last; ++it)
+	{
+		out << "Plot_" << it->first << ", ";
+	}
+	out << "Plot_" << plot_last->first << "\n";
+
+	auto n = mDates.size();
+	n = std::min(n, mPlotHeights.size());
+
+	auto date_it = mDates.begin();
+	for (std::size_t i = 0; i < n; ++i, ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
+		out << date_it->doy << ",\t";
+
+		for (auto it = mPlotHeights.begin(); it != plot_last; ++it)
+		{
+			out << (it->second)[i].height_mm << ", ";
+		}
+		out << (plot_last->second)[i].height_mm << "\n";
+	}
 }
 
 void cPlotData::write_replicate_height_file(const std::string& directory, const std::string& title)
@@ -400,6 +495,16 @@ void cPlotData::write_replicate_height_file(const std::string& directory, const 
 	if (!out.is_open())
 		return;
 
+	if (mSaveRowMajor)
+		write_replicate_height_file_by_row(out);
+	else
+		write_replicate_height_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_replicate_height_file_by_row(std::ofstream& out)
+{
 	auto doy_last = --(mDates.end());
 
 	out << "Date,\t";
@@ -433,8 +538,37 @@ void cPlotData::write_replicate_height_file(const std::string& directory, const 
 		}
 		out << last->avgHeight_mm << ", " << last->stdHeight_mm << "\n";
 	}
+}
 
-	out.close();
+void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
+{
+	out << "Date,\t" << "DayOfYear,\t";
+
+	auto group_last = --(mGroups.end());
+	for (auto it = mGroups.begin(); it != group_last; ++it)
+	{
+		const auto& info = (*it).front();
+		out << info->event() << ",, ";
+	}
+	const auto& info = (*group_last).front();
+	out << info->event() << "\n";
+
+	auto n = mDates.size();
+	n = std::min(n, mGroupHeights.size());
+
+	auto height_last = --(mGroupHeights.end());
+	auto date_it = mDates.begin();
+	for (std::size_t i = 0; i < n; ++i, ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
+		out << date_it->doy << ",\t";
+
+		for (auto it = mGroupHeights.begin(); it != height_last; ++it)
+		{
+			out << (it->second)[i].avgHeight_mm << ", " << (it->second)[i].stdHeight_mm << ", ";
+		}
+		out << (height_last->second)[i].avgHeight_mm << ", " << (height_last->second)[i].stdHeight_mm << "\n";
+	}
 }
 
 void cPlotData::write_plot_biomass_file(const std::string& directory, const std::string& title)
@@ -455,6 +589,16 @@ void cPlotData::write_plot_biomass_file(const std::string& directory, const std:
 	if (!out.is_open())
 		return;
 
+	if (mSaveRowMajor)
+		write_plot_biomass_file_by_row(out);
+	else
+		write_plot_biomass_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_plot_biomass_file_by_row(std::ofstream& out)
+{
 	auto doy_last = --(mDates.end());
 
 	out << "Date,\t";
@@ -464,7 +608,7 @@ void cPlotData::write_plot_biomass_file(const std::string& directory, const std:
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "Day of Year,\t";
+	out << "DayOfYear,\t";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
 		out << it->doy << ",\t";
@@ -473,7 +617,7 @@ void cPlotData::write_plot_biomass_file(const std::string& directory, const std:
 
 	for (const auto& plot : mPlotBioMasses)
 	{
-		out << "Plot " << plot.first << ",\t";
+		out << "Plot_" << plot.first << ",\t";
 
 		const auto& heights = plot.second;
 
@@ -486,8 +630,34 @@ void cPlotData::write_plot_biomass_file(const std::string& directory, const std:
 		}
 		out << last->biomass << "\n";
 	}
+}
 
-	out.close();
+void cPlotData::write_plot_biomass_file_by_column(std::ofstream& out)
+{
+	out << "Date,\t" << "DayOfYear,\t";
+
+	auto plot_last = --(mPlotBioMasses.end());
+	for (auto it = mPlotBioMasses.begin(); it != plot_last; ++it)
+	{
+		out << "Plot_" << it->first << ", ";
+	}
+	out << "Plot_" << plot_last->first << "\n";
+
+	auto n = mDates.size();
+	n = std::min(n, mPlotBioMasses.size());
+
+	auto date_it = mDates.begin();
+	for (std::size_t i = 0; i < n; ++i, ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
+		out << date_it->doy << ",\t";
+
+		for (auto it = mPlotBioMasses.begin(); it != plot_last; ++it)
+		{
+			out << (it->second)[i].biomass << ", ";
+		}
+		out << (plot_last->second)[i].biomass << "\n";
+	}
 }
 
 void cPlotData::write_replicate_biomass_file(const std::string& directory, const std::string& title)
@@ -495,7 +665,7 @@ void cPlotData::write_replicate_biomass_file(const std::string& directory, const
 	if (mDates.empty())
 		return;
 
-	if (mGroupHeights.empty())
+	if (mGroupBioMasses.empty())
 		return;
 
 	bool useEvent = true;
@@ -512,16 +682,26 @@ void cPlotData::write_replicate_biomass_file(const std::string& directory, const
 	//useSeedGeneration = false; same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
 	//useCopyNumber = false; same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
 
-	std::filesystem::path height_file = directory;
+	std::filesystem::path biomass_file = directory;
 
-	height_file /= title;
-	height_file.replace_extension("heights.csv");
+	biomass_file /= title;
+	biomass_file.replace_extension("biomass.csv");
 
 	std::ofstream out;
-	out.open(height_file, std::ios::trunc);
+	out.open(biomass_file, std::ios::trunc);
 	if (!out.is_open())
 		return;
 
+	if (mSaveRowMajor)
+		write_replicate_biomass_file_by_row(out);
+	else
+		write_replicate_biomass_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_replicate_biomass_file_by_row(std::ofstream& out)
+{
 	auto doy_last = --(mDates.end());
 
 	out << "Date,\t";
@@ -531,32 +711,61 @@ void cPlotData::write_replicate_biomass_file(const std::string& directory, const
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "Day of Year,\t";
+	out << "DayOfYear,\t";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
 		out << it->doy << ",\t";
 	}
 	out << doy_last->doy << "\n";
 
-	for (const auto& group : mGroupHeights)
+	for (const auto& group : mGroupBioMasses)
 	{
 		const auto& info = mGroups[group.first].front();
 
 		out << info->event() << ",\t";
 
-		const auto& heights = group.second;
+		const auto& biomasses = group.second;
 
-		auto last = heights.end();
+		auto last = biomasses.end();
 		--last;
 
-		for (auto it = heights.begin(); it != last; ++it)
+		for (auto it = biomasses.begin(); it != last; ++it)
 		{
-			out << it->avgHeight_mm << ", " << it->stdHeight_mm << ",\t";
+			out << it->avgBioMass << ", " << it->stdBioMass << ",\t";
 		}
-		out << last->avgHeight_mm << ", " << last->stdHeight_mm << "\n";
+		out << last->avgBioMass << ", " << last->stdBioMass << "\n";
 	}
+}
 
-	out.close();
+void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
+{
+	out << "Date,\t" << "DayOfYear,\t";
+
+	auto group_last = --(mGroups.end());
+	for (auto it = mGroups.begin(); it != group_last; ++it)
+	{
+		const auto& info = (*it).front();
+		out << info->event() << ",, ";
+	}
+	const auto& info = (*group_last).front();
+	out << info->event() << "\n";
+
+	auto n = mDates.size();
+	n = std::min(n, mGroupBioMasses.size());
+
+	auto biomass_last = --(mGroupBioMasses.end());
+	auto date_it = mDates.begin();
+	for (std::size_t i = 0; i < n; ++i, ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
+		out << date_it->doy << ",\t";
+
+		for (auto it = mGroupBioMasses.begin(); it != biomass_last; ++it)
+		{
+			out << (it->second)[i].avgBioMass << ", " << (it->second)[i].stdBioMass << ", ";
+		}
+		out << (biomass_last->second)[i].avgBioMass << ", " << (biomass_last->second)[i].stdBioMass << "\n";
+	}
 }
 
 void cPlotData::splitIntoGroups(cPlotMetaData* pPlotInfo)

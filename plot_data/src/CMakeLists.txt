@@ -21,6 +21,9 @@ set(PLOT_DATA_COMMON_FILES
 	PlotDataConfigFile.hpp
 	PlotDataConfigFile.cpp
 
+	PlotDataConfigOptions.hpp
+	PlotDataConfigOptions.cpp
+
 	PlotDataConfigHeight.hpp
 	PlotDataConfigHeight.cpp
 
