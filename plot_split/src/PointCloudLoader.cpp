@@ -43,6 +43,11 @@ void cPointCloudLoader::onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, s
     mInfo->setReferencePoint(x_mm, y_mm, z_mm);
 }
 
+void cPointCloudLoader::onVegetationOnly(const bool vegetation_only)
+{
+    mInfo->setVegetationOnly(vegetation_only);
+}
+
 void cPointCloudLoader::onDimensions(double x_min_m, double x_max_m,
     double y_min_m, double y_max_m, double z_min_m, double z_max_m)
 {

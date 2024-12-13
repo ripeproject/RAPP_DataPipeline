@@ -69,6 +69,10 @@ public:
 	const std::optional<sAzimuthWindow_t>&  azimuthWindow() const;
 	const std::optional<sAltitudeWindow_t>& altitudeWindow() const;
 
+	const std::optional<sRappPoint_t>& referencePoint() const;
+
+	bool vegetationOnly() const;
+
 	const std::optional<pointcloud::imu_data_t>& imuData() const;
 
 	const std::deque<pointcloud::sSensorKinematicInfo_t>& getSensorKinematicData() const;
@@ -92,6 +96,8 @@ protected:
 	void setAltitudeWindow(double min_altitude_deg, double max_altitude_deg);
 
 	void setReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm);
+
+	void setVegetationOnly(const bool vegetation_only);
 
 	void setImuData(pointcloud::imu_data_t data);
 
@@ -123,6 +129,8 @@ private:
 	std::optional<sAltitudeWindow_t> mAltitudeWindow;
 
 	std::optional<sRappPoint_t> mReferencePoint;
+
+	bool mVegetationOnly = false;
 
 	std::optional<pointcloud::imu_data_t> mImuData;
 

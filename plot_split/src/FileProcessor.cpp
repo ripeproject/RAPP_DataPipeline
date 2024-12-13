@@ -567,8 +567,7 @@ void cFileProcessor::savePlotFile()
         if (!plot->copyNumber().empty())
             plotInfoSerializer.writeCopyNumber(plot->copyNumber());
 
-        if (!plot->v.empty())
-            plotInfoSerializer.writeCopyNumber(plot->copyNumber());
+        plotInfoSerializer.writeVegetationOnly(plot->vegetationOnly());
 
 
         if (plot->pointCloud().hasPixelInfo())

@@ -14,6 +14,10 @@ void cPointCloudInfo::clear()
 	mAzimuthWindow.reset();
 	mAltitudeWindow.reset();
 
+	mReferencePoint.reset();
+
+	mVegetationOnly = false;
+
 	mImuData.reset();
 
 	mSensorKinematicData.clear();
@@ -57,6 +61,16 @@ const std::optional<cPointCloudInfo::sAzimuthWindow_t>& cPointCloudInfo::azimuth
 const std::optional<cPointCloudInfo::sAltitudeWindow_t>& cPointCloudInfo::altitudeWindow() const
 {
 	return mAltitudeWindow;
+}
+
+const std::optional<cPointCloudInfo::sRappPoint_t>& cPointCloudInfo::referencePoint() const
+{
+	return mReferencePoint;
+}
+
+bool cPointCloudInfo::vegetationOnly() const
+{
+	return mVegetationOnly;
 }
 
 const std::optional<pointcloud::imu_data_t>& cPointCloudInfo::imuData() const
@@ -134,6 +148,11 @@ void cPointCloudInfo::setReferencePoint(std::int32_t x_mm, std::int32_t y_mm, st
 {
 	sRappPoint_t ref_point = { x_mm, y_mm, z_mm };
 	mReferencePoint = ref_point;
+}
+
+void cPointCloudInfo::setVegetationOnly(const bool vegetation_only)
+{
+	mVegetationOnly = vegetation_only;
 }
 
 void cPointCloudInfo::setImuData(pointcloud::imu_data_t data)
