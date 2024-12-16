@@ -104,8 +104,6 @@ private:
 	std::string mSeedGeneration;
 	std::string mCopyNumber;
 
-	bool mVegetationOnly = false;
-
 	cRappPointCloud mCloud;
 };
 

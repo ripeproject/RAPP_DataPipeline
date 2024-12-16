@@ -401,6 +401,29 @@ void cFileProcessor::doPlotSplit()
                 }
                 break;
             }
+            case ePlotIsolationMethod::CENTER_OF_PLOT:
+            {
+                auto plotPointCloud = isolate_center_of_plot(pointCloud, bounds.getBoundingBox(),
+                    method.getPlotWidth_mm(), method.getPlotLength_mm());
+
+                if (plotPointCloud.empty())
+                {
+                    std::string msg = "Point cloud \"";
+                    msg += pointCloud.name();
+                    msg += "\" is empty!";
+                    console_message(msg);
+                    continue;
+                }
+
+                cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
+
+                fillPlotInformation(plot, plotInfo);
+
+                plot->setPointCloud(plotPointCloud);
+
+                mPlots.push_back(plot);
+                break;
+            }
             case ePlotIsolationMethod::CENTER_OF_HEIGHT:
             {
                 if (hasSubPlot)
@@ -474,6 +497,7 @@ void cFileProcessor::doPlotSplit()
 
                     mPlots.push_back(plot);
                 }
+                break;
             }
             }
         }

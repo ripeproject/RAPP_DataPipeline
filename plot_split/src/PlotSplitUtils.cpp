@@ -120,19 +120,19 @@ cRappPointCloud trim_outside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t 
 	{
 		x = line1.slope * point.y_mm + line1.intercept;
 
-		if (point.x_mm > x)
+		if (point.x_mm >= x)
 		{
 			x = line3.slope * point.y_mm + line3.intercept;
 
-			if (point.x_mm < x)
+			if (point.x_mm <= x)
 			{
 				y = line2.slope * point.x_mm + line2.intercept;
 
-				if (point.y_mm < y)
+				if (point.y_mm <= y)
 				{
 					y = line4.slope * point.x_mm + line4.intercept;
 
-					if (point.y_mm > y)
+					if (point.y_mm >= y)
 					{
 						result.push_back(point);
 					}
@@ -289,14 +289,147 @@ std::vector<cRappPointCloud> isolate_basic(const cRappPointCloud& pc, rfm::sPlot
 	return result;
 }
 
-cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
-	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct)
+cRappPointCloud isolate_center_of_plot(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm)
 {
 	double half_width_mm = plot_width_mm / 2.0;
 	double half_length_mm = plot_length_mm / 2.0;
 
 	auto result = trim_outside(pc, box);
+	result.recomputeBounds();
+
+	rfm::rappPoint_t c1 = result.center();
+
+	std::int32_t north_mm = c1.x_mm - half_width_mm;
+	std::int32_t south_mm = c1.x_mm + half_width_mm;
+	std::int32_t east_mm = c1.y_mm + half_length_mm;
+	std::int32_t west_mm = c1.y_mm - half_length_mm;
+
+	rfm::sPlotBoundingBox_t plot;
+	plot.northWestCorner.x_mm = north_mm;
+	plot.northWestCorner.y_mm = west_mm;
+
+	plot.southWestCorner.x_mm = south_mm;
+	plot.southWestCorner.y_mm = west_mm;
+
+	plot.northEastCorner.x_mm = north_mm;
+	plot.northEastCorner.y_mm = east_mm;
+
+	plot.southEastCorner.x_mm = south_mm;
+	plot.southEastCorner.y_mm = east_mm;
+
+	result = trim_outside(pc, plot);
+	result.recomputeBounds();
+
+	return result;
+}
+
+cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+{
+	double width_mm = ((box.southEastCorner.x_mm - box.northEastCorner.x_mm) + (box.southWestCorner.x_mm - box.northWestCorner.x_mm)) / 2.0;
+	double length_mm = ((box.northEastCorner.y_mm - box.northWestCorner.y_mm) + (box.southEastCorner.y_mm - box.southWestCorner.y_mm)) / 2.0;
+
+	double max_shift_x_mm = ((max_displacement_pct / 100.0) * width_mm) / 2.0;
+	double max_shift_y_mm = ((max_displacement_pct / 100.0) * length_mm) / 2.0;
+
+	double half_width_mm = plot_width_mm / 2.0;
+	double half_length_mm = plot_length_mm / 2.0;
+
+	auto result = trim_outside(pc, box);
+	result.recomputeBounds();
+
+	auto c0 = result.center();
+
 	auto c1 = compute_center_of_height(result, height_threshold_pct);
+
+	auto dx = c0.x_mm - c1.x_mm;
+	auto dy = c0.y_mm - c1.y_mm;
+
+	if (std::abs(dx) > max_shift_x_mm)
+	{
+		if (dx < 0)
+			c1.x_mm = c0.x_mm + max_shift_x_mm;
+		else
+			c1.x_mm = c0.x_mm - max_shift_x_mm;
+	}
+
+
+	if (std::abs(dy) > max_shift_y_mm)
+	{
+		if (dx < 0)
+			c1.y_mm = c0.y_mm + max_shift_y_mm;
+		else
+			c1.y_mm = c0.y_mm - max_shift_y_mm;
+	}
+
+
+	std::int32_t north_mm = c1.x_mm - half_width_mm;
+	std::int32_t south_mm = c1.x_mm + half_width_mm;
+	std::int32_t east_mm = c1.y_mm + half_length_mm;
+	std::int32_t west_mm = c1.y_mm - half_length_mm;
+
+	rfm::sPlotBoundingBox_t plot;
+	plot.northWestCorner.x_mm = north_mm;
+	plot.northWestCorner.y_mm = west_mm;
+
+	plot.southWestCorner.x_mm = south_mm;
+	plot.southWestCorner.y_mm = west_mm;
+
+	plot.northEastCorner.x_mm = north_mm;
+	plot.northEastCorner.y_mm = east_mm;
+
+	plot.southEastCorner.x_mm = south_mm;
+	plot.southEastCorner.y_mm = east_mm;
+
+	result = trim_outside(pc, plot);
+	result.recomputeBounds();
+
+	return result;
+}
+
+
+
+cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	const cRappPointCloud& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm, 
+	double height_threshold_pct, double max_displacement_pct)
+{
+	double width_mm = ((box.southEastCorner.x_mm - box.northEastCorner.x_mm) + (box.southWestCorner.x_mm - box.northWestCorner.x_mm)) / 2.0;
+	double length_mm = ((box.northEastCorner.y_mm - box.northWestCorner.y_mm) + (box.southEastCorner.y_mm - box.southWestCorner.y_mm)) / 2.0;
+
+	double max_shift_x_mm = ((max_displacement_pct / 100.0) * width_mm) / 2.0;
+	double max_shift_y_mm = ((max_displacement_pct / 100.0) * length_mm) / 2.0;
+
+	double half_width_mm = plot_width_mm / 2.0;
+	double half_length_mm = plot_length_mm / 2.0;
+
+	auto result = trim_outside(full_pc, box);
+	result.recomputeBounds();
+
+	auto c0 = result.center();
+
+	auto c1 = compute_center_of_height(result, height_threshold_pct);
+
+	auto dx = c0.x_mm - c1.x_mm;
+	auto dy = c0.y_mm - c1.y_mm;
+
+	if (std::abs(dx) > max_shift_x_mm)
+	{
+		if (dx < 0)
+			c1.x_mm = c0.x_mm + max_shift_x_mm;
+		else
+			c1.x_mm = c0.x_mm - max_shift_x_mm;
+	}
+
+
+	if (std::abs(dy) > max_shift_y_mm)
+	{
+		if (dx < 0)
+			c1.y_mm = c0.y_mm + max_shift_y_mm;
+		else
+			c1.y_mm = c0.y_mm - max_shift_y_mm;
+	}
+
 
 	std::int32_t north_mm = c1.x_mm - half_width_mm;
 	std::int32_t south_mm = c1.x_mm + half_width_mm;

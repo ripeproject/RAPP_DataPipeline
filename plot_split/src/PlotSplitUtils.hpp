@@ -40,8 +40,16 @@ cRappPointCloud isolate_basic(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t
 std::vector<cRappPointCloud> isolate_basic(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
 	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm);
 
+cRappPointCloud isolate_center_of_plot(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm);
+
 cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box, 
-	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0);
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0, 
+	double max_displacement_pct = 25.0);
+
+cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	const cRappPointCloud& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm, 
+	double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 
 std::vector<cRappPointCloud> isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
 	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm,

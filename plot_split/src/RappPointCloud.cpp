@@ -306,7 +306,13 @@ void cRappPointCloud::recomputeBounds()
 	double z_mm = sum_z / n;
 
 	mCentroid = { x_mm , y_mm, z_mm };
+}
 
+rfm::rappPoint_t cRappPointCloud::center() const
+{
+	return {static_cast<std::int32_t>((mMaxX_mm + mMinX_mm) / 2),
+		static_cast<std::int32_t>((mMaxY_mm + mMinY_mm) / 2), 
+		static_cast<std::int32_t>((mMaxZ_mm + mMinZ_mm) / 2) };
 }
 
 rfm::sCentroid_t cRappPointCloud::centroid() const { return mCentroid; }
@@ -380,7 +386,7 @@ void cRappPointCloud::sort()
 
 rfm::sPoint3D_t cRappPointCloud::getPoint(int x_mm, int y_mm, int r_mm) const
 {
-	rfm::sPoint3D_t result = {x_mm, y_mm, rfm::INVALID_HEIGHT};
+	rfm::sPoint3D_t result = {x_mm, y_mm, rfm::INVALID_HEIGHT, rfm::INVALID_HEIGHT};
 
 	if ((x_mm < mMinX_mm) || (x_mm > mMaxX_mm)) return result;
 	if ((y_mm < mMinY_mm) || (y_mm > mMaxY_mm)) return result;

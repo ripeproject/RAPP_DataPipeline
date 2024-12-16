@@ -87,6 +87,8 @@ public:
 
 	void recomputeBounds();
 
+	rfm::rappPoint_t center() const;
+
 	rfm::sCentroid_t centroid() const;
 
 	rfm::sPoint3D_t getPoint(int x_mm, int y_mm, int r_mm) const;

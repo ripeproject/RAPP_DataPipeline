@@ -28,7 +28,7 @@ const std::string& cRappPlot::constructName() const { return mConstructName; }
 const std::string& cRappPlot::potLabel() const { return mPotLabel; }
 const std::string& cRappPlot::seedGeneration() const { return mSeedGeneration; }
 const std::string& cRappPlot::copyNumber() const { return mCopyNumber; }
-const bool cRappPlot::vegetationOnly() const { return mVegetationOnly; }
+const bool cRappPlot::vegetationOnly() const { return mCloud.vegetationOnly(); }
 
 
 bool cRappPlot::empty() const
@@ -84,7 +84,7 @@ void cRappPlot::setCopyNumber(const std::string& copyNumber)
 
 void cRappPlot::setVegetationOnly(const bool vegetation_only)
 {
-	mVegetationOnly = vegetation_only;
+	mCloud.setVegetationOnly(vegetation_only);
 }
 
 

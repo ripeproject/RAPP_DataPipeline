@@ -169,5 +169,5 @@ namespace rfm
 }
 
 enum class ePlotOrientation { eWEST_TO_EAST, eEAST_TO_WEST, eNORTH_TO_SOUTH, eSOUTH_TO_NORTH };
-enum class ePlotIsolationMethod { NONE, CENTER_OF_HEIGHT, POUR, ITERATIVE, FIND_CENTER };
+enum class ePlotIsolationMethod { NONE, CENTER_OF_PLOT, CENTER_OF_HEIGHT, POUR, ITERATIVE, FIND_CENTER };
 

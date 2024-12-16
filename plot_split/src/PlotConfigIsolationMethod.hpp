@@ -23,13 +23,14 @@ public:
 
 	ePlotIsolationMethod getMethod() const;
 
+	// Use when method is "Center of Plot", "Center of Height", or "Iterative"
 	double getPlotLength_mm() const;
 	double getPlotWidth_mm() const;
 
-	bool getUseCenterOfHeight() const;
-
+	// Use when method is "Center of Height" or "Iterative"
 	double getHeightThreshold_pct() const;
 
+	// Use when method is "Iterative"
 	double getTolerance_mm() const;
 	double getBounds_pct() const;
 
@@ -37,8 +38,6 @@ public:
 
 	void setPlotLength_mm(double length_mm);
 	void setPlotWidth_mm(double width_mm);
-
-	void setUseCenterOfHeight(bool enable);
 
 	void setHeightThreshold_pct(double threshold_pct);
 
@@ -65,8 +64,6 @@ private:
 	double mPlotWidth_mm = 0.0;
 
 	double mHeightThreshold_pct = 0.0;
-
-	bool mUseCenterOfHeight = true;
 
 	double mTolerance_mm = 15.0;
 	double mBounds_pct = 50.0;

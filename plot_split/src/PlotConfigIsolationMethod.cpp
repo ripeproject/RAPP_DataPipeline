@@ -32,12 +32,16 @@ bool cPlotConfigIsolationMethod::operator==(const cPlotConfigIsolationMethod& rh
 		case ePlotIsolationMethod::NONE:
 			return true;
 
+		case ePlotIsolationMethod::CENTER_OF_PLOT:
+			return mPlotLength_mm == rhs.mPlotLength_mm
+				&& mPlotWidth_mm == rhs.mPlotWidth_mm;
+
 		case ePlotIsolationMethod::CENTER_OF_HEIGHT:
 			return mPlotLength_mm == rhs.mPlotLength_mm
 				&& mPlotWidth_mm == rhs.mPlotWidth_mm;
 
 		case ePlotIsolationMethod::POUR:
-			return mUseCenterOfHeight == rhs.mUseCenterOfHeight;
+			return true; // mUseCenterOfHeight == rhs.mUseCenterOfHeight;
 
 		case ePlotIsolationMethod::ITERATIVE:
 			return mPlotLength_mm == rhs.mPlotLength_mm
@@ -73,11 +77,6 @@ double cPlotConfigIsolationMethod::getPlotWidth_mm() const
 	return mPlotWidth_mm;
 }
 
-bool cPlotConfigIsolationMethod::getUseCenterOfHeight() const
-{
-	return mUseCenterOfHeight;
-}
-
 double cPlotConfigIsolationMethod::getHeightThreshold_pct() const
 {
 	return mHeightThreshold_pct;
@@ -109,12 +108,6 @@ void cPlotConfigIsolationMethod::setPlotWidth_mm(double width_mm)
 {
 	mDirty = (mPlotWidth_mm != width_mm);
 	mPlotWidth_mm = width_mm;
-}
-
-void cPlotConfigIsolationMethod::setUseCenterOfHeight(bool enable)
-{
-	mDirty = (mUseCenterOfHeight != enable);
-	mUseCenterOfHeight = enable;
 }
 
 void cPlotConfigIsolationMethod::setHeightThreshold_pct(double threshold_pct)
@@ -164,6 +157,12 @@ void cPlotConfigIsolationMethod::load(const nlohmann::json& jdoc)
 	{
 		mMethod = ePlotIsolationMethod::NONE;
 	}
+	else if (type == "center of plot")
+	{
+		mMethod = ePlotIsolationMethod::CENTER_OF_PLOT;
+		mPlotLength_mm = method["plot length (mm)"];
+		mPlotWidth_mm = method["plot width (mm)"];
+	}
 	else if (type == "center of height")
 	{
 		mMethod = ePlotIsolationMethod::CENTER_OF_HEIGHT;
@@ -176,7 +175,7 @@ void cPlotConfigIsolationMethod::load(const nlohmann::json& jdoc)
 	else if (type == "pour")
 	{
 		mMethod = ePlotIsolationMethod::POUR;
-		mUseCenterOfHeight = method["use center of height"];
+//		mUseCenterOfHeight = method["use center of height"];
 		if (method.contains("height threshold (%)"))
 			mHeightThreshold_pct = method["height threshold (%)"];
 	}
@@ -211,6 +210,14 @@ nlohmann::json cPlotConfigIsolationMethod::save()
 	case ePlotIsolationMethod::NONE:
 		method["type"] = "none";
 		break;
+
+	case ePlotIsolationMethod::CENTER_OF_PLOT:
+		method["type"] = "center of plot";
+
+		method["plot length (mm)"] = mPlotLength_mm;
+		method["plot width (mm)"] = mPlotWidth_mm;
+		break;
+
 	case ePlotIsolationMethod::CENTER_OF_HEIGHT:
 		method["type"] = "center of height";
 
@@ -223,7 +230,7 @@ nlohmann::json cPlotConfigIsolationMethod::save()
 
 	case ePlotIsolationMethod::POUR:
 		method["type"] = "pour";
-		method["use center of height"] = mUseCenterOfHeight;
+//		method["use center of height"] = mUseCenterOfHeight;
 		break;
 
 	case ePlotIsolationMethod::ITERATIVE:
