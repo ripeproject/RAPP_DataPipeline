@@ -502,6 +502,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		std::filesystem::create_directories(output_dir);
 	}
 
+	mResults.setRootFileName(mConfigData.getResultsRootFileName());
 	mResults.saveRowMajor(mpSaveDataAsRowMajor->IsChecked());
 
 	startDataProcessing();
@@ -564,12 +565,12 @@ wxThread::ExitCode cMainWindow::Entry()
 
 	mResults.computeReplicateData();
 
-	mResults.write_metadata_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
-	mResults.write_plot_height_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
-	mResults.write_replicate_height_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
+	mResults.write_metadata_file(mDstDirectory.ToStdString());
+	mResults.write_plot_height_file(mDstDirectory.ToStdString());
+	mResults.write_replicate_height_file(mDstDirectory.ToStdString());
 
-	mResults.write_plot_biomass_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
-	mResults.write_replicate_biomass_file(mDstDirectory.ToStdString(), "Long_VPZ_RCBD");
+	mResults.write_plot_biomass_file(mDstDirectory.ToStdString());
+	mResults.write_replicate_biomass_file(mDstDirectory.ToStdString());
 
 	wxString msg = "Finished processing ";
 	msg += mSrcDirectory;

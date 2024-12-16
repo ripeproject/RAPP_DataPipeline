@@ -1,5 +1,6 @@
 
 #define NOMINMAX
+#define USE_PCL
 
 #include "PlotDataUtils.hpp"
 
@@ -8,17 +9,22 @@
 
 #include <cstdint>
 #include <algorithm>
-#include <open3d/Open3D.h>
-#include <pcl/point_types.h>
-#include <pcl/conversions.h>
-#include <pcl/filters/voxel_grid.h>
 
+#ifdef USE_PCL
+    #include <pcl/point_types.h>
+    #include <pcl/conversions.h>
+    #include <pcl/filters/voxel_grid.h>
+#else
+    #include <open3d/Open3D.h>
+#endif
 
-#define USE_PCL
 
 nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointCloud& plot, int groundHeight_mm, double plotHeight_pct, double lowerBound_pct, double upperBound_pct)
 {
     sHeightResults_t result;
+
+    if (plot.vegetationOnly())
+        groundHeight_mm = 0;
 
     std::vector<int> heights;
     for (const auto& point : plot)

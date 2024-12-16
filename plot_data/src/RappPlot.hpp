@@ -45,6 +45,7 @@ public:
 	const std::string& potLabel() const;
 	const std::string& seedGeneration() const;
 	const std::string& copyNumber() const;
+	const bool vegetationOnly() const;
 
 	const cRappPointCloud& pointCloud() const { return mCloud; }
 	cRappPointCloud& pointCloud() { return mCloud; }
@@ -61,6 +62,7 @@ public:
 	void setPotLabel(const std::string& potLabel);
 	void setSeedGeneration(const std::string& seedGeneration);
 	void setCopyNumber(const std::string& copyNumber);
+	void setVegetationOnly(const bool vegetation_only);
 
 	void setPointCloud(const cRappPointCloud& pointCloud);
 

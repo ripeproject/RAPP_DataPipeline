@@ -30,6 +30,11 @@ cPlotData::~cPlotData()
 	mGroups.clear();
 }
 
+void cPlotData::setRootFileName(const std::string& filename)
+{
+	mRootFileName = filename;
+}
+
 bool cPlotData::saveRowMajor() const
 {
 	return mSaveRowMajor;
@@ -208,11 +213,16 @@ void cPlotData::computeReplicateData()
 	}
 }
 
-void cPlotData::write_metadata_file(const std::string& directory, const std::string& title)
+void cPlotData::write_metadata_file(const std::string& directory)
+{
+	write_metadata_file(directory, mRootFileName);
+}
+
+void cPlotData::write_metadata_file(const std::string& directory, const std::string& filename)
 {
 	std::filesystem::path meta_file = directory;
 
-	meta_file /= title;
+	meta_file /= filename;
 	meta_file.replace_extension("metadata");
 
 	std::ofstream out;
@@ -374,7 +384,12 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 	out.close();
 }
 
-void cPlotData::write_plot_height_file(const std::string& directory, const std::string& title)
+void cPlotData::write_plot_height_file(const std::string& directory)
+{
+	write_plot_height_file(directory, mRootFileName);
+}
+
+void cPlotData::write_plot_height_file(const std::string& directory, const std::string& filename)
 {
 	if (mDates.empty())
 		return;
@@ -384,7 +399,7 @@ void cPlotData::write_plot_height_file(const std::string& directory, const std::
 
 	std::filesystem::path plot_height_file = directory;
 
-	plot_height_file /= title;
+	plot_height_file /= filename;
 	plot_height_file.replace_extension("plot_heights.csv");
 
 	std::ofstream out;
@@ -463,7 +478,12 @@ void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 	}
 }
 
-void cPlotData::write_replicate_height_file(const std::string& directory, const std::string& title)
+void cPlotData::write_replicate_height_file(const std::string& directory)
+{
+	write_replicate_height_file(directory, mRootFileName);
+}
+
+void cPlotData::write_replicate_height_file(const std::string& directory, const std::string& filename)
 {
 	if (mDates.empty())
 		return;
@@ -487,7 +507,7 @@ void cPlotData::write_replicate_height_file(const std::string& directory, const 
 
 	std::filesystem::path height_file = directory;
 
-	height_file /= title;
+	height_file /= filename;
 	height_file.replace_extension("heights.csv");
 
 	std::ofstream out;
@@ -571,7 +591,12 @@ void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 	}
 }
 
-void cPlotData::write_plot_biomass_file(const std::string& directory, const std::string& title)
+void cPlotData::write_plot_biomass_file(const std::string& directory)
+{
+	write_plot_biomass_file(directory, mRootFileName);
+}
+
+void cPlotData::write_plot_biomass_file(const std::string& directory, const std::string& filename)
 {
 	if (mDates.empty())
 		return;
@@ -581,7 +606,7 @@ void cPlotData::write_plot_biomass_file(const std::string& directory, const std:
 
 	std::filesystem::path plot_biomass_file = directory;
 
-	plot_biomass_file /= title;
+	plot_biomass_file /= filename;
 	plot_biomass_file.replace_extension("plot_biomass.csv");
 
 	std::ofstream out;
@@ -660,7 +685,12 @@ void cPlotData::write_plot_biomass_file_by_column(std::ofstream& out)
 	}
 }
 
-void cPlotData::write_replicate_biomass_file(const std::string& directory, const std::string& title)
+void cPlotData::write_replicate_biomass_file(const std::string& directory)
+{
+	write_replicate_biomass_file(directory, mRootFileName);
+}
+
+void cPlotData::write_replicate_biomass_file(const std::string& directory, const std::string& filename)
 {
 	if (mDates.empty())
 		return;
@@ -684,7 +714,7 @@ void cPlotData::write_replicate_biomass_file(const std::string& directory, const
 
 	std::filesystem::path biomass_file = directory;
 
-	biomass_file /= title;
+	biomass_file /= filename;
 	biomass_file.replace_extension("biomass.csv");
 
 	std::ofstream out;

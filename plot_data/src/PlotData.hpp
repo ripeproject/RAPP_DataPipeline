@@ -6,6 +6,7 @@
 #include <cbdf/ExperimentInfo.hpp>
 
 #include <cstdint>
+#include <string>
 #include <vector>
 #include <map>
 #include <set>
@@ -16,6 +17,8 @@ class cPlotData
 public:
 	cPlotData() = default;
 	~cPlotData();
+
+	void setRootFileName(const std::string& filename);
 
 	bool saveRowMajor() const;
 	void saveRowMajor(bool row_major);
@@ -31,13 +34,20 @@ public:
 
 	void computeReplicateData();
 
-	void write_metadata_file(const std::string& directory, const std::string& title);
+	void write_metadata_file(const std::string& directory);
+	void write_metadata_file(const std::string& directory, const std::string& filename);
 
-	void write_plot_height_file(const std::string& directory, const std::string& title);
-	void write_replicate_height_file(const std::string& directory, const std::string& title);
+	void write_plot_height_file(const std::string& directory);
+	void write_plot_height_file(const std::string& directory, const std::string& filename);
 
-	void write_plot_biomass_file(const std::string& directory, const std::string& title);
-	void write_replicate_biomass_file(const std::string& directory, const std::string& title);
+	void write_replicate_height_file(const std::string& directory);
+	void write_replicate_height_file(const std::string& directory, const std::string& filename);
+
+	void write_plot_biomass_file(const std::string& directory);
+	void write_plot_biomass_file(const std::string& directory, const std::string& filename);
+
+	void write_replicate_biomass_file(const std::string& directory);
+	void write_replicate_biomass_file(const std::string& directory, const std::string& filename);
 
 protected:
 	void write_plot_height_file_by_row(std::ofstream& out);
@@ -56,6 +66,8 @@ protected:
 	bool inGroup(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2);
 
 private:
+	std::string mRootFileName;
+
 	cExperimentMetaData mExperimentInfo;
 
 	std::vector<cPlotMetaData*> mpPlots;

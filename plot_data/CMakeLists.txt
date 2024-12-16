@@ -109,8 +109,8 @@ find_package(fmt REQUIRED)
 # Find and include my libraries for data collection
 find_package(CBDF REQUIRED cbdf info) # ctrl sensors)
 find_package(Eigen3 REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(Open3D REQUIRED)
+#find_package(OpenSSL REQUIRED)
+#find_package(Open3D REQUIRED)
 
 find_package(PCL REQUIRED)
 

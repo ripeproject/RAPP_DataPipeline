@@ -71,6 +71,7 @@ bool cPlotDataConfigFile::open(const std::string& file_name)
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
+	mResultsRootFileName = configDoc["result file name"];
 	mOptions.load(configDoc);
 	mHeightParameters.load(configDoc);
 	mBiomassParameters.load(configDoc);
@@ -203,6 +204,11 @@ void cPlotDataConfigFile::save_temporary_file()
 		return;
 
 	out << std::setw(4) << configDoc << std::endl;
+}
+
+const std::string& cPlotDataConfigFile::getResultsRootFileName() const
+{
+	return mResultsRootFileName;
 }
 
 const cPlotDataConfigOptions& cPlotDataConfigFile::getOptions() const

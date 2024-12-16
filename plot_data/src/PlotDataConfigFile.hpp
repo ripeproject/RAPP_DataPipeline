@@ -34,6 +34,8 @@ public:
 	bool open_temporary_file(const std::string& file_name);
 	void save_temporary_file();
 
+	const std::string& getResultsRootFileName() const;
+
 	const cPlotDataConfigOptions& getOptions() const;
 	cPlotDataConfigOptions& getOptions();
 
@@ -47,6 +49,8 @@ public:
 private:
 	std::string mFileName;
 	std::string mTmpFileName;
+
+	std::string mResultsRootFileName;
 
 	cPlotDataConfigOptions mOptions;
 	cPlotDataConfigHeight  mHeightParameters;
