@@ -39,6 +39,8 @@ protected:
 	void onSeedGeneration(const std::string& seed_generation) override;
 	void onCopyNumber(const std::string& copy_number) override;
 
+	void onVegetationOnly(const bool vegetation_only)  override;
+
 	void onPlotDimensions(double x_min_m, double x_max_m,
 						double y_min_m, double y_max_m,
 						double z_min_m, double z_max_m) override;

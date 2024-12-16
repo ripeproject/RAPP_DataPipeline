@@ -17,6 +17,13 @@ namespace plot
 {
 	constexpr std::int32_t INVALID_HEIGHT = -999999;
 
+	struct rappPoint_t
+	{
+		int32_t  x_mm = 0;
+		int32_t  y_mm = 0;
+		int32_t  z_mm = 0;
+	};
+
 	struct sPoint3D_t
 	{
 		int32_t  x_mm = 0;

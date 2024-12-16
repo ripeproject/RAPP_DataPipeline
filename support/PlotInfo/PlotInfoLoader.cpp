@@ -102,6 +102,12 @@ void cPlotInfoLoader::onCopyNumber(const std::string& copy_number)
 		mPlot->setCopyNumber(copy_number);
 }
 
+void cPlotInfoLoader::onVegetationOnly(const bool vegetation_only)
+{
+	if (mPlot)
+		mPlot->setVegetationOnly(vegetation_only);
+}
+
 void cPlotInfoLoader::onPlotDimensions(double x_min_m, double x_max_m,
 	double y_min_m, double y_max_m,
 	double z_min_m, double z_max_m)

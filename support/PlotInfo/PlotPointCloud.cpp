@@ -115,6 +115,17 @@ cPlotPointCloud::cPlotPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_S
 	mHasPixelInfo = true;
 }
 
+
+bool cPlotPointCloud::vegetationOnly() const
+{
+	return mVegetationOnly;
+}
+
+void cPlotPointCloud::setVegetationOnly(const bool vegetation_only)
+{
+	mVegetationOnly = vegetation_only;
+}
+
 bool cPlotPointCloud::hasFrameIDs() const { return mHasFrameIDs && mEnableFrameIDs; }
 bool cPlotPointCloud::hasPixelInfo() const { return mHasPixelInfo && mEnableFrameIDs && mEnablePixelInfo; }
 
@@ -193,6 +204,10 @@ int cPlotPointCloud::maxY_mm() const { return mMaxY_mm; }
 int cPlotPointCloud::minZ_mm() const { return mMinZ_mm; }
 int cPlotPointCloud::maxZ_mm() const { return mMaxZ_mm; }
 
+int cPlotPointCloud::length_mm() const { return mMaxX_mm - mMinX_mm; }
+int cPlotPointCloud::width_mm() const { return mMaxY_mm - mMinY_mm; }
+int cPlotPointCloud::height_mm() const { return mMaxZ_mm - mMinZ_mm; }
+
 void cPlotPointCloud::recomputeBounds()
 {
 	if (mCloud.empty())
@@ -253,7 +268,13 @@ void cPlotPointCloud::recomputeBounds()
 	double z_mm = sum_z / n;
 
 	mCentroid = { x_mm , y_mm, z_mm };
+}
 
+plot::rappPoint_t cPlotPointCloud::center() const
+{
+	return {static_cast<std::int32_t>((mMaxX_mm + mMinX_mm) / 2),
+		static_cast<std::int32_t>((mMaxY_mm + mMinY_mm) / 2), 
+		static_cast<std::int32_t>((mMaxZ_mm + mMinZ_mm) / 2) };
 }
 
 plot::sCentroid_t cPlotPointCloud::centroid() const { return mCentroid; }

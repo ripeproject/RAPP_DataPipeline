@@ -43,6 +43,9 @@ public:
 
 	cPlotPointCloud& operator=(const cPlotPointCloud& pc) = default;
 
+	bool vegetationOnly() const;
+	void setVegetationOnly(const bool vegetation_only);
+
 	bool hasFrameIDs() const;
 	bool hasPixelInfo() const;
 
@@ -71,7 +74,13 @@ public:
 	int minZ_mm() const;
 	int maxZ_mm() const;
 
+	int length_mm() const;
+	int width_mm() const;
+	int height_mm() const;
+
 	void recomputeBounds();
+
+	plot::rappPoint_t center() const;
 
 	plot::sCentroid_t centroid() const;
 
@@ -125,6 +134,8 @@ private:
 
 	bool mEnableFrameIDs = true;
 	bool mEnablePixelInfo = true;
+
+	bool mVegetationOnly = false;
 
 	vCloud_t mCloud;
 };
