@@ -230,6 +230,12 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 	if (!out.is_open())
 		return;
 
+	out << "\nUnits: \n";
+	out << "Plot Heights: millimeters\n";
+	out << "Plot BioMass: ??\n";
+
+	out << "\n";
+
 	out << "\nExperiment Information: \n";
 	out << "Title: " << mExperimentInfo.title() << "\n";
 
@@ -568,13 +574,13 @@ void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 	for (auto it = mGroups.begin(); it != group_last; ++it)
 	{
 		const auto& info = (*it).front();
-		out << info->event() << ",, ";
+		out << info->event() << " (avg), " << info->event() << " (std dev), ";
 	}
 	const auto& info = (*group_last).front();
-	out << info->event() << "\n";
+	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
 
 	auto n = mDates.size();
-	n = std::min(n, mGroupHeights.size());
+	n = std::min(n, mGroupHeights.begin()->second.size());
 
 	auto height_last = --(mGroupHeights.end());
 	auto date_it = mDates.begin();
@@ -775,13 +781,13 @@ void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
 	for (auto it = mGroups.begin(); it != group_last; ++it)
 	{
 		const auto& info = (*it).front();
-		out << info->event() << ",, ";
+		out << info->event() << " (avg), " << info->event() << " (std dev), ";
 	}
 	const auto& info = (*group_last).front();
-	out << info->event() << "\n";
+	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
 
 	auto n = mDates.size();
-	n = std::min(n, mGroupBioMasses.size());
+	n = std::min(n, mGroupBioMasses.begin()->second.size());
 
 	auto biomass_last = --(mGroupBioMasses.end());
 	auto date_it = mDates.begin();
