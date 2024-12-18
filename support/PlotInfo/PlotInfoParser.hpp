@@ -48,6 +48,7 @@ public:
 	virtual void onPotLabel(const std::string& pot_label) = 0;
 	virtual void onSeedGeneration(const std::string& seed_generation) = 0;
 	virtual void onCopyNumber(const std::string& copy_number) = 0;
+	virtual void onLeafType(const std::string& leaf_type) = 0;
 
 	virtual void onVegetationOnly(const bool vegetation_only) = 0;
 
@@ -88,6 +89,7 @@ protected:
 	virtual void processPotLabel(cDataBuffer& buffer);
 	virtual void processSeedGeneration(cDataBuffer& buffer);
 	virtual void processCopyNumber(cDataBuffer& buffer);
+	virtual void processLeafType(cDataBuffer& buffer);
 
 	virtual void processVegetationOnly(cDataBuffer& buffer);
 

@@ -214,6 +214,20 @@ void cPlotInfoSerializer::writeCopyNumber(const std::string& copy_number)
     writeBlock(*mBlockID, mDataBuffer);
 }
 
+void cPlotInfoSerializer::writeLeafType(const std::string& leaf_type)
+{
+    setVersion(1, 0);
+    mBlockID->dataID(DataID::LEAF_TYPE);
+
+    mDataBuffer.clear();
+    mDataBuffer << leaf_type;
+
+    if (mDataBuffer.overrun())
+        throw std::runtime_error("ERROR, Buffer Overrun in writing writeLeafType data.");
+
+    writeBlock(*mBlockID, mDataBuffer);
+}
+
 void cPlotInfoSerializer::writeVegetationOnly(const bool vegetation_only)
 {
     setVersion(1, 0);

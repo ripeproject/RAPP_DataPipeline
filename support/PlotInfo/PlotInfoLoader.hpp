@@ -38,6 +38,7 @@ protected:
 	void onPotLabel(const std::string& pot_label) override;
 	void onSeedGeneration(const std::string& seed_generation) override;
 	void onCopyNumber(const std::string& copy_number) override;
+	void onLeafType(const std::string& leaf_type) override;
 
 	void onVegetationOnly(const bool vegetation_only)  override;
 

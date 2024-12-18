@@ -35,6 +35,7 @@ namespace plot_info
 		COPY_NUMBER,
 		SUB_PLOT_ID,
 		VEGETATION_ONLY,
+		LEAF_TYPE,
 	};
 }
 

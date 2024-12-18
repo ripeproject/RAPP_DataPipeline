@@ -102,6 +102,12 @@ void cPlotInfoLoader::onCopyNumber(const std::string& copy_number)
 		mPlot->setCopyNumber(copy_number);
 }
 
+void cPlotInfoLoader::onLeafType(const std::string& leaf_type)
+{
+	if (mPlot)
+		mPlot->setLeafType(leaf_type);
+}
+
 void cPlotInfoLoader::onVegetationOnly(const bool vegetation_only)
 {
 	if (mPlot)

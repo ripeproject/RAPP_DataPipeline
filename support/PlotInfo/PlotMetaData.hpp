@@ -28,6 +28,7 @@ public:
 	const std::string& potLabel() const;
 	const std::string& seedGeneration() const;
 	const std::string& copyNumber() const;
+	const std::string& leafType() const;
 
 	void setPlotName(const std::string& name);
 
@@ -39,6 +40,7 @@ public:
 	void setPotLabel(const std::string& potLabel);
 	void setSeedGeneration(const std::string& seedGeneration);
 	void setCopyNumber(const std::string& copyNumber);
+	void setLeafType(const std::string& leafType);
 
 	void addTreatment(const std::string& treatment);
 
@@ -55,6 +57,7 @@ private:
 	std::string mPotLabel;
 	std::string mSeedGeneration;
 	std::string mCopyNumber;
+	std::string mLeafType;
 	std::vector<std::string> mTreatments;
 };
 

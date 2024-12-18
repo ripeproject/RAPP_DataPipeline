@@ -20,6 +20,7 @@ const std::string& cPlotMetaData::constructName() const { return mConstructName;
 const std::string& cPlotMetaData::potLabel() const { return mPotLabel; }
 const std::string& cPlotMetaData::seedGeneration() const { return mSeedGeneration; }
 const std::string& cPlotMetaData::copyNumber() const { return mCopyNumber; }
+const std::string& cPlotMetaData::leafType() const { return mLeafType; }
 
 
 void cPlotMetaData::setPlotName(const std::string& name)
@@ -65,6 +66,11 @@ void cPlotMetaData::setSeedGeneration(const std::string& seedGeneration)
 void cPlotMetaData::setCopyNumber(const std::string& copyNumber)
 {
 	mCopyNumber = copyNumber;
+}
+
+void cPlotMetaData::setLeafType(const std::string& leafType)
+{
+	mLeafType = leafType;
 }
 
 void cPlotMetaData::addTreatment(const std::string& treatment)

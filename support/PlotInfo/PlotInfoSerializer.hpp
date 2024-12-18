@@ -83,6 +83,7 @@ public:
 	void writePotLabel(const std::string& pot_label);
 	void writeSeedGeneration(const std::string& seed_generation);
 	void writeCopyNumber(const std::string& copy_number);
+	void writeLeafType(const std::string& leaf_type);
 
 	void writeVegetationOnly(const bool vegetation_only);
 

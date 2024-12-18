@@ -82,6 +82,9 @@ void cPlotInfoParser::processData(BLOCK_MAJOR_VERSION_t major_version,
     case DataID::COPY_NUMBER:
         processCopyNumber(buffer);
         break;
+    case DataID::LEAF_TYPE:
+        processLeafType(buffer);
+        break;
     case DataID::BEGIN_TREATMENT_LIST:
         break;
     case DataID::END_OF_TREATMENT_LIST:
@@ -243,6 +246,17 @@ void cPlotInfoParser::processCopyNumber(cDataBuffer& buffer)
         throw std::runtime_error("ERROR, Buffer under run in processCopyNumber.");
 
     onCopyNumber(copy_num);
+}
+
+void cPlotInfoParser::processLeafType(cDataBuffer& buffer)
+{
+    std::string leaf_type;
+    buffer >> leaf_type;
+
+    if (buffer.underrun())
+        throw std::runtime_error("ERROR, Buffer under run in processLeafType.");
+
+    onLeafType(leaf_type);
 }
 
 void cPlotInfoParser::processVegetationOnly(cDataBuffer& buffer)
