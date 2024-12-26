@@ -1,7 +1,6 @@
 
 #include "FileProcessor.hpp"
 
-#include "ProcessingInfoLoader.hpp"
 #include "PointCloudLoader.hpp"
 
 #include "PlotConfigScan.hpp"
@@ -11,9 +10,10 @@
 #include "StringUtils.hpp"
 #include "ExportUtils.hpp"
 
-#include "ProcessingInfoSerializer.hpp"
 #include "PlotInfoSerializer.hpp"
 
+#include <cbdf/ProcessingInfoLoader.hpp>
+#include <cbdf/ProcessingInfoSerializer.hpp>
 #include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentInfoLoader.hpp>

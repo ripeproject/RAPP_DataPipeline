@@ -2,10 +2,10 @@
 #pragma once
 
 #include "PointCloudInfo.hpp"
-#include "ProcessingInfo.hpp"
 #include "RappPointCloud.hpp"
 #include "RappPlot.hpp"
 
+#include <cbdf/ProcessingInfo.hpp>
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/ExperimentInfo.hpp>
 
