@@ -40,6 +40,8 @@ public:
 	double minZ_m() const;
 	double maxZ_m() const;
 
+	pointcloud::sPoint3D_t center() const;
+
 	void setExtents(double minX_m, double maxX_m, double minY_m, double maxY_m, double minZ_m, double maxZ_m);
 
 	POINT operator[](int) const;
@@ -447,6 +449,16 @@ double cBasePointCloud<POINT>::minZ_m() const { return mMinZ_m; }
 
 template<class POINT>
 double cBasePointCloud<POINT>::maxZ_m() const { return mMaxZ_m; }
+
+template<class POINT>
+pointcloud::sPoint3D_t cBasePointCloud<POINT>::center() const
+{
+	pointcloud::sPoint3D_t c;
+	c.X_m = (mMaxX_m + mMinX_m) / 2;
+	c.Y_m = (mMaxY_m + mMinY_m) / 2;
+	c.Z_m = (mMaxZ_m + mMinZ_m) / 2;
+	return c;
+}
 
 template<class POINT>
 void cBasePointCloud<POINT>::setExtents(double minX_m, double maxX_m, double minY_m, double maxY_m, double minZ_m, double maxZ_m)
