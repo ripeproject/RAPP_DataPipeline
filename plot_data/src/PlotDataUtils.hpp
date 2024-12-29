@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "PlotPointCloud.hpp"
+#include <cbdf/PlotPointCloud.hpp>
 
 #include <cstdint>
 

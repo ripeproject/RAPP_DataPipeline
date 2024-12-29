@@ -1,7 +1,6 @@
 
 #include "FileProcessor.hpp"
 
-#include "PlotInfoLoader.hpp"
 
 #include "PlotDataConfigFile.hpp"
 
@@ -10,9 +9,9 @@
 #include "StringUtils.hpp"
 #include "DateTimeUtils.hpp"
 
-#include "ProcessingInfoSerializer.hpp"
-#include "PlotInfoSerializer.hpp"
-
+#include <cbdf/ProcessingInfoSerializer.hpp>
+#include <cbdf/PlotInfoSerializer.hpp>
+#include <cbdf/PlotInfoLoader.hpp>
 #include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentInfoLoader.hpp>
@@ -99,7 +98,7 @@ void cFileProcessor::run()
     update_prefix_progress(mID, "Computing Plot Digital Biomass...    ", 0);
     computePlotBioMasses();
 
-    update_prefix_progress(mID, "Saving...                ", 0);
+//    update_prefix_progress(mID, "Saving...                ", 0);
 //    if (mSavePlotsInSingleFile)
 //        savePlotFile();
 //    else
@@ -240,7 +239,13 @@ void cFileProcessor::computePlotHeights()
 
         const auto& plot = (*mPlotInfo)[i];
 
-        auto height = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, 94, heightPercentile, 96);
+        nPlotUtils::sHeightResults_t height;
+
+        if (plot->vegetationOnly())
+            height = nPlotUtils::computePlotHeights(*plot, 0.0, 94, heightPercentile, 96);
+        else
+            height = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, 94, heightPercentile, 96);
+
         mResults.addPlotData(plot->id(), mDayOfYear, height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
     }
 }
@@ -259,7 +264,13 @@ void cFileProcessor::computePlotBioMasses()
 
         const auto& plot = (*mPlotInfo)[i];
 
-        auto biomass = nPlotUtils::computeDigitalBiomass(*plot, groundLevelBound_mm, voxel_size_mm);
+        double biomass = 0.0;
+
+        if (plot->vegetationOnly())
+            biomass = nPlotUtils::computeDigitalBiomass(*plot, 0.0, voxel_size_mm);
+        else
+            biomass = nPlotUtils::computeDigitalBiomass(*plot, groundLevelBound_mm, voxel_size_mm);
+
         mResults.addPlotBiomass(plot->id(), mDayOfYear, biomass);
     }
 }

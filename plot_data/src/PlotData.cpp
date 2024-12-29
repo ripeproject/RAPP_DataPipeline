@@ -1,10 +1,10 @@
 
 #include "PlotData.hpp"
 
-#include "PointCloudTypes.hpp"
 #include "Constants.hpp"
 
 //#include <fmt/format.h>
+#include <cbdf/PointCloudTypes.hpp>
 
 #include <cstdint>
 #include <algorithm>

@@ -1,8 +1,9 @@
 
 #include "datatypes.hpp"
 
-#include "PointCloudTypes.hpp"
 #include "Constants.hpp"
+
+#include <cbdf/PointCloudTypes.hpp>
 
 #include <cstdint>
 

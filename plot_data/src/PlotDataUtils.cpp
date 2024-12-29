@@ -4,8 +4,9 @@
 
 #include "PlotDataUtils.hpp"
 
-#include "PointCloudTypes.hpp"
 #include "Constants.hpp"
+
+#include <cbdf/PointCloudTypes.hpp>
 
 #include <cstdint>
 #include <algorithm>

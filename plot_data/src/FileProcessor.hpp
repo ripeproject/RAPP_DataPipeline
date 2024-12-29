@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include "PlotInfo.hpp"
 #include "RappPointCloud.hpp"
 #include "RappPlot.hpp"
 #include "PlotData.hpp"
 
+#include <cbdf/PlotInfo.hpp>
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/ExperimentInfo.hpp>
 

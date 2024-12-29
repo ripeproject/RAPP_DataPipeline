@@ -1,9 +1,9 @@
 
 #pragma once
 
-#include "PointCloudTypes.hpp"
-
 #include "Constants.hpp"
+
+#include <cbdf/PointCloudTypes.hpp>
 
 #include <vector>
 #include <algorithm>

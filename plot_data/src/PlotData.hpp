@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include "PlotMetaData.hpp"
-
+#include <cbdf/PlotMetaData.hpp>
 #include <cbdf/ExperimentInfo.hpp>
 
 #include <cstdint>

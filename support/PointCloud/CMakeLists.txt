@@ -90,35 +90,16 @@ target_compile_features(pointcloud_io PRIVATE cxx_std_20)
 
 target_sources(pointcloud_io
 PUBLIC
-	PointCloudTypes.hpp
 	PointCloudUtils.hpp
-	PointCloud.hpp
-	PointCloudParser.hpp
-	PointCloudSerializer.hpp
-
-	PointCloudInfo.hpp
-	PointCloudInfoLoader.hpp
 	
 PRIVATE
 
-	PointCloudBlockId.hpp
-	PointCloudBlockId.cpp
-
-	PointCloudDataIdentifiers.hpp
 	PointCloudUtils.cpp
-	PointCloud.cpp
-	PointCloudParser.cpp
-	PointCloudSerializer.cpp
-
-	PointCloudInfo.cpp
-	PointCloudInfoLoader.cpp
 )
 
 target_include_directories(pointcloud_io PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
 target_include_directories(pointcloud_io PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
-
-target_link_libraries(pointcloud_io PRIVATE cbdf::cbdf)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
