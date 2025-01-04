@@ -4,6 +4,7 @@
 #include "Constants.hpp"
 
 #include <cbdf/PointCloudTypes.hpp>
+#include <cbdf/PointCloud.hpp>
 
 #include <vector>
 #include <algorithm>
@@ -37,6 +38,9 @@ namespace pointcloud
 
 	template<typename POINT>
 	std::vector<POINT> sliceAtGivenY(std::vector<POINT> pc, double y_mm, double tolerance_mm);
+
+	template<class POINT>
+	sPoint3D_t center(const cBasePointCloud<POINT>& pc);
 }
 
 /*****************************************************************************
@@ -134,3 +138,15 @@ std::vector<POINT> pointcloud::sliceAtGivenY(std::vector<POINT> pc, double y_mm,
 	return result;
 }
 
+
+template<class POINT>
+pointcloud::sPoint3D_t pointcloud::center(const cBasePointCloud<POINT>& pc)
+{
+	pointcloud::sPoint3D_t result;
+
+	result.X_m = (pc.maxX_m() + pc.minX_m()) / 2.0;
+	result.Y_m = (pc.maxY_m() + pc.minY_m()) / 2.0;
+	result.Z_m = (pc.maxZ_m() + pc.minZ_m()) / 2.0;
+
+	return result;
+}
