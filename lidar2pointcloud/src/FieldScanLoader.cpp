@@ -4,8 +4,8 @@
 #include "FieldScanDataModel.hpp"
 
 #include "OusterInfoLoader.hpp"
-#include "ProcessingInfoLoader.hpp"
 
+#include <cbdf/ProcessingInfoLoader.hpp>
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentInfoLoader.hpp>

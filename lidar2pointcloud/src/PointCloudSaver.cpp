@@ -1,11 +1,12 @@
 
 #include "PointCloudSaver.hpp"
 #include "RappPointCloud.hpp"
-#include "PointCloud.hpp"
 
 #include "Constants.hpp"
 
 #include "FieldUtils.hpp"
+
+#include <cbdf/PointCloud.hpp>
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 

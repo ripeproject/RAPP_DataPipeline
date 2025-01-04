@@ -3,8 +3,9 @@
 
 #include "LidarMapConfigFile.hpp"
 
-#include "ProcessingInfoSerializer.hpp"
 #include "lidar2pointcloud.hpp"
+
+#include <cbdf/ProcessingInfoSerializer.hpp>
 
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/OusterParser.hpp>

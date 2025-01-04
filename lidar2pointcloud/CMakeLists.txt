@@ -162,7 +162,7 @@ find_package(tinyply REQUIRED)
 
 
 # Find and include my libraries for data collection
-find_package(CBDF REQUIRED cbdf info ctrl sensors)
+find_package(cbdf REQUIRED cbdf info ctrl sensors processing_info pointcloud)
 
 # Required for the cbdf::sensors library
 find_package(ouster REQUIRED)
@@ -212,7 +212,6 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 
 # Add the support library source code directory
 # Note: the support directory is a symlink 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/ProcessingInfo)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PointCloud)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)

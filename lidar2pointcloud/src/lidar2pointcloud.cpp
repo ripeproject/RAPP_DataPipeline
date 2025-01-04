@@ -1,10 +1,11 @@
 
 #include "lidar2pointcloud.hpp"
-#include "PointCloudTypes.hpp"
 #include "Constants.hpp"
 #include "MathUtils.hpp"
 #include "KinematicUtils.hpp"
 #include "PointCloudGenerator.hpp"
+
+#include <cbdf/PointCloudTypes.hpp>
 
 #include <ouster/simple_blas.h>
 #include <ouster/ouster_utils.h>

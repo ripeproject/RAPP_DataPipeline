@@ -2,10 +2,11 @@
 #pragma once
 
 #include "PointCloudInfo.hpp"
-#include "ProcessingInfoSerializer.hpp"
-#include "PointCloudSerializer.hpp"
 
 #include "RappPointCloud.hpp"
+
+#include <cbdf/ProcessingInfoSerializer.hpp>
+#include <cbdf/PointCloudSerializer.hpp>
 
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/OusterParser.hpp>

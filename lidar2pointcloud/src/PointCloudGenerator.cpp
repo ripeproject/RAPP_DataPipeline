@@ -11,7 +11,7 @@
 #include "PointCloudUtils.hpp"
 #include "GroundModelUtils.hpp"
 
-#include "PointCloud.hpp"
+#include <cbdf/PointCloud.hpp>
 
 #include <ouster/simple_blas.h>
 #include <ouster/ouster_utils.h>

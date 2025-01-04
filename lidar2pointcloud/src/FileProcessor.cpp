@@ -7,7 +7,7 @@
 #include "GroundModelUtils.hpp"
 #include "PointCloudSaver.hpp"
 
-#include "PointCloudSerializer.hpp"
+#include <cbdf/PointCloudSerializer.hpp>
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentSerializer.hpp>

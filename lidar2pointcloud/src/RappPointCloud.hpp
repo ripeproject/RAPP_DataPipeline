@@ -1,10 +1,11 @@
 #pragma once
 
-#include "PointCloudTypes.hpp"
 #include "datatypes.hpp"
-#include "PointCloud.hpp"
 
 #include "Constants.hpp"
+
+#include <cbdf/PointCloudTypes.hpp>
+#include <cbdf/PointCloud.hpp>
 
 #include <vector>
 #include <cassert>

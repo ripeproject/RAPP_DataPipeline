@@ -3,12 +3,13 @@
 #include "datatypes.hpp"
 
 #include "OusterInfo.hpp"
-#include "ProcessingInfo.hpp"
 
 #include "RappFieldBoundary.hpp"
 #include "RappTriangle.hpp"
 
 #include "RappPointCloud.hpp"
+
+#include <cbdf/ProcessingInfo.hpp>
 
 #include <cbdf/ExperimentInfo.hpp>
 #include <cbdf/SsnxInfo.hpp>

@@ -1,15 +1,11 @@
 
 #pragma once
 
-//#include "PointCloudSerializer.hpp"
-#include "PointCloudTypes.hpp"
-#include "PointCloud.hpp"
 
 #include "FieldScanDataModel.hpp"
 
-//#include <cbdf/BlockDataFile.hpp>
-//#include <cbdf/OusterParser.hpp>
-//#include <ouster/simple_blas.h>
+#include <cbdf/PointCloudTypes.hpp>
+#include <cbdf/PointCloud.hpp>
 
 #include <filesystem>
 #include <string>
