@@ -69,6 +69,8 @@ public:
 
 	void insert(const_iterator first, const_iterator last);
 
+	void push_back(const rfm::sPoint3D_t& cloudPoint);
+
 	const cRappPointCloud& operator+=(const cRappPointCloud& pc);
 
 	void sort();
@@ -184,16 +186,20 @@ void cRappPointCloud::assign(const cBasePointCloud<POINT2>& pc)
 	{
 		POINT2 point = data[i];
 
-		sum_x += point.X_m;
-		sum_y += point.Y_m;
-		sum_z += point.Z_m;
+		auto x = point.X_m * nConstants::M_TO_MM;
+		auto y = point.Y_m * nConstants::M_TO_MM;
+		auto z = point.Z_m * nConstants::M_TO_MM;
 
-		mCloud[i] = point;
+		sum_x += x;
+		sum_y += y;
+		sum_z += z;
+
+		mCloud[i] = {static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z)};
 	}
 
-	double x_mm = (sum_x / n) * nConstants::M_TO_MM;
-	double y_mm = (sum_y / n) * nConstants::M_TO_MM;
-	double z_mm = (sum_z / n) * nConstants::M_TO_MM;
+	double x_mm = sum_x / n;
+	double y_mm = sum_y / n;
+	double z_mm = sum_z / n;
 
 	mCentroid = { x_mm , y_mm, z_mm };
 }

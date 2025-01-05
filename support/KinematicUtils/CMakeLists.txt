@@ -1,5 +1,5 @@
 
-# The general string utilities
+# The general dolly kinematic utilities
 
 # Usage:
 # cmake -G <generator> -D CMAKE_INSTALL_PREFIX=<path to support libraries>
@@ -65,6 +65,9 @@ endif()
 # PROJECT LANGUAGE SUPPORT
 #******************************************************************************
 
+# We need a C and C++ compiler, so make sure project() test for it.
+#project(pointcloud LANGUAGES C CXX)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -74,30 +77,35 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 
-add_library(string_utils)
+add_library(kinematic_utils)
 
-set_target_properties(string_utils PROPERTIES LANGUAGE CXX)
+set_target_properties(kinematic_utils PROPERTIES LANGUAGE CXX)
 
-target_compile_features(string_utils PRIVATE cxx_std_20)
+target_compile_features(kinematic_utils PRIVATE cxx_std_20)
 
-target_sources(string_utils
+target_sources(kinematic_utils
 PUBLIC
-	StringUtils.hpp
+	KinematicDataTypes.hpp
+	
+	KinematicUtils.hpp
 	
 PRIVATE
 
-	StringUtils.cpp
+	KinematicUtils.cpp
 )
 
-target_include_directories(string_utils PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(kinematic_utils PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
-target_include_directories(string_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+target_include_directories(kinematic_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+target_include_directories(kinematic_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../FieldUtils)
+target_include_directories(kinematic_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../MathUtils)
 
-#target_link_libraries(string_utils PRIVATE cbdf::cbdf)
+target_link_libraries(kinematic_utils PRIVATE field_utils)
+target_link_libraries(kinematic_utils PRIVATE math_utils)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
 # Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
-set_property(TARGET string_utils PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+set_property(TARGET kinematic_utils PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 

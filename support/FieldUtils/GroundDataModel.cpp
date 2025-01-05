@@ -1,6 +1,8 @@
 
 #include "GroundDataModel.hpp"
 
+#include "QuadTree.hpp"
+
 
 cGroundDataModel::cGroundDataModel()
 {}

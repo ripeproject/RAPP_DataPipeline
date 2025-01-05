@@ -53,10 +53,6 @@ cmake_policy(SET CMP0091 NEW)
 SET(CMAKE_WARN_DEPRECATED 1)
 
 
-# Find and include my libraries for data collection
-find_package(CBDF REQUIRED cbdf) # info) # ctrl sensors)
-
-
 #******************************************************************************
 # PROJECT OPTIONS
 #******************************************************************************
@@ -70,9 +66,6 @@ endif()
 # PROJECT LANGUAGE SUPPORT
 #******************************************************************************
 
-# We need a C and C++ compiler, so make sure project() test for it.
-#project(pointcloud LANGUAGES C CXX)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -80,30 +73,45 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+#******************************************************************************
+# PROJECT DEPENDENCIES
+#******************************************************************************
+
+# Find all the packages needed by this code
+
+find_package(Eigen3 REQUIRED)
+find_package(dlib REQUIRED)
 
 
-add_library(pointcloud_io)
+add_library(pointcloud_utils)
 
-set_target_properties(pointcloud_io PROPERTIES LANGUAGE CXX)
+set_target_properties(pointcloud_utils PROPERTIES LANGUAGE CXX)
 
-target_compile_features(pointcloud_io PRIVATE cxx_std_20)
+target_compile_features(pointcloud_utils PRIVATE cxx_std_20)
 
-target_sources(pointcloud_io
+target_sources(pointcloud_utils
 PUBLIC
 	PointCloudUtils.hpp
-	
+
+	RappPointCloud.hpp
+
 PRIVATE
 
 	PointCloudUtils.cpp
+
+	RappPointCloud.cpp
 )
 
-target_include_directories(pointcloud_io PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(pointcloud_utils PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
-target_include_directories(pointcloud_io PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+target_include_directories(pointcloud_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+
+target_link_libraries(pointcloud_utils PRIVATE Eigen3::Eigen )
+target_link_libraries(pointcloud_utils PRIVATE dlib::dlib )
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
 # Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
-set_property(TARGET pointcloud_io PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+set_property(TARGET pointcloud_utils PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 

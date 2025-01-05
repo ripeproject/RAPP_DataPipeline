@@ -5,14 +5,13 @@
 #include "RappFieldBoundary.hpp"
 #include "RappTriangle.hpp"
 
-#include "RappPointCloud.hpp"
-#include "QuadTree.hpp"
-
 #include <string>
 #include <vector>
 #include <map>
 #include <memory>
 
+//Forward Declarations
+class cQuadTree;
 
 class cGroundDataModel
 {

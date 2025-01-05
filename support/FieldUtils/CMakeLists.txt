@@ -1,5 +1,5 @@
 
-# The general string utilities
+# A library for common RAPP field operations
 
 # Usage:
 # cmake -G <generator> -D CMAKE_INSTALL_PREFIX=<path to support libraries>
@@ -73,31 +73,71 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
+#******************************************************************************
+# PROJECT DEPENDENCIES
+#******************************************************************************
 
-add_library(string_utils)
+# Find all the packages needed by this code
 
-set_target_properties(string_utils PROPERTIES LANGUAGE CXX)
+#find_package(Eigen3 REQUIRED)
+find_package(dlib REQUIRED)
+find_package(csv2 REQUIRED)
+find_package(VTK 9.0 REQUIRED COMPONENTS 
+  CommonCore
+  CommonDataModel
+  FiltersGeneral
+  FiltersStatistics
+)
 
-target_compile_features(string_utils PRIVATE cxx_std_20)
 
-target_sources(string_utils
+add_library(field_utils)
+
+set_target_properties(field_utils PROPERTIES LANGUAGE CXX)
+
+target_compile_features(field_utils PRIVATE cxx_std_20)
+
+target_sources(field_utils
 PUBLIC
-	StringUtils.hpp
+	FieldUtils.hpp
+
+	GpsFileReader.hpp
+
+	GroundModelUtils.hpp
+
+	GroundDataModel.hpp
+
+	QuadTree.hpp
+	QuadNode.hpp
+
+	RappFieldBoundary.hpp
+	RappTriangle.hpp
 	
 PRIVATE
 
-	StringUtils.cpp
+	FieldUtils.cpp
+
+	GpsFileReader.cpp
+
+	GroundModelUtils.cpp
+	GroundDataModel.cpp
+
+	QuadTree.cpp
+	QuadNode.cpp
+
+	RappFieldBoundary.cpp
+	RappTriangle.cpp
 )
 
-target_include_directories(string_utils PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(field_utils PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
-target_include_directories(string_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+target_include_directories(field_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
 
-#target_link_libraries(string_utils PRIVATE cbdf::cbdf)
+target_link_libraries(field_utils PRIVATE ${VTK_LIBRARIES} )
+target_link_libraries(field_utils PRIVATE dlib::dlib )
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
 # Force use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
-set_property(TARGET string_utils PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+set_property(TARGET field_utils PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 

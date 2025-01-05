@@ -325,6 +325,14 @@ void cRappPointCloud::insert(const_iterator first, const_iterator last)
 	recomputeBounds();
 }
 
+void cRappPointCloud::push_back(const rfm::sPoint3D_t& cloudPoint)
+{
+	if ((cloudPoint.x_mm == 0) && (cloudPoint.y_mm == 0) && (cloudPoint.z_mm == 0))
+		return;
+
+	mCloud.push_back(cloudPoint);
+}
+
 const cRappPointCloud& cRappPointCloud::operator+=(const cRappPointCloud& pc)
 {
 	for (const auto& point : pc)
