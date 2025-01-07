@@ -82,6 +82,7 @@ namespace rfm
 		double z_mm = 0.0;
 	};
 
+/*
 	struct sDollyAtitude_t
 	{
 		double pitch_deg = 0.0;
@@ -154,6 +155,7 @@ namespace rfm
 			return !operator==(rhs);
 		}
 	};
+*/
 
 	/*
 	 * The RAPP uses a south/east/up coordinate system
@@ -161,6 +163,7 @@ namespace rfm
 	 * y axis is positive heading east
 	 * z axis is positive going up
 	 */
+/*
 	struct sDollyInfo_t
 	{
 		double timestamp_us = 0.0;
@@ -192,6 +195,7 @@ namespace rfm
 		double endRoll_deg = 0.0;
 		double endYaw_deg = 0.0;
 	};
+*/
 
 	struct sPoint3D_t
 	{
