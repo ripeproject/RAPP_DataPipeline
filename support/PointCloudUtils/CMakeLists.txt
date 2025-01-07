@@ -91,6 +91,8 @@ target_compile_features(pointcloud_utils PRIVATE cxx_std_20)
 
 target_sources(pointcloud_utils
 PUBLIC
+	PointCloudUtilTypes.hpp
+
 	PointCloudUtils.hpp
 
 	RappPointCloud.hpp

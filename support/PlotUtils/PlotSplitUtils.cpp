@@ -1,10 +1,30 @@
 
 #include "PlotSplitUtils.hpp"
 
-#include "PointCloudUtils.hpp"
+#include <array>
+#include <iterator>
+#include <algorithm>
+#include <numeric>
 
 
-double distance_mm(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2)
+namespace
+{
+	plot::sPoint3D_t to_plot_point(const rfm::sPoint3D_t& point)
+	{
+		return { point.x_mm, point.y_mm, point.z_mm,
+			point.range_mm, point.signal, point.reflectivity, point.nir,
+			point.frameID, point.chnNum, point.pixelNum };
+	}
+
+	rfm::sPoint3D_t to_rfm_point(const plot::sPoint3D_t& point)
+	{
+		return { point.x_mm, point.y_mm, point.z_mm, 0,
+			point.range_mm, point.signal, point.reflectivity, point.nir,
+			point.frameID, point.chnNum, point.pixelNum };
+	}
+}
+
+double plot::distance_mm(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2)
 {
 	double dx = p1.x_mm - p2.x_mm;
 	double dy = p1.y_mm - p2.y_mm;
@@ -12,13 +32,34 @@ double distance_mm(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2)
 	return sqrt(dx * dx + dy * dy);
 }
 
-double distance_mm(rfm::rappPoint_t p1, rfm::rappPoint_t p2)
+double plot::distance_mm(rfm::rappPoint_t p1, rfm::rappPoint_t p2)
 {
 	double dx = p1.x_mm - p2.x_mm;
 	double dy = p1.y_mm - p2.y_mm;
 	double dz = p1.z_mm - p2.z_mm;
 
 	return sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+bool plot::contains(const cPlotPointCloud& pc, const rfm::sPlotBoundingBox_t& box)
+{
+	if ((box.northEastCorner.x_mm < pc.minX_mm())
+		|| (box.northWestCorner.x_mm < pc.minX_mm()))
+		return false;
+
+	if ((box.southEastCorner.x_mm > pc.maxX_mm())
+		|| (box.southWestCorner.x_mm > pc.maxX_mm()))
+		return false;
+
+	if ((box.northWestCorner.y_mm < pc.minY_mm())
+		|| (box.southWestCorner.y_mm < pc.minY_mm()))
+		return false;
+
+	if ((box.northEastCorner.y_mm > pc.maxY_mm())
+		|| (box.southEastCorner.y_mm > pc.maxY_mm()))
+		return false;
+
+	return true;
 }
 
 void orderBoundingBox(std::array<rfm::rappPoint2D_t, 4>& box)
@@ -33,9 +74,9 @@ void orderBoundingBox(std::array<rfm::rappPoint2D_t, 4>& box)
 		std::swap(box[0], box[1]);
 	}
 
-	double d1 = distance_mm(box[1], box[2]);
+	double d1 = plot::distance_mm(box[1], box[2]);
 
-	double d2 = distance_mm(box[1], box[3]);
+	double d2 = plot::distance_mm(box[1], box[3]);
 
 	if (d2 < d1)
 	{
@@ -43,7 +84,7 @@ void orderBoundingBox(std::array<rfm::rappPoint2D_t, 4>& box)
 	}
 }
 
-rfm::rappPoint_t compute_center_of_height(const cRappPointCloud& pc, double height_threshold_pct)
+rfm::rappPoint_t plot::compute_center_of_height(const cPlotPointCloud& pc, double height_threshold_pct)
 {
 	double total_height = 0.0;
 	double Mx = 0.0;
@@ -51,6 +92,7 @@ rfm::rappPoint_t compute_center_of_height(const cRappPointCloud& pc, double heig
 
 	double min_x = pc.minX_mm();
 	double min_y = pc.minY_mm();
+
 	double z = pc.minZ_mm() + (pc.maxZ_mm() - pc.minZ_mm()) * (height_threshold_pct/100.0);
 
 	for (auto& point : pc)
@@ -78,7 +120,64 @@ rfm::rappPoint_t compute_center_of_height(const cRappPointCloud& pc, double heig
 	return point;
 }
 
-sLine_t computeLineParameters(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2, bool swapAxis)
+rfm::rappPoint_t plot::compute_center_of_height(const std::vector<plot::sPoint3D_t>& points, double height_threshold_pct)
+{
+	double total_height = 0.0;
+	double Mx = 0.0;
+	double My = 0.0;
+
+	double min_x = std::numeric_limits<double>::max();
+	double min_y = std::numeric_limits<double>::max();
+	double min_z = std::numeric_limits<double>::max();
+	double max_z = -min_z;
+
+	for (const auto& point : points)
+	{
+		if (point.x_mm < min_x) min_x = point.x_mm;
+		if (point.y_mm < min_y) min_y = point.y_mm;
+		if (point.z_mm < min_z) min_z = point.z_mm;
+		if (point.z_mm > max_z) max_z = point.z_mm;
+	}
+
+	double z = min_z + (max_z - min_z) * (height_threshold_pct / 100.0);
+
+	for (auto& point : points)
+	{
+		if (point.z_mm >= z)
+		{
+			total_height += point.z_mm;
+			Mx += (point.y_mm - min_y) * point.z_mm;
+			My += (point.x_mm - min_x) * point.z_mm;
+		}
+	}
+
+	if (total_height == 0.0)
+		return rfm::rappPoint_t();
+
+	double x = My / total_height;
+	double y = Mx / total_height;
+
+	rfm::rappPoint_t point;
+
+	point.x_mm = static_cast<int32_t>(x + min_x);
+	point.y_mm = static_cast<int32_t>(y + min_y);
+	point.z_mm = static_cast<int32_t>(total_height / points.size());
+
+	return point;
+}
+
+rfm::rappPoint_t plot::compute_center_of_height(const std::vector<rfm::sPoint3D_t>& points, double height_threshold_pct)
+{
+	std::vector<plot::sPoint3D_t> plotPoints;
+	plotPoints.reserve(points.size());
+
+	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+
+	return compute_center_of_height(plotPoints, height_threshold_pct);
+}
+
+
+plot::sLine_t plot::computeLineParameters(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2, bool swapAxis)
 {
 	sLine_t result;
 
@@ -101,22 +200,27 @@ sLine_t computeLineParameters(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2, bool
 	return result;
 }
 
-cRappPointCloud trim_outside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box)
+cPlotPointCloud plot::trim_outside(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box)
 {
-	cRappPointCloud result;
+	return trim_outside(pc.data(), box);
+}
 
-	std::array<rfm::rappPoint2D_t, 4> points = {box.northEastCorner, box.northWestCorner, box.southEastCorner, box.southWestCorner};
+cPlotPointCloud plot::trim_outside(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box)
+{
+	cPlotPointCloud result;
 
-	orderBoundingBox(points);
+	std::array<rfm::rappPoint2D_t, 4> corners = { box.northEastCorner, box.northWestCorner, box.southEastCorner, box.southWestCorner };
 
-	auto line1 = computeLineParameters(points[0], points[1], true);
-	auto line2 = computeLineParameters(points[1], points[2]);
-	auto line3 = computeLineParameters(points[2], points[3], true);
-	auto line4 = computeLineParameters(points[3], points[0]);
+	orderBoundingBox(corners);
+
+	auto line1 = computeLineParameters(corners[0], corners[1], true);
+	auto line2 = computeLineParameters(corners[1], corners[2]);
+	auto line3 = computeLineParameters(corners[2], corners[3], true);
+	auto line4 = computeLineParameters(corners[3], corners[0]);
 
 	double x, y;
 
-	for (const auto& point : pc)
+	for (const auto& point : points)
 	{
 		x = line1.slope * point.y_mm + line1.intercept;
 
@@ -144,9 +248,19 @@ cRappPointCloud trim_outside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t 
 	return result;
 }
 
-std::vector<cRappPointCloud::value_type> sliceAtGivenX(const cRappPointCloud& pc, double x_mm, double tolerance_mm)
+cPlotPointCloud plot::trim_outside(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box)
 {
-	std::vector<cRappPointCloud::value_type> result;
+	std::vector<plot::sPoint3D_t> plotPoints;
+	plotPoints.reserve(points.size());
+
+	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+
+	return trim_outside(plotPoints, box);
+}
+
+std::vector<cPlotPointCloud::value_type> plot::sliceAtGivenX(const cPlotPointCloud& pc, double x_mm, double tolerance_mm)
+{
+	std::vector<cPlotPointCloud::value_type> result;
 	if (pc.empty())
 		return result;
 
@@ -159,13 +273,11 @@ std::vector<cRappPointCloud::value_type> sliceAtGivenX(const cRappPointCloud& pc
 	return result;
 }
 
-std::vector<cRappPointCloud::value_type> sliceAtGivenY(const cRappPointCloud& pc, double y_mm, double tolerance_mm)
+std::vector<cPlotPointCloud::value_type> plot::sliceAtGivenY(const cPlotPointCloud& pc, double y_mm, double tolerance_mm)
 {
-	std::vector<cRappPointCloud::value_type> result;
+	std::vector<cPlotPointCloud::value_type> result;
 	if (pc.empty())
 		return result;
-
-	//	std::sort(pc.begin(), pc.end(), [](POINT a, POINT b) { return a.y_mm < b.y_mm; });
 
 	double y_min = y_mm - tolerance_mm;
 	double y_max = y_mm + tolerance_mm;
@@ -176,23 +288,41 @@ std::vector<cRappPointCloud::value_type> sliceAtGivenY(const cRappPointCloud& pc
 	return result;
 }
 
-cRappPointCloud isolate_basic(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box)
+cPlotPointCloud plot::isolate_basic(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box)
+{
+	return isolate_basic(pc.data(), box);
+}
+
+cPlotPointCloud plot::isolate_basic(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box)
 {
 	auto result = trim_outside(pc, box);
 	result.recomputeBounds();
 	return result;
 }
 
-std::vector<cRappPointCloud> isolate_basic(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+cPlotPointCloud plot::isolate_basic(const std::vector<rfm::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box)
+{
+	auto result = trim_outside(pc, box);
+	result.recomputeBounds();
+	return result;
+}
+
+std::vector<cPlotPointCloud> plot::isolate_basic(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm)
+{
+	return isolate_basic(pc.data(), box, numSubPlots, orientation, plot_width_mm, plot_length_mm);
+}
+
+std::vector<cPlotPointCloud> plot::isolate_basic(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm)
 {
 	int half_length_mm = plot_length_mm / 2;
 	int half_width_mm = plot_width_mm / 2;
 
-	auto temp = trim_outside(pc, box);
+	auto temp = trim_outside(points, box);
 	temp.recomputeBounds();
 
-	std::vector<cRappPointCloud> result;
+	std::vector<cPlotPointCloud> result;
 
 	if (numSubPlots < 1)
 	{
@@ -223,7 +353,7 @@ std::vector<cRappPointCloud> isolate_basic(const cRappPointCloud& pc, rfm::sPlot
 		}
 		}
 
-		temp.trim_outside(plot_bounds);
+		temp = trim_outside(temp, plot_bounds);
 		temp.recomputeBounds();
 
 		result.push_back(temp);
@@ -289,16 +419,34 @@ std::vector<cRappPointCloud> isolate_basic(const cRappPointCloud& pc, rfm::sPlot
 	return result;
 }
 
-cRappPointCloud isolate_center_of_plot(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+std::vector<cPlotPointCloud> plot::isolate_basic(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm)
+{
+	std::vector<plot::sPoint3D_t> plotPoints;
+	plotPoints.reserve(points.size());
+
+	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+
+	return isolate_basic(plotPoints, box, numSubPlots, orientation, plot_width_mm, plot_length_mm);
+}
+
+
+cPlotPointCloud plot::isolate_center_of_plot(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm)
+{
+	return isolate_center_of_plot(pc.data(), box, plot_width_mm, plot_length_mm);
+}
+
+cPlotPointCloud plot::isolate_center_of_plot(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm)
 {
 	double half_width_mm = plot_width_mm / 2.0;
 	double half_length_mm = plot_length_mm / 2.0;
 
-	auto result = trim_outside(pc, box);
+	auto result = trim_outside(points, box);
 	result.recomputeBounds();
 
-	rfm::rappPoint_t c1 = result.center();
+	plot::rappPoint_t c1 = result.center();
 
 	std::int32_t north_mm = c1.x_mm - half_width_mm;
 	std::int32_t south_mm = c1.x_mm + half_width_mm;
@@ -318,13 +466,31 @@ cRappPointCloud isolate_center_of_plot(const cRappPointCloud& pc, rfm::sPlotBoun
 	plot.southEastCorner.x_mm = south_mm;
 	plot.southEastCorner.y_mm = east_mm;
 
-	result = trim_outside(pc, plot);
+	result = trim_outside(points, plot);
 	result.recomputeBounds();
 
 	return result;
 }
 
-cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+cPlotPointCloud plot::isolate_center_of_plot(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm)
+{
+	std::vector<plot::sPoint3D_t> plotPoints;
+	plotPoints.reserve(points.size());
+
+	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+
+	return isolate_center_of_plot(plotPoints, box, plot_width_mm, plot_length_mm);
+}
+
+
+cPlotPointCloud plot::isolate_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+{
+	return isolate_center_of_height(pc.data(), box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+}
+
+cPlotPointCloud plot::isolate_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
 {
 	double width_mm = ((box.southEastCorner.x_mm - box.northEastCorner.x_mm) + (box.southWestCorner.x_mm - box.northWestCorner.x_mm)) / 2.0;
@@ -336,7 +502,7 @@ cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBo
 	double half_width_mm = plot_width_mm / 2.0;
 	double half_length_mm = plot_length_mm / 2.0;
 
-	auto result = trim_outside(pc, box);
+	auto result = trim_outside(points, box);
 	result.recomputeBounds();
 
 	auto c0 = result.center();
@@ -382,16 +548,26 @@ cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBo
 	plot.southEastCorner.x_mm = south_mm;
 	plot.southEastCorner.y_mm = east_mm;
 
-	result = trim_outside(pc, plot);
+	result = trim_outside(points, plot);
 	result.recomputeBounds();
 
 	return result;
 }
 
+cPlotPointCloud plot::isolate_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+{
+	std::vector<plot::sPoint3D_t> plotPoints;
+	plotPoints.reserve(points.size());
+
+	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+
+	return isolate_center_of_height(plotPoints, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+}
 
 
-cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
-	const cRappPointCloud& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm, 
+cPlotPointCloud plot::isolate_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	const cPlotPointCloud& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
 	double height_threshold_pct, double max_displacement_pct)
 {
 	double width_mm = ((box.southEastCorner.x_mm - box.northEastCorner.x_mm) + (box.southWestCorner.x_mm - box.northWestCorner.x_mm)) / 2.0;
@@ -456,17 +632,24 @@ cRappPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBo
 }
 
 
-std::vector<cRappPointCloud> isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+std::vector<cPlotPointCloud> plot::isolate_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
+	double height_threshold_pct)
+{
+	return isolate_center_of_height(pc.data(), box, numSubPlots, orientation, plot_width_mm, plot_length_mm, height_threshold_pct);
+}
+
+std::vector<cPlotPointCloud> plot::isolate_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
 	double height_threshold_pct)
 {
 	int half_length_mm = plot_length_mm / 2;
 	int half_width_mm = plot_width_mm / 2;
 
-	auto temp = trim_outside(pc, box);
+	auto temp = trim_outside(points, box);
 	temp.recomputeBounds();
 
-	std::vector<cRappPointCloud> result;
+	std::vector<cPlotPointCloud> result;
 
 	if (numSubPlots < 1)
 	{
@@ -496,7 +679,7 @@ std::vector<cRappPointCloud> isolate_center_of_height(const cRappPointCloud& pc,
 		}
 		}
 
-		auto plot = trim_outside(pc, plot_bounds);
+		auto plot = trim_outside(points, plot_bounds);
 		plot.recomputeBounds();
 
 		result.push_back(plot);
@@ -581,7 +764,7 @@ std::vector<cRappPointCloud> isolate_center_of_height(const cRappPointCloud& pc,
 		}
 		}
 
-		auto plot = trim_outside(pc, plot_bounds);
+		auto plot = trim_outside(points, plot_bounds);
 		plot.recomputeBounds();
 
 		result.push_back(plot);
@@ -590,8 +773,19 @@ std::vector<cRappPointCloud> isolate_center_of_height(const cRappPointCloud& pc,
 	return result;
 }
 
+std::vector<cPlotPointCloud> plot::isolate_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
+	double height_threshold_pct)
+{
+	std::vector<plot::sPoint3D_t> plotPoints;
+	plotPoints.reserve(points.size());
 
-cRappPointCloud isolate_iterative(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box, 
+	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+
+	return isolate_center_of_height(plotPoints, box, numSubPlots, orientation, plot_width_mm, plot_length_mm, height_threshold_pct);
+}
+
+cPlotPointCloud plot::isolate_iterative(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double tolerance_mm, double bound_pct)
 {
 	std::int32_t width_mm = box.southWestCorner.x_mm - box.northWestCorner.x_mm;
@@ -698,13 +892,13 @@ cRappPointCloud isolate_iterative(const cRappPointCloud& pc, rfm::sPlotBoundingB
 	return test2;
 }
 
-cRappPointCloud isolate_pour(const cRappPointCloud& pc)
+cPlotPointCloud plot::isolate_pour(const cPlotPointCloud& pc)
 {
 	return pc;
 }
 
 
-cRappPointCloud isolate_find_center(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+cPlotPointCloud plot::isolate_find_center(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct)
 {
 	double half_width_mm = plot_width_mm / 2.0;
@@ -735,5 +929,6 @@ cRappPointCloud isolate_find_center(const cRappPointCloud& pc, rfm::sPlotBoundin
 	result.recomputeBounds();
 
 	return result;
-
 }
+
+

@@ -3,6 +3,7 @@
 #include "lidar2pointcloud.hpp"
 #include "StringUtils.hpp"
 #include "FieldUtils.hpp"
+#include "PointCloudUtils.hpp"
 #include "ExportUtils.hpp"
 #include "GroundModelUtils.hpp"
 #include "PointCloudSaver.hpp"
@@ -20,6 +21,7 @@
 #include <numbers>
 #include <optional>
 
+using namespace pointcloud;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);

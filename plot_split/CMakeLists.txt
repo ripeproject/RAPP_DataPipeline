@@ -104,7 +104,7 @@ find_package(nlohmann_json REQUIRED)
 find_package(fmt REQUIRED)
 
 # Find and include my libraries for data collection
-find_package(CBDF REQUIRED cbdf info processing_info) # ctrl sensors)
+find_package(cbdf REQUIRED cbdf info processing_info pointcloud plot_info) # ctrl sensors)
 find_package(tinyply REQUIRED)
 
 
@@ -144,8 +144,9 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 
 # Add the support library source code directory
 # Note: the support directory is a symlink 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PlotInfo)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PointCloud)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/common)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PlotUtils)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PointCloudUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/Utilities)

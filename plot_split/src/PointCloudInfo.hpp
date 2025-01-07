@@ -1,8 +1,10 @@
 
 #pragma once
 
-#include "PointCloudTypes.hpp"
 #include "RappPointCloud.hpp"
+
+#include <cbdf/PointCloudTypes.hpp>
+#include <cbdf/PointCloud.hpp>
 
 #include <string>
 #include <optional>

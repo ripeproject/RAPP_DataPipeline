@@ -109,7 +109,8 @@ public:
 	const std::string& getPotLabel() const;
 	const std::string& getSeedGeneration() const;
 	const std::string& getCopyNumber() const;
-//	std::vector<std::string> mTreatments;
+	const std::string& getLeafType() const;
+	//	std::vector<std::string> mTreatments;
 
 	const cPlotConfigBoundary& getBounds() const;
 	cPlotConfigBoundary& getBounds();
@@ -128,6 +129,8 @@ public:
 	void setPotLabel(const std::string& pot);
 	void setSeedGeneration(const std::string& generation);
 	void setCopyNumber(const std::string& num);
+	void setLeafType(const std::string& leaf_type);
+
 	void setBounds(const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
 
@@ -150,6 +153,7 @@ private:
 	std::string mPotLabel;
 	std::string mSeedGeneration;
 	std::string mCopyNumber;
+	std::string mLeafType;
 	std::vector<std::string> mTreatments;
 
 	cPlotConfigBoundary mBounds;

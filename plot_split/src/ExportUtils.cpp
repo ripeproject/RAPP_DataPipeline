@@ -36,7 +36,7 @@ namespace
 // end of namespace
 
 
-void exportPointcloud2Ply(const std::string& filename, const cRappPointCloud& pc, bool useBinaryFormat)
+void exportPointcloud2Ply(const std::string& filename, const cPlotPointCloud& pc, bool useBinaryFormat)
 {
     using namespace tinyply;
 

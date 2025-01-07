@@ -4,8 +4,6 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
 	ParserExceptions.hpp
 
-	datatypes.hpp
-
 	LidarMapConfigScan.hpp
 	LidarMapConfigScan.cpp
 	LidarMapConfigOptions.hpp
@@ -25,9 +23,6 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	PointCloudGenerator.hpp
 	PointCloudGenerator.cpp
 
-	KinematicUtils.hpp
-	KinematicUtils.cpp
-
 	FieldScanLoader.hpp
 	FieldScanLoader.cpp
 
@@ -37,34 +32,8 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	ExportUtils.hpp
 	ExportUtils.cpp
 
-	FieldUtils.hpp
-	FieldUtils.cpp
-
-	GpsFileReader.hpp
-	GpsFileReader.cpp
-
-	GroundModelUtils.hpp
-	GroundModelUtils.cpp
-
-	GroundDataModel.hpp
-	GroundDataModel.cpp
-
-	RappFieldBoundary.hpp
-	RappFieldBoundary.cpp
-
-	RappTriangle.hpp
-	RappTriangle.cpp
-
-	RappPointCloud.hpp
-	RappPointCloud.cpp
-
 	FieldScanDataModel.hpp
 	FieldScanDataModel.cpp
-
-	QuadTree.hpp
-	QuadTree.cpp
-	QuadNode.hpp
-	QuadNode.cpp
 
 	lidar2pointcloud.hpp
 	lidar2pointcloud.cpp
@@ -95,7 +64,9 @@ PRIVATE
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE ${PCL_INCLUDE_DIRS})
 target_include_directories(console_app PRIVATE "../support/common")
-target_include_directories(console_app PRIVATE "../support/PointCloud")
+target_include_directories(console_app PRIVATE "../support/FieldUtils")
+target_include_directories(console_app PRIVATE "../support/KinematicUtils")
+target_include_directories(console_app PRIVATE "../support/PointCloudUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/MathUtils")
@@ -110,7 +81,10 @@ target_link_libraries(console_app PRIVATE cbdf::ctrl)
 target_link_libraries(console_app PRIVATE cbdf::gps cbdf::lidar)
 target_link_libraries(console_app PRIVATE cbdf::pointcloud)
 target_link_libraries(console_app PRIVATE cbdf::processing_info)
-target_link_libraries(console_app PRIVATE pointcloud_io)
+target_link_libraries(console_app PRIVATE common)
+target_link_libraries(console_app PRIVATE field_utils)
+target_link_libraries(console_app PRIVATE kinematic_utils)
+target_link_libraries(console_app PRIVATE pointcloud_utils)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE utilities)
@@ -171,7 +145,9 @@ if(wxWidgets_FOUND)
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_include_directories(gui_app PRIVATE ${PCL_INCLUDE_DIRS})
 	target_include_directories(gui_app PRIVATE "../support/common")
-	target_include_directories(gui_app PRIVATE "../support/PointCloud")
+	target_include_directories(gui_app PRIVATE "../support/FieldUtils")
+	target_include_directories(gui_app PRIVATE "../support/KinematicUtils")
+	target_include_directories(gui_app PRIVATE "../support/PointCloudUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 	target_include_directories(gui_app PRIVATE "../support/MathUtils")
@@ -190,8 +166,10 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::processing_info)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE math_utils)
+	target_link_libraries(gui_app PRIVATE field_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
-	target_link_libraries(gui_app PRIVATE pointcloud_io)
+	target_link_libraries(gui_app PRIVATE pointcloud_utils)
+	target_link_libraries(gui_app PRIVATE kinematic_utils)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

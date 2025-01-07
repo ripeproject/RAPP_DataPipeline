@@ -167,47 +167,47 @@ void cPointCloudInfo::clearPointCloudData()
 
 void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_FrameId pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cReducedPointCloudByFrame_SensorInfo pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_FrameId pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(cPointCloud pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(cPointCloud_FrameId pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::addPointCloudData(cPointCloud_SensorInfo pointCloud)
 {
-	mPointClouds.push_back(cRappPointCloud(pointCloud));
+	mPointClouds.push_back(cRappPointCloud(pointCloud.data()));
 }
 
 void cPointCloudInfo::clearSensorKinematics()

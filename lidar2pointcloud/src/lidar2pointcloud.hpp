@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "KinematicDataTypes.hpp"
 
 #include "FieldScanDataModel.hpp"
 

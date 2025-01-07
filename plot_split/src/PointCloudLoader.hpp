@@ -2,7 +2,7 @@
 
 #include "PointCloudInfo.hpp"
 
-#include "PointCloudParser.hpp"
+#include <cbdf/PointCloudParser.hpp>
 
 #include <list>
 #include <memory>

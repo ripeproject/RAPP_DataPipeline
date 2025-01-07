@@ -384,6 +384,11 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 			out << "Pot Label: " << plot->potLabel() << "\n";
 		}
 
+		if (!plot->leafType().empty())
+		{
+			out << "Leaf Type: " << plot->leafType() << "\n";
+		}
+
 		out << "\n\n";
 	}
 
@@ -503,6 +508,7 @@ void cPlotData::write_replicate_height_file(const std::string& directory, const 
 	bool useConstructName= false;
 	bool useSeedGeneration = false;
 	bool useCopyNumber = false;
+	bool useLeafType = false;
 
 	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
 	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
@@ -710,6 +716,7 @@ void cPlotData::write_replicate_biomass_file(const std::string& directory, const
 	bool useConstructName = false;
 	bool useSeedGeneration = false;
 	bool useCopyNumber = false;
+	bool useLeafType = false;
 
 	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
 	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
@@ -840,6 +847,7 @@ bool cPlotData::inGroup(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2)
 	same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
 	same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
 	same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
+	same &= pPlotInfo1->leafType() == pPlotInfo2->leafType();
 
 	return same;
 }

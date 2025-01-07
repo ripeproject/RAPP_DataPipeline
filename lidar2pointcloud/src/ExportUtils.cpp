@@ -3,7 +3,7 @@
 
 #include "datatypes.hpp"
 #include "Constants.hpp"
-#include "FieldUtils.hpp"
+#include "PointCloudUtils.hpp"
 
 #include <tinyply.h>
 
@@ -13,6 +13,9 @@
 #include <filesystem>
 
 #define USE_FLOATS
+
+using namespace pointcloud;
+
 
 extern void update_progress(const int id, const int progress_pct);
 

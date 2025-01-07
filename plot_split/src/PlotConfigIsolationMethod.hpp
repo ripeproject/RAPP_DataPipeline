@@ -2,6 +2,7 @@
 #pragma once
 
 #include "datatypes.hpp"
+#include "PlotSplitDataTypes.hpp"
 
 #include <nlohmann/json.hpp>
 

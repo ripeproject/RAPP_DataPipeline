@@ -4,11 +4,14 @@
 
 #include "Constants.hpp"
 
+#include <cbdf/PointCloudTypes.hpp>
+
 #include <eigen3/Eigen/Eigen>
 
 #include <numbers>
 #include <algorithm>
 #include <numeric>
+
 
 namespace
 {
@@ -84,6 +87,88 @@ rfm::sPoint3D_t& rfm::sPoint3D_t::operator=(const pointcloud::sCloudPoint_Sensor
 }
 
 
+rfm::sPoint3D_t to_point(const pointcloud::sCloudPoint_t& rhs)
+{
+	rfm::sPoint3D_t result;
+
+	result.x_mm = rhs.X_m * nConstants::M_TO_MM;
+	result.y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	result.z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	result.h_mm = rfm::INVALID_HEIGHT;
+	result.range_mm = rhs.range_mm;
+	result.signal = rhs.signal;
+	result.reflectivity = rhs.reflectivity;
+	result.nir = rhs.nir;
+	result.frameID = 0;
+	result.chnNum = 0;
+	result.pixelNum = 0;
+
+	return result;
+}
+
+rfm::sPoint3D_t to_point(const pointcloud::sCloudPoint_FrameID_t& rhs)
+{
+	rfm::sPoint3D_t result;
+
+	result.x_mm = rhs.X_m * nConstants::M_TO_MM;
+	result.y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	result.z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	result.h_mm = rfm::INVALID_HEIGHT;
+	result.range_mm = rhs.range_mm;
+	result.signal = rhs.signal;
+	result.reflectivity = rhs.reflectivity;
+	result.nir = rhs.nir;
+	result.frameID = rhs.frameID;
+	result.chnNum = 0;
+	result.pixelNum = 0;
+
+	return result;
+}
+
+rfm::sPoint3D_t to_point(const pointcloud::sCloudPoint_SensorInfo_t& rhs)
+{
+	rfm::sPoint3D_t result;
+
+	result.x_mm = rhs.X_m * nConstants::M_TO_MM;
+	result.y_mm = rhs.Y_m * nConstants::M_TO_MM;
+	result.z_mm = rhs.Z_m * nConstants::M_TO_MM;
+	result.h_mm = rfm::INVALID_HEIGHT;
+	result.range_mm = rhs.range_mm;
+	result.signal = rhs.signal;
+	result.reflectivity = rhs.reflectivity;
+	result.nir = rhs.nir;
+	result.frameID = rhs.frameID;
+	result.chnNum = rhs.chnNum;
+	result.pixelNum = rhs.pixelNum;
+
+	return result;
+}
+
+template<class POINT2>
+void assign(const std::vector<POINT2>& in, std::vector<rfm::sPoint3D_t>& out)
+{
+	out.clear();
+
+	auto n = in.size();
+	out.resize(n);
+
+	for (std::size_t i = 0; i < n; ++i)
+	{
+		rfm::sPoint3D_t point = to_point(in[i]);
+		out[i] = point;
+
+		//			POINT2 point = data[i];
+
+		//			auto x = point.X_m * nConstants::M_TO_MM;
+		//			auto y = point.Y_m * nConstants::M_TO_MM;
+		//			auto z = point.Z_m * nConstants::M_TO_MM;
+
+		//			out[i] = {static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z)};
+	}
+}
+
+
+
 cRappPointCloud::cRappPointCloud() : mCentroid(), mID(::id++)
 {}
 
@@ -112,36 +197,53 @@ cRappPointCloud::cRappPointCloud(rfm::sCentroid_t centroid, const vCloud_t& pc)
 	mCloud = pc;
 }
 
-/*
-cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_t>& pc)
+cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
-	assign(pc);
+	assign(pc, mCloud);
+
+	recomputeBounds();
 
 	mHasFrameIDs = false;
 	mHasPixelInfo = false;
 }
 
-cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_FrameID_t>& pc)
+cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_FrameID_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
-	assign(pc);
+	assign(pc, mCloud);
+
+	recomputeBounds();
 
 	mHasFrameIDs = true;
 	mHasPixelInfo = false;
 }
 
-cRappPointCloud::cRappPointCloud(const cBasePointCloud<pointcloud::sCloudPoint_SensorInfo_t>& pc)
+cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_SensorInfo_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
-	assign(pc);
+	assign(pc, mCloud);
+
+	recomputeBounds();
 
 	mHasFrameIDs = true;
 	mHasPixelInfo = true;
 }
-*/
 
 int cRappPointCloud::id() const { return mID; }
+
+const std::string& cRappPointCloud::name() const { return mName; }
+void cRappPointCloud::setName(const std::string& name) { mName = name; }
+
+bool cRappPointCloud::vegetationOnly() const
+{
+	return mVegetationOnly;
+}
+
+void cRappPointCloud::setVegetationOnly(const bool vegetation_only)
+{
+	mVegetationOnly = vegetation_only;
+}
 
 bool cRappPointCloud::hasFrameIDs() const { return mHasFrameIDs && mEnableFrameIDs; }
 bool cRappPointCloud::hasPixelInfo() const { return mHasPixelInfo && mEnableFrameIDs && mEnablePixelInfo; }
@@ -233,8 +335,26 @@ int cRappPointCloud::maxY_mm() const { return mMaxY_mm; }
 int cRappPointCloud::minZ_mm() const { return mMinZ_mm; }
 int cRappPointCloud::maxZ_mm() const { return mMaxZ_mm; }
 
+int cRappPointCloud::length_mm() const { return mMaxX_mm - mMinX_mm; }
+int cRappPointCloud::width_mm() const { return mMaxY_mm - mMinY_mm; }
+int cRappPointCloud::height_mm() const { return mMaxZ_mm - mMinZ_mm; }
+
 void cRappPointCloud::recomputeBounds()
 {
+	if (mCloud.empty())
+	{
+		mMinX_mm = 0.0;
+		mMaxX_mm = 0.0;
+
+		mMinY_mm = 0.0;
+		mMaxY_mm = 0.0;
+
+		mMinZ_mm = 0.0;
+		mMaxZ_mm = 0.0;
+
+		return;
+	}
+
 	auto minX_mm = std::numeric_limits<int>::max();
 	auto maxX_mm = std::numeric_limits<int>::min();
 
@@ -279,7 +399,13 @@ void cRappPointCloud::recomputeBounds()
 	double z_mm = sum_z / n;
 
 	mCentroid = { x_mm , y_mm, z_mm };
+}
 
+rfm::rappPoint_t cRappPointCloud::center() const
+{
+	return {static_cast<std::int32_t>((mMaxX_mm + mMinX_mm) / 2),
+		static_cast<std::int32_t>((mMaxY_mm + mMinY_mm) / 2), 
+		static_cast<std::int32_t>((mMaxZ_mm + mMinZ_mm) / 2) };
 }
 
 rfm::sCentroid_t cRappPointCloud::centroid() const { return mCentroid; }
@@ -367,7 +493,7 @@ void cRappPointCloud::sort()
 
 rfm::sPoint3D_t cRappPointCloud::getPoint(int x_mm, int y_mm, int r_mm) const
 {
-	rfm::sPoint3D_t result = {x_mm, y_mm, rfm::INVALID_HEIGHT};
+	rfm::sPoint3D_t result = {x_mm, y_mm, rfm::INVALID_HEIGHT, rfm::INVALID_HEIGHT};
 
 	if ((x_mm < mMinX_mm) || (x_mm > mMaxX_mm)) return result;
 	if ((y_mm < mMinY_mm) || (y_mm > mMaxY_mm)) return result;

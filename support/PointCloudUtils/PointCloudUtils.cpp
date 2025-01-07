@@ -111,7 +111,36 @@ void pointcloud::orderBoundingBox(sBoundingBox_t& box)
 	{
 		std::swap(box.points[2], box.points[3]);
 	}
+}
 
+
+bool pointcloud::contains(const cRappPointCloud& pc, pointcloud::sBoundingBox_t box)
+{
+    orderBoundingBox(box);
+
+    double minX_m = pc.minX_mm() * nConstants::MM_TO_M;
+    double maxX_m = pc.maxX_mm() * nConstants::MM_TO_M;
+
+    double minY_m = pc.minY_mm() * nConstants::MM_TO_M;
+    double maxY_m = pc.maxY_mm() * nConstants::MM_TO_M;
+
+    if ((box.points[0].X_m < minX_m)
+        || (box.points[1].X_m < minX_m))
+        return false;
+
+    if ((box.points[2].X_m > maxX_m)
+        || (box.points[3].X_m > maxX_m))
+        return false;
+
+    if ((box.points[0].Y_m < minY_m)
+        || (box.points[2].Y_m < minY_m))
+        return false;
+
+    if ((box.points[1].Y_m > maxY_m)
+        || (box.points[3].Y_m > maxY_m))
+        return false;
+
+    return true;
 }
 
 pointcloud::sLine_t pointcloud::computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis)

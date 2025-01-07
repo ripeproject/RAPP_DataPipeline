@@ -360,6 +360,11 @@ const std::string& cPlotConfigPlotInfo::getCopyNumber() const
 	return mCopyNumber;
 }
 
+const std::string& cPlotConfigPlotInfo::getLeafType() const
+{
+	return mLeafType;
+}
+
 const cPlotConfigBoundary& cPlotConfigPlotInfo::getBounds() const
 {
 	return mBounds;
@@ -484,6 +489,12 @@ void cPlotConfigPlotInfo::setCopyNumber(const std::string& num)
 	mCopyNumber = num;
 }
 
+void cPlotConfigPlotInfo::setLeafType(const std::string& leaf_type)
+{
+	mDirty |= (mLeafType != leaf_type);
+	mLeafType = leaf_type;
+}
+
 void cPlotConfigPlotInfo::setBounds(const cPlotConfigBoundary& bounds)
 {
 	mDirty |= (mBounds != bounds);
@@ -543,6 +554,9 @@ void cPlotConfigPlotInfo::load(const nlohmann::json& jdoc)
 	if (jdoc.contains("copy number"))
 		mCopyNumber = jdoc["copy number"];
 
+	if (jdoc.contains("leaf type"))
+		mLeafType = jdoc["leaf type"];
+
 	mBounds.load(jdoc);
 	mIsolationMethod.load(jdoc);
 }
@@ -584,6 +598,9 @@ nlohmann::json cPlotConfigPlotInfo::save()
 
 	if (!mCopyNumber.empty())
 		infoDoc["copy number"] = mCopyNumber;
+
+	if (!mLeafType.empty())
+		infoDoc["leaf type"] = mLeafType;
 
 	mBounds.save(infoDoc);
 	infoDoc["isolation method"] = mIsolationMethod.save();

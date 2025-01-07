@@ -26,6 +26,7 @@
 
 
 using namespace ouster;
+using namespace pointcloud;
 
 extern void update_progress(const int id, const int progress_pct);
 

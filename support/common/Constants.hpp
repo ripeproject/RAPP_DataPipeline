@@ -22,11 +22,17 @@ namespace nConstants
 	constexpr static double CM_TO_MM = 10.0;
 	constexpr static double MM_TO_CM = 1.0 / CM_TO_MM;
 
+	constexpr static double FT_TO_IN = 12.0;
+	constexpr static double IN_TO_FT = 1.0 / FT_TO_IN;
+
 	constexpr static double FT_TO_M = 0.3048;
 	constexpr static double M_TO_FT = 1.0 / FT_TO_M;
 
 	constexpr static double FT_TO_MM = FT_TO_M * M_TO_MM;
 	constexpr static double MM_TO_FT = 1.0 / FT_TO_MM;
+
+	constexpr static double IN_TO_MM = 25.4;
+	constexpr static double MM_TO_IN = 1.0 / IN_TO_MM;
 
 	/*** Time Conversions ***/
 	constexpr static double SEC_TO_MS = 1000.0;

@@ -5,8 +5,8 @@
 
 #include "RappPointCloud.hpp"
 
-//#include <cbdf/PointCloudTypes.hpp>
-//#include <cbdf/PointCloud.hpp>
+#include <cbdf/PointCloudTypes.hpp>
+#include <cbdf/PointCloud.hpp>
 
 #include <vector>
 #include <algorithm>
@@ -22,6 +22,8 @@ namespace pointcloud
 	double distance_m(sPoint3D_t p1, sPoint3D_t p2);
 
 	void orderBoundingBox(sBoundingBox_t& box);
+
+	bool contains(const cRappPointCloud& pc, pointcloud::sBoundingBox_t box);
 
 	struct sLine_t
 	{

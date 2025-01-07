@@ -28,6 +28,8 @@ const std::string& cRappPlot::constructName() const { return mConstructName; }
 const std::string& cRappPlot::potLabel() const { return mPotLabel; }
 const std::string& cRappPlot::seedGeneration() const { return mSeedGeneration; }
 const std::string& cRappPlot::copyNumber() const { return mCopyNumber; }
+const std::string& cRappPlot::leafType() const { return mLeafType; }
+
 const bool cRappPlot::vegetationOnly() const { return mCloud.vegetationOnly(); }
 
 
@@ -82,28 +84,33 @@ void cRappPlot::setCopyNumber(const std::string& copyNumber)
 	mCopyNumber = copyNumber;
 }
 
+void cRappPlot::setLeafType(const std::string& leafType)
+{
+	mLeafType = leafType;
+}
+
 void cRappPlot::setVegetationOnly(const bool vegetation_only)
 {
 	mCloud.setVegetationOnly(vegetation_only);
 }
 
 
-void cRappPlot::setPointCloud(const cRappPointCloud& pointCloud)
+void cRappPlot::setPointCloud(const cPlotPointCloud& pointCloud)
 {
 	mCloud.clear();
 
 	mCloud = pointCloud;
 }
 
-rfm::sPoint3D_t cRappPlot::getPoint(int x_mm, int y_mm, int r_mm) const
+plot::sPoint3D_t cRappPlot::getPoint(int x_mm, int y_mm, int r_mm) const
 {
-	rfm::sPoint3D_t result = {x_mm, y_mm, rfm::INVALID_HEIGHT};
+	plot::sPoint3D_t result = {x_mm, y_mm, plot::INVALID_HEIGHT};
 
 	auto lb = result;
 	lb.x_mm -= r_mm;
 
 	auto first = std::lower_bound(mCloud.begin(), mCloud.end(), lb,
-		[](const rfm::sPoint3D_t& a, rfm::sPoint3D_t value)
+		[](const plot::sPoint3D_t& a, plot::sPoint3D_t value)
 		{
 			return a.x_mm < value.x_mm;
 		});
@@ -115,18 +122,18 @@ rfm::sPoint3D_t cRappPlot::getPoint(int x_mm, int y_mm, int r_mm) const
 	ub.x_mm += r_mm;
 
 	auto last = std::upper_bound(mCloud.begin(), mCloud.end(), ub,
-		[](const rfm::sPoint3D_t& a, rfm::sPoint3D_t value)
+		[](const plot::sPoint3D_t& a, plot::sPoint3D_t value)
 		{
 			return a.x_mm < value.x_mm;
 		});
 
-	std::vector<rfm::sPoint3D_t>  xs(first, last);
+	std::vector<plot::sPoint3D_t>  xs(first, last);
 
 	lb = result;
 	lb.y_mm -= r_mm;
 
 	first = std::lower_bound(xs.begin(), xs.end(), lb,
-		[](const rfm::sPoint3D_t& a, rfm::sPoint3D_t value)
+		[](const plot::sPoint3D_t& a, plot::sPoint3D_t value)
 		{
 			return a.y_mm < value.y_mm;
 		});
@@ -138,7 +145,7 @@ rfm::sPoint3D_t cRappPlot::getPoint(int x_mm, int y_mm, int r_mm) const
 	ub.y_mm += r_mm;
 
 	last = std::upper_bound(xs.begin(), xs.end(), ub,
-		[](const rfm::sPoint3D_t& a, rfm::sPoint3D_t value)
+		[](const plot::sPoint3D_t& a, plot::sPoint3D_t value)
 		{
 			return a.y_mm < value.y_mm;
 		});
@@ -146,7 +153,7 @@ rfm::sPoint3D_t cRappPlot::getPoint(int x_mm, int y_mm, int r_mm) const
 	if (first == last)
 		return *first;
 
-	std::vector<rfm::sPoint3D_t>  points(first, last);
+	std::vector<plot::sPoint3D_t>  points(first, last);
 
 	if (points.empty())
 		return result;
@@ -155,7 +162,7 @@ rfm::sPoint3D_t cRappPlot::getPoint(int x_mm, int y_mm, int r_mm) const
 	int z = 0;
 	for (const auto& point : points)
 	{
-		if (point.z_mm != rfm::INVALID_HEIGHT)
+		if (point.z_mm != plot::INVALID_HEIGHT)
 		{
 			z += point.z_mm;
 			++n;
