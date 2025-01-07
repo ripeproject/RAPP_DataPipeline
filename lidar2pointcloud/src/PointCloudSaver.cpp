@@ -108,7 +108,7 @@ void to_pointcloud(const cRappPointCloud& in, cPointCloud_SensorInfo& out)
     }
 }
 
-pointcloud::sSensorKinematicInfo_t to_sensor_kinematics(const rfm::sDollyInfo_t& in)
+pointcloud::sSensorKinematicInfo_t to_sensor_kinematics(const kdt::sDollyInfo_t& in)
 {
     pointcloud::sSensorKinematicInfo_t point;
 
@@ -155,7 +155,7 @@ void cPointCloudSaver::setOutputFile(const std::string& out)
     mOutputFile = out;
 }
 
-void cPointCloudSaver::setKinematicModel(pointcloud::eKINEMATIC_MODEL model, const std::vector<rfm::sDollyInfo_t>& dollyPath)
+void cPointCloudSaver::setKinematicModel(pointcloud::eKINEMATIC_MODEL model, const std::vector<kdt::sDollyInfo_t>& dollyPath)
 {
     mKinematicModel = model;
 

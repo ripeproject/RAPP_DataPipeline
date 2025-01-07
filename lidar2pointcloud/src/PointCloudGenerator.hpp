@@ -2,6 +2,7 @@
 #pragma once
 
 #include "datatypes.hpp"
+#include "PointCloudUtilTypes.hpp"
 #include "KinematicDataTypes.hpp"
 
 #include "RappPointCloud.hpp"
@@ -100,7 +101,7 @@ public:
 	void setTranslateToGroundModel(eTranslateToGroundModel model);
 	void setTranslateDistance_m(double distance_m);
 	void setTranslateThreshold_pct(double threshold_pct);
-	void setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table);
+	void setTranslateInterpTable(const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& table);
 
 	/**
 	 */
@@ -109,7 +110,7 @@ public:
 	void setRotationToGroundModel(eRotateToGroundModel model);
 	void setRotationAngles_deg(double pitch_deg, double roll_deg);
 	void setRotationThreshold_pct(double threshold_pct);
-	void setRotateInterpTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table);
+	void setRotateInterpTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table);
 
 	/**
 	 */
@@ -118,9 +119,9 @@ public:
 	void setNearestNeighborThreshold_mm(double threshold_mm);
 	void setComputedYawLimits(double lower_limit_deg, double upper_limit_deg);
 
-	void setDollyPath(const std::vector<rfm::sDollyInfo_t>& path);
+	void setDollyPath(const std::vector<kdt::sDollyInfo_t>& path);
 
-	const std::vector<rfm::sDollyInfo_t>& getComputedDollyPath() const;
+	const std::vector<kdt::sDollyInfo_t>& getComputedDollyPath() const;
 
 	const cRappPointCloud& getPointCloud() const;
 	cRappPointCloud& getPointCloud();
@@ -206,13 +207,13 @@ private:
 	eTranslateToGroundModel	mTranslateToGroundModel = eTranslateToGroundModel::NONE;
 	double	mTranslationDistance_m = 0.0;
 	double	mTranslationThreshold_pct = 1.0;
-	std::vector<rfm::sPointCloudTranslationInterpPoint_t> mTranslateInterpTable;
+	std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> mTranslateInterpTable;
 
 	eRotateToGroundModel	mRotateToGroundModel = eRotateToGroundModel::NONE;
 	double	mRotationPitch_deg = 0.0;
 	double	mRotationRoll_deg = 0.0;
 	double	mRotationThreshold_pct = 1.0;
-	std::vector<rfm::sPointCloudRotationInterpPoint_t>    mRotateInterpTable;
+	std::vector<pointcloud::sPointCloudRotationInterpPoint_t>    mRotateInterpTable;
 
 	bool	mEnableAutomaticYawCorrection = false;
 	double  mPlantHeightThreshold_pct = 50.0;
@@ -224,9 +225,9 @@ private:
 	double	mLowerLimitYaw_deg = -30.0;
 	double	mUpperLimitYaw_deg = 30.0;
 
-	std::vector<rfm::sDollyInfo_t> mDollyPath;
+	std::vector<kdt::sDollyInfo_t> mDollyPath;
 
-	std::vector<rfm::sDollyInfo_t> mComputedDollyPath;
+	std::vector<kdt::sDollyInfo_t> mComputedDollyPath;
 
 	cRappPointCloud mPointCloud;
 

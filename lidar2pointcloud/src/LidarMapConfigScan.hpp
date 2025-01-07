@@ -2,6 +2,7 @@
 #pragma once
 
 #include "datatypes.hpp"
+#include "PointCloudUtilTypes.hpp"
 #include "KinematicDataTypes.hpp"
 
 #include <nlohmann/json.hpp>
@@ -57,20 +58,20 @@ public:
 	const std::optional<double>& getEndRollOffset_deg() const;
 	const std::optional<double>& getEndYawOffset_deg() const;
 
-	const std::vector<rfm::sDollyOrientationInterpPoint_t>& getOrientationTable() const;
+	const std::vector<kdt::sDollyOrientationInterpPoint_t>& getOrientationTable() const;
 
 	const std::optional<bool>&   getTranslateToGround() const;
 	const std::optional<double>& getTranslateDistance_m() const;
 	const std::optional<double>& getTranslateThreshold_pct() const;
 
-	const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& getTranslateTable() const;
+	const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& getTranslateTable() const;
 
 	const std::optional<bool>&   getRotateToGround() const;
 	const std::optional<double>& getRotatePitch_deg() const;
 	const std::optional<double>& getRotateRoll_deg() const;
 	const std::optional<double>& getRotateThreshold_pct() const;
 
-	const std::vector<rfm::sPointCloudRotationInterpPoint_t>& getRotateTable() const;
+	const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& getRotateTable() const;
 
 	const std::optional<double>& getStart_X_m() const;
 	const std::optional<double>& getStart_Y_m() const;
@@ -128,21 +129,21 @@ public:
 	void setEndYawOffset_deg(const std::optional<double>&);
 
 	void clearOrientationTable();
-	void setOrientationTable(const std::vector<rfm::sDollyOrientationInterpPoint_t>& table);
+	void setOrientationTable(const std::vector<kdt::sDollyOrientationInterpPoint_t>& table);
 
 	void setTranslateToGround(const std::optional<bool>&);
 	void setTranslateDistance_m(const std::optional<double>& dist_m);
 	void setTranslateThreshold_pct(const std::optional<double>& threshold_pct);
 
 	void clearTranslateTable();
-	void setTranslateTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table);
+	void setTranslateTable(const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& table);
 
 	void setRotateToGround(const std::optional<bool>&);
 	void setRotateAngles_deg(const std::optional<double>& pitch_deg, const std::optional<double>& roll_deg);
 	void setRotateThreshold_pct(const std::optional<double>&);
 
 	void clearRotateTable();
-	void setRotateTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table);
+	void setRotateTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table);
 
 	void setStart_X_m(const std::optional<double>&);
 	void setStart_Y_m(const std::optional<double>&);
@@ -214,7 +215,7 @@ private:
 	std::optional<double> mEndYawOffset_deg;
 
 	// Dolly Rotation Model - Intrep Table: Data Points
-	std::vector<rfm::sDollyOrientationInterpPoint_t> mOrientationTable;
+	std::vector<kdt::sDollyOrientationInterpPoint_t> mOrientationTable;
 
 	// Translate Model Parameters
 	std::optional<bool>   mTranslateToGround;
@@ -226,7 +227,7 @@ private:
 	std::optional<double> mTranslateThreshold_pct;
 
 	// Translate Model - Intrep Table: Data Points
-	std::vector<rfm::sPointCloudTranslationInterpPoint_t> mTranslateTable;
+	std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> mTranslateTable;
 
 	// Rotate Model Parameters
 	std::optional<bool>   mRotateToGround;
@@ -239,7 +240,7 @@ private:
 	std::optional<double> mRotateThreshold_pct;
 
 	// Rotate Model - Intrep Table: Data Points
-	std::vector<rfm::sPointCloudRotationInterpPoint_t> mRotateTable;
+	std::vector<pointcloud::sPointCloudRotationInterpPoint_t> mRotateTable;
 
 	// Start position of the scan
 	std::optional<double> mStart_X_m;

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "KinematicDataTypes.hpp"
+
 #include "PointCloudInfo.hpp"
 
 #include "RappPointCloud.hpp"
@@ -23,7 +25,7 @@ namespace pointcloud
 void to_pointcloud(const cRappPointCloud& in, cPointCloud& out);
 void to_pointcloud(const cRappPointCloud& in, cPointCloud_FrameId& out);
 void to_pointcloud(const cRappPointCloud& in, cPointCloud_SensorInfo& out);
-pointcloud::sSensorKinematicInfo_t to_sensor_kinematics(const rfm::sDollyInfo_t& in);
+pointcloud::sSensorKinematicInfo_t to_sensor_kinematics(const kdt::sDollyInfo_t& in);
 
 
 class cPointCloudSaver : public cOusterParser
@@ -36,7 +38,7 @@ public:
 	void setInputFile(const std::string& in);
 	void setOutputFile(const std::string& out);
 
-	void setKinematicModel(pointcloud::eKINEMATIC_MODEL model, const std::vector<rfm::sDollyInfo_t>& dollyPath);
+	void setKinematicModel(pointcloud::eKINEMATIC_MODEL model, const std::vector<kdt::sDollyInfo_t>& dollyPath);
 	void setRangeWindow_m(double min_dist_m, double max_dist_m);
 	void setAzimuthWindow_deg(double min_azimuth_deg, double max_azimuth_deg);
 	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);

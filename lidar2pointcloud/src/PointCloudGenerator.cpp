@@ -185,7 +185,7 @@ double	cPointCloudGenerator::getComputedEndYaw_deg() const
     return mComputedEndYaw_deg;
 }
 
-const std::vector<rfm::sDollyInfo_t>& cPointCloudGenerator::getComputedDollyPath() const
+const std::vector<kdt::sDollyInfo_t>& cPointCloudGenerator::getComputedDollyPath() const
 {
     return mComputedDollyPath;
 }
@@ -390,7 +390,7 @@ void cPointCloudGenerator::setTranslateThreshold_pct(double threshold_pct)
         mTranslationThreshold_pct = threshold_pct;
 }
 
-void cPointCloudGenerator::setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table)
+void cPointCloudGenerator::setTranslateInterpTable(const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& table)
 {
     mTranslateInterpTable = table;
 }
@@ -421,7 +421,7 @@ void cPointCloudGenerator::setRotationThreshold_pct(double threshold_pct)
         mRotationThreshold_pct = threshold_pct;
 }
 
-void cPointCloudGenerator::setRotateInterpTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table)
+void cPointCloudGenerator::setRotateInterpTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table)
 {
     mRotateInterpTable = table;
 }
@@ -450,7 +450,7 @@ void cPointCloudGenerator::setComputedYawLimits(double lower_limit_deg, double u
         std::swap(mLowerLimitYaw_deg, mUpperLimitYaw_deg);
 }
 
-void cPointCloudGenerator::setDollyPath(const std::vector<rfm::sDollyInfo_t>& path)
+void cPointCloudGenerator::setDollyPath(const std::vector<kdt::sDollyInfo_t>& path)
 {
     mDollyPath = path;
 }

@@ -164,7 +164,7 @@ void cLidar2PointCloud::setTranslateThreshold_pct(double threshold_pct)
 		mTranslationThreshold_pct = threshold_pct;
 }
 
-void cLidar2PointCloud::setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table)
+void cLidar2PointCloud::setTranslateInterpTable(const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& table)
 {
 	mTranslateInterpTable = table;
 }
@@ -190,7 +190,7 @@ void cLidar2PointCloud::setRotationThreshold_pct(double threshold_pct)
 		mRotationThreshold_pct = threshold_pct;
 }
 
-void cLidar2PointCloud::setRotateInterpTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table)
+void cLidar2PointCloud::setRotateInterpTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table)
 {
 	mRotateInterpTable = table;
 }
@@ -200,7 +200,7 @@ pointcloud::eKINEMATIC_MODEL cLidar2PointCloud::getKinematicModel() const
 	return mKinematicModel;
 }
 
-const std::vector<rfm::sDollyInfo_t>& cLidar2PointCloud::getComputedDollyPath() const
+const std::vector<kdt::sDollyInfo_t>& cLidar2PointCloud::getComputedDollyPath() const
 {
 	auto pPointCloudGenerator = getOusterInfo()->getPointCloudGenerator().lock();
 	return pPointCloudGenerator->getComputedDollyPath();
@@ -470,8 +470,8 @@ void cLidar2PointCloud::computeDollyOrientation_ConstantSpeed()
 
 	double scanTime_sec = getScanTime_sec();
 
-	rfm::sDollyAtitude_t start = { mStartPitchOffset_deg, mStartRollOffset_deg, mStartYawOffset_deg };
-	rfm::sDollyAtitude_t end = { mEndPitchOffset_deg, mEndRollOffset_deg, mEndYawOffset_deg };
+	kdt::sDollyAtitude_t start = { mStartPitchOffset_deg, mStartRollOffset_deg, mStartYawOffset_deg };
+	kdt::sDollyAtitude_t end = { mEndPitchOffset_deg, mEndRollOffset_deg, mEndYawOffset_deg };
 
 	mDollyOrientation = computeDollyOrientationKinematics(mID, mSensorMountPitch_deg,
 		mSensorMountRoll_deg, mSensorMountYaw_deg,

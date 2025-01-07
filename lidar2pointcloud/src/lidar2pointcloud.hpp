@@ -2,6 +2,7 @@
 #pragma once
 
 #include "KinematicDataTypes.hpp"
+#include "PointCloudUtilTypes.hpp"
 
 #include "FieldScanDataModel.hpp"
 
@@ -27,7 +28,7 @@ struct sPoint_t
 };
 
 
-typedef std::vector<rfm::sDollyOrientationInterpPoint_t> InterpTable_t;
+typedef std::vector<kdt::sDollyOrientationInterpPoint_t> InterpTable_t;
 
 class cLidar2PointCloud : public cFieldScanDataModel
 {
@@ -86,16 +87,16 @@ public:
 	void setTranslateToGroundModel(eTranslateToGroundModel model);
 	void setTranslateDistance_m(double distance_m);
 	void setTranslateThreshold_pct(double threshold_pct);
-	void setTranslateInterpTable(const std::vector<rfm::sPointCloudTranslationInterpPoint_t>& table);
+	void setTranslateInterpTable(const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& table);
 
 	void setRotationToGroundModel(eRotateToGroundModel model);
 	void setRotationAngles_deg(double pitch_deg, double roll_deg);
 	void setRotationThreshold_pct(double threshold_pct);
-	void setRotateInterpTable(const std::vector<rfm::sPointCloudRotationInterpPoint_t>& table);
+	void setRotateInterpTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table);
 
 	pointcloud::eKINEMATIC_MODEL getKinematicModel() const;
 
-	const std::vector<rfm::sDollyInfo_t>& getComputedDollyPath() const;
+	const std::vector<kdt::sDollyInfo_t>& getComputedDollyPath() const;
 
 	const cRappPointCloud& getPointCloud() const;
 
@@ -157,15 +158,15 @@ private:
 	eTranslateToGroundModel	mTranslateToGroundModel = eTranslateToGroundModel::NONE;
 	double	mTranslationDistance_m = 0.0;
 	double	mTranslationThreshold_pct = 1.0;
-	std::vector<rfm::sPointCloudTranslationInterpPoint_t> mTranslateInterpTable;
+	std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> mTranslateInterpTable;
 
 	eRotateToGroundModel	mRotateToGroundModel = eRotateToGroundModel::NONE;
 	double	mRotationPitch_deg = 0.0;
 	double	mRotationRoll_deg = 0.0;
 	double	mRotationThreshold_pct = 1.0;
-	std::vector<rfm::sPointCloudRotationInterpPoint_t>    mRotateInterpTable;
+	std::vector<pointcloud::sPointCloudRotationInterpPoint_t>    mRotateInterpTable;
 
 private:
-	std::vector<rfm::sDollyInfo_t>			mDollyMovement;
-	std::vector<rfm::sDollyOrientation_t>	mDollyOrientation;
+	std::vector<kdt::sDollyInfo_t>			mDollyMovement;
+	std::vector<kdt::sDollyOrientation_t>	mDollyOrientation;
 };
