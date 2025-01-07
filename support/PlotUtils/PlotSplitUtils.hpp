@@ -78,6 +78,12 @@ namespace plot
 	cPlotPointCloud isolate_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
 		const cPlotPointCloud& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
 		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
+	cPlotPointCloud isolate_center_of_height(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box,
+		const std::vector<plot::sPoint3D_t>& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
+		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
+	cPlotPointCloud isolate_center_of_height(const std::vector<rfm::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box,
+		const std::vector<rfm::sPoint3D_t>& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
+		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 
 
 	std::vector<cPlotPointCloud> isolate_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
