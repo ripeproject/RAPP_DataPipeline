@@ -2,6 +2,8 @@
 #pragma once
 
 #include "Constants.hpp"
+#include "PointCloudUtilTypes.hpp"
+//#include "KinematicDataTypes.hpp"
 
 #include "RappPointCloud.hpp"
 
@@ -34,6 +36,8 @@ namespace pointcloud
 
 	sLine_t computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis = false);
 
+	cRappPointCloud trim_outside(const cRappPointCloud& pc, sBoundingBox_t box);
+
 	template<typename POINT>
 	std::vector<POINT> trim_outside(const std::vector<POINT>& pc, sBoundingBox_t box);
 
@@ -49,24 +53,24 @@ namespace pointcloud
 
 	struct sOffsetInterpTable_t
 	{
-		std::vector<rfm::sPointCloudTranslationInterpPoint_t> offset_m;
+		std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> offset_m;
 		double R = 0;
 		bool valid = false;
 	};
 
-	sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights);
-	sOffsetInterpTable_t computePointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps);
+	sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> heights);
+	sOffsetInterpTable_t computePointCloudHeightTable(std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps);
 
 
 	struct sAnglesInterpTable_t
 	{
-		std::vector<rfm::sPointCloudRotationInterpPoint_t> angles_deg;
+		std::vector<pointcloud::sPointCloudRotationInterpPoint_t> angles_deg;
 		double R = 0;
 		bool valid = false;
 	};
 
-	sAnglesInterpTable_t fitPointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps);
-	sAnglesInterpTable_t computePointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps);
+	sAnglesInterpTable_t fitPointCloudAngleTable(std::vector<pointcloud::sPointCloudRotationInterpPoint_t> angles, uint16_t steps);
+	sAnglesInterpTable_t computePointCloudAngleTable(std::vector<pointcloud::sPointCloudRotationInterpPoint_t> angles, uint16_t steps);
 
 
 	struct sPitchAndRoll_t

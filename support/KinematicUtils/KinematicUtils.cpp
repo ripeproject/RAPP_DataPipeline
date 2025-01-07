@@ -76,54 +76,54 @@ namespace
 
 }
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
     const rfm::rappSpeeds_t& speed, double* scan_time_sec)
 {
     return computeDollyKinematics(-1, start, end, speed, scan_time_sec);
 }
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCamTypes::sPosition_t>& data, uint32_t startIndex, uint32_t endIndex)
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCamTypes::sPosition_t>& data, uint32_t startIndex, uint32_t endIndex)
 {
     return computeDollyKinematics(-1, data, startIndex, endIndex);
 }
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data)
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data)
 {
     return computeDollyKinematics(-1, data);
 }
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
     const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec)
 {
     return computeDollyKinematics(-1, start, end, vel, ignoreInvalidGroundTrackData, scan_time_sec);
 }
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
     double pitch_offset_deg, double roll_offset_deg, double yaw_offset_deg, double scan_time_sec)
 {
     return computeDollyOrientationKinematics(-1, mount_pitch_deg, mount_roll_deg, mount_yaw_deg, 
         pitch_offset_deg, roll_offset_deg, yaw_offset_deg, scan_time_sec);
 }
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
-    rfm::sDollyAtitude_t start, rfm::sDollyAtitude_t end, double scan_time_sec)
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+    kdt::sDollyAtitude_t start, kdt::sDollyAtitude_t end, double scan_time_sec)
 {
     return computeDollyOrientationKinematics(-1, mount_pitch_deg, mount_roll_deg, mount_yaw_deg, start, end, scan_time_sec);
 }
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
-    std::vector<rfm::sDollyOrientationInterpPoint_t> table, double scan_time_sec)
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+    std::vector<kdt::sDollyOrientationInterpPoint_t> table, double scan_time_sec)
 {
     return computeDollyOrientationKinematics(-1, mount_pitch_deg, mount_roll_deg, mount_yaw_deg, table, scan_time_sec);
 }
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
     const std::deque<nOusterTypes::imu_data_t>& imu, nOusterTypes::imu_intrinsics_2_t transform)
 {
     return computeDollyOrientationKinematics(-1, mount_pitch_deg, mount_roll_deg, mount_yaw_deg, imu, transform);
 }
 
-void mergeDollyOrientation(std::vector<rfm::sDollyInfo_t>& dolly, const std::vector<rfm::sDollyOrientation_t>& orientation)
+void mergeDollyOrientation(std::vector<kdt::sDollyInfo_t>& dolly, const std::vector<kdt::sDollyOrientation_t>& orientation)
 {
     mergeDollyOrientation(-1, dolly, orientation);
 }
@@ -132,10 +132,10 @@ void mergeDollyOrientation(std::vector<rfm::sDollyInfo_t>& dolly, const std::vec
 
 
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
     const rfm::rappSpeeds_t& speeds, double* scan_time_sec)
 {
-    std::vector<rfm::sDollyInfo_t> result;
+    std::vector<kdt::sDollyInfo_t> result;
 
     double speed = sqrt(speeds.vx_mmps * speeds.vx_mmps + speeds.vy_mmps * speeds.vy_mmps + speeds.vz_mmps * speeds.vz_mmps);
 
@@ -144,7 +144,7 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
         return result;
     }
 
-    rfm::sDollyInfo_t entry;
+    kdt::sDollyInfo_t entry;
     entry.timestamp_us = 0;
     entry.x_mm = start.x_mm;
     entry.y_mm = start.y_mm;
@@ -189,10 +189,10 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
 }
 
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSpiderCamTypes::sPosition_t>& data,
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSpiderCamTypes::sPosition_t>& data,
     uint32_t startIndex, uint32_t endIndex)
 {
-    std::vector<rfm::sDollyInfo_t> result;
+    std::vector<kdt::sDollyInfo_t> result;
 
     if (data.empty())
         return result;
@@ -203,7 +203,7 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
 
     auto startTimestamp = it->timestamp;
 
-    rfm::sDollyInfo_t entry;
+    kdt::sDollyInfo_t entry;
     entry.timestamp_us = 0;
     entry.x_mm = it->X_mm;
     entry.y_mm = it->Y_mm;
@@ -267,9 +267,9 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
     return result;
 }
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSsnxTypes::sPvtGeodetic_t>& data)
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSsnxTypes::sPvtGeodetic_t>& data)
 {
-    std::vector<rfm::sDollyInfo_t> result;
+    std::vector<kdt::sDollyInfo_t> result;
 
     if (data.empty())
         return result;
@@ -282,7 +282,7 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
 
     auto point = rfb::fromGPS(it->Lat_rad, it->Lon_rad, height_m);
 
-    rfm::sDollyInfo_t entry;
+    kdt::sDollyInfo_t entry;
     entry.timestamp_us = 0;
     entry.x_mm = point.x_mm;
     entry.y_mm = point.y_mm;
@@ -330,10 +330,10 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
     return result;
 }
 
-std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
     const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec)
 {
-    std::vector<rfm::sDollyInfo_t> result;
+    std::vector<kdt::sDollyInfo_t> result;
 
     if (vel.empty())
         return result;
@@ -344,7 +344,7 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
 
     double max_distance = sqrt(dx * dx + dy * dy + dz * dz);
 
-    rfm::sDollyInfo_t entry;
+    kdt::sDollyInfo_t entry;
     entry.timestamp_us = 0;
     entry.x_mm = start.x_mm;
     entry.y_mm = start.y_mm;
@@ -414,10 +414,10 @@ std::vector<rfm::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
     return result;
 }
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
     double pitch_offset_deg, double roll_offset_deg, double yaw_offset_deg, double scan_time_sec)
 {
-    std::vector<rfm::sDollyOrientation_t> result;
+    std::vector<kdt::sDollyOrientation_t> result;
 
     if (scan_time_sec <= 0.0)
         return result;
@@ -426,7 +426,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     auto roll = nMathUtils::wrap_neg_180_to_180(mount_roll_deg + roll_offset_deg);
     auto yaw = nMathUtils::wrap_0_to_360(mount_yaw_deg + yaw_offset_deg);
 
-    rfm::sDollyOrientation_t entry;
+    kdt::sDollyOrientation_t entry;
     entry.timestamp_us = 0;
     entry.pitch_deg = pitch;
     entry.roll_deg = roll;
@@ -454,10 +454,10 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     return result;
 }
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
-    rfm::sDollyAtitude_t start, rfm::sDollyAtitude_t end, double scan_time_sec)
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+    kdt::sDollyAtitude_t start, kdt::sDollyAtitude_t end, double scan_time_sec)
 {
-    std::vector<rfm::sDollyOrientation_t> result;
+    std::vector<kdt::sDollyOrientation_t> result;
 
     if (scan_time_sec <= 0.0)
         return result;
@@ -474,7 +474,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     auto roll_rate = (end_roll - start_roll) / scan_time_sec;
     auto yaw_rate = (end_yaw - start_yaw) / scan_time_sec;
 
-    rfm::sDollyOrientation_t entry;
+    kdt::sDollyOrientation_t entry;
     entry.timestamp_us = 0;
     entry.pitch_deg = start_pitch;
     entry.roll_deg = start_roll;
@@ -511,10 +511,10 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 }
 
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
-    std::vector<rfm::sDollyOrientationInterpPoint_t> table, double scan_time_sec)
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+    std::vector<kdt::sDollyOrientationInterpPoint_t> table, double scan_time_sec)
 {
-    std::vector<rfm::sDollyOrientation_t> result;
+    std::vector<kdt::sDollyOrientation_t> result;
 
     if ((scan_time_sec <= 0.0) || (table.empty()))
         return result;
@@ -523,7 +523,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     {
         auto point = table.front();
 
-        rfm::sDollyOrientation_t entry;
+        kdt::sDollyOrientation_t entry;
         entry.timestamp_us = 0;
         entry.pitch_deg = point.pitch_deg;
         entry.roll_deg = point.roll_deg;
@@ -582,7 +582,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
         auto roll_rate = (end_roll - start_roll) / delta_time_sec;
         auto yaw_rate = (end_yaw - start_yaw) / delta_time_sec;
 
-        rfm::sDollyOrientation_t entry;
+        kdt::sDollyOrientation_t entry;
         entry.timestamp_us = (scan_time_sec * (start.distance_pct / 100.0)) * nConstants::SEC_TO_US;
         entry.pitch_deg = start_pitch;
         entry.roll_deg = start_roll;
@@ -597,7 +597,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 
     auto last = table.back();
 
-    rfm::sDollyOrientation_t entry;
+    kdt::sDollyOrientation_t entry;
     entry.timestamp_us = scan_time_sec * nConstants::SEC_TO_US;
     entry.pitch_deg = nMathUtils::wrap_neg_180_to_180(mount_pitch_deg + last.pitch_deg);;
     entry.roll_deg = nMathUtils::wrap_neg_180_to_180(mount_roll_deg + last.roll_deg);
@@ -613,10 +613,10 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 }
 
 
-std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
+std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
     const std::deque<nOusterTypes::imu_data_t>& imu, nOusterTypes::imu_intrinsics_2_t transform)
 {
-    std::vector<rfm::sDollyOrientation_t> result;
+    std::vector<kdt::sDollyOrientation_t> result;
 
     if (imu.empty())
         return result;
@@ -662,7 +662,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     double y2 = data.acceleration_Yaxis_g * data.acceleration_Yaxis_g;
     double z2 = data.acceleration_Zaxis_g * data.acceleration_Zaxis_g;
 
-    rfm::sDollyOrientation_t entry;
+    kdt::sDollyOrientation_t entry;
     entry.timestamp_us = 0;
     entry.pitch_deg = atan(data.acceleration_Zaxis_g / sqrt(x2 + y2)) * nConstants::RAD_TO_DEG;
     entry.roll_deg  = atan(data.acceleration_Yaxis_g / sqrt(x2 + z2)) * nConstants::RAD_TO_DEG;
@@ -719,7 +719,7 @@ std::vector<rfm::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     return result;
 }
 
-void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const std::vector<rfm::sDollyOrientation_t>& orientation)
+void mergeDollyOrientation(int id, std::vector<kdt::sDollyInfo_t>& dolly, const std::vector<kdt::sDollyOrientation_t>& orientation)
 {
     int i = 0;
     auto n = 2*dolly.size();
@@ -737,7 +737,7 @@ void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const 
 
         auto time_us = pos.timestamp_us;
 
-        auto it = std::upper_bound(orientation.begin(), orientation.end(), time_us, [](double time_us, const rfm::sDollyOrientation_t& p)
+        auto it = std::upper_bound(orientation.begin(), orientation.end(), time_us, [](double time_us, const kdt::sDollyOrientation_t& p)
             {
                 return time_us < p.timestamp_us;
             });
@@ -801,15 +801,15 @@ void mergeDollyOrientation(int id, std::vector<rfm::sDollyInfo_t>& dolly, const 
 
 }
 
-bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path, 
+bool transform(double time_us, const std::vector<kdt::sDollyInfo_t>& path,
                 ouster::matrix_col_major<rfm::sPoint3D_t>& cloud,
-                std::vector<rfm::sDollyInfo_t>* pComputedPath, double* displacement_mm)
+                std::vector<kdt::sDollyInfo_t>* pComputedPath, double* displacement_mm)
 {
     if (path.empty()) return false;
     if (time_us < 0.0) return false;
     if (time_us > path.back().timestamp_us) return false;
 
-    rfm::sDollyInfo_t dolly;
+    kdt::sDollyInfo_t dolly;
 
     if (time_us == 0.0)
     {
@@ -818,7 +818,7 @@ bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path,
     else
     {
         auto it = std::upper_bound(path.begin(), path.end(),time_us,
-            [](double time_us, const rfm::sDollyInfo_t& p)
+            [](double time_us, const kdt::sDollyInfo_t& p)
                 {
                     return time_us < p.timestamp_us;
                 });
@@ -879,7 +879,7 @@ bool transform(double time_us, const std::vector<rfm::sDollyInfo_t>& path,
 
     if (pComputedPath)
     {
-        rfm::sDollyInfo_t info;
+        kdt::sDollyInfo_t info;
 
         info.timestamp_us = time_us;
         info.x_mm = southPos_mm;

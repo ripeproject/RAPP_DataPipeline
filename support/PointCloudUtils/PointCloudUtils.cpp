@@ -143,6 +143,13 @@ bool pointcloud::contains(const cRappPointCloud& pc, pointcloud::sBoundingBox_t 
     return true;
 }
 
+cRappPointCloud pointcloud::trim_outside(const cRappPointCloud& pc, pointcloud::sBoundingBox_t box)
+{
+    cRappPointCloud result = pc;
+    result.trim_outside(box);
+    return result;
+}
+
 pointcloud::sLine_t pointcloud::computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis)
 {
 	sLine_t result;
@@ -287,7 +294,7 @@ namespace
 
 
 //sOffsetInterpTable_t fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps)
-pointcloud::sOffsetInterpTable_t pointcloud::fitPointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights)
+pointcloud::sOffsetInterpTable_t pointcloud::fitPointCloudHeightTable(std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> heights)
 {
     using namespace dlib;
 
@@ -296,7 +303,7 @@ pointcloud::sOffsetInterpTable_t pointcloud::fitPointCloudHeightTable(std::vecto
         return sOffsetInterpTable_t();
     }
 
-    std::sort(heights.begin(), heights.end(), [](rfm::sPointCloudTranslationInterpPoint_t a, rfm::sPointCloudTranslationInterpPoint_t b)
+    std::sort(heights.begin(), heights.end(), [](sPointCloudTranslationInterpPoint_t a, sPointCloudTranslationInterpPoint_t b)
         {
             return (a.displacement_m < b.displacement_m);
         });
@@ -351,7 +358,7 @@ pointcloud::sOffsetInterpTable_t pointcloud::fitPointCloudHeightTable(std::vecto
 
     for (std::size_t i = 0; i < n; i += 2)
     {
-        rfm::sPointCloudTranslationInterpPoint_t point;
+        sPointCloudTranslationInterpPoint_t point;
         point.displacement_m = table(i);
         point.height_m = table(i + 1);
         result.offset_m.push_back(point);
@@ -375,14 +382,14 @@ pointcloud::sOffsetInterpTable_t pointcloud::fitPointCloudHeightTable(std::vecto
     return result;
 }
 
-pointcloud::sOffsetInterpTable_t pointcloud::computePointCloudHeightTable(std::vector<rfm::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps)
+pointcloud::sOffsetInterpTable_t pointcloud::computePointCloudHeightTable(std::vector<pointcloud::sPointCloudTranslationInterpPoint_t> heights, uint16_t steps)
 {
     if (heights.empty())
     {
         return sOffsetInterpTable_t();
     }
 
-    std::sort(heights.begin(), heights.end(), [](rfm::sPointCloudTranslationInterpPoint_t a, rfm::sPointCloudTranslationInterpPoint_t b)
+    std::sort(heights.begin(), heights.end(), [](sPointCloudTranslationInterpPoint_t a, sPointCloudTranslationInterpPoint_t b)
         {
             return (a.displacement_m < b.displacement_m);
         });
@@ -425,7 +432,7 @@ pointcloud::sOffsetInterpTable_t pointcloud::computePointCloudHeightTable(std::v
             ++n;
         }
 
-        rfm::sPointCloudTranslationInterpPoint_t point;
+        sPointCloudTranslationInterpPoint_t point;
         point.displacement_m = d0;
 
         if (n > 0)
@@ -465,7 +472,7 @@ pointcloud::sOffsetInterpTable_t pointcloud::computePointCloudHeightTable(std::v
             ++n;
         }
 
-        rfm::sPointCloudTranslationInterpPoint_t point;
+        sPointCloudTranslationInterpPoint_t point;
         point.displacement_m = d0;
 
         if (n > 0)
@@ -504,7 +511,7 @@ pointcloud::sOffsetInterpTable_t pointcloud::computePointCloudHeightTable(std::v
             ++n;
         }
 
-        rfm::sPointCloudTranslationInterpPoint_t point;
+        sPointCloudTranslationInterpPoint_t point;
         point.displacement_m = d0;
 
         if (n > 0)
@@ -683,7 +690,7 @@ namespace
     }
 };
 
-pointcloud::sAnglesInterpTable_t pointcloud::fitPointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps)
+pointcloud::sAnglesInterpTable_t pointcloud::fitPointCloudAngleTable(std::vector<pointcloud::sPointCloudRotationInterpPoint_t> angles, uint16_t steps)
 {
     using namespace dlib;
 
@@ -692,7 +699,7 @@ pointcloud::sAnglesInterpTable_t pointcloud::fitPointCloudAngleTable(std::vector
         return sAnglesInterpTable_t();
     }
 
-    std::sort(angles.begin(), angles.end(), [](rfm::sPointCloudRotationInterpPoint_t a, rfm::sPointCloudRotationInterpPoint_t b)
+    std::sort(angles.begin(), angles.end(), [](sPointCloudRotationInterpPoint_t a, sPointCloudRotationInterpPoint_t b)
         {
             return (a.displacement_m < b.displacement_m);
         });
@@ -749,7 +756,7 @@ pointcloud::sAnglesInterpTable_t pointcloud::fitPointCloudAngleTable(std::vector
 
     for (std::size_t i = 0; i < n; i += 3)
     {
-        rfm::sPointCloudRotationInterpPoint_t point;
+        sPointCloudRotationInterpPoint_t point;
         point.displacement_m = table(i);
         point.pitch_deg = table(i + 1);
         point.roll_deg = table(i + 2);
@@ -777,7 +784,7 @@ pointcloud::sAnglesInterpTable_t pointcloud::fitPointCloudAngleTable(std::vector
     return result;
 }
 
-pointcloud::sAnglesInterpTable_t pointcloud::computePointCloudAngleTable(std::vector<rfm::sPointCloudRotationInterpPoint_t> angles, uint16_t steps)
+pointcloud::sAnglesInterpTable_t pointcloud::computePointCloudAngleTable(std::vector<pointcloud::sPointCloudRotationInterpPoint_t> angles, uint16_t steps)
 {
     using namespace dlib;
 
@@ -786,7 +793,7 @@ pointcloud::sAnglesInterpTable_t pointcloud::computePointCloudAngleTable(std::ve
         return sAnglesInterpTable_t();
     }
 
-    std::sort(angles.begin(), angles.end(), [](rfm::sPointCloudRotationInterpPoint_t a, rfm::sPointCloudRotationInterpPoint_t b)
+    std::sort(angles.begin(), angles.end(), [](sPointCloudRotationInterpPoint_t a, sPointCloudRotationInterpPoint_t b)
         {
             return (a.displacement_m < b.displacement_m);
         });
@@ -831,7 +838,7 @@ pointcloud::sAnglesInterpTable_t pointcloud::computePointCloudAngleTable(std::ve
             ++n;
         }
 
-        rfm::sPointCloudRotationInterpPoint_t point;
+        sPointCloudRotationInterpPoint_t point;
         point.displacement_m = d0;
 
         if (n > 0)
@@ -879,7 +886,7 @@ pointcloud::sAnglesInterpTable_t pointcloud::computePointCloudAngleTable(std::ve
             ++n;
         }
 
-        rfm::sPointCloudRotationInterpPoint_t point;
+        sPointCloudRotationInterpPoint_t point;
         point.displacement_m = d0;
 
         if (n > 0)
@@ -926,7 +933,7 @@ pointcloud::sAnglesInterpTable_t pointcloud::computePointCloudAngleTable(std::ve
             ++n;
         }
 
-        rfm::sPointCloudRotationInterpPoint_t point;
+        sPointCloudRotationInterpPoint_t point;
         point.displacement_m = d0;
 
         if (n > 0)
