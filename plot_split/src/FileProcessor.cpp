@@ -665,7 +665,7 @@ void cFileProcessor::savePlyFiles()
         }
 
         filename += ".ply";
-        exportPointcloud2Ply(filename, plot->data(), mPlyUseBinaryFormat);
+        exportPointcloud2Ply(filename, plot->pointCloud(), mPlyUseBinaryFormat);
     }
 }
 
