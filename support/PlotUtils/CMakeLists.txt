@@ -108,10 +108,12 @@ PRIVATE
 target_include_directories(plot_utils PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
 target_include_directories(plot_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+target_include_directories(plot_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../PointCloudUtils)
 
 #target_link_libraries(plot_utils PRIVATE Eigen3::Eigen)
 #target_link_libraries(plot_utils PRIVATE dlib::dlib)
 target_link_libraries(plot_utils PRIVATE cbdf::plot_info)
+target_link_libraries(plot_utils PRIVATE pointcloud_utils )
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

@@ -93,23 +93,23 @@ double pointcloud::distance_m(sPoint3D_t p1, sPoint3D_t p2)
 
 void pointcloud::orderBoundingBox(sBoundingBox_t& box)
 {
-	std::sort(box.points.begin(), box.points.end(), [](sPoint2D_t a, sPoint2D_t b)
+	std::sort(box.corners.begin(), box.corners.end(), [](sPoint2D_t a, sPoint2D_t b)
 		{
 			return a.X_m < b.X_m;
 		});
 
-	if (box.points[1].Y_m < box.points[0].Y_m)
+	if (box.corners[1].Y_m < box.corners[0].Y_m)
 	{
-		std::swap(box.points[0], box.points[1]);
+		std::swap(box.corners[0], box.corners[1]);
 	}
 
-	double d1 = distance_m(box.points[1], box.points[2]);
+	double d1 = distance_m(box.corners[1], box.corners[2]);
 
-	double d2 = distance_m(box.points[1], box.points[3]);
+	double d2 = distance_m(box.corners[1], box.corners[3]);
 
 	if (d2 < d1)
 	{
-		std::swap(box.points[2], box.points[3]);
+		std::swap(box.corners[2], box.corners[3]);
 	}
 }
 
@@ -124,53 +124,64 @@ bool pointcloud::contains(const cRappPointCloud& pc, pointcloud::sBoundingBox_t 
     double minY_m = pc.minY_mm() * nConstants::MM_TO_M;
     double maxY_m = pc.maxY_mm() * nConstants::MM_TO_M;
 
-    if ((box.points[0].X_m < minX_m)
-        || (box.points[1].X_m < minX_m))
+    if ((box.corners[0].X_m < minX_m)
+        || (box.corners[1].X_m < minX_m))
         return false;
 
-    if ((box.points[2].X_m > maxX_m)
-        || (box.points[3].X_m > maxX_m))
+    if ((box.corners[2].X_m > maxX_m)
+        || (box.corners[3].X_m > maxX_m))
         return false;
 
-    if ((box.points[0].Y_m < minY_m)
-        || (box.points[2].Y_m < minY_m))
+    if ((box.corners[0].Y_m < minY_m)
+        || (box.corners[2].Y_m < minY_m))
         return false;
 
-    if ((box.points[1].Y_m > maxY_m)
-        || (box.points[3].Y_m > maxY_m))
+    if ((box.corners[1].Y_m > maxY_m)
+        || (box.corners[3].Y_m > maxY_m))
         return false;
 
     return true;
 }
 
-cRappPointCloud pointcloud::trim_outside(const cRappPointCloud& pc, pointcloud::sBoundingBox_t box)
+pointcloud::sLine_t pointcloud::computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis)
 {
-    cRappPointCloud result = pc;
-    result.trim_outside(box);
+    sLine_t result;
+
+    if (swapAxis)
+    {
+        std::swap(p1.X_m, p1.Y_m);
+        std::swap(p2.X_m, p2.Y_m);
+    }
+
+    if (p1.X_m == p2.X_m)
+    {
+        result.vertical = true;
+        result.intercept = p1.X_m;
+        return result;
+    }
+
+    result.slope = (p2.Y_m - p1.Y_m) / (p2.X_m - p1.X_m);
+    result.intercept = p1.Y_m - result.slope * p1.X_m;
+
     return result;
 }
 
-pointcloud::sLine_t pointcloud::computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis)
+cRappPointCloud pointcloud::trim_outside(const cRappPointCloud& pc, pointcloud::sBoundingBox_t box)
 {
-	sLine_t result;
+    cRappPointCloud result;
 
-	if (swapAxis)
-	{
-		std::swap(p1.X_m, p1.Y_m);
-		std::swap(p2.X_m, p2.Y_m);
-	}
+    result.assign(pointcloud::trim_outside(pc.data(), box));
 
-	if (p1.X_m == p2.X_m)
-	{
-		result.vertical = true;
-		result.intercept = p1.X_m;
-		return result;
-	}
+    result.recomputeBounds();
 
-	result.slope = (p2.Y_m - p1.Y_m) / (p2.X_m - p1.X_m);
-	result.intercept = p1.Y_m - result.slope * p1.X_m;
+    result.setName(pc.name());
 
-	return result;
+    if (pc.referenceValid())
+        result.setReferencePoint(pc.referencePoint());
+
+    result.setVegetationOnly(pc.vegetationOnly());
+
+    return result;
 }
 
 namespace
@@ -1255,32 +1266,35 @@ pointcloud::sOffset_t pointcloud::computePcToGroundMeshDistance_mm(const cRappPo
 }
 
 //-----------------------------------------------------------------------------
-rfm::sCentroid_t computeCentroid(const cRappPointCloud::vCloud_t& data)
+namespace
 {
-    auto n = data.size();
-
-    double sum_x = 0.0;
-    double sum_y = 0.0;
-    double sum_z = 0.0;
-
-    for (std::size_t i = 0; i < n; ++i)
+    rfm::sCentroid_t computeCentroid(const cRappPointCloud::vCloud_t& data)
     {
-        auto point = data[i];
+        auto n = data.size();
 
-        auto x = point.x_mm;
-        auto y = point.y_mm;
-        auto z = point.z_mm;
+        double sum_x = 0.0;
+        double sum_y = 0.0;
+        double sum_z = 0.0;
 
-        sum_x += x;
-        sum_y += y;
-        sum_z += z;
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            auto point = data[i];
+
+            auto x = point.x_mm;
+            auto y = point.y_mm;
+            auto z = point.z_mm;
+
+            sum_x += x;
+            sum_y += y;
+            sum_z += z;
+        }
+
+        double x_mm = sum_x / n;
+        double y_mm = sum_y / n;
+        double z_mm = sum_z / n;
+
+        return { x_mm , y_mm, z_mm };
     }
-
-    double x_mm = sum_x / n;
-    double y_mm = sum_y / n;
-    double z_mm = sum_z / n;
-
-    return { x_mm , y_mm, z_mm };
 }
 
 //-----------------------------------------------------------------------------

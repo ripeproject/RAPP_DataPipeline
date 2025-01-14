@@ -91,7 +91,7 @@ public:
 
 	plot::sPoint3D_t operator[](int i) const { return mCloud[i]; }
 
-	const cPlotPointCloud& data() const { return mCloud; }
+	const cPlotPointCloud::vCloud_t& data() const { return mCloud.data(); }
 
 private:
 	int mID;

@@ -50,6 +50,10 @@ public:
 
 	cRappPointCloud& operator=(const cRappPointCloud& pc) = default;
 
+	/**
+	 * RAPP Point Cloud Properties
+	 **/
+
 	int id() const;
 
 	const std::string& name() const;
@@ -61,29 +65,7 @@ public:
 	bool hasFrameIDs() const;
 	bool hasPixelInfo() const;
 
-    void clear();
-
     bool empty() const;
-
-	void reserve(size_type new_cap);
-	void resize(size_type count);
-	void resize(size_type count, const value_type& value);
-
-	size_type size() const;
-
-	bool referenceValid() const;
-	rfm::rappPoint_t referencePoint() const;
-	void setReferencePoint(rfm::rappPoint_t point, bool valid = true);
-
-	void addPoint(const rfm::sPoint3D_t& cloudPoint);
-
-	void insert(const_iterator first, const_iterator last);
-
-	void push_back(const rfm::sPoint3D_t& cloudPoint);
-
-	const cRappPointCloud& operator+=(const cRappPointCloud& pc);
-
-	void sort();
 
 	/** SpiderCam uses millimeters **/
 	int minX_mm() const;
@@ -99,13 +81,31 @@ public:
 	int width_mm() const;
 	int height_mm() const;
 
-	void recomputeBounds();
+	size_type size() const;
 
 	rfm::rappPoint_t center() const;
 
 	rfm::sCentroid_t centroid() const;
 
-	rfm::sPoint3D_t getPoint(int x_mm, int y_mm, int r_mm) const;
+	bool referenceValid() const;
+	rfm::rappPoint_t referencePoint() const;
+
+
+	/**
+	 * RAPP Point Cloud Operations
+	 **/
+
+	void clear();
+
+	void sort();
+
+	void recomputeBounds();
+
+	void reserve(size_type new_cap);
+	void resize(size_type count);
+	void resize(size_type count, const value_type& value);
+
+	void setReferencePoint(rfm::rappPoint_t point, bool valid = true);
 
 	void rotate(double yaw_deg, double pitch_deg, double roll_deg);
 	void translate(int dx_mm, int dy_mm, int dz_mm);
@@ -113,7 +113,21 @@ public:
 	void trim_outside(pointcloud::sBoundingBox_t box);
 
 	void trim_below(int z_mm);
+	void trim_below(pointcloud::sBoundingBox_t box, int z_mm);
+
 	void trim_above(int z_mm);
+	void trim_above(pointcloud::sBoundingBox_t box, int z_mm);
+
+	void disableFrameIDs();
+	void enableFrameIDs();
+
+	void disablePixelInfo();
+	void enablePixelInfo();
+
+
+	/**
+	 * RAPP Point Cloud Iteration
+	 **/
 
 	iterator begin() { return mCloud.begin(); }
 	const_iterator begin() const { return mCloud.begin(); }
@@ -131,16 +145,28 @@ public:
 	const_reverse_iterator rend() const { return mCloud.rend(); }
 	const_reverse_iterator crend() { return mCloud.crend(); }
 
+
+	/**
+	 * RAPP Point Cloud Data Operations
+	 **/
+
+	void assign(const vCloud_t& data);
+
+	void addPoint(const rfm::sPoint3D_t& cloudPoint);
+
+	void insert(const_iterator first, const_iterator last);
+
+	void push_back(const rfm::sPoint3D_t& cloudPoint);
+
+	const cRappPointCloud& operator+=(const cRappPointCloud& pc);
+	const cRappPointCloud& operator+=(const vCloud_t& points);
+
+	rfm::sPoint3D_t getPoint(int x_mm, int y_mm, int r_mm) const;
+
 	rfm::sPoint3D_t& operator[](int i)       { return mCloud[i]; }
 	rfm::sPoint3D_t  operator[](int i) const { return mCloud[i]; }
 
     const vCloud_t& data() const { return mCloud; }
-
-	void disableFrameIDs();
-	void enableFrameIDs();
-
-	void disablePixelInfo();
-	void enablePixelInfo();
 
 
 private:

@@ -47,6 +47,6 @@ namespace pointcloud
     //
     struct sBoundingBox_t
     {
-        std::array<sPoint2D_t, 4> points;
+        std::array<sPoint2D_t, 4> corners;
     };
 }

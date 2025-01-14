@@ -156,14 +156,6 @@ void assign(const std::vector<POINT2>& in, std::vector<rfm::sPoint3D_t>& out)
 	{
 		rfm::sPoint3D_t point = to_point(in[i]);
 		out[i] = point;
-
-		//			POINT2 point = data[i];
-
-		//			auto x = point.X_m * nConstants::M_TO_MM;
-		//			auto y = point.Y_m * nConstants::M_TO_MM;
-		//			auto z = point.Z_m * nConstants::M_TO_MM;
-
-		//			out[i] = {static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z)};
 	}
 }
 
@@ -200,7 +192,7 @@ cRappPointCloud::cRappPointCloud(rfm::sCentroid_t centroid, const vCloud_t& pc)
 cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
-	assign(pc, mCloud);
+	::assign(pc, mCloud);
 
 	recomputeBounds();
 
@@ -211,7 +203,7 @@ cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_t>& p
 cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_FrameID_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
-	assign(pc, mCloud);
+	::assign(pc, mCloud);
 
 	recomputeBounds();
 
@@ -222,13 +214,18 @@ cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_Frame
 cRappPointCloud::cRappPointCloud(const std::vector<pointcloud::sCloudPoint_SensorInfo_t>& pc)
 	: mCentroid(), mID(::id++) 
 {
-	assign(pc, mCloud);
+	::assign(pc, mCloud);
 
 	recomputeBounds();
 
 	mHasFrameIDs = true;
 	mHasPixelInfo = true;
 }
+
+
+/******************************************************************************
+	RAPP Point Cloud Properties
+*******************************************************************************/
 
 int cRappPointCloud::id() const { return mID; }
 
@@ -248,28 +245,48 @@ void cRappPointCloud::setVegetationOnly(const bool vegetation_only)
 bool cRappPointCloud::hasFrameIDs() const { return mHasFrameIDs && mEnableFrameIDs; }
 bool cRappPointCloud::hasPixelInfo() const { return mHasPixelInfo && mEnableFrameIDs && mEnablePixelInfo; }
 
-void cRappPointCloud::disableFrameIDs() 
+bool cRappPointCloud::empty() const { return mCloud.empty(); }
+
+int cRappPointCloud::minX_mm() const { return mMinX_mm; }
+int cRappPointCloud::maxX_mm() const { return mMaxX_mm; }
+
+int cRappPointCloud::minY_mm() const { return mMinY_mm; }
+int cRappPointCloud::maxY_mm() const { return mMaxY_mm; }
+
+int cRappPointCloud::minZ_mm() const { return mMinZ_mm; }
+int cRappPointCloud::maxZ_mm() const { return mMaxZ_mm; }
+
+int cRappPointCloud::length_mm() const { return mMaxX_mm - mMinX_mm; }
+int cRappPointCloud::width_mm() const { return mMaxY_mm - mMinY_mm; }
+int cRappPointCloud::height_mm() const { return mMaxZ_mm - mMinZ_mm; }
+
+std::size_t cRappPointCloud::size() const { return mCloud.size(); }
+
+rfm::rappPoint_t cRappPointCloud::center() const
 {
-	mEnableFrameIDs = false; 
+	return { static_cast<std::int32_t>((mMaxX_mm + mMinX_mm) / 2),
+		static_cast<std::int32_t>((mMaxY_mm + mMinY_mm) / 2),
+		static_cast<std::int32_t>((mMaxZ_mm + mMinZ_mm) / 2) };
 }
 
-void cRappPointCloud::enableFrameIDs()
+rfm::sCentroid_t cRappPointCloud::centroid() const { return mCentroid; }
+
+bool cRappPointCloud::referenceValid() const
 {
-	mEnableFrameIDs = true;
+	return mReferencePointValid && (mReferencePoint.x_mm > 0)
+		&& (mReferencePoint.y_mm > 0) && (mReferencePoint.z_mm > 0);
 }
 
-void cRappPointCloud::disablePixelInfo()
-{
-	mEnablePixelInfo = false;
-}
+rfm::rappPoint_t cRappPointCloud::referencePoint() const { return mReferencePoint; }
 
-void cRappPointCloud::enablePixelInfo()
-{
-	mEnablePixelInfo = true;
-}
+
+/******************************************************************************
+	RAPP Point Cloud Operations
+*******************************************************************************/
 
 void cRappPointCloud::clear()
 {
+	mName.clear();
 	mCloud.clear();
 
 	mMinX_mm = 0.0;
@@ -284,60 +301,21 @@ void cRappPointCloud::clear()
 	mCentroid = rfm::sCentroid_t();
 }
 
-bool cRappPointCloud::empty() const
+void cRappPointCloud::sort()
 {
-	return mCloud.empty(); 
+	std::sort(mCloud.begin(), mCloud.end(), [](rfm::sPoint3D_t a, rfm::sPoint3D_t b)
+		{
+			if (a.x_mm < b.x_mm) return true;
+
+			if (a.x_mm == b.x_mm)
+			{
+				if (a.y_mm < b.y_mm)
+					return true;
+			}
+
+			return false;
+		});
 }
-
-void cRappPointCloud::reserve(size_type new_cap)
-{
-	mCloud.reserve(new_cap);
-}
-
-void cRappPointCloud::resize(size_type count)
-{
-	mCloud.resize(count);
-}
-
-void cRappPointCloud::resize(size_type count, const value_type& value)
-{
-	mCloud.resize(count, value);
-}
-
-std::size_t cRappPointCloud::size() const
-{
-	return mCloud.size(); 
-}
-
-bool cRappPointCloud::referenceValid() const
-{
-	return mReferencePointValid && (mReferencePoint.x_mm > 0) 
-		&& (mReferencePoint.y_mm > 0) && (mReferencePoint.z_mm > 0);
-}
-
-rfm::rappPoint_t cRappPointCloud::referencePoint() const
-{
-	return mReferencePoint;
-}
-
-void cRappPointCloud::setReferencePoint(rfm::rappPoint_t point, bool valid)
-{
-	mReferencePoint = point;
-	mReferencePointValid = valid;
-}
-
-int cRappPointCloud::minX_mm() const { return mMinX_mm; }
-int cRappPointCloud::maxX_mm() const { return mMaxX_mm; }
-
-int cRappPointCloud::minY_mm() const { return mMinY_mm; }
-int cRappPointCloud::maxY_mm() const { return mMaxY_mm; }
-
-int cRappPointCloud::minZ_mm() const { return mMinZ_mm; }
-int cRappPointCloud::maxZ_mm() const { return mMaxZ_mm; }
-
-int cRappPointCloud::length_mm() const { return mMaxX_mm - mMinX_mm; }
-int cRappPointCloud::width_mm() const { return mMaxY_mm - mMinY_mm; }
-int cRappPointCloud::height_mm() const { return mMaxZ_mm - mMinZ_mm; }
 
 void cRappPointCloud::recomputeBounds()
 {
@@ -386,7 +364,6 @@ void cRappPointCloud::recomputeBounds()
 	double sum_z = 0.0;
 	auto n = mCloud.size();
 
-
 	for (auto& point : mCloud)
 	{
 		sum_x += point.x_mm;
@@ -401,14 +378,271 @@ void cRappPointCloud::recomputeBounds()
 	mCentroid = { x_mm , y_mm, z_mm };
 }
 
-rfm::rappPoint_t cRappPointCloud::center() const
+void cRappPointCloud::reserve(size_type new_cap)
 {
-	return {static_cast<std::int32_t>((mMaxX_mm + mMinX_mm) / 2),
-		static_cast<std::int32_t>((mMaxY_mm + mMinY_mm) / 2), 
-		static_cast<std::int32_t>((mMaxZ_mm + mMinZ_mm) / 2) };
+	mCloud.reserve(new_cap);
 }
 
-rfm::sCentroid_t cRappPointCloud::centroid() const { return mCentroid; }
+void cRappPointCloud::resize(size_type count)
+{
+	mCloud.resize(count);
+}
+
+void cRappPointCloud::resize(size_type count, const value_type& value)
+{
+	mCloud.resize(count, value);
+}
+
+void cRappPointCloud::setReferencePoint(rfm::rappPoint_t point, bool valid)
+{
+	mReferencePoint = point;
+	mReferencePointValid = valid;
+}
+
+void cRappPointCloud::rotate(double yaw_deg, double pitch_deg, double roll_deg)
+{
+	double pitch_rad = pitch_deg * nConstants::DEG_TO_RAD;
+	double roll_rad = roll_deg * nConstants::DEG_TO_RAD;
+	double yaw_rad = yaw_deg * nConstants::DEG_TO_RAD;
+
+	Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
+	Eigen::AngleAxisd yawAngle(yaw_rad, Eigen::Vector3d::UnitZ());
+	Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
+
+	//	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
+	Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
+	Eigen::Matrix3d rotationMatrix = q.matrix();
+
+	for (auto& point : mCloud)
+	{
+		auto x = point.x_mm - mCentroid.x_mm;
+		auto y = point.y_mm - mCentroid.y_mm;
+		auto z = point.z_mm - mCentroid.z_mm;
+
+		::rotate(x, y, z, rotationMatrix);
+
+		point.x_mm = x + mCentroid.x_mm;
+		point.y_mm = y + mCentroid.y_mm;
+		point.z_mm = z + mCentroid.z_mm;
+	}
+
+	recomputeBounds();
+}
+
+void cRappPointCloud::translate(int dx_mm, int dy_mm, int dz_mm)
+{
+	for (auto& point : mCloud)
+	{
+		point.x_mm += dx_mm;
+		point.y_mm += dy_mm;
+		point.z_mm += dz_mm;
+	}
+
+	recomputeBounds();
+}
+
+void cRappPointCloud::trim_outside(pointcloud::sBoundingBox_t box)
+{
+	auto cloud = pointcloud::trim_outside(mCloud, box);
+
+	mCloud = cloud;
+
+	recomputeBounds();
+}
+
+void cRappPointCloud::trim_below(int z_mm)
+{
+	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [z_mm](auto a)
+		{
+			return a.z_mm < z_mm;
+		});
+
+	mCloud.erase(it, mCloud.end());
+
+	recomputeBounds();
+}
+
+/*
+void cRappPointCloud::trim_below(const rfm::sPlotBoundingBox_t& box, int z_mm)
+{
+	auto line1 = computeLineParameters(box.northWestCorner, box.northEastCorner, true);
+	auto line2 = computeLineParameters(box.northWestCorner, box.southWestCorner);
+	auto line3 = computeLineParameters(box.southWestCorner, box.southEastCorner, true);
+	auto line4 = computeLineParameters(box.northEastCorner, box.southEastCorner);
+
+	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [line1, line2, line3, line4, z_mm](auto a)
+		{
+			if (a.z_mm >= z_mm)
+				return false;
+
+			double limit = line1.slope * a.y_mm + line1.intercept;
+
+			if (a.x_mm < limit)
+				return false;
+
+			limit = line3.slope * a.y_mm + line3.intercept;
+
+			if (a.x_mm > limit)
+				return false;
+
+			limit = line2.slope * a.x_mm + line2.intercept;
+
+			if (a.y_mm < limit)
+				return false;
+
+			limit = line4.slope * a.x_mm + line4.intercept;
+
+			if (a.y_mm > limit)
+				return false;
+
+			return true;
+		});
+
+	mCloud.erase(it, mCloud.end());
+
+	recomputeBounds();
+}
+*/
+
+void cRappPointCloud::trim_below(pointcloud::sBoundingBox_t box, int z_mm)
+{
+	orderBoundingBox(box);
+
+	// Convert bounding box coordinates (m) to spidercam coordinates (mm)
+	for (auto& point : box.corners)
+	{
+		point.X_m *= nConstants::M_TO_MM;
+		point.Y_m *= nConstants::M_TO_MM;
+	}
+
+	auto line1 = computeLineParameters(box.corners[0], box.corners[1], true);
+	auto line2 = computeLineParameters(box.corners[1], box.corners[2]);
+	auto line3 = computeLineParameters(box.corners[2], box.corners[3], true);
+	auto line4 = computeLineParameters(box.corners[3], box.corners[0]);
+
+	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [line1, line2, line3, line4, z_mm](auto a)
+		{
+			if (a.z_mm >= z_mm)
+				return false;
+
+			double limit = line1.slope * a.y_mm + line1.intercept;
+
+			if (a.x_mm < limit)
+				return false;
+
+			limit = line3.slope * a.y_mm + line3.intercept;
+
+			if (a.x_mm > limit)
+				return false;
+
+			limit = line2.slope * a.x_mm + line2.intercept;
+
+			if (a.y_mm < limit)
+				return false;
+
+			limit = line4.slope * a.x_mm + line4.intercept;
+
+			if (a.y_mm > limit)
+				return false;
+
+			return true;
+		});
+
+	mCloud.erase(it, mCloud.end());
+
+	recomputeBounds();
+}
+
+void cRappPointCloud::trim_above(int z_mm)
+{
+	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [z_mm](auto a)
+		{
+			return a.z_mm > z_mm;
+		});
+
+	mCloud.erase(it, mCloud.end());
+
+	recomputeBounds();
+}
+
+/*
+void cRappPointCloud::trim_above(const rfm::sPlotBoundingBox_t& box, int z_mm)
+{
+	auto line1 = computeLineParameters(box.northWestCorner, box.northEastCorner, true);
+	auto line2 = computeLineParameters(box.northWestCorner, box.southWestCorner);
+	auto line3 = computeLineParameters(box.southWestCorner, box.southEastCorner, true);
+	auto line4 = computeLineParameters(box.northEastCorner, box.southEastCorner);
+
+	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [line1, line2, line3, line4, z_mm](auto a)
+		{
+			if (a.z_mm < z_mm)
+				return false;
+
+			double limit = line1.slope * a.y_mm + line1.intercept;
+
+			if (a.x_mm < limit)
+				return false;
+
+			limit = line3.slope * a.y_mm + line3.intercept;
+
+			if (a.x_mm > limit)
+				return false;
+
+			limit = line2.slope * a.x_mm + line2.intercept;
+
+			if (a.y_mm < limit)
+				return false;
+
+			limit = line4.slope * a.x_mm + line4.intercept;
+
+			if (a.y_mm > limit)
+				return false;
+
+			return true;
+		});
+
+	mCloud.erase(it, mCloud.end());
+
+	recomputeBounds();
+}
+*/
+
+void cRappPointCloud::trim_above(pointcloud::sBoundingBox_t box, int z_mm)
+{
+/*
+	rfm::sPlotBoundingBox_t plot;
+
+	plot.northEastCorner.x_mm = box.points[0].X_m * nConstants::M_TO_MM;
+	plot.northEastCorner.y_mm = box.points[0].Y_m * nConstants::M_TO_MM;
+
+	plot.northWestCorner.x_mm = box.points[1].X_m * nConstants::M_TO_MM;
+	plot.northWestCorner.y_mm = box.points[1].Y_m * nConstants::M_TO_MM;
+
+	plot.southEastCorner.x_mm = box.points[2].X_m * nConstants::M_TO_MM;
+	plot.southEastCorner.y_mm = box.points[2].Y_m * nConstants::M_TO_MM;
+
+	plot.southWestCorner.x_mm = box.points[3].X_m * nConstants::M_TO_MM;
+	plot.southWestCorner.y_mm = box.points[3].Y_m * nConstants::M_TO_MM;
+
+	trim_above(plot, z_mm);
+*/
+}
+
+void cRappPointCloud::disableFrameIDs() { mEnableFrameIDs = false; }
+void cRappPointCloud::enableFrameIDs() { mEnableFrameIDs = true; }
+
+void cRappPointCloud::disablePixelInfo() { mEnablePixelInfo = false; }
+void cRappPointCloud::enablePixelInfo() { mEnablePixelInfo = true; }
+
+
+/******************************************************************************
+	RAPP Point Cloud Data Operations
+*******************************************************************************/
+
+void cRappPointCloud::assign(const vCloud_t& data)
+{
+	mCloud.assign(data.begin(), data.end());
+}
 
 void cRappPointCloud::addPoint(const rfm::sPoint3D_t& cloudPoint)
 {
@@ -474,21 +708,19 @@ const cRappPointCloud& cRappPointCloud::operator+=(const cRappPointCloud& pc)
 	return *this;
 }
 
-
-void cRappPointCloud::sort()
+const cRappPointCloud& cRappPointCloud::operator+=(const vCloud_t& points)
 {
-	std::sort(mCloud.begin(), mCloud.end(), [](rfm::sPoint3D_t a, rfm::sPoint3D_t b)
-		{
-			if (a.x_mm < b.x_mm) return true;
+	for (const auto& point : points)
+	{
+		if ((point.x_mm == 0) && (point.y_mm == 0) && (point.z_mm == 0))
+			continue;
 
-			if (a.x_mm == b.x_mm)
-			{
-				if (a.y_mm < b.y_mm)
-					return true;
-			}
+		mCloud.push_back(point);
+	}
 
-			return false;
-		});
+	recomputeBounds();
+
+	return *this;
 }
 
 rfm::sPoint3D_t cRappPointCloud::getPoint(int x_mm, int y_mm, int r_mm) const
@@ -565,82 +797,6 @@ rfm::sPoint3D_t cRappPointCloud::getPoint(int x_mm, int y_mm, int r_mm) const
 		result.z_mm = z / n;
 
 	return result;
-}
-
-
-void cRappPointCloud::rotate(double yaw_deg, double pitch_deg, double roll_deg)
-{
-	double pitch_rad = pitch_deg * nConstants::DEG_TO_RAD;
-	double roll_rad = roll_deg * nConstants::DEG_TO_RAD;
-	double yaw_rad = yaw_deg * nConstants::DEG_TO_RAD;
-
-	Eigen::AngleAxisd rollAngle(roll_rad, Eigen::Vector3d::UnitX());
-	Eigen::AngleAxisd yawAngle(yaw_rad, Eigen::Vector3d::UnitZ());
-	Eigen::AngleAxisd pitchAngle(pitch_rad, Eigen::Vector3d::UnitY());
-
-	//	Eigen::Quaternion<double> q = rollAngle * pitchAngle * yawAngle;
-	Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
-	Eigen::Matrix3d rotationMatrix = q.matrix();
-
-	for (auto& point : mCloud)
-	{
-		auto x = point.x_mm - mCentroid.x_mm;
-		auto y = point.y_mm - mCentroid.y_mm;
-		auto z = point.z_mm - mCentroid.z_mm;
-
-		::rotate(x, y, z, rotationMatrix);
-
-		point.x_mm = x + mCentroid.x_mm;
-		point.y_mm = y + mCentroid.y_mm;
-		point.z_mm = z + mCentroid.z_mm;
-	}
-
-	recomputeBounds();
-}
-
-void cRappPointCloud::translate(int dx_mm, int dy_mm, int dz_mm)
-{
-	for (auto& point : mCloud)
-	{
-		point.x_mm += dx_mm;
-		point.y_mm += dy_mm;
-		point.z_mm += dz_mm;
-	}
-
-	recomputeBounds();
-}
-
-void cRappPointCloud::trim_outside(pointcloud::sBoundingBox_t box)
-{
-	auto cloud = pointcloud::trim_outside(mCloud, box);
-
-	mCloud = cloud;
-
-	recomputeBounds();
-}
-
-void cRappPointCloud::trim_below(int z_mm)
-{
-	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [z_mm](auto a)
-		{
-			return a.z_mm < z_mm;
-		});
-
-	mCloud.erase(it, mCloud.end());
-
-	recomputeBounds();
-}
-
-void cRappPointCloud::trim_above(int z_mm)
-{
-	auto it = std::remove_if(mCloud.begin(), mCloud.end(), [z_mm](auto a)
-		{
-			return a.z_mm > z_mm;
-		});
-
-	mCloud.erase(it, mCloud.end());
-
-	recomputeBounds();
 }
 
 

@@ -34,6 +34,7 @@ namespace pointcloud
 		bool vertical = false;
 	};
 
+	// The intercept will be in the same units as sPoint2D_t (meters)
 	sLine_t computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis = false);
 
 	cRappPointCloud trim_outside(const cRappPointCloud& pc, sBoundingBox_t box);
@@ -144,17 +145,16 @@ std::vector<POINT> pointcloud::trim_outside(const std::vector<POINT>& pc, pointc
 	orderBoundingBox(box);
 
 	// Convert bounding box coordinates (m) to spidercam coordinates (mm)
-
-	for (auto& point : box.points)
+	for (auto& point : box.corners)
 	{
 		point.X_m *= nConstants::M_TO_MM;
 		point.Y_m *= nConstants::M_TO_MM;
 	}
 
-	auto line1 = computeLineParameters(box.points[0], box.points[1], true);
-	auto line2 = computeLineParameters(box.points[1], box.points[2]);
-	auto line3 = computeLineParameters(box.points[2], box.points[3], true);
-	auto line4 = computeLineParameters(box.points[3], box.points[0]);
+	auto line1 = computeLineParameters(box.corners[0], box.corners[1], true);
+	auto line2 = computeLineParameters(box.corners[1], box.corners[2]);
+	auto line3 = computeLineParameters(box.corners[2], box.corners[3], true);
+	auto line4 = computeLineParameters(box.corners[3], box.corners[0]);
 
 	double x, y;
 
