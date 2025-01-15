@@ -220,5 +220,6 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/Utilities)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/MathUtils)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/LidarMapConfig)
 
 #print_all_variables()

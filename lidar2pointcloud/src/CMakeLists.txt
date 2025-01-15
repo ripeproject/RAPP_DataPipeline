@@ -4,14 +4,14 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
 	ParserExceptions.hpp
 
-	LidarMapConfigScan.hpp
-	LidarMapConfigScan.cpp
-	LidarMapConfigOptions.hpp
-	LidarMapConfigOptions.cpp
-	LidarMapConfigDefaults.hpp
-	LidarMapConfigDefaults.cpp
-	LidarMapConfigFile.hpp
-	LidarMapConfigFile.cpp
+#	LidarMapConfigScan.hpp
+#	LidarMapConfigScan.cpp
+#	LidarMapConfigOptions.hpp
+#	LidarMapConfigOptions.cpp
+#	LidarMapConfigDefaults.hpp
+#	LidarMapConfigDefaults.cpp
+#	LidarMapConfigFile.hpp
+#	LidarMapConfigFile.cpp
 
 	OusterInfo.hpp
 	OusterInfo.cpp
@@ -70,6 +70,7 @@ target_include_directories(console_app PRIVATE "../support/PointCloudUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/MathUtils")
+target_include_directories(console_app PRIVATE "../support/LidarMapConfig")
 
 target_link_libraries(console_app PRIVATE ${PCL_LIBRARIES} )
 target_link_libraries(console_app PRIVATE Eigen3::Eigen )
@@ -87,6 +88,7 @@ target_link_libraries(console_app PRIVATE kinematic_utils)
 target_link_libraries(console_app PRIVATE pointcloud_utils)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE math_utils)
+target_link_libraries(console_app PRIVATE lidar_map_config)
 target_link_libraries(console_app PRIVATE utilities)
 target_link_libraries(console_app PRIVATE fmt::fmt)
 
@@ -151,6 +153,7 @@ if(wxWidgets_FOUND)
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 	target_include_directories(gui_app PRIVATE "../support/MathUtils")
+	target_include_directories(gui_app PRIVATE "../support/LidarMapConfig")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
@@ -170,6 +173,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 	target_link_libraries(gui_app PRIVATE pointcloud_utils)
 	target_link_libraries(gui_app PRIVATE kinematic_utils)
+	target_link_libraries(gui_app PRIVATE lidar_map_config)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
