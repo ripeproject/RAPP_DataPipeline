@@ -8,20 +8,20 @@ set(PLOT_SPLIT_COMMON_FILES
 	FileProcessor.hpp
 	FileProcessor.cpp
 
-	PlotConfigFile.hpp
-	PlotConfigFile.cpp
+#	PlotConfigFile.hpp
+#	PlotConfigFile.cpp
 
-	PlotConfigOptions.hpp
-	PlotConfigOptions.cpp
+#	PlotConfigOptions.hpp
+#	PlotConfigOptions.cpp
 
-	PlotConfigScan.hpp
-	PlotConfigScan.cpp
+#	PlotConfigScan.hpp
+#	PlotConfigScan.cpp
 
-	PlotConfigBoundary.hpp
-	PlotConfigBoundary.cpp
+#	PlotConfigBoundary.hpp
+#	PlotConfigBoundary.cpp
 
-	PlotConfigIsolationMethod.hpp
-	PlotConfigIsolationMethod.cpp
+#	PlotConfigIsolationMethod.hpp
+#	PlotConfigIsolationMethod.cpp
 
 	PointCloudInfo.hpp
 	PointCloudInfo.cpp
@@ -52,6 +52,7 @@ PRIVATE
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE "../support/PlotUtils")
+target_include_directories(console_app PRIVATE "../support/PlotConfig")
 target_include_directories(console_app PRIVATE "../support/PointCloudUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/Utilities")
@@ -66,6 +67,7 @@ target_link_libraries(console_app PRIVATE cbdf::plot_info)
 target_link_libraries(console_app PRIVATE nlohmann_json)
 target_link_libraries(console_app PRIVATE pointcloud_utils)
 target_link_libraries(console_app PRIVATE plot_utils)
+target_link_libraries(console_app PRIVATE plot_config)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
 target_link_libraries(console_app PRIVATE math_utils)
@@ -125,6 +127,7 @@ if(wxWidgets_FOUND)
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_include_directories(gui_app PRIVATE "../support/PlotUtils")
+	target_include_directories(gui_app PRIVATE "../support/PlotConfig")
 	target_include_directories(gui_app PRIVATE "../support/PointCloudUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
@@ -140,6 +143,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::plot_info)
 	target_link_libraries(gui_app PRIVATE nlohmann_json)
 	target_link_libraries(gui_app PRIVATE plot_utils)
+	target_link_libraries(gui_app PRIVATE plot_config)
 	target_link_libraries(gui_app PRIVATE pointcloud_utils)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE math_utils)

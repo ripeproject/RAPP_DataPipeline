@@ -146,6 +146,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 # Note: the support directory is a symlink 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/common)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PlotUtils)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PlotConfig)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PointCloudUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
