@@ -3,14 +3,8 @@
 
 set(PLOT_DATA_COMMON_FILES
 
-	datatypes.hpp
-	datatypes.cpp
-
-	RappPointCloud.hpp
-	RappPointCloud.cpp
-
-	RappPlot.hpp
-	RappPlot.cpp
+#	datatypes.hpp
+#	datatypes.cpp
 
 	PlotData.hpp
 	PlotData.cpp
@@ -54,7 +48,7 @@ PRIVATE
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE ${PCL_INCLUDE_DIRS})
-target_include_directories(console_app PRIVATE "../support/PointCloudUtils")
+target_include_directories(console_app PRIVATE "../support/PlotUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/MathUtils")
@@ -63,17 +57,15 @@ target_include_directories(console_app PRIVATE "../support/common")
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE cbdf::processing_info)
-target_link_libraries(console_app PRIVATE cbdf::pointcloud)
 target_link_libraries(console_app PRIVATE cbdf::plot_info)
 target_link_libraries(console_app PRIVATE nlohmann_json)
-target_link_libraries(console_app PRIVATE pointcloud_utils)
+target_link_libraries(console_app PRIVATE plot_utils)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
 target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE fmt::fmt)
 target_link_libraries(console_app PRIVATE ${PCL_LIBRARIES} )
 target_link_libraries(console_app PRIVATE Eigen3::Eigen )
-#target_link_libraries(console_app PRIVATE Open3D::Open3D)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
@@ -128,7 +120,7 @@ if(wxWidgets_FOUND)
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 	target_include_directories(gui_app PRIVATE ${PCL_INCLUDE_DIRS})
-	target_include_directories(gui_app PRIVATE "../support/PointCloudUtils")
+	target_include_directories(gui_app PRIVATE "../support/PlotUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 	target_include_directories(gui_app PRIVATE "../support/Utilities")
@@ -140,12 +132,9 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
 	target_link_libraries(gui_app PRIVATE cbdf::processing_info)
-	target_link_libraries(gui_app PRIVATE cbdf::pointcloud)
-	target_link_libraries(gui_app PRIVATE cbdf::plot_info)
-	target_link_libraries(gui_app PRIVATE cbdf::processing_info)
 	target_link_libraries(gui_app PRIVATE cbdf::plot_info)
 	target_link_libraries(gui_app PRIVATE nlohmann_json)
-	target_link_libraries(gui_app PRIVATE pointcloud_utils)
+	target_link_libraries(gui_app PRIVATE plot_utils)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE utilities)
 	target_link_libraries(gui_app PRIVATE math_utils)
@@ -153,7 +142,6 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE fmt::fmt)
 	target_link_libraries(gui_app PRIVATE ${PCL_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE Eigen3::Eigen)
-#	target_link_libraries(gui_app PRIVATE Open3D::Open3D)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

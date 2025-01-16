@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "RappPointCloud.hpp"
 #include "RappPlot.hpp"
 #include "PlotData.hpp"
 
