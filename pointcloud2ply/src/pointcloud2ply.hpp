@@ -1,10 +1,9 @@
 
 #pragma once
 
-#include "PointCloudParser.hpp"
-#include "PlotInfoParser.hpp"
-#include "PointCloud.hpp"
-
+#include <cbdf/PointCloud.hpp>
+#include <cbdf/PointCloudParser.hpp>
+#include <cbdf/PlotInfoParser.hpp>
 #include <cbdf/SpidercamParser.hpp>
 
 #include <filesystem>
@@ -39,6 +38,8 @@ private:
     void onAltitudeWindow(double min_altitude_deg, double max_altitude_deg) override;
 
     void onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std::int32_t z_mm) override;
+
+    void onVegetationOnly(const bool vegetation_only) override;
 
     void onDimensions(double x_min_m, double x_max_m,
         double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
@@ -77,6 +78,9 @@ private:
     void onSpecies(const std::string& species) override;
     void onCultivar(const std::string& cultivar) override;
 
+
+    void onBeginTreatmentList() override;
+    void onEndTreatmentList() override;
     void onTreatment(const std::string& treatment) override;
 
     void onConstructName(const std::string& name) override;
@@ -85,13 +89,12 @@ private:
     void onPotLabel(const std::string& pot_label) override;
     void onSeedGeneration(const std::string& seed_generation) override;
     void onCopyNumber(const std::string& copy_number) override;
+    void onLeafType(const std::string& leaf_type) override;
 
     void onPlotDimensions(double x_min_m, double x_max_m,
         double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
 
-    void onPlotPointCloudData(cPointCloud pointCloud) override;
-    void onPlotPointCloudData(cPointCloud_FrameId pointCloud) override;
-    void onPlotPointCloudData(cPointCloud_SensorInfo pointCloud) override;
+    void onPlotPointCloudData(cPlotPointCloud pointCloud) override;
 
 
 private:
@@ -111,10 +114,14 @@ private:
 #ifdef USE_FLOATS
     typedef float range_t;
     struct returns3 { float s, r, a; };
+
+    typedef float frameID_t;
     struct pixel_loc { float chn, pixel; };
 #else
     typedef uint32_t range_t;
     struct returns3 { uint16_t s, r, a; };
+
+    typedef uint16_t frameID_t;
     struct pixel_loc { uint16_t chn, pixel; };
 #endif
 
@@ -134,11 +141,7 @@ private:
 
     std::vector<returns3>   mReturns;
 
-#ifdef USE_FLOATS
-    std::vector<float>      mFrameIDs;
-#else
-    std::vector<uint16_t>   mFrameIDs;
-#endif
+    std::vector<frameID_t>  mFrameIDs;
 
     std::vector<pixel_loc>  mPixelLocations;
 

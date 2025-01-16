@@ -160,7 +160,7 @@ find_package(tinyply REQUIRED)
 find_package(wxWidgets QUIET COMPONENTS core base)
 
 # Find and include my libraries for data collection
-find_package(CBDF REQUIRED cbdf ctrl)
+find_package(CBDF REQUIRED cbdf ctrl processing_info pointcloud plot_info)
 find_package(spidercam REQUIRED)
 
 
@@ -204,8 +204,6 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 
 # Add the support library source code directory
 # Note: the support directory is a symlink 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PlotInfo)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PointCloud)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/Utilities)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
