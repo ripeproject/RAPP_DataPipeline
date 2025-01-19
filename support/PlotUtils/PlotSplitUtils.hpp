@@ -30,6 +30,7 @@ namespace plot
 	bool contains(const cRappPointCloud& pc, const rfm::sPlotBoundingBox_t& box);
 	bool contains(const cPlotPointCloud& pc, const rfm::sPlotBoundingBox_t& box);
 
+
 	/**
 	 * Computes the center of height (similiar to center of mass) of a point cloud.
 	 * The height threshold % will set the height level used in the computation.
@@ -39,6 +40,17 @@ namespace plot
 	rfm::rappPoint_t compute_center_of_height(const cPlotPointCloud& pc, double height_threshold_pct = 0.0);
 	rfm::rappPoint_t compute_center_of_height(const std::vector<plot::sPoint3D_t>& points, double height_threshold_pct = 0.0);
 	rfm::rappPoint_t compute_center_of_height(const std::vector<rfm::sPoint3D_t>& points, double height_threshold_pct = 0.0);
+
+	rfm::sPlotBoundingBox_t compute_bounding_box_center_of_plot(rfm::sPlotBoundingBox_t box, std::int32_t plot_width_mm, std::int32_t plot_length_mm);
+
+	rfm::sPlotBoundingBox_t compute_bounding_box_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0, double max_displacement_pct = 25.0);
+	rfm::sPlotBoundingBox_t compute_bounding_box_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0, double max_displacement_pct = 25.0);
+	rfm::sPlotBoundingBox_t compute_bounding_box_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0, double max_displacement_pct = 25.0);
+	rfm::sPlotBoundingBox_t compute_bounding_box_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 
 	struct sLine_t
 	{

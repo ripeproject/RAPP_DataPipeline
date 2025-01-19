@@ -263,6 +263,128 @@ rfm::rappPoint_t plot::compute_center_of_height(const std::vector<rfm::sPoint3D_
 	return ::compute_center_of_height<rfm::sPoint3D_t>(points, height_threshold_pct);
 }
 
+rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_plot(rfm::sPlotBoundingBox_t box, std::int32_t plot_width_mm, std::int32_t plot_length_mm)
+{
+	double half_width_mm = plot_width_mm / 2.0;
+	double half_length_mm = plot_length_mm / 2.0;
+
+	plot::rappPoint_t c1;
+	c1.x_mm = static_cast<std::int32_t>((((box.southEastCorner.x_mm + box.northEastCorner.x_mm) / 2.0)
+		+ ((box.southWestCorner.x_mm + box.northWestCorner.x_mm) / 2.0)) / 2.0);
+
+	c1.y_mm = static_cast<std::int32_t>((((box.northEastCorner.y_mm + box.northWestCorner.y_mm) / 2.0)
+		+ ((box.southEastCorner.y_mm + box.southWestCorner.y_mm) / 2.0)) / 2.0);
+
+	std::int32_t north_mm = c1.x_mm - half_width_mm;
+	std::int32_t south_mm = c1.x_mm + half_width_mm;
+	std::int32_t east_mm = c1.y_mm + half_length_mm;
+	std::int32_t west_mm = c1.y_mm - half_length_mm;
+
+	rfm::sPlotBoundingBox_t plot;
+	plot.northWestCorner.x_mm = north_mm;
+	plot.northWestCorner.y_mm = west_mm;
+
+	plot.southWestCorner.x_mm = south_mm;
+	plot.southWestCorner.y_mm = west_mm;
+
+	plot.northEastCorner.x_mm = north_mm;
+	plot.northEastCorner.y_mm = east_mm;
+
+	plot.southEastCorner.x_mm = south_mm;
+	plot.southEastCorner.y_mm = east_mm;
+
+	return plot;
+}
+
+namespace
+{
+	template<class POINT>
+	rfm::sPlotBoundingBox_t compute_bounding_box_center_of_height(const std::vector<POINT>& points, rfm::sPlotBoundingBox_t box,
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+	{
+		double width_mm = ((box.southEastCorner.x_mm - box.northEastCorner.x_mm) + (box.southWestCorner.x_mm - box.northWestCorner.x_mm)) / 2.0;
+		double length_mm = ((box.northEastCorner.y_mm - box.northWestCorner.y_mm) + (box.southEastCorner.y_mm - box.southWestCorner.y_mm)) / 2.0;
+
+		double max_shift_x_mm = ((max_displacement_pct / 100.0) * width_mm) / 2.0;
+		double max_shift_y_mm = ((max_displacement_pct / 100.0) * length_mm) / 2.0;
+
+		double half_width_mm = plot_width_mm / 2.0;
+		double half_length_mm = plot_length_mm / 2.0;
+
+		auto result = ::trim_outside(points, box);
+		result.recomputeBounds();
+
+		auto c0 = result.center();
+
+		auto c1 = compute_center_of_height(result, height_threshold_pct);
+
+		auto dx = c0.x_mm - c1.x_mm;
+		auto dy = c0.y_mm - c1.y_mm;
+
+		if (std::abs(dx) > max_shift_x_mm)
+		{
+			if (dx < 0)
+				c1.x_mm = c0.x_mm + max_shift_x_mm;
+			else
+				c1.x_mm = c0.x_mm - max_shift_x_mm;
+		}
+
+
+		if (std::abs(dy) > max_shift_y_mm)
+		{
+			if (dx < 0)
+				c1.y_mm = c0.y_mm + max_shift_y_mm;
+			else
+				c1.y_mm = c0.y_mm - max_shift_y_mm;
+		}
+
+
+		std::int32_t north_mm = c1.x_mm - half_width_mm;
+		std::int32_t south_mm = c1.x_mm + half_width_mm;
+		std::int32_t east_mm = c1.y_mm + half_length_mm;
+		std::int32_t west_mm = c1.y_mm - half_length_mm;
+
+		rfm::sPlotBoundingBox_t plot;
+		plot.northWestCorner.x_mm = north_mm;
+		plot.northWestCorner.y_mm = west_mm;
+
+		plot.southWestCorner.x_mm = south_mm;
+		plot.southWestCorner.y_mm = west_mm;
+
+		plot.northEastCorner.x_mm = north_mm;
+		plot.northEastCorner.y_mm = east_mm;
+
+		plot.southEastCorner.x_mm = south_mm;
+		plot.southEastCorner.y_mm = east_mm;
+
+		return plot;
+	}
+}
+
+rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+{
+	return compute_bounding_box_center_of_height(pc.data(), box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+}
+
+rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+{
+	return compute_bounding_box_center_of_height(pc.data(), box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+}
+
+rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+{
+	return ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+}
+
+rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+{
+	return ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+}
+
 
 plot::sLine_t plot::computeLineParameters(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t p2, bool swapAxis)
 {
@@ -553,33 +675,9 @@ cPlotPointCloud plot::isolate_center_of_plot(const cPlotPointCloud& pc, rfm::sPl
 cPlotPointCloud plot::isolate_center_of_plot(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm)
 {
-	double half_width_mm = plot_width_mm / 2.0;
-	double half_length_mm = plot_length_mm / 2.0;
+	rfm::sPlotBoundingBox_t plot = compute_bounding_box_center_of_plot(box, plot_width_mm, plot_length_mm);
 
-	auto result = trim_outside(points, box);
-	result.recomputeBounds();
-
-	plot::rappPoint_t c1 = result.center();
-
-	std::int32_t north_mm = c1.x_mm - half_width_mm;
-	std::int32_t south_mm = c1.x_mm + half_width_mm;
-	std::int32_t east_mm = c1.y_mm + half_length_mm;
-	std::int32_t west_mm = c1.y_mm - half_length_mm;
-
-	rfm::sPlotBoundingBox_t plot;
-	plot.northWestCorner.x_mm = north_mm;
-	plot.northWestCorner.y_mm = west_mm;
-
-	plot.southWestCorner.x_mm = south_mm;
-	plot.southWestCorner.y_mm = west_mm;
-
-	plot.northEastCorner.x_mm = north_mm;
-	plot.northEastCorner.y_mm = east_mm;
-
-	plot.southEastCorner.x_mm = south_mm;
-	plot.southEastCorner.y_mm = east_mm;
-
-	result = trim_outside(points, plot);
+	auto result = trim_outside(points, plot);
 	result.recomputeBounds();
 
 	return result;
@@ -612,62 +710,9 @@ cPlotPointCloud plot::isolate_center_of_height(const cPlotPointCloud& pc, rfm::s
 cPlotPointCloud plot::isolate_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
 {
-	double width_mm = ((box.southEastCorner.x_mm - box.northEastCorner.x_mm) + (box.southWestCorner.x_mm - box.northWestCorner.x_mm)) / 2.0;
-	double length_mm = ((box.northEastCorner.y_mm - box.northWestCorner.y_mm) + (box.southEastCorner.y_mm - box.southWestCorner.y_mm)) / 2.0;
+	rfm::sPlotBoundingBox_t plot = ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
 
-	double max_shift_x_mm = ((max_displacement_pct / 100.0) * width_mm) / 2.0;
-	double max_shift_y_mm = ((max_displacement_pct / 100.0) * length_mm) / 2.0;
-
-	double half_width_mm = plot_width_mm / 2.0;
-	double half_length_mm = plot_length_mm / 2.0;
-
-	auto result = trim_outside(points, box);
-	result.recomputeBounds();
-
-	auto c0 = result.center();
-
-	auto c1 = compute_center_of_height(result, height_threshold_pct);
-
-	auto dx = c0.x_mm - c1.x_mm;
-	auto dy = c0.y_mm - c1.y_mm;
-
-	if (std::abs(dx) > max_shift_x_mm)
-	{
-		if (dx < 0)
-			c1.x_mm = c0.x_mm + max_shift_x_mm;
-		else
-			c1.x_mm = c0.x_mm - max_shift_x_mm;
-	}
-
-
-	if (std::abs(dy) > max_shift_y_mm)
-	{
-		if (dx < 0)
-			c1.y_mm = c0.y_mm + max_shift_y_mm;
-		else
-			c1.y_mm = c0.y_mm - max_shift_y_mm;
-	}
-
-
-	std::int32_t north_mm = c1.x_mm - half_width_mm;
-	std::int32_t south_mm = c1.x_mm + half_width_mm;
-	std::int32_t east_mm = c1.y_mm + half_length_mm;
-	std::int32_t west_mm = c1.y_mm - half_length_mm;
-
-	rfm::sPlotBoundingBox_t plot;
-	plot.northWestCorner.x_mm = north_mm;
-	plot.northWestCorner.y_mm = west_mm;
-
-	plot.southWestCorner.x_mm = south_mm;
-	plot.southWestCorner.y_mm = west_mm;
-
-	plot.northEastCorner.x_mm = north_mm;
-	plot.northEastCorner.y_mm = east_mm;
-
-	plot.southEastCorner.x_mm = south_mm;
-	plot.southEastCorner.y_mm = east_mm;
-
-	result = trim_outside(points, plot);
+	auto result = trim_outside(points, plot);
 	result.recomputeBounds();
 
 	return result;
@@ -676,12 +721,12 @@ cPlotPointCloud plot::isolate_center_of_height(const std::vector<plot::sPoint3D_
 cPlotPointCloud plot::isolate_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
 {
-	std::vector<plot::sPoint3D_t> plotPoints;
-	plotPoints.reserve(points.size());
+	rfm::sPlotBoundingBox_t plot = ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
 
-	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+	auto result = trim_outside(points, plot);
+	result.recomputeBounds();
 
-	return isolate_center_of_height(plotPoints, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+	return result;
 }
 
 
