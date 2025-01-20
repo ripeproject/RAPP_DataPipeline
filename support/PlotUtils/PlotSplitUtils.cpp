@@ -53,8 +53,7 @@ cPlotPointCloud to_plot_point_cloud(const cRappPointCloud& pc)
 {
 	cPlotPointCloud result;
 
-	std::vector<plot::sPoint3D_t> plotPoints;
-	plotPoints.reserve(pc.data().size());
+	std::vector<plot::sPoint3D_t> plotPoints(pc.data().size());
 
 	std::transform(pc.data().begin(), pc.data().end(), plotPoints.begin(), to_plot_point);
 
@@ -651,8 +650,7 @@ std::vector<cPlotPointCloud> plot::isolate_basic(const std::vector<plot::sPoint3
 std::vector<cPlotPointCloud> plot::isolate_basic(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm)
 {
-	std::vector<plot::sPoint3D_t> plotPoints;
-	plotPoints.reserve(points.size());
+	std::vector<plot::sPoint3D_t> plotPoints(points.size());
 
 	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
 
@@ -677,7 +675,7 @@ cPlotPointCloud plot::isolate_center_of_plot(const std::vector<plot::sPoint3D_t>
 {
 	rfm::sPlotBoundingBox_t plot = compute_bounding_box_center_of_plot(box, plot_width_mm, plot_length_mm);
 
-	auto result = trim_outside(points, plot);
+	auto result = ::trim_outside(points, plot);
 	result.recomputeBounds();
 
 	return result;
@@ -686,12 +684,12 @@ cPlotPointCloud plot::isolate_center_of_plot(const std::vector<plot::sPoint3D_t>
 cPlotPointCloud plot::isolate_center_of_plot(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
 	std::int32_t plot_width_mm, std::int32_t plot_length_mm)
 {
-	std::vector<plot::sPoint3D_t> plotPoints;
-	plotPoints.reserve(points.size());
+	rfm::sPlotBoundingBox_t plot = compute_bounding_box_center_of_plot(box, plot_width_mm, plot_length_mm);
 
-	std::transform(points.begin(), points.end(), plotPoints.begin(), to_plot_point);
+	auto result = ::trim_outside(points, plot);
+	result.recomputeBounds();
 
-	return isolate_center_of_plot(plotPoints, box, plot_width_mm, plot_length_mm);
+	return result;
 }
 
 
