@@ -8,7 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include <utility>
-#include <vector>
+#include <optional>
 #include <string>
 #include <memory>
 
@@ -30,7 +30,8 @@ public:
 	double getPlotWidth_mm() const;
 
 	// Use when method is "Center of Height" or "Iterative"
-	double getHeightThreshold_pct() const;
+	std::optional<double> getHeightThreshold_pct() const;
+	std::optional<double> getMaxDisplacement_pct() const;
 
 	// Use when method is "Iterative"
 	double getTolerance_mm() const;
@@ -42,6 +43,7 @@ public:
 	void setPlotWidth_mm(double width_mm);
 
 	void setHeightThreshold_pct(double threshold_pct);
+	void setMaxDisplacement_pct(double displacement_pct);
 
 	void setTolerance_mm(double tolerance_mm);
 	void setBounds_pct(double bounds_pct);
@@ -65,7 +67,8 @@ private:
 	double mPlotLength_mm = 0.0;
 	double mPlotWidth_mm = 0.0;
 
-	double mHeightThreshold_pct = 0.0;
+	std::optional<double> mHeightThreshold_pct;
+	std::optional<double> mMaxDisplacement_pct;
 
 	double mTolerance_mm = 15.0;
 	double mBounds_pct = 50.0;

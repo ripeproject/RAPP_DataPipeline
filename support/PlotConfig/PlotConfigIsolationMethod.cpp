@@ -77,9 +77,14 @@ double cPlotConfigIsolationMethod::getPlotWidth_mm() const
 	return mPlotWidth_mm;
 }
 
-double cPlotConfigIsolationMethod::getHeightThreshold_pct() const
+std::optional<double> cPlotConfigIsolationMethod::getHeightThreshold_pct() const
 {
 	return mHeightThreshold_pct;
+}
+
+std::optional<double> cPlotConfigIsolationMethod::getMaxDisplacement_pct() const
+{
+	return mMaxDisplacement_pct;
 }
 
 double cPlotConfigIsolationMethod::getTolerance_mm() const
@@ -117,6 +122,15 @@ void cPlotConfigIsolationMethod::setHeightThreshold_pct(double threshold_pct)
 
 	mDirty = (mHeightThreshold_pct != threshold_pct);
 	mHeightThreshold_pct = threshold_pct;
+}
+
+void cPlotConfigIsolationMethod::setMaxDisplacement_pct(double displacement_pct)
+{
+	if (displacement_pct < 0.0)  displacement_pct = 0.0;
+	if (displacement_pct > 100.0)  displacement_pct = 100.0;
+
+	mDirty = (mMaxDisplacement_pct != displacement_pct);
+	mMaxDisplacement_pct = displacement_pct;
 }
 
 
@@ -171,6 +185,9 @@ void cPlotConfigIsolationMethod::load(const nlohmann::json& jdoc)
 
 		if (method.contains("height threshold (%)"))
 			mHeightThreshold_pct = method["height threshold (%)"];
+
+		if (method.contains("max. displacement (%)"))
+			mMaxDisplacement_pct = method["max. displacement (%)"];
 	}
 	else if (type == "pour")
 	{
@@ -224,8 +241,12 @@ nlohmann::json cPlotConfigIsolationMethod::save()
 		method["plot length (mm)"] = mPlotLength_mm;
 		method["plot width (mm)"] = mPlotWidth_mm;
 
-		if (mHeightThreshold_pct > 0.0)
-			 method["height threshold (%)"] = mHeightThreshold_pct;
+		if (mHeightThreshold_pct.has_value())
+			 method["height threshold (%)"] = mHeightThreshold_pct.value();
+
+		if (mMaxDisplacement_pct.has_value())
+			method["max. displacement (%)"] = mMaxDisplacement_pct.value();
+
 		break;
 
 	case ePlotIsolationMethod::POUR:
@@ -241,8 +262,8 @@ nlohmann::json cPlotConfigIsolationMethod::save()
 		method["tolerance (mm)"] = mTolerance_mm;
 		method["bounds (pct)"] = mBounds_pct;
 
-		if (mHeightThreshold_pct > 0.0)
-			method["height threshold (%)"] = mHeightThreshold_pct;
+		if (mHeightThreshold_pct.has_value())
+			method["height threshold (%)"] = mHeightThreshold_pct.value();
 
 		break;
 
@@ -252,8 +273,8 @@ nlohmann::json cPlotConfigIsolationMethod::save()
 		method["plot length (mm)"] = mPlotLength_mm;
 		method["plot width (mm)"] = mPlotWidth_mm;
 
-		if (mHeightThreshold_pct > 0.0)
-			method["height threshold (%)"] = mHeightThreshold_pct;
+		if (mHeightThreshold_pct.has_value())
+			method["height threshold (%)"] = mHeightThreshold_pct.value();
 		break;
 	}
 
