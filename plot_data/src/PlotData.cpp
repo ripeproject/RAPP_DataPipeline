@@ -483,9 +483,20 @@ void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 
 		for (auto it = mPlotHeights.begin(); it != plot_last; ++it)
 		{
-			out << (it->second)[i].height_mm << ", ";
+			const auto& data = it->second;
+
+			if (i < data.size())
+				out << (it->second)[i].height_mm << ", ";
+			else
+				out << ", ";
 		}
-		out << (plot_last->second)[i].height_mm << "\n";
+
+		const auto& data = plot_last->second;
+
+		if (i < data.size())
+			out << (plot_last->second)[i].height_mm << "\n";
+		else
+			out << "\n";
 	}
 }
 
