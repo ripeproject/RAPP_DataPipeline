@@ -486,7 +486,7 @@ void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 			const auto& data = it->second;
 
 			if (i < data.size())
-				out << (it->second)[i].height_mm << ", ";
+				out << data[i].height_mm << ", ";
 			else
 				out << ", ";
 		}
@@ -494,7 +494,7 @@ void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 		const auto& data = plot_last->second;
 
 		if (i < data.size())
-			out << (plot_last->second)[i].height_mm << "\n";
+			out << data[i].height_mm << "\n";
 		else
 			out << "\n";
 	}
@@ -608,9 +608,20 @@ void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 
 		for (auto it = mGroupHeights.begin(); it != height_last; ++it)
 		{
-			out << (it->second)[i].avgHeight_mm << ", " << (it->second)[i].stdHeight_mm << ", ";
+			const auto& data = it->second;
+
+			if (i < data.size())
+				out << data[i].avgHeight_mm << ", " << data[i].stdHeight_mm << ", ";
+			else
+				out << ", , ";
 		}
-		out << (height_last->second)[i].avgHeight_mm << ", " << (height_last->second)[i].stdHeight_mm << "\n";
+
+		const auto& data = height_last->second;
+
+		if (i < data.size())
+			out << data[i].avgHeight_mm << ", " << data[i].stdHeight_mm << "\n";
+		else
+			out << ", \n";
 	}
 }
 
@@ -702,9 +713,20 @@ void cPlotData::write_plot_biomass_file_by_column(std::ofstream& out)
 
 		for (auto it = mPlotBioMasses.begin(); it != plot_last; ++it)
 		{
-			out << (it->second)[i].biomass << ", ";
+			const auto& data = it->second;
+
+			if (i < data.size())
+				out << data[i].biomass << ", ";
+			else
+				out << ", ";
 		}
-		out << (plot_last->second)[i].biomass << "\n";
+
+		const auto& data = plot_last->second;
+
+		if (i < data.size())
+			out << data[i].biomass << "\n";
+		else
+			out << "\n";
 	}
 }
 
@@ -816,9 +838,20 @@ void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
 
 		for (auto it = mGroupBioMasses.begin(); it != biomass_last; ++it)
 		{
-			out << (it->second)[i].avgBioMass << ", " << (it->second)[i].stdBioMass << ", ";
+			const auto& data = it->second;
+
+			if (i < data.size())
+				out << data[i].avgBioMass << ", " << data[i].stdBioMass << ", ";
+			else
+				out << ", , ";
 		}
-		out << (biomass_last->second)[i].avgBioMass << ", " << (biomass_last->second)[i].stdBioMass << "\n";
+
+		const auto& data = biomass_last->second;
+
+		if (i < data.size())
+			out << data[i].avgBioMass << ", " << data[i].stdBioMass << "\n";
+		else
+			out << ", \n";
 	}
 }
 

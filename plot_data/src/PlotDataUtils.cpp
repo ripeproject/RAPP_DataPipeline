@@ -34,6 +34,9 @@ nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointClou
             heights.push_back(point.z_mm);
     }
 
+    if (heights.empty())
+        return result;
+
     std::sort(heights.begin(), heights.end());
 
     auto n = heights.size();
