@@ -365,6 +365,11 @@ const std::string& cPlotConfigPlotInfo::getLeafType() const
 	return mLeafType;
 }
 
+const std::vector<std::string>& cPlotConfigPlotInfo::getTreatments() const
+{
+	return mTreatments;
+}
+
 const cPlotConfigBoundary& cPlotConfigPlotInfo::getBounds() const
 {
 	return mBounds;
@@ -495,6 +500,53 @@ void cPlotConfigPlotInfo::setLeafType(const std::string& leaf_type)
 	mLeafType = leaf_type;
 }
 
+void cPlotConfigPlotInfo::setTreatment(const std::string& treatment)
+{
+	if (mTreatments.size() != 1)
+	{
+		clearTreatments();
+		addTreatment(treatment);
+	}
+	else
+	{
+		mDirty |= (mTreatments.front() != treatment); 
+		mTreatments.front() = treatment;
+	}
+}
+
+void cPlotConfigPlotInfo::setTreatments(const std::vector<std::string>& treatments)
+{
+	if (mTreatments.size() != treatments.size())
+	{
+		clearTreatments();
+
+		for (const auto& treatment : treatments)
+			mTreatments.push_back(treatment);
+	}
+	else
+	{
+		auto n = treatments.size();
+
+		for (int i = 0; i < n; ++i)
+		{
+			mDirty |= (mTreatments[i] != treatments[i]);
+			mTreatments[i] = treatments[i];
+		}
+	}
+}
+
+void cPlotConfigPlotInfo::clearTreatments()
+{
+	mDirty |= (!mTreatments.empty());
+	mTreatments.clear();
+}
+
+void cPlotConfigPlotInfo::addTreatment(const std::string& treatment)
+{
+	mDirty = true;
+	mTreatments.push_back(treatment);
+}
+
 void cPlotConfigPlotInfo::setBounds(const cPlotConfigBoundary& bounds)
 {
 	mDirty |= (mBounds != bounds);
@@ -557,6 +609,21 @@ void cPlotConfigPlotInfo::load(const nlohmann::json& jdoc)
 	if (jdoc.contains("leaf type"))
 		mLeafType = jdoc["leaf type"];
 
+	if (jdoc.contains("treatment"))
+	{
+		mTreatments.clear();
+		mTreatments.push_back(jdoc["treatment"]);
+	}
+
+	if (jdoc.contains("treatments"))
+	{
+		mTreatments.clear();
+		nlohmann::json treatments = jdoc["treatments"];
+
+		for (const auto& treatment : treatments)
+			mTreatments.push_back(treatment);
+	}
+
 	mBounds.load(jdoc);
 	mIsolationMethod.load(jdoc);
 }
@@ -601,6 +668,20 @@ nlohmann::json cPlotConfigPlotInfo::save()
 
 	if (!mLeafType.empty())
 		infoDoc["leaf type"] = mLeafType;
+
+	if (mTreatments.size() == 1)
+	{
+		infoDoc["treatment"] = mTreatments.front();
+	}
+	else if (mTreatments.size() > 1)
+	{
+		nlohmann::json treatments;
+
+		for (const auto& treatment : mTreatments)
+			treatments.push_back(treatment);
+
+		infoDoc["treatments"] = treatments;
+	}
 
 	mBounds.save(infoDoc);
 	infoDoc["isolation method"] = mIsolationMethod.save();

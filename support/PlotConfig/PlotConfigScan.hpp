@@ -110,7 +110,7 @@ public:
 	const std::string& getSeedGeneration() const;
 	const std::string& getCopyNumber() const;
 	const std::string& getLeafType() const;
-	//	std::vector<std::string> mTreatments;
+	const std::vector<std::string>& getTreatments() const;
 
 	const cPlotConfigBoundary& getBounds() const;
 	cPlotConfigBoundary& getBounds();
@@ -130,6 +130,12 @@ public:
 	void setSeedGeneration(const std::string& generation);
 	void setCopyNumber(const std::string& num);
 	void setLeafType(const std::string& leaf_type);
+
+	void setTreatment(const std::string& treatment);
+	void setTreatments(const std::vector<std::string>& treatments);
+
+	void clearTreatments();
+	void addTreatment(const std::string& treatment);
 
 	void setBounds(const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
