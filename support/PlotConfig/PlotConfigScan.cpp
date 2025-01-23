@@ -253,6 +253,7 @@ const cPlotConfigPlotInfo& cPlotConfigPlotInfo::operator=(const cPlotConfigPlotI
 	mSeedGeneration = rhs.mSeedGeneration;
 	mCopyNumber = rhs.mCopyNumber;
 	mTreatments = rhs.mTreatments;
+	mLeafType = rhs.mLeafType;
 
 	mBounds = rhs.mBounds;
 	mIsolationMethod = rhs.mIsolationMethod;
@@ -274,6 +275,7 @@ void cPlotConfigPlotInfo::clear()
 	mPotLabel.clear();
 	mSeedGeneration.clear();
 	mCopyNumber.clear();
+	mLeafType.clear();
 	mTreatments.clear();
 
 	mBounds.clear();
