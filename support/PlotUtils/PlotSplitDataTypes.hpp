@@ -12,7 +12,7 @@ namespace rfm
 {
 	struct sPlotBoundingBox_t
 	{
-		int32_t	plotNumber = 0;
+		int32_t	plotNumber = -1;
 		rappPoint2D_t northEastCorner;
 		rappPoint2D_t northWestCorner;
 		rappPoint2D_t southEastCorner;
