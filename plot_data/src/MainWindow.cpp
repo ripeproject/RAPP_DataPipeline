@@ -471,16 +471,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
-		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
-
-		std::filesystem::path out_file = output_dir;
-
-		if (out_file.empty())
-			out_file = mDstDirectory.ToStdString();
-
-		out_file /= fe.filename;
-
-
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, mResults, mConfigData);
 
 		mFileProcessors.push(fp);
@@ -567,10 +557,10 @@ wxThread::ExitCode cMainWindow::Entry()
 
 	mResults.write_metadata_file(mDstDirectory.ToStdString());
 	mResults.write_plot_height_file(mDstDirectory.ToStdString());
-	mResults.write_replicate_height_file(mDstDirectory.ToStdString());
+//	mResults.write_replicate_height_file(mDstDirectory.ToStdString());
 
 	mResults.write_plot_biomass_file(mDstDirectory.ToStdString());
-	mResults.write_replicate_biomass_file(mDstDirectory.ToStdString());
+//	mResults.write_replicate_biomass_file(mDstDirectory.ToStdString());
 
 	wxString msg = "Finished processing ";
 	msg += mSrcDirectory;

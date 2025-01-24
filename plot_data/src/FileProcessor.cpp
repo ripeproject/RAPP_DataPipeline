@@ -82,6 +82,12 @@ void cFileProcessor::run()
         return;
 	}
 
+    if (mExpInfo->title() == "Bishal Soybean 1 Pass 14")
+    {
+        auto n = mPlotInfo->size();
+
+    }
+
     if (mPlotInfo->empty())
     {
         update_prefix_progress(mID, "    No plots found!      ", 100);
@@ -242,9 +248,9 @@ void cFileProcessor::computePlotHeights()
         nPlotUtils::sHeightResults_t height;
 
         if (plot->vegetationOnly())
-            height = nPlotUtils::computePlotHeights(*plot, 0.0, 94, heightPercentile, 96);
+            height = nPlotUtils::computePlotHeights(*plot, 0.0, heightPercentile, heightPercentile-1, heightPercentile+1);
         else
-            height = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, 94, heightPercentile, 96);
+            height = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, heightPercentile, heightPercentile-1, heightPercentile+1);
 
         mResults.addPlotData(plot->id(), mDayOfYear, height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
     }
