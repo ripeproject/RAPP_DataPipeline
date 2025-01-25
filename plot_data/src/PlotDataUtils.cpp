@@ -20,6 +20,11 @@
 #endif
 
 
+double nPlotUtils::computePlotHeights(const cPlotPointCloud& plot, int groundHeight_mm, double plotHeight_pct)
+{
+    return computePlotHeights(plot, groundHeight_mm, plotHeight_pct, plotHeight_pct - 1.0, plotHeight_pct + 1.0).height_mm;
+}
+
 nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointCloud& plot, int groundHeight_mm, double plotHeight_pct, double lowerBound_pct, double upperBound_pct)
 {
     sHeightResults_t result;
