@@ -450,14 +450,34 @@ void cPlotData::write_plot_height_file_by_row(std::ofstream& out)
 
 		const auto& heights = plot.second;
 
-		auto last = heights.end();
-		--last;
-
-		for (auto it = heights.begin(); it != last; ++it)
+		for (auto date = mDates.begin(); date != doy_last; ++date)
 		{
-			out << it->height_mm << ",\t";
+			auto doy = date->doy;
+
+			auto height = std::find_if(heights.begin(), heights.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (height == heights.end())
+				out << ",\t";
+			else
+				out << height->height_mm << ",\t";
 		}
-		out << last->height_mm << "\n";
+
+		auto doy = doy_last->doy;
+
+		auto height = std::find_if(heights.begin(), heights.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (height == heights.end())
+			out << "\n";
+		else
+			out << height->height_mm << "\n";
 	}
 }
 
@@ -481,22 +501,36 @@ void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
 		out << date_it->doy << ",\t";
 
+		auto doy = date_it->doy;
+
 		for (auto it = mPlotHeights.begin(); it != plot_last; ++it)
 		{
-			const auto& data = it->second;
+			const auto& heights = it->second;
 
-			if (i < data.size())
-				out << data[i].height_mm << ", ";
-			else
+			auto height = std::find_if(heights.begin(), heights.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (height == heights.end())
 				out << ", ";
+			else
+				out << height->height_mm << ", ";
 		}
 
-		const auto& data = plot_last->second;
+		const auto& heights = plot_last->second;
 
-		if (i < data.size())
-			out << data[i].height_mm << "\n";
-		else
+		auto height = std::find_if(heights.begin(), heights.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (height == heights.end())
 			out << "\n";
+		else
+			out << height->height_mm << "\n";
 	}
 }
 
@@ -678,16 +712,36 @@ void cPlotData::write_plot_biomass_file_by_row(std::ofstream& out)
 	{
 		out << "Plot_" << plot.first << ",\t";
 
-		const auto& heights = plot.second;
+		const auto& biomasses = plot.second;
 
-		auto last = heights.end();
-		--last;
-
-		for (auto it = heights.begin(); it != last; ++it)
+		for (auto date = mDates.begin(); date != doy_last; ++date)
 		{
-			out << it->biomass << ",\t";
+			auto doy = date->doy;
+
+			auto biomass = std::find_if(biomasses.begin(), biomasses.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (biomass == biomasses.end())
+				out << ",\t";
+			else
+				out << biomass->biomass << ",\t";
 		}
-		out << last->biomass << "\n";
+
+		auto doy = doy_last->doy;
+
+		auto biomass = std::find_if(biomasses.begin(), biomasses.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (biomass == biomasses.end())
+			out << "\n";
+		else
+			out << biomass->biomass << "\n";
 	}
 }
 
@@ -711,22 +765,36 @@ void cPlotData::write_plot_biomass_file_by_column(std::ofstream& out)
 		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
 		out << date_it->doy << ",\t";
 
+		auto doy = date_it->doy;
+
 		for (auto it = mPlotBioMasses.begin(); it != plot_last; ++it)
 		{
-			const auto& data = it->second;
+			const auto& biomasses = it->second;
 
-			if (i < data.size())
-				out << data[i].biomass << ", ";
-			else
+			auto biomass = std::find_if(biomasses.begin(), biomasses.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (biomass == biomasses.end())
 				out << ", ";
+			else
+				out << biomass->biomass << ", ";
 		}
 
-		const auto& data = plot_last->second;
+		const auto& biomasses = plot_last->second;
 
-		if (i < data.size())
-			out << data[i].biomass << "\n";
-		else
+		auto biomass = std::find_if(biomasses.begin(), biomasses.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (biomass == biomasses.end())
 			out << "\n";
+		else
+			out << biomass->biomass << "\n";
 	}
 }
 
