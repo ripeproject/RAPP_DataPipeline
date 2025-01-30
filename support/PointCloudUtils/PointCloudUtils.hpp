@@ -27,6 +27,9 @@ namespace pointcloud
 
 	bool contains(const cRappPointCloud& pc, pointcloud::sBoundingBox_t box);
 
+	double computeHeightPercentile_mm(const cRappPointCloud& pc, double percentile_pct);
+
+
 	struct sLine_t
 	{
 		double slope = 0;

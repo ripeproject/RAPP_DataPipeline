@@ -143,6 +143,26 @@ bool pointcloud::contains(const cRappPointCloud& pc, pointcloud::sBoundingBox_t 
     return true;
 }
 
+double pointcloud::computeHeightPercentile_mm(const cRappPointCloud& pc, double percentile_pct)
+{
+    std::vector<int> heights;
+    for (const auto& point : pc)
+    {
+        heights.push_back(point.z_mm);
+    }
+
+    if (heights.empty())
+        return 0.0;
+
+    std::sort(heights.begin(), heights.end());
+
+    auto n = heights.size();
+
+    int i = static_cast<int>(n * (percentile_pct / 100.0));
+
+    return heights[i];
+}
+
 pointcloud::sLine_t pointcloud::computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis)
 {
     sLine_t result;
