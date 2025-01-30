@@ -82,7 +82,7 @@ public:
 	void setInitialOffset_deg(double yaw_deg, double pitch_deg, double roll_deg);
 	void setFinalOffset_deg(double yaw_deg, double pitch_deg, double roll_deg);
 
-	void setInterpolationTable(const InterpTable_t& table);
+	void setOrientationInterpTable(const InterpTable_t& table);
 
 	void setTranslateToGroundModel(eTranslateToGroundModel model);
 	void setTranslateDistance_m(double distance_m);

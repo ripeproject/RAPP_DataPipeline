@@ -165,6 +165,7 @@ void cFileProcessor::process_file()
             break;
 
         case eOrientationModel::INTREP_CURVE:
+            converter->setOrientationInterpTable(mParameters.getOrientationTable());
             break;
 
         case eOrientationModel::IMU:
@@ -264,7 +265,6 @@ void cFileProcessor::process_file()
         converter->setTranslateToGroundModel(eTranslateToGroundModel::NONE);
         converter->setRotationToGroundModel(eRotateToGroundModel::NONE);
     }
-
 
     // Start by loading the field scan data into memory
     new_file_progress(mID, mInputFile.string());

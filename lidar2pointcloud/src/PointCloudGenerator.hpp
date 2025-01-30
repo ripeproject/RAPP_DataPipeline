@@ -123,6 +123,7 @@ public:
 
 	const std::vector<kdt::sDollyInfo_t>& getComputedDollyPath() const;
 
+	bool hasPointCloud() const;
 	const cRappPointCloud& getPointCloud() const;
 	cRappPointCloud& getPointCloud();
 
@@ -163,8 +164,6 @@ private:
 	bool computeYawCorrections();
 	bool shiftPointCloudToAGL();
 	bool updateDollyPath();
-
-	//	cRappPointCloud& pc
 
 public:
 	struct sPoint_t

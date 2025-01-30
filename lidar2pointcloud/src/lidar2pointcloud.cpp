@@ -138,7 +138,7 @@ void cLidar2PointCloud::setFinalOffset_deg(double yaw_deg, double pitch_deg, dou
 	mEndYawOffset_deg = yaw_deg;
 }
 
-void cLidar2PointCloud::setInterpolationTable(const InterpTable_t& table)
+void cLidar2PointCloud::setOrientationInterpTable(const InterpTable_t& table)
 {
 	mOrientationInterpTable = table;
 }
