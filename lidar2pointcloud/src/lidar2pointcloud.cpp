@@ -275,20 +275,31 @@ bool cLidar2PointCloud::computePointCloud()
 	auto ssnx = getSsnxInfo();
 	if (ssnx)
 	{
-		const auto& gps = ssnx->getGeodeticPositions();
-
-		if (gps.size() > 0)
+		if (ssnx->hasReferencePoint())
 		{
-			auto point = gps[0];
+			auto point = ssnx->getReferencePoint().value();
 
-			if (point.dataValid)
+			auto ref_point = rfb::fromGPS(point.avgLat_rad, point.avgLng_rad, point.avgHeight_m);
+
+			pPointCloudGenerator->setReferencePoint(ref_point, true);
+		}
+		else
+		{
+			const auto& gps = ssnx->getGeodeticPositions();
+
+			if (gps.size() > 0)
 			{
-				double height_m = point.Height_m - point.Undulation_m;
-				auto ref_point = rfb::fromGPS(point.Lat_rad, point.Lon_rad, height_m);
-				bool valid = point.HeightComputed && ((point.Mode == nSsnxTypes::eSolutionType::RTK_FIXED)
-					|| (point.Mode == nSsnxTypes::eSolutionType::RTK_FLOAT));
+				auto point = gps[0];
 
-				pPointCloudGenerator->setReferencePoint(ref_point, valid);
+				if (point.dataValid)
+				{
+					double height_m = point.Height_m - point.Undulation_m;
+					auto ref_point = rfb::fromGPS(point.Lat_rad, point.Lon_rad, height_m);
+					bool valid = point.HeightComputed && ((point.Mode == nSsnxTypes::eSolutionType::RTK_FIXED)
+						|| (point.Mode == nSsnxTypes::eSolutionType::RTK_FLOAT));
+
+					pPointCloudGenerator->setReferencePoint(ref_point, valid);
+				}
 			}
 		}
 	}
