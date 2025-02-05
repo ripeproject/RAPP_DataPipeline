@@ -492,11 +492,7 @@ void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 	}
 	out << "Plot_" << plot_last->first << "\n";
 
-	auto n = mDates.size();
-	n = std::min(n, mPlotHeights.size());
-
-	auto date_it = mDates.begin();
-	for (std::size_t i = 0; i < n; ++i, ++date_it)
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
 		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
 		out << date_it->doy << ",\t";
@@ -630,32 +626,43 @@ void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 	const auto& info = (*group_last).front();
 	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
 
-	auto n = mDates.size();
-	n = std::min(n, mGroupHeights.begin()->second.size());
-
 	auto height_last = --(mGroupHeights.end());
-	auto date_it = mDates.begin();
-	for (std::size_t i = 0; i < n; ++i, ++date_it)
+
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
 		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
 		out << date_it->doy << ",\t";
 
+		auto doy = date_it->doy;
+
 		for (auto it = mGroupHeights.begin(); it != height_last; ++it)
 		{
-			const auto& data = it->second;
+			const auto& heights = it->second;
 
-			if (i < data.size())
-				out << data[i].avgHeight_mm << ", " << data[i].stdHeight_mm << ", ";
-			else
+			auto height = std::find_if(heights.begin(), heights.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (height == heights.end())
 				out << ", , ";
+			else
+				out << height->avgHeight_mm << ", " << height->stdHeight_mm << ", ";
 		}
 
-		const auto& data = height_last->second;
+		const auto& heights = height_last->second;
 
-		if (i < data.size())
-			out << data[i].avgHeight_mm << ", " << data[i].stdHeight_mm << "\n";
+		auto height = std::find_if(heights.begin(), heights.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (height == heights.end())
+			out << ",\n";
 		else
-			out << ", \n";
+			out << height->avgHeight_mm << ", " << height->stdHeight_mm << "\n";
 	}
 }
 
@@ -756,11 +763,7 @@ void cPlotData::write_plot_biomass_file_by_column(std::ofstream& out)
 	}
 	out << "Plot_" << plot_last->first << "\n";
 
-	auto n = mDates.size();
-	n = std::min(n, mPlotBioMasses.size());
-
-	auto date_it = mDates.begin();
-	for (std::size_t i = 0; i < n; ++i, ++date_it)
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
 		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
 		out << date_it->doy << ",\t";
@@ -894,32 +897,43 @@ void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
 	const auto& info = (*group_last).front();
 	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
 
-	auto n = mDates.size();
-	n = std::min(n, mGroupBioMasses.begin()->second.size());
-
 	auto biomass_last = --(mGroupBioMasses.end());
 	auto date_it = mDates.begin();
-	for (std::size_t i = 0; i < n; ++i, ++date_it)
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
 		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
 		out << date_it->doy << ",\t";
 
+		auto doy = date_it->doy;
+
 		for (auto it = mGroupBioMasses.begin(); it != biomass_last; ++it)
 		{
-			const auto& data = it->second;
+			const auto& biomasses = it->second;
 
-			if (i < data.size())
-				out << data[i].avgBioMass << ", " << data[i].stdBioMass << ", ";
-			else
+			auto biomass = std::find_if(biomasses.begin(), biomasses.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (biomass == biomasses.end())
 				out << ", , ";
+			else
+				out << biomass->avgBioMass << ", " << biomass->stdBioMass << ", ";
 		}
 
-		const auto& data = biomass_last->second;
+		const auto& biomasses = biomass_last->second;
 
-		if (i < data.size())
-			out << data[i].avgBioMass << ", " << data[i].stdBioMass << "\n";
-		else
+		auto biomass = std::find_if(biomasses.begin(), biomasses.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (biomass == biomasses.end())
 			out << ", \n";
+		else
+			out << biomass->avgBioMass << ", " << biomass->stdBioMass << "\n";
 	}
 }
 

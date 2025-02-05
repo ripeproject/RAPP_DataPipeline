@@ -84,6 +84,17 @@ nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointClou
 
         double single_voxel_volume = voxel_size * voxel_size * voxel_size;
 
+/*
+        auto v = voxels->data;
+
+        std::sort(v.begin(), v.end());
+        
+        auto last = std::unique(v.begin(), v.end());
+        v.erase(last, v.end());
+
+        auto m = v.size();
+*/
+
         auto n = voxels->height * voxels->width;
 
         double volume = single_voxel_volume * n;
