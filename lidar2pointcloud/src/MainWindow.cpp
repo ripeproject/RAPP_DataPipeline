@@ -519,7 +519,15 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 	mpComputeButton->Disable();
 
-	if (numFilesToProcess > 1)
+	if (mIsFile)
+	{
+		wxString msg = "Processing ";
+		msg += input.filename().string();
+		msg += " from ";
+		msg += mSource;
+		wxLogMessage(msg);
+	}
+	else if (numFilesToProcess > 1)
 	{
 		wxString msg = "Processing ";
 		msg += wxString::Format("%d", numFilesToProcess);
@@ -527,10 +535,27 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		msg += mSource;
 		wxLogMessage(msg);
 	}
-
-	if (!output_dir.exists() && (numFilesToProcess > 1))
+	else if (numFilesToProcess == 1)
 	{
-		std::filesystem::create_directories(output_dir);
+		wxString msg = "Processing ";
+		msg += wxString::Format("%d", numFilesToProcess);
+		msg += " file from ";
+		msg += mSource;
+		wxLogMessage(msg);
+	}
+
+	if (!output_dir.exists() && (numFilesToProcess > 0))
+	{
+		try
+		{
+			std::filesystem::create_directories(output_dir);
+		}
+		catch (const std::filesystem::filesystem_error& e)
+		{
+			wxString msg = e.what();
+			wxLogMessage(msg);
+			return;
+		}
 	}
 
 	startDataProcessing();
