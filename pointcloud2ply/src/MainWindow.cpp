@@ -380,6 +380,14 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		msg += mSource;
 		wxLogMessage(msg);
 	}
+	else if (numFilesToProcess == 1)
+	{
+		wxString msg = "Processing ";
+		msg += wxString::Format("%d", numFilesToProcess);
+		msg += " file from ";
+		msg += mSource;
+		wxLogMessage(msg);
+	}
 
 	if (!output_dir.exists() && (numFilesToProcess > 0))
 	{
