@@ -4,6 +4,8 @@
 #include "FieldScanLoader.hpp"
 #include "PointCloudGenerator.hpp"
 
+#include "StringUtils.hpp"
+
 extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
 extern void update_progress(const int id, const int progress_pct);
 
@@ -139,6 +141,15 @@ void cFieldScanDataModel::loadFieldScanData(const std::string& filename)
     mFilename = filename;
 
     mExperimentTitle = mExperimentInfo->title();
+
+    if (mExperimentTitle.empty())
+    {
+        nStringUtils::sPathAndFilename pf = nStringUtils::splitPathname(mFilename);
+        auto fe = nStringUtils::removeMeasurementTimestamp(pf.filename);
+        mExperimentInfo->setTitle(fe.filename);
+
+        mExperimentTitle = fe.filename;
+    }
 
     auto ouster = mOusterInfo->getPointCloudGenerator().lock();
     mScanTime_sec = ouster->getScanTime_sec();
