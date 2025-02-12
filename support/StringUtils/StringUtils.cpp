@@ -92,10 +92,22 @@ std::vector<std::string> nStringUtils::get_parameters(const std::string& str)
 
 std::string nStringUtils::addMeasurementTimestamp(std::string filename)
 {
+	return addMeasurementTimestamp(filename, std::time(nullptr));
+}
+
+std::string nStringUtils::addMeasurementTimestamp(std::string filename, std::time_t time)
+{
+	return addMeasurementTimestamp(filename, std::localtime(&time));
+}
+
+std::string nStringUtils::addMeasurementTimestamp(std::string filename, std::tm* time)
+{
+	if (!time)
+		return filename;
+
 	char timestamp[100] = { '\0' };
 
-	std::time_t t = std::time(nullptr);
-	std::strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M%S", std::localtime(&t));
+	std::strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M%S", time);
 
 	filename += "_";
 	filename += timestamp;
@@ -103,12 +115,67 @@ std::string nStringUtils::addMeasurementTimestamp(std::string filename)
 	return filename;
 }
 
+std::tm nStringUtils::extractMeasurementTimestamp(std::string filename)
+{
+	std::tm tm{};
+
+	auto start_process_mark = filename.find("_p");
+	if (start_process_mark != std::string::npos)
+	{
+		filename.erase(start_process_mark);
+	}
+
+	auto start_measure_mark = filename.find_last_of('_');
+	if (start_measure_mark != std::string::npos)
+	{
+		++start_measure_mark;	// Skip the leading dash
+
+		auto ext = filename.find_last_of('.');
+
+		if (ext != std::string::npos)
+			ext -= start_measure_mark;
+
+		std::string time_mark = filename.substr(start_measure_mark, ext);
+
+		std::string year = time_mark.substr(0, 4);
+		std::string month = time_mark.substr(4, 2);
+		std::string day = time_mark.substr(6, 2);
+
+		std::string hour = time_mark.substr(8, 2);
+		std::string minute = time_mark.substr(10, 2);
+		std::string second = time_mark.substr(12, 2);
+
+		tm.tm_year = std::stoi(year) - 1900;
+		tm.tm_mon  = std::stoi(month) - 1;
+		tm.tm_mday = std::stoi(day);
+
+		tm.tm_hour = std::stoi(hour);
+		tm.tm_min = std::stoi(minute);
+		tm.tm_sec = std::stoi(second);
+	}
+
+	return tm;
+}
+
 std::string nStringUtils::addProcessedTimestamp(std::string filename)
 {
+	return addProcessedTimestamp(filename, std::time(nullptr));
+}
+
+std::string nStringUtils::addProcessedTimestamp(std::string filename, std::time_t time)
+{
+	return addProcessedTimestamp(filename, std::localtime(&time));
+}
+
+std::string nStringUtils::addProcessedTimestamp(std::string filename, std::tm* time)
+{
+	if (!time)
+		return filename;
+
 	char timestamp[100] = { '\0' };
 
 	std::time_t t = std::time(nullptr);
-	std::strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M", std::localtime(&t));
+	std::strftime(timestamp, sizeof(timestamp), "%Y%m%d%H%M", time);
 
 	filename += "_p";
 	filename += timestamp;

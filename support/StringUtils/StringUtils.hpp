@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <ctime>
 
 
 namespace nStringUtils
@@ -41,6 +42,15 @@ namespace nStringUtils
 	 * The filename will become: filename_YYYYmmddHHMM.extension
 	 */
 	std::string addMeasurementTimestamp(std::string filename);
+	std::string addMeasurementTimestamp(std::string filename, std::time_t time);
+	std::string addMeasurementTimestamp(std::string filename, std::tm* time);
+
+	/**
+	 * Extract the measurement timestamp from a filename
+	 *
+	 * The filename filename_YYYYmmddHHMM.extension results in YYYYmmddHHMM
+	 */
+	std::tm extractMeasurementTimestamp(std::string filename);
 
 	/**
 	 * Add a process timestamp to a filename
@@ -48,6 +58,8 @@ namespace nStringUtils
 	 * The filename will become: filename.YYYYmmddHHMM.extension
 	 */
 	std::string addProcessedTimestamp(std::string filename);
+	std::string addProcessedTimestamp(std::string filename, std::time_t time);
+	std::string addProcessedTimestamp(std::string filename, std::tm* time);
 
 
 	struct sFilenameAndExtension
