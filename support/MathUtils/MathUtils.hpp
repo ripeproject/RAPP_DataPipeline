@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include <limits>
 
 
 namespace nMathUtils
@@ -25,6 +25,15 @@ namespace nMathUtils
 		if (value < lower_bound) return lower_bound;
 
 		return value;
+	}
+
+	template<typename T0, typename T1>
+	T0 bound(T1 value)
+	{
+		if (value > std::numeric_limits<T0>::max()) return std::numeric_limits<T0>::max();
+		if (value < std::numeric_limits<T0>::lowest()) return std::numeric_limits<T0>::lowest();
+
+		return static_cast<T0>(value);
 	}
 
 	template<typename T>
