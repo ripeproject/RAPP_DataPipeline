@@ -53,4 +53,12 @@ namespace nConstants
 	/*** Speed Conversions ***/
 	constexpr static double MPS_TO_MPH = 2.23693629;
 	constexpr static double MPH_TO_MPS = 1.0 / MPS_TO_MPH;
+
+	/*** Area Conversions ***/
+	constexpr static double M2_TO_MM2 = M_TO_MM * M_TO_MM;
+	constexpr static double MM2_TO_M2 = 1.0 / M2_TO_MM2;
+
+	/*** Volume Conversions ***/
+	constexpr static double M3_TO_MM3 = M_TO_MM * M_TO_MM * M_TO_MM;
+	constexpr static double MM3_TO_M3 = 1.0 / M3_TO_MM3;
 }
