@@ -34,12 +34,14 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE "../support/MathUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE cbdf::ctrl)
 target_link_libraries(console_app PRIVATE cbdf::hyperspectral)
+target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE HySpexConnect::HySpexConnect_minimal_static)
 target_link_libraries(console_app PRIVATE ${OpenCV_LIBS} )
@@ -97,6 +99,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE "../support/MathUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 
@@ -106,6 +109,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
 	target_link_libraries(gui_app PRIVATE cbdf::ctrl)
 	target_link_libraries(gui_app PRIVATE cbdf::hyperspectral)
+	target_link_libraries(gui_app PRIVATE math_utils)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
 	target_link_libraries(gui_app PRIVATE HySpexConnect::HySpexConnect_minimal_static)

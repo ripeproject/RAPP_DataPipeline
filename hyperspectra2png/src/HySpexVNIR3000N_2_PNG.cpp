@@ -1,12 +1,14 @@
 
 #include "HySpexVNIR3000N_2_PNG.hpp"
 
+#include "MathUtils.hpp"
+
 #include <opencv2/opencv.hpp>
 
 #include <iostream>
 
 
-cHySpexVNIR3000N_2_Png::cHySpexVNIR3000N_2_Png() : cHySpexVNIR_3000N_Parser(), cSpidercamParser()
+cHySpexVNIR3000N_2_Png::cHySpexVNIR3000N_2_Png() : cHySpexVNIR_3000N_Parser()
 {
 }
 
@@ -15,6 +17,12 @@ cHySpexVNIR3000N_2_Png::~cHySpexVNIR3000N_2_Png()
     std::filesystem::path filename = mOutputPath;
 
     std::string ext;
+
+    if (mPlotID != 'A')
+    {
+        ext = ".";
+        ext += mPlotID;
+    }
 
     ext += ".vnir.png";
 
@@ -48,13 +56,16 @@ void cHySpexVNIR3000N_2_Png::onSpatialSize(uint64_t spatialSize)
 }
 
 void cHySpexVNIR3000N_2_Png::onSpectralSize(uint64_t spectralSize)
-{}
+{
+    mSpectralSize = spectralSize;
+}
 
 void cHySpexVNIR3000N_2_Png::onMaxSpatialSize(uint64_t maxSpatialSize) {}
 void cHySpexVNIR3000N_2_Png::onMaxSpectralSize(uint64_t maxSpectralSize) {}
 void cHySpexVNIR3000N_2_Png::onMaxPixelValue(uint16_t maxPixelValue)
 {
     mColorScale = 255.0 / maxPixelValue;
+    mColorScale *= 4.0;
 }
 
 void cHySpexVNIR3000N_2_Png::onResponsivityMatrix(HySpexConnect::cSpatialMajorData<float> re) {}
@@ -128,9 +139,9 @@ void cHySpexVNIR3000N_2_Png::onImage(HySpexConnect::cImageData<uint16_t> image)
 
     for (int i = 0; i < n; ++i)
     {
-        uint8_t r = static_cast<uint8_t>(red[i] * mColorScale);
-        uint8_t g = static_cast<uint8_t>(green[i] * mColorScale);
-        uint8_t b = static_cast<uint8_t>(blue[i] * mColorScale);
+        uint8_t r = nMathUtils::bound<uint8_t>(red[i] * mColorScale);
+        uint8_t g = nMathUtils::bound<uint8_t>(green[i] * mColorScale);
+        uint8_t b = nMathUtils::bound<uint8_t>(blue[i] * mColorScale);
         cv::Point p(i, mActiveRow);
         mImage.at<cv::Vec3b>(p) = { b,g,r };
     }
@@ -148,18 +159,45 @@ void cHySpexVNIR3000N_2_Png::onImage(HySpexConnect::cImageData<uint16_t> image, 
 
 void cHySpexVNIR3000N_2_Png::onSensorTemperature_C(float temp_C) {}
 
-void cHySpexVNIR3000N_2_Png::onPosition(spidercam::sPosition_1_t pos)
+void cHySpexVNIR3000N_2_Png::onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps)
 {
     mResyncTimestamp = true;
 
     float4 xyz;
-    xyz.x = pos.X_mm / 1000.0;
-    xyz.y = pos.Y_mm / 1000.0;
-    xyz.z = pos.Z_mm / 1000.0;
-    xyz.s = pos.speed_mmps / 1000.0;
+    xyz.x = x_mm / 1000.0;
+    xyz.y = y_mm / 1000.0;
+    xyz.z = z_mm / 1000.0;
+    xyz.s = speed_mmps / 1000.0;
 
     mPositions.push_back(xyz);
 }
+
+void cHySpexVNIR3000N_2_Png::onStartRecordingTimestamp(uint64_t timestamp_ns) 
+{
+    if (mActiveRow == 0)
+        return;
+
+    std::filesystem::path filename = mOutputPath;
+
+    std::string ext;
+
+    ext = ".";
+    ext += mPlotID;
+    ext += ".vnir.png";
+
+    filename += ext;
+
+    writeRgbImage(filename);
+
+    ++mPlotID;
+
+    mActiveRow = 0;
+}
+
+void cHySpexVNIR3000N_2_Png::onEndRecordingTimestamp(uint64_t timestamp_ns)
+{
+}
+
 
 void cHySpexVNIR3000N_2_Png::writeRgbImage(std::filesystem::path filename)
 {
@@ -167,12 +205,9 @@ void cHySpexVNIR3000N_2_Png::writeRgbImage(std::filesystem::path filename)
         return;
 
     mImage.resize(mActiveRow);
-
-//    cv::Mat img_dst;
-//    cv::resize(mImage, img_dst, cv::Size(mSpatialSize, mActiveRow), 0, 0, cv::INTER_AREA);
+    mMaxRows = mActiveRow;
 
     cv::String name = filename.string();
     cv::imwrite(name, mImage);
-    mImage.release();
 }
 

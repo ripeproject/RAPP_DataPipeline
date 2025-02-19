@@ -80,14 +80,13 @@ void cFileProcessor::run()
 	}
 
     mFileReader.attach(static_cast<cExperimentParser*>(this));
+    mFileReader.attach(static_cast<cSpidercamParser*>(this));
 
     cHySpexVNIR3000N_2_Png* pVnir = mVnirConverter.get();
 	mFileReader.attach(static_cast<cHySpexVNIR_3000N_Parser*>(pVnir));
-    mFileReader.attach(static_cast<cSpidercamParser*>(pVnir));
 
     cHySpexSWIR384_2_Png* pSwir = mSwirConverter.get();
     mFileReader.attach(static_cast<cHySpexSWIR_384_Parser*>(pSwir));
-    mFileReader.attach(static_cast<cSpidercamParser*>(pSwir));
 
 	try
     {
@@ -185,12 +184,22 @@ void cFileProcessor::onEndTime(sExperimentTime_t time) {}
 
 void cFileProcessor::onStartRecordingTimestamp(uint64_t timestamp_ns)
 {
-    auto x = timestamp_ns;
+    mVnirConverter->onStartRecordingTimestamp(timestamp_ns);
+    mSwirConverter->onStartRecordingTimestamp(timestamp_ns);
 }
 
 void cFileProcessor::onEndRecordingTimestamp(uint64_t timestamp_ns) 
 {
-    auto x = timestamp_ns;
+    mVnirConverter->onEndRecordingTimestamp(timestamp_ns);
+    mSwirConverter->onEndRecordingTimestamp(timestamp_ns);
 }
 
 void cFileProcessor::onHeartbeatTimestamp(uint64_t timestamp_ns) {}
+
+
+void cFileProcessor::onPosition(spidercam::sPosition_1_t pos)
+{
+    mVnirConverter->onPosition(pos.X_mm, pos.Y_mm, pos.Z_mm, pos.speed_mmps);
+    mSwirConverter->onPosition(pos.X_mm, pos.Y_mm, pos.Z_mm, pos.speed_mmps);
+}
+

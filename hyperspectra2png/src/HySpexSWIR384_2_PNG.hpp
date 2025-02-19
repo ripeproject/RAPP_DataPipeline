@@ -2,7 +2,6 @@
 #pragma once
 
 #include <cbdf/HySpexSWIR_384_Parser.hpp>
-#include <cbdf/SpidercamParser.hpp>
 
 #include <opencv2/core.hpp>
 
@@ -12,7 +11,7 @@
 
 
 
-class cHySpexSWIR384_2_Png : public cHySpexSWIR_384_Parser, public cSpidercamParser
+class cHySpexSWIR384_2_Png : public cHySpexSWIR_384_Parser
 {
 public:
     cHySpexSWIR384_2_Png();
@@ -21,6 +20,13 @@ public:
     void setOutputPath(std::filesystem::path out);
 
 	void setRgbWavelengths_nm(float red_nm, float green_nm, float blue_nm);
+
+	// Spidercam Parser Data
+	void onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps);
+
+	// Experiment Info Parser Data
+	void onStartRecordingTimestamp(uint64_t timestamp_ns);
+	void onEndRecordingTimestamp(uint64_t timestamp_ns);
 
 private:
 	void onID(std::string id) override;
@@ -60,7 +66,6 @@ private:
 
 	void onSensorTemperature_K(float temp_K) override;
 
-    void onPosition(spidercam::sPosition_1_t pos) override;
 
     void writeRgbImage(std::filesystem::path filename);
 
@@ -68,6 +73,7 @@ private:
     std::filesystem::path mOutputPath;
 
 	std::size_t mSpatialSize = 0;
+	std::size_t mSpectralSize = 0;
 	std::size_t mMaxRows = 0;
 
 	float mColorScale = 1.0;
@@ -79,6 +85,8 @@ private:
 	std::size_t mRedIndex = 49;
 	std::size_t mGreenIndex = 129;
 	std::size_t mBlueIndex = 219;
+
+	char mPlotID = 'A';
 
 	std::size_t mActiveRow = 0;
 

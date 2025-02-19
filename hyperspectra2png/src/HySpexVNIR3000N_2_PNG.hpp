@@ -3,7 +3,8 @@
 
 #include <cbdf/HySpexVNIR_3000N_Parser.hpp>
 
-#include <cbdf/SpidercamParser.hpp>
+//#include <cbdf/SpidercamParser.hpp>
+//#include <spidercam/spidercam_types.hpp>
 
 #include <opencv2/core.hpp>
 
@@ -13,7 +14,7 @@
 
 
 
-class cHySpexVNIR3000N_2_Png : public cHySpexVNIR_3000N_Parser, public cSpidercamParser
+class cHySpexVNIR3000N_2_Png : public cHySpexVNIR_3000N_Parser
 {
 public:
     cHySpexVNIR3000N_2_Png();
@@ -23,7 +24,15 @@ public:
 
 	void setRgbWavelengths_nm(float red_nm, float green_nm, float blue_nm);
 
+	// Spidercam Parser Data
+	void onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps);
+
+	// Experiment Info Parser Data
+	void onStartRecordingTimestamp(uint64_t timestamp_ns);
+	void onEndRecordingTimestamp(uint64_t timestamp_ns);
+
 private:
+	// HySpex VNIR 3000N Parser Methods
 	void onID(std::string id) override;
 	void onSerialNumber(std::string serialNumber) override;
 	void onWavelengthRange_nm(uint16_t minWavelength_nm, uint16_t maxWavelength_nm) override;
@@ -61,7 +70,6 @@ private:
 
 	void onSensorTemperature_C(float temp_C) override;
 
-    void onPosition(spidercam::sPosition_1_t pos) override;
 
     void writeRgbImage(std::filesystem::path filename);
 
@@ -69,6 +77,7 @@ private:
     std::filesystem::path mOutputPath;
 
 	std::size_t mSpatialSize = 0;
+	std::size_t mSpectralSize = 0;
 	std::size_t mMaxRows = 0;
 
 	float mColorScale = 1.0;
@@ -80,6 +89,8 @@ private:
 	std::size_t mRedIndex   = 279;
 	std::size_t mGreenIndex = 169;
 	std::size_t mBlueIndex  = 69;
+
+	char mPlotID = 'A';
 
 	std::size_t mActiveRow = 0;
 

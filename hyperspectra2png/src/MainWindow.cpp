@@ -214,7 +214,7 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", "",
+	wxDirDialog dlg(NULL, "Choose directory", mSource,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -231,7 +231,7 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnDestinationDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose Destination Directory", "",
+	wxDirDialog dlg(NULL, "Choose Destination Directory", mDestinationDataDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)

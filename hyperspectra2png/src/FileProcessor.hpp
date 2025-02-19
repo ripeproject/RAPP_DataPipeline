@@ -3,6 +3,7 @@
 
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/ExperimentParser.hpp>
+#include <cbdf/SpidercamParser.hpp>
 
 #include <filesystem>
 #include <string>
@@ -13,7 +14,7 @@ class cHySpexVNIR3000N_2_Png;
 class cHySpexSWIR384_2_Png;
 
 
-class cFileProcessor : public cExperimentParser
+class cFileProcessor : public cExperimentParser, public cSpidercamParser
 {
 public:
 	cFileProcessor(int id, std::filesystem::directory_entry in,
@@ -80,6 +81,10 @@ private:
 	void onStartRecordingTimestamp(uint64_t timestamp_ns) override;
 	void onEndRecordingTimestamp(uint64_t timestamp_ns) override;
 	void onHeartbeatTimestamp(uint64_t timestamp_ns) override;
+
+
+	void onPosition(spidercam::sPosition_1_t pos) override;
+
 
 private:
 	const int mID;
