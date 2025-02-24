@@ -232,7 +232,7 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 
 	out << "\nUnits: \n";
 	out << "Plot Heights: millimeters\n";
-	out << "Plot BioMass: ??\n";
+	out << "Plot BioMass: mm^3 / mm^2\n";
 
 	out << "\n";
 

@@ -58,8 +58,10 @@ nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointClou
 }
 
 #ifdef USE_PCL
-    double nPlotUtils::computeDigitalBiomass(const cPlotPointCloud& plot, int groundHeight_mm, double voxel_size)
+    double nPlotUtils::computeDigitalBiomass(const cPlotPointCloud& plot, int groundHeight_mm, double voxel_size_mm)
     {
+        auto num_points_in_cloud = plot.size();
+
         pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
 
         for (const auto& point : plot)
@@ -79,35 +81,34 @@ nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointClou
         // Create the filtering object
         pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
         sor.setInputCloud(cloud);
-        sor.setLeafSize(voxel_size, voxel_size, voxel_size);
+        sor.setLeafSize(voxel_size_mm, voxel_size_mm, voxel_size_mm);
         sor.filter(*voxels);
 
-        double single_voxel_volume = voxel_size * voxel_size * voxel_size;
+        double single_voxel_volume_mm3 = voxel_size_mm * voxel_size_mm * voxel_size_mm;
 
-/*
         auto v = voxels->data;
+        auto num_points_in_voxels = voxels->data.size();
 
         std::sort(v.begin(), v.end());
-        
+
         auto last = std::unique(v.begin(), v.end());
         v.erase(last, v.end());
 
         auto m = v.size();
-*/
 
         auto n = voxels->height * voxels->width;
 
-        double volume = single_voxel_volume * n;
+        double volume_mm3 = single_voxel_volume_mm3 * n;
 
         double dx = plot.maxX_mm() - plot.minX_mm();
         double dy = plot.maxY_mm() - plot.minY_mm();
 
-        double area = dx * dy;
+        double area_mm2 = dx * dy;
 
         double biomass = 0;
 
-        if (area > 0.0)
-            biomass = volume / area;
+        if (area_mm2 > 0.0)
+            biomass = volume_mm3 / area_mm2;
 
         return biomass;
     }
