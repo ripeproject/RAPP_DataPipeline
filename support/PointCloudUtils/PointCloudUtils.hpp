@@ -13,6 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <initializer_list>
 
 // Forward Declares
 
@@ -105,6 +106,24 @@ namespace pointcloud
 	};
 
 	sRoll_t fitPointCloudRollToGroundMesh_deg(const cRappPointCloud& pc);
+
+	struct sGroundLevel_t
+	{
+		double amplitude = 0;
+		double mean_mm = 0;
+		double sigma_mm = 0;
+		bool valid = false;
+	};
+
+	sGroundLevel_t fitGroundLevel(const cRappPointCloud& pc);
+
+	struct sHeightPercentile_t
+	{
+		int32_t	height_mm = 0;
+		int32_t count = 0;
+	};
+
+	sGroundLevel_t fitGroundLevel(std::vector<sHeightPercentile_t> heights);
 
 
 	struct sOffset_t

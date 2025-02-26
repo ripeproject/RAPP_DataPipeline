@@ -5,6 +5,8 @@
 #include <dlib/optimization.h>
 
 #include <algorithm>
+#include <numbers>
+#include <cmath>
 
 #ifdef USE_UPDATE_PROGRESS
     extern void update_progress(const int id, const int progress_pct);
@@ -14,6 +16,7 @@
 namespace
 {
     constexpr std::size_t MIN_SET_OF_POINTS = 10;
+    constexpr std::size_t NUM_STD_DEVIATIONS = 3;
 
     constexpr size_t NUM_HEIGHT_INTERP_POINTS = 10;
     constexpr size_t NUM_ANGLE_INTERP_POINTS = 10;
@@ -22,12 +25,13 @@ namespace
     typedef dlib::matrix<double, 3 * NUM_ANGLE_INTERP_POINTS, 1>  angle_interp_table_vector;
 
     typedef dlib::matrix<double, 1, 1> input_one_variable;
-    typedef dlib::matrix<double, 2, 1> input_two_variable;
+    typedef dlib::matrix<double, 2, 1> input_two_variables;
     typedef dlib::matrix<double, 3, 1> input_three_variables;
     typedef dlib::matrix<double, 2, 1> slope_interslope_vector;
     typedef dlib::matrix<double, 2, 1> pitch_roll_vector;
     typedef dlib::matrix<double, 1, 1> pitch_vector;
     typedef dlib::matrix<double, 1, 1> roll_vector;
+    typedef dlib::matrix<double, 3, 1> gaussian_distribution_params;
 
     template<typename T>
     T threshold(T min, T max, double level_pct)
@@ -1221,6 +1225,167 @@ pointcloud::sRoll_t pointcloud::fitPointCloudRollToGroundMesh_deg(const cRappPoi
     result.roll_deg = roll(0);
     result.R = sqrt(R2);
     result.valid = true;
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+namespace
+{
+    double modelGroundGaussianDistribution(const input_one_variable& input, const gaussian_distribution_params& params)
+    {
+        const double amplitude = params(0);
+        const double mean = params(1);
+        const double sigma = params(2);
+
+        const double x = input(0);
+
+        double d = (x - mean) / (2.0 * sigma);
+        double e = exp(-0.5 * (d * d));
+
+        double h = amplitude * e;
+
+        return h;
+    }
+
+    double residualGroundGaussianDistribution(const std::pair<input_one_variable, double>& data, const gaussian_distribution_params& params)
+    {
+        auto count = modelGroundGaussianDistribution(data.first, params);
+
+        auto r = count - data.second;
+
+        if (std::isnan(r))
+        {
+            r = 0.0;
+        }
+
+        return r;
+    }
+}
+
+//-----------------------------------------------------------------------------
+pointcloud::sGroundLevel_t pointcloud::fitGroundLevel(const cRappPointCloud& pc)
+{
+    using namespace dlib;
+
+    std::vector<int> heights;
+
+    for (const auto& point : pc)
+    {
+        heights.push_back(point.z_mm);
+    }
+
+    std::sort(heights.begin(), heights.end());
+
+    auto min_height = heights.front();
+    auto max_height = heights.back();
+
+    float delta_height = (max_height - min_height) / 100.0;
+
+    std::array<sHeightPercentile_t, 100> counts;
+
+    int max_count = 0;
+    for (int i = 1; i <= 100; ++i)
+    {
+        auto first = min_height + (i - 1) * delta_height;
+        auto last = min_height + i * delta_height;
+
+        int height_mm = static_cast<int>((first + last) / 2.0);
+
+        std::vector<int>::iterator lb = std::lower_bound(heights.begin(), heights.end(), first);
+        std::vector<int>::iterator ub = std::upper_bound(heights.begin(), heights.end(), last);
+
+        auto d = std::distance(lb, ub);
+        int count = static_cast<int>(d);
+        counts[i - 1] = { height_mm, count };
+
+        if (count > max_count)
+            max_count = count;
+    }
+
+    std::vector<std::pair<input_one_variable, double>> samples;
+
+    for (auto& point : counts)
+    {
+        input_one_variable height_mm;
+        height_mm(0) = point.height_mm;
+
+        // Output is the target value we are fitting for
+        const double output = point.count;
+
+        // save the pair
+        samples.push_back(std::make_pair(height_mm, point.count));
+    }
+
+    gaussian_distribution_params input;
+    input(0) = max_count;
+    input(1) = 0;
+    input(2) = (max_height - min_height) / 4;
+
+    auto R2 = solve_least_squares(objective_delta_stop_strategy(0.001, 50).be_verbose(),
+        residualGroundGaussianDistribution,
+        derivative(residualGroundGaussianDistribution),
+        samples,
+        input);
+
+    sGroundLevel_t result;
+
+    result.amplitude = input(0);
+    result.mean_mm = input(1);
+    result.sigma_mm = std::abs(input(2));
+
+    return result;
+}
+
+//-----------------------------------------------------------------------------
+pointcloud::sGroundLevel_t pointcloud::fitGroundLevel(std::vector<sHeightPercentile_t> heights)
+{
+    using namespace dlib;
+
+    std::sort(heights.begin(), heights.end(), [](pointcloud::sHeightPercentile_t& a, pointcloud::sHeightPercentile_t& b)
+        { return a.height_mm < b.height_mm; }
+    );
+
+    auto min_height = heights.front().height_mm;
+    auto max_height = heights.back().height_mm;
+
+    int max_count = 0;
+    for (const auto& h : heights)
+    {
+        if (h.count > max_count)
+            max_count = h.count;
+    }
+
+    std::vector<std::pair<input_one_variable, double>> samples;
+
+    for (auto& point : heights)
+    {
+        input_one_variable height_mm;
+        height_mm(0) = point.height_mm;
+
+        // Output is the target value we are fitting for
+        const double output = point.count;
+
+        // save the pair
+        samples.push_back(std::make_pair(height_mm, point.count));
+    }
+
+    gaussian_distribution_params input;
+    input(0) = max_count;
+    input(1) = 0; // min_height;
+    input(2) = (max_height - min_height) / 4;
+
+    auto R2 = solve_least_squares(objective_delta_stop_strategy(0.001, 50) /*.be_verbose()*/,
+        residualGroundGaussianDistribution,
+        derivative(residualGroundGaussianDistribution),
+        samples,
+        input);
+
+    sGroundLevel_t result;
+
+    result.amplitude = input(0);
+    result.mean_mm = input(1);
+    result.sigma_mm = std::abs(input(2));
 
     return result;
 }
