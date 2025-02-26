@@ -135,6 +135,7 @@ void cMainWindow::CreateControls()
 	mpIndividualPlyFiles = new wxCheckBox(this, wxID_ANY, "Save As Individual Ply Files");
 	mpSavePositionFile = new wxCheckBox(this, wxID_ANY, "Save Dolly Position Ply File");
 	mpUseBinaryFormat = new wxCheckBox(this, wxID_ANY, "Save in Binary Format");
+	mpResetOrigin = new wxCheckBox(this, wxID_ANY, "Reset Origin");
 
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
@@ -178,6 +179,8 @@ void cMainWindow::CreateLayout()
 	op_sz->Add(mpSavePositionFile, wxSizerFlags().Proportion(0).Expand());
 	op_sz->AddSpacer(10);
 	op_sz->Add(mpUseBinaryFormat, wxSizerFlags().Proportion(0).Expand());
+	op_sz->AddSpacer(10);
+	op_sz->Add(mpResetOrigin, wxSizerFlags().Proportion(0).Expand());
 	topsizer->Add(op_sz, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(10);
@@ -254,6 +257,7 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	cPointCloud2Ply::mIndividualPlyFiles = mpIndividualPlyFiles->GetValue();
 	cPointCloud2Ply::mSaveDollyPositions = mpSavePositionFile->GetValue();
 	cPointCloud2Ply::mUseBinaryFormat    = mpUseBinaryFormat->GetValue();
+	cPointCloud2Ply::mResetOrigin        = mpResetOrigin->GetValue();
 
 	const std::filesystem::path input{ mSource.ToStdString() };
 	std::string output_directory = mDestinationDataDirectory.ToStdString();

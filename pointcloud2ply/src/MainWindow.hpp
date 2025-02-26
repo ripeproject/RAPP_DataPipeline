@@ -57,6 +57,7 @@ private:
 	wxCheckBox* mpIndividualPlyFiles = nullptr;
 	wxCheckBox* mpSavePositionFile = nullptr;
 	wxCheckBox* mpUseBinaryFormat = nullptr;
+	wxCheckBox* mpResetOrigin = nullptr;
 
 	wxButton* mpExportButton = nullptr;
 

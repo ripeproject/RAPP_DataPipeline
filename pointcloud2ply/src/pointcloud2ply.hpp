@@ -18,6 +18,7 @@ public:
     static bool mIndividualPlyFiles;
     static bool mSaveDollyPositions;
     static bool mUseBinaryFormat;
+    static bool mResetOrigin;
 
 public:
 	cPointCloud2Ply();

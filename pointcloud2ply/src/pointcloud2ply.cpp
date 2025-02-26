@@ -15,6 +15,7 @@
 bool cPointCloud2Ply::mIndividualPlyFiles = false;
 bool cPointCloud2Ply::mSaveDollyPositions = false;
 bool cPointCloud2Ply::mUseBinaryFormat    = false;
+bool cPointCloud2Ply::mResetOrigin        = false;
 
 cPointCloud2Ply::cPointCloud2Ply() : cPointCloudParser()
 {
@@ -805,6 +806,27 @@ void cPointCloud2Ply::writePosition(std::filesystem::path filename)
 void cPointCloud2Ply::writePointcloud(std::filesystem::path filename)
 {
     using namespace tinyply;
+
+    if (mResetOrigin)
+    {
+        float minX = std::numeric_limits<float>::max();
+        float minY = std::numeric_limits<float>::max();
+
+        for (const auto& vertex : mVertices)
+        {
+            if (vertex.x < minX)
+                minX = vertex.x;
+
+            if (vertex.y < minY)
+                minY = vertex.y;
+        }
+
+        for (auto& vertex : mVertices)
+        {
+            vertex.x -= minX;
+            vertex.y -= minY;
+        }
+    }
 
     std::filebuf file_buffer;
 
