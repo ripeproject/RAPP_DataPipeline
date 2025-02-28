@@ -18,8 +18,8 @@ void cLidarMapConfigOptions::clear()
 	mSaveCompactDataFile = true;
 	mSavePlyFiles = false;
 	mPlysUseBinaryFormat = true;
-	mSaveFrameIds = false;
-	mSavePixelInfo = false;
+	mSaveFrameIds = true;
+	mSavePixelInfo = true;
 }
 
 bool cLidarMapConfigOptions::isDirty() const
