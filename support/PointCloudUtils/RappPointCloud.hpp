@@ -8,6 +8,7 @@
 #include <vector>
 #include <cassert>
 #include <string>
+#include <optional>
 
 // Forward Declaration
 namespace pointcloud
@@ -61,6 +62,9 @@ public:
 
 	bool vegetationOnly() const;
 	void setVegetationOnly(const bool vegetation_only);
+
+	std::optional<double> groundLevel_mm() const;
+	void setGroundLevel_mm(const double ground_level_mm);
 
 	bool hasFrameIDs() const;
 	bool hasPixelInfo() const;
@@ -195,6 +199,8 @@ private:
 	bool mEnablePixelInfo = true;
 
 	bool mVegetationOnly = false;
+
+	std::optional<double> mGroundLevel_mm;
 
 	vCloud_t mCloud;
 };

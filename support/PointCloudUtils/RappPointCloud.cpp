@@ -242,6 +242,16 @@ void cRappPointCloud::setVegetationOnly(const bool vegetation_only)
 	mVegetationOnly = vegetation_only;
 }
 
+std::optional<double> cRappPointCloud::groundLevel_mm() const
+{
+	return mGroundLevel_mm;
+}
+
+void cRappPointCloud::setGroundLevel_mm(const double ground_level_mm)
+{
+	mGroundLevel_mm = ground_level_mm;
+}
+
 bool cRappPointCloud::hasFrameIDs() const { return mHasFrameIDs && mEnableFrameIDs; }
 bool cRappPointCloud::hasPixelInfo() const { return mHasPixelInfo && mEnableFrameIDs && mEnablePixelInfo; }
 
