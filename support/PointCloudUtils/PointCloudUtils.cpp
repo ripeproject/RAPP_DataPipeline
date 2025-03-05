@@ -42,6 +42,7 @@ namespace
         return static_cast<T>((max - min) * (level_pct / 100.0)) + min;
     }
 
+
     double deltaAngle(double angle1_deg, double angle2_deg)
     {
         double delta = angle1_deg - angle2_deg;
@@ -1232,10 +1233,13 @@ pointcloud::sRoll_t pointcloud::fitPointCloudRollToGroundMesh_deg(const cRappPoi
 //-----------------------------------------------------------------------------
 namespace
 {
+    static double PEAK_HEIGHT = 0;
+    static bool FORCE_MEAN = false;
+
     double modelGroundGaussianDistribution(const input_one_variable& input, const gaussian_distribution_params& params)
     {
         const double amplitude = params(0);
-        const double mean = params(1);
+        const double mean = FORCE_MEAN ? PEAK_HEIGHT : params(1);
         const double sigma = params(2);
 
         const double x = input(0);
@@ -1348,12 +1352,16 @@ pointcloud::sGroundLevel_t pointcloud::fitGroundLevel(std::vector<sHeightPercent
 
     auto min_height = heights.front().height_mm;
     auto max_height = heights.back().height_mm;
+    auto peak_height = min_height;
 
     int max_count = 0;
     for (const auto& h : heights)
     {
         if (h.count > max_count)
+        {
             max_count = h.count;
+            peak_height = h.height_mm;
+        }
     }
 
     std::vector<std::pair<input_one_variable, double>> samples;
@@ -1372,14 +1380,32 @@ pointcloud::sGroundLevel_t pointcloud::fitGroundLevel(std::vector<sHeightPercent
 
     gaussian_distribution_params input;
     input(0) = max_count;
-    input(1) = 0; // min_height;
+    input(1) = 0;
     input(2) = (max_height - min_height) / 4;
+
+    FORCE_MEAN = false;
 
     auto R2 = solve_least_squares(objective_delta_stop_strategy(0.001, 50) /*.be_verbose()*/,
         residualGroundGaussianDistribution,
         derivative(residualGroundGaussianDistribution),
         samples,
         input);
+
+    if ((input(1) <= min_height) || (input(1) >= max_height))
+    {
+        input(0) = max_count;
+        input(1) = peak_height;
+        input(2) = (max_height - min_height) / 4;
+
+        FORCE_MEAN = true;
+        PEAK_HEIGHT = peak_height;
+
+        R2 = solve_least_squares(objective_delta_stop_strategy(0.001, 50) /*.be_verbose()*/,
+            residualGroundGaussianDistribution,
+            derivative(residualGroundGaussianDistribution),
+            samples,
+            input);
+    }
 
     sGroundLevel_t result;
 
