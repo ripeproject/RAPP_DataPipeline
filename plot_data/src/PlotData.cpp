@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <algorithm>
+#include <numeric>
 #include <fstream>
 #include <filesystem>
 #include <valarray>
@@ -76,8 +77,17 @@ void cPlotData::addDate(int month, int day, int year, int doy)
 	mDates.insert(date);
 }
 
-void cPlotData::addPlotData(int plot_id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm)
+void cPlotData::addPlotData(int plot_id, int doy, int num_of_points, double height_mm, double lowerBound_mm, double upperBount_mm)
 {
+	{
+		sPlotNumPointData_t data;
+
+		data.doy = doy;
+		data.num_points = num_of_points;
+
+		mPlotSizes[plot_id].push_back(data);
+	}
+
 	sPlotHeightData_t data;
 
 	data.doy = doy;
@@ -389,8 +399,59 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 			out << "Leaf Type: " << plot->leafType() << "\n";
 		}
 
+/*
+		if (mPlotSizes.contains(plot->id()))
+		{
+			auto& num_points = mPlotSizes[plot->id()];
+
+			if (num_points.size() > 0)
+			{
+				double n = num_points.size();
+
+				double mean = std::accumulate(num_points.begin(), num_points.end(), 0, [mean](auto a, auto x)
+					{ return a + x.num_points; }) / n;
+
+				double sd = sqrt(std::accumulate(num_points.begin(), num_points.end(), 0.0, [mean](auto a, auto x)
+					{ return a + (x.num_points - mean) * (x.num_points - mean); }) / n);
+
+				out << "Number of points: " << mean << " +/- " << sd << "\n";
+			}
+		}
+*/
+
 		out << "\n\n";
 	}
+
+	out.close();
+}
+
+void cPlotData::write_plot_num_points_file(const std::string& directory)
+{
+	write_plot_num_points_file(directory, mRootFileName);
+}
+
+void cPlotData::write_plot_num_points_file(const std::string& directory, const std::string& filename)
+{
+	if (mDates.empty())
+		return;
+
+	if (mPlotHeights.empty())
+		return;
+
+	std::filesystem::path plot_num_points_file = directory;
+
+	plot_num_points_file /= filename;
+	plot_num_points_file.replace_extension("plot_num_points.csv");
+
+	std::ofstream out;
+	out.open(plot_num_points_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	if (mSaveRowMajor)
+		write_plot_num_points_file_by_row(out);
+	else
+		write_plot_num_points_file_by_column(out);
 
 	out.close();
 }
@@ -424,6 +485,110 @@ void cPlotData::write_plot_height_file(const std::string& directory, const std::
 		write_plot_height_file_by_column(out);
 
 	out.close();
+}
+
+void cPlotData::write_plot_num_points_file_by_row(std::ofstream& out)
+{
+	auto doy_last = --(mDates.end());
+
+	out << "Date,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "DayOfYear,\t";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ",\t";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& plot : mPlotSizes)
+	{
+		out << "Plot_" << plot.first << ",\t";
+
+		const auto& numPoints = plot.second;
+
+		for (auto date = mDates.begin(); date != doy_last; ++date)
+		{
+			auto doy = date->doy;
+
+			auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (points == numPoints.end())
+				out << ",\t";
+			else
+				out << points->num_points << ",\t";
+		}
+
+		auto doy = doy_last->doy;
+
+		auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (points == numPoints.end())
+			out << "\n";
+		else
+			out << points->num_points << "\n";
+	}
+}
+
+void cPlotData::write_plot_num_points_file_by_column(std::ofstream& out)
+{
+	out << "Date,\t" << "DayOfYear,\t";
+
+	auto plot_last = --(mPlotSizes.end());
+	for (auto it = mPlotSizes.begin(); it != plot_last; ++it)
+	{
+		out << "Plot_" << it->first << ", ";
+	}
+	out << "Plot_" << plot_last->first << "\n";
+
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
+		out << date_it->doy << ",\t";
+
+		auto doy = date_it->doy;
+
+		for (auto it = mPlotSizes.begin(); it != plot_last; ++it)
+		{
+			const auto& numPoints = it->second;
+
+			auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (points == numPoints.end())
+				out << ", ";
+			else
+				out << points->num_points << ", ";
+		}
+
+		const auto& numPoints = plot_last->second;
+
+		auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (points == numPoints.end())
+			out << "\n";
+		else
+			out << points->num_points << "\n";
+	}
 }
 
 void cPlotData::write_plot_height_file_by_row(std::ofstream& out)

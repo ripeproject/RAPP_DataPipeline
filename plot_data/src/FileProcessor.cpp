@@ -5,6 +5,7 @@
 #include "PlotDataConfigFile.hpp"
 
 #include "PlotDataUtils.hpp"
+#include "PlotSplitUtils.hpp"
 
 #include "StringUtils.hpp"
 #include "DateTimeUtils.hpp"
@@ -243,16 +244,32 @@ void cFileProcessor::computePlotHeights()
     {
         update_progress(mID, static_cast<int>((100.0 * i) / n));
 
-        const auto& plot = (*mPlotInfo)[i];
+//        const auto& plot = (*mPlotInfo)[i];
+        auto plot = *((*mPlotInfo)[i]);
 
         nPlotUtils::sHeightResults_t height;
 
-        if (plot->vegetationOnly())
-            height = nPlotUtils::computePlotHeights(*plot, 0.0, heightPercentile, heightPercentile-1, heightPercentile+1);
-        else
-            height = nPlotUtils::computePlotHeights(*plot, groundLevelBound_mm, heightPercentile, heightPercentile-1, heightPercentile+1);
+        if (plot.vegetationOnly())
+        {
+            height = nPlotUtils::computePlotHeights(plot, heightPercentile, heightPercentile - 1, heightPercentile + 1);
+        }
+        else if (plot.groundLevel_mm().has_value())
+        {
+            groundLevelBound_mm = plot.groundLevel_mm().value();
 
-        mResults.addPlotData(plot->id(), mDayOfYear, height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
+
+            plot::translate(plot, 0, 0, -groundLevelBound_mm);
+            plot.clearGroundLevel_mm();
+
+            height = nPlotUtils::computePlotHeights(plot, heightPercentile, heightPercentile - 1, heightPercentile + 1);
+        }
+        else
+        {
+            height = nPlotUtils::computePlotHeights(plot, groundLevelBound_mm, heightPercentile, heightPercentile - 1, heightPercentile + 1);
+        }
+
+        mResults.addPlotData(plot.id(), mDayOfYear, plot.size(), height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
     }
 }
 
@@ -268,16 +285,31 @@ void cFileProcessor::computePlotBioMasses()
     {
         update_progress(mID, static_cast<int>((100.0 * i) / n));
 
-        const auto& plot = (*mPlotInfo)[i];
+        auto plot = *((*mPlotInfo)[i]);
 
         double biomass = 0.0;
 
-        if (plot->vegetationOnly())
-            biomass = nPlotUtils::computeDigitalBiomass(*plot, 0.0, voxel_size_mm);
-        else
-            biomass = nPlotUtils::computeDigitalBiomass(*plot, groundLevelBound_mm, voxel_size_mm);
+        if (plot.vegetationOnly())
+        {
+            biomass = nPlotUtils::computeDigitalBiomass(plot, voxel_size_mm);
+        }
+        else if (plot.groundLevel_mm().has_value())
+        {
+            groundLevelBound_mm = plot.groundLevel_mm().value();
 
-        mResults.addPlotBiomass(plot->id(), mDayOfYear, biomass);
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
+
+            plot::translate(plot, 0, 0, -groundLevelBound_mm);
+            plot.clearGroundLevel_mm();
+
+            biomass = nPlotUtils::computeDigitalBiomass(plot, voxel_size_mm);
+        }
+        else
+        {
+            biomass = nPlotUtils::computeDigitalBiomass(plot, groundLevelBound_mm, voxel_size_mm);
+        }
+
+        mResults.addPlotBiomass(plot.id(), mDayOfYear, biomass);
     }
 }
 

@@ -556,6 +556,9 @@ wxThread::ExitCode cMainWindow::Entry()
 	mResults.computeReplicateData();
 
 	mResults.write_metadata_file(mDstDirectory.ToStdString());
+
+	mResults.write_plot_num_points_file(mDstDirectory.ToStdString());
+
 	mResults.write_plot_height_file(mDstDirectory.ToStdString());
 //	mResults.write_replicate_height_file(mDstDirectory.ToStdString());
 

@@ -28,13 +28,16 @@ public:
 
 	void addDate(int month, int day, int year, int doy);
 
-	void addPlotData(int plot_id, int doy, double height_mm, double lowerBound_mm, double upperBount_mm);
+	void addPlotData(int plot_id, int doy, int num_of_points, double height_mm, double lowerBound_mm, double upperBount_mm);
 	void addPlotBiomass(int plot_id, int doy, double biomass);
 
 	void computeReplicateData();
 
 	void write_metadata_file(const std::string& directory);
 	void write_metadata_file(const std::string& directory, const std::string& filename);
+
+	void write_plot_num_points_file(const std::string& directory);
+	void write_plot_num_points_file(const std::string& directory, const std::string& filename);
 
 	void write_plot_height_file(const std::string& directory);
 	void write_plot_height_file(const std::string& directory, const std::string& filename);
@@ -49,6 +52,9 @@ public:
 	void write_replicate_biomass_file(const std::string& directory, const std::string& filename);
 
 protected:
+	void write_plot_num_points_file_by_row(std::ofstream& out);
+	void write_plot_num_points_file_by_column(std::ofstream& out);
+
 	void write_plot_height_file_by_row(std::ofstream& out);
 	void write_plot_height_file_by_column(std::ofstream& out);
 
@@ -90,6 +96,14 @@ private:
 	};
 
 	std::set<sPlotDate_t> mDates;
+
+	struct sPlotNumPointData_t
+	{
+		int doy = 0;
+		int num_points = 0;
+	};
+
+	std::map<int, std::vector<sPlotNumPointData_t> > mPlotSizes;
 
 	struct sPlotHeightData_t
 	{
