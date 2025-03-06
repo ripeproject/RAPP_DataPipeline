@@ -64,6 +64,7 @@ public:
 	void setVegetationOnly(const bool vegetation_only);
 
 	std::optional<double> groundLevel_mm() const;
+	void clearGroundLevel_mm();
 	void setGroundLevel_mm(const double ground_level_mm);
 
 	bool hasFrameIDs() const;

@@ -247,6 +247,11 @@ std::optional<double> cRappPointCloud::groundLevel_mm() const
 	return mGroundLevel_mm;
 }
 
+void cRappPointCloud::clearGroundLevel_mm()
+{
+	mGroundLevel_mm.reset();
+}
+
 void cRappPointCloud::setGroundLevel_mm(const double ground_level_mm)
 {
 	mGroundLevel_mm = ground_level_mm;
