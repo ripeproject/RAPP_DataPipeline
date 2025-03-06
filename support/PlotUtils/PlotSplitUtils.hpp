@@ -66,6 +66,17 @@ namespace plot
 	cPlotPointCloud trim_outside(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly);
 	cPlotPointCloud trim_outside(const std::vector<rfm::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly);
 
+	cPlotPointCloud trim_below(const cRappPointCloud& pc, int z_mm);
+	cPlotPointCloud trim_below(const cPlotPointCloud& pc, int z_mm);
+
+	void trim_below_in_place(cPlotPointCloud& pc, int z_mm);
+
+	cPlotPointCloud trim_above(const cRappPointCloud& pc, int z_mm);
+	cPlotPointCloud trim_above(const cPlotPointCloud& pc, int z_mm);
+
+	void translate(cPlotPointCloud& pc, int dx_mm, int dy_mm, int dz_mm);
+
+
 	std::vector<cPlotPointCloud::value_type> sliceAtGivenX(const cPlotPointCloud& pc, double x_mm, double tolerance_mm);
 
 	std::vector<cPlotPointCloud::value_type> sliceAtGivenY(const cPlotPointCloud& pc, double y_mm, double tolerance_mm);

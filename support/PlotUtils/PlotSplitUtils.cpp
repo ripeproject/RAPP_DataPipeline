@@ -455,6 +455,44 @@ namespace
 
 		return result;
 	}
+
+	template<typename POINT>
+	cPlotPointCloud trim_below(std::vector<POINT> points, int z_mm, bool vegetationOnly)
+	{
+		cPlotPointCloud result;
+
+		auto it = std::remove_if(points.begin(), points.end(), [z_mm](auto a)
+			{
+				return a.z_mm < z_mm;
+			});
+
+		points.erase(it, points.end());
+
+		result.assign(points);
+
+		result.setVegetationOnly(vegetationOnly);
+
+		return result;
+	}
+
+	template<typename POINT>
+	cPlotPointCloud trim_above(std::vector<POINT> points, int z_mm, bool vegetationOnly)
+	{
+		cPlotPointCloud result;
+
+		auto it = std::remove_if(points.begin(), points.end(), [z_mm](auto a)
+			{
+				return a.z_mm > z_mm;
+			});
+
+		points.erase(it, points.end());
+
+		result.assign(points);
+
+		result.setVegetationOnly(vegetationOnly);
+
+		return result;
+	}
 }
 
 cPlotPointCloud plot::trim_outside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box)
@@ -475,6 +513,54 @@ cPlotPointCloud plot::trim_outside(const std::vector<plot::sPoint3D_t>& points, 
 cPlotPointCloud plot::trim_outside(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly)
 {
 	return ::trim_outside(points, box, vegetationOnly);
+}
+
+cPlotPointCloud plot::trim_below(const cRappPointCloud& pc, int z_mm)
+{
+	return ::trim_below(to_plot_points(pc.data()), z_mm, pc.vegetationOnly());
+}
+
+cPlotPointCloud plot::trim_below(const cPlotPointCloud& pc, int z_mm)
+{
+	return ::trim_below(pc.data(), z_mm, pc.vegetationOnly());
+}
+
+void plot::trim_below_in_place(cPlotPointCloud& pc, int z_mm)
+{
+	auto points = pc.data();
+
+	auto it = std::remove_if(points.begin(), points.end(), [z_mm](auto a)
+		{
+			return a.z_mm < z_mm;
+		});
+
+	points.erase(it, points.end());
+
+	pc.assign(points);
+
+	pc.recomputeBounds();
+}
+
+cPlotPointCloud plot::trim_above(const cRappPointCloud& pc, int z_mm)
+{
+	return ::trim_above(to_plot_points(pc.data()), z_mm, pc.vegetationOnly());
+}
+
+cPlotPointCloud plot::trim_above(const cPlotPointCloud& pc, int z_mm)
+{
+	return ::trim_above(pc.data(), z_mm, pc.vegetationOnly());
+}
+
+void plot::translate(cPlotPointCloud& pc, int dx_mm, int dy_mm, int dz_mm)
+{
+	for (auto& point : pc)
+	{
+		point.x_mm += dx_mm;
+		point.y_mm += dy_mm;
+		point.z_mm += dz_mm;
+	}
+
+	pc.recomputeBounds();
 }
 
 std::vector<cPlotPointCloud::value_type> plot::sliceAtGivenX(const cPlotPointCloud& pc, double x_mm, double tolerance_mm)
