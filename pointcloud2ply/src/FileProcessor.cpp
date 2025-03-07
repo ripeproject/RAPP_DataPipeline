@@ -21,7 +21,7 @@ extern void complete_file_progress(const int id);
 cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
-    mID(id), mConverter{new cPointCloud2Ply}
+    mID(id), mConverter{new cPointCloud2Ply()}
 {
     mInputFile = in;
     mOutputFile = out;

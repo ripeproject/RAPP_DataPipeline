@@ -107,6 +107,11 @@ void cPointCloud2Ply::onReferencePoint(std::int32_t x_mm, std::int32_t y_mm, std
 
 void cPointCloud2Ply::onVegetationOnly(const bool vegetation_only) {}
 
+void cPointCloud2Ply::onGroundLevel(double ground_level_mm)
+{
+    mGroundLevel_mm = ground_level_mm;
+}
+
 void cPointCloud2Ply::onDimensions(double x_min_m, double x_max_m,
     double y_min_m, double y_max_m, double z_min_m, double z_max_m) {}
 
@@ -658,6 +663,16 @@ void cPointCloud2Ply::onPlotDimensions(double x_min_m, double x_max_m,
 void cPointCloud2Ply::onPlotPointCloudData(cPlotPointCloud pointCloud)
 {
     auto cloud_data = pointCloud.data();
+
+    if (mGroundLevel_mm.has_value())
+    {
+        auto ground_level_mm = mGroundLevel_mm.value();
+
+        for (auto& point : cloud_data)
+        {
+            point.z_mm -= ground_level_mm;
+        }
+    }
 
     std::vector<position3>  vertices;
     std::vector<range_t>    ranges;
