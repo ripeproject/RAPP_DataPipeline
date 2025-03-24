@@ -3,6 +3,8 @@
 
 #include "datatypes.hpp"
 
+#include "PlotDataConfigFilters.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <utility>
@@ -27,6 +29,9 @@ public:
 	void setGroundLevelBound_mm(double ground_level_mm);
 	void setHeightPercentile(double height_percentile);
 
+	bool hasFilters() const;
+	const std::vector<cPlotDataConfigFilter*>& getFilters() const;
+
 protected:
 	void setDirty(bool dirty);
 
@@ -39,6 +44,8 @@ private:
 	double mGroundLevelBound_mm = 0.0;
 
 	double mHeightPercentile = 95.0;
+
+	cPlotDataConfigFilters mFilters;
 
 	friend class cPlotDataConfigFile;
 };

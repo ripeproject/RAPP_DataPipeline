@@ -47,6 +47,16 @@ void cPlotDataConfigBiomass::setVoxelSize_mm(double voxel_size_mm)
 	mVoxelSize_mm = voxel_size_mm;
 }
 
+bool cPlotDataConfigBiomass::hasFilters() const
+{
+	return !mFilters.isEmpty();
+}
+
+const std::vector<cPlotDataConfigFilter*>& cPlotDataConfigBiomass::getFilters() const
+{
+	return mFilters.getFilters();
+}
+
 void cPlotDataConfigBiomass::setDirty(bool dirty)
 {
 	mDirty = dirty;
@@ -61,6 +71,8 @@ void cPlotDataConfigBiomass::load(const nlohmann::json& jdoc)
 
 	mGroundLevelBound_mm = height["ground level bound (mm)"];
 	mVoxelSize_mm = height["voxel size (mm)"];
+
+	mFilters.load(height);
 }
 
 void cPlotDataConfigBiomass::save(nlohmann::json& jdoc)

@@ -8,6 +8,8 @@
 
 namespace nPlotUtils
 {
+	void removeHeightOutliers_Histogram(cPlotPointCloud& plot, int min_bin_count);
+
 	struct sHeightResults_t
 	{
 		double lowerHeight_mm = 0.0;

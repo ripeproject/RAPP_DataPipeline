@@ -3,6 +3,7 @@
 #define USE_PCL
 
 #include "PlotDataUtils.hpp"
+#include "PlotSplitUtils.hpp"
 
 #include "Constants.hpp"
 
@@ -19,6 +20,79 @@
     #include <open3d/Open3D.h>
 #endif
 
+
+namespace rfm
+{
+    struct sHeightPercentile_t
+    {
+        int32_t	height_mm = 0;
+        int32_t count = 0;
+    };
+}
+
+
+void nPlotUtils::removeHeightOutliers_Histogram(cPlotPointCloud& plot, int min_bin_count)
+{
+    std::vector<int> heights;
+
+    for (const auto& point : plot)
+    {
+        heights.push_back(point.z_mm);
+    }
+
+    std::sort(heights.begin(), heights.end());
+
+    auto min_height = heights.front();
+    auto max_height = heights.back();
+
+    float delta_height = (max_height - min_height) / 100.0;
+
+    std::array<rfm::sHeightPercentile_t, 100> counts;
+
+    for (int i = 1; i <= 100; ++i)
+    {
+        auto first = min_height + (i - 1) * delta_height;
+        auto last = min_height + i * delta_height;
+
+        int height_mm = static_cast<int>((first + last) / 2.0);
+
+        std::vector<int>::iterator lb = std::lower_bound(heights.begin(), heights.end(), first);
+        std::vector<int>::iterator ub = std::upper_bound(heights.begin(), heights.end(), last);
+
+        auto d = std::distance(lb, ub);
+        int count = static_cast<int>(d);
+        counts[i - 1] = { height_mm, count };
+    }
+
+    int lowerBound_mm = plot.minZ_mm();
+    int upperBound_mm = plot.maxZ_mm();
+
+    int n = 99;
+    for (int i = 0; i < n; ++i)
+    {
+        auto count = counts[i].count;
+
+        if (count < min_bin_count)
+            continue;
+
+        lowerBound_mm = counts[i].height_mm;
+        n = i;
+        break;
+    }
+
+    for (int i = 99; i > n; --i)
+    {
+        auto count = counts[i].count;
+
+        if (count < min_bin_count)
+            continue;
+
+        upperBound_mm = counts[i].height_mm;
+        break;
+    }
+
+    plot = plot::trim_above(plot::trim_below(plot, lowerBound_mm), upperBound_mm);
+}
 
 double nPlotUtils::computePlotHeights(const cPlotPointCloud& plot, double plotHeight_pct)
 {

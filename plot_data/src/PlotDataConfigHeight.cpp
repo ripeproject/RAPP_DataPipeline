@@ -48,6 +48,16 @@ void cPlotDataConfigHeight::setHeightPercentile(double height_percentile)
 	mHeightPercentile = height_percentile;
 }
 
+bool cPlotDataConfigHeight::hasFilters() const
+{
+	return !mFilters.isEmpty();
+}
+
+const std::vector<cPlotDataConfigFilter*>& cPlotDataConfigHeight::getFilters() const
+{
+	return mFilters.getFilters();
+}
+
 void cPlotDataConfigHeight::setDirty(bool dirty)
 {
 	mDirty = dirty;
@@ -62,6 +72,8 @@ void cPlotDataConfigHeight::load(const nlohmann::json& jdoc)
 
 	mGroundLevelBound_mm = height["ground level bound (mm)"];
 	mHeightPercentile = height["height percentile"];
+
+	mFilters.load(height);
 }
 
 void cPlotDataConfigHeight::save(nlohmann::json& jdoc)
