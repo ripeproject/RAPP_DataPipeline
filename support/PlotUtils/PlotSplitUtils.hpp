@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 // Forward Declarations
 class cRappPointCloud;
@@ -63,8 +64,8 @@ namespace plot
 
 	cPlotPointCloud trim_outside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box);
 	cPlotPointCloud trim_outside(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box);
-	cPlotPointCloud trim_outside(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly);
-	cPlotPointCloud trim_outside(const std::vector<rfm::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly);
+	cPlotPointCloud trim_outside(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm);
+	cPlotPointCloud trim_outside(const std::vector<rfm::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm);
 
 	cPlotPointCloud trim_below(const cRappPointCloud& pc, int z_mm);
 	cPlotPointCloud trim_below(const cPlotPointCloud& pc, int z_mm);
@@ -83,17 +84,17 @@ namespace plot
 
 	cPlotPointCloud isolate_basic(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box);
 	cPlotPointCloud isolate_basic(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box);
-	cPlotPointCloud isolate_basic(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly);
-	cPlotPointCloud isolate_basic(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly);
+	cPlotPointCloud isolate_basic(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm);
+	cPlotPointCloud isolate_basic(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm);
 
 	std::vector<cPlotPointCloud> isolate_basic(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
 		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm);
 	std::vector<cPlotPointCloud> isolate_basic(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
 		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm);
 	std::vector<cPlotPointCloud> isolate_basic(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly);
+		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm);
 	std::vector<cPlotPointCloud> isolate_basic(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly);
+		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm);
 
 
 	cPlotPointCloud isolate_center_of_plot(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
@@ -101,9 +102,9 @@ namespace plot
 	cPlotPointCloud isolate_center_of_plot(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
 		std::int32_t plot_width_mm, std::int32_t plot_length_mm);
 	cPlotPointCloud isolate_center_of_plot(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly);
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm);
 	cPlotPointCloud isolate_center_of_plot(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly);
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm);
 
 
 	cPlotPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
@@ -113,11 +114,11 @@ namespace plot
 		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct = 0,
 		double max_displacement_pct = 25.0);
 	cPlotPointCloud isolate_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, double height_threshold_pct = 0,
-		double max_displacement_pct = 25.0);
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm,
+		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 	cPlotPointCloud isolate_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, double height_threshold_pct = 0,
-		double max_displacement_pct = 25.0);
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm,
+		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 
 
 	cPlotPointCloud isolate_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
@@ -127,10 +128,10 @@ namespace plot
 		const cPlotPointCloud& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
 		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 	cPlotPointCloud isolate_center_of_height(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box,
-		const std::vector<plot::sPoint3D_t>& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly,
+		const std::vector<plot::sPoint3D_t>& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm,
 		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 	cPlotPointCloud isolate_center_of_height(const std::vector<rfm::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box,
-		const std::vector<rfm::sPoint3D_t>& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly,
+		const std::vector<rfm::sPoint3D_t>& full_pc, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm,
 		double height_threshold_pct = 0, double max_displacement_pct = 25.0);
 
 
@@ -141,10 +142,10 @@ namespace plot
 		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm,
 		double height_threshold_pct = 0);
 	std::vector<cPlotPointCloud> isolate_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly,
+		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm,
 		double height_threshold_pct = 0);
 	std::vector<cPlotPointCloud> isolate_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly,
+		int numSubPlots, ePlotOrientation orientation, std::int32_t plot_width_mm, std::int32_t plot_length_mm, bool vegetationOnly, std::optional<double> groundLevel_mm,
 		double height_threshold_pct = 0);
 
 	cPlotPointCloud isolate_iterative(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
