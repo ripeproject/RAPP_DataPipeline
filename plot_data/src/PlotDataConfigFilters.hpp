@@ -2,6 +2,7 @@
 #pragma once
 
 #include "datatypes.hpp"
+#include "PlotDataConfigFilter.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -9,9 +10,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-
-// Forward Declarations
-class cPlotDataConfigFilter;
 
 
 class cPlotDataConfigFilters
@@ -42,28 +40,6 @@ private:
 };
 
 
-class cPlotDataConfigFilter
-{
-public:
-	cPlotDataConfigFilter() = default;
-	~cPlotDataConfigFilter() = default;
-
-	bool isDirty() const;
-
-protected:
-	void setDirty(bool dirty);
-
-	virtual void load(const nlohmann::json& jdoc) = 0;
-	virtual void save(nlohmann::json& jdoc) = 0;
-
-protected:
-	bool mDirty = false;
-
-	friend class cPlotDataConfigFile;
-	friend class cPlotDataConfigFilters;
-};
-
-
 class cPlotDataConfigFilter_Histogram : public cPlotDataConfigFilter
 {
 public:
@@ -75,6 +51,8 @@ public:
 protected:
 	void load(const nlohmann::json& jdoc) override;
 	void save(nlohmann::json& jdoc) override;
+
+	void apply(cPlotPointCloud& plot) override;
 
 private:
 	int mMinBinCount = 5;

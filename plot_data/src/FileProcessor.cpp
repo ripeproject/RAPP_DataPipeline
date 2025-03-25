@@ -238,14 +238,24 @@ void cFileProcessor::computePlotHeights()
     int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
     double heightPercentile = parameters.getHeightPercentile();
 
+    bool hasFilters = parameters.hasFilters();
+    const auto& filters = parameters.getFilters();
+
     auto n = mPlotInfo->size();
 
     for (std::size_t i = 0; i < n; ++i)
     {
         update_progress(mID, static_cast<int>((100.0 * i) / n));
 
-//        const auto& plot = (*mPlotInfo)[i];
         auto plot = *((*mPlotInfo)[i]);
+
+        if (hasFilters)
+        {
+            for (auto* filter : filters)
+            {
+                filter->apply(plot);
+            }
+        }
 
         nPlotUtils::sHeightResults_t height;
 

@@ -24,6 +24,8 @@ set(PLOT_DATA_COMMON_FILES
 	PlotDataConfigBiomass.hpp
 	PlotDataConfigBiomass.cpp
 
+	PlotDataConfigFilter.hpp
+
 	PlotDataConfigFilters.hpp
 	PlotDataConfigFilters.cpp
 

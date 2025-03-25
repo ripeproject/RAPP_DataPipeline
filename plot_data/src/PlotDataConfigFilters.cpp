@@ -1,5 +1,6 @@
 
 #include "PlotDataConfigFilters.hpp"
+#include "PlotDataUtils.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -7,7 +8,9 @@
 #include <algorithm>
 #include <stdexcept>
 
+
 const char* FILTERS_SECTION_NAME = "filters";
+
 
 cPlotDataConfigFilters::cPlotDataConfigFilters()
 {}
@@ -118,6 +121,10 @@ void cPlotDataConfigFilter_Histogram::load(const nlohmann::json& jdoc)
 void cPlotDataConfigFilter_Histogram::save(nlohmann::json& jdoc)
 {}
 
+void cPlotDataConfigFilter_Histogram::apply(cPlotPointCloud& plot)
+{
+	nPlotUtils::removeHeightOutliers_Histogram(plot, mMinBinCount);
+}
 
 
 
