@@ -52,6 +52,7 @@ protected:
 	void load(const nlohmann::json& jdoc) override;
 	void save(nlohmann::json& jdoc) override;
 
+	std::vector<std::string> info() override;
 	void apply(cPlotPointCloud& plot) override;
 
 private:

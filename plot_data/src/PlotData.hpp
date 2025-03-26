@@ -5,6 +5,7 @@
 #include <cbdf/ExperimentInfo.hpp>
 
 #include <cstdint>
+#include <string_view>
 #include <string>
 #include <vector>
 #include <map>
@@ -28,7 +29,16 @@ public:
 
 	void addDate(int month, int day, int year, int doy);
 
-	void addPlotData(int plot_id, int doy, int num_of_points, double height_mm, double lowerBound_mm, double upperBount_mm);
+	void clearHeightMetaInfo();
+	void addHeightMetaInfo(std::string_view info);
+	void addHeightMetaInfo(const std::vector<std::string>& info);
+
+	void addPlotHeight(int plot_id, int doy, int num_of_points, double height_mm, double lowerBound_mm, double upperBount_mm);
+
+	void clearBiomassMetaInfo();
+	void addBiomassMetaInfo(std::string_view info);
+	void addBiomassMetaInfo(const std::vector<std::string>& info);
+
 	void addPlotBiomass(int plot_id, int doy, double biomass);
 
 	void computeReplicateData();
@@ -105,6 +115,8 @@ private:
 
 	std::map<int, std::vector<sPlotNumPointData_t> > mPlotSizes;
 
+	std::vector<std::string> mHeightMetaData;
+
 	struct sPlotHeightData_t
 	{
 		int doy = 0;
@@ -123,6 +135,8 @@ private:
 	};
 
 	std::map<int, std::vector<sGroupHeightData_t> > mGroupHeights;
+
+	std::vector<std::string> mBioMassMetaData;
 
 	struct sPlotBioMassData_t
 	{

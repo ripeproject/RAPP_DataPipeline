@@ -3,6 +3,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include <string>
+#include <vector>
+
 // Forward Declarations
 class cPlotPointCloud;
 
@@ -14,6 +17,8 @@ public:
 	~cPlotDataConfigFilter() = default;
 
 	bool isDirty() const;
+
+	virtual std::vector<std::string> info() = 0;
 
 	virtual void apply(cPlotPointCloud& plot) = 0;
 

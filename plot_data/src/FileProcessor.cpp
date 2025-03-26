@@ -238,8 +238,26 @@ void cFileProcessor::computePlotHeights()
     int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
     double heightPercentile = parameters.getHeightPercentile();
 
+    mResults.clearHeightMetaInfo();
+    mResults.addHeightMetaInfo("algorithm: histogram");
+
+    std::string info = "height percentile: ";
+    info += std::to_string(heightPercentile);
+    mResults.addHeightMetaInfo(info);
+
     bool hasFilters = parameters.hasFilters();
     const auto& filters = parameters.getFilters();
+
+    if (hasFilters)
+    {
+        mResults.addHeightMetaInfo("");
+        mResults.addHeightMetaInfo("Height Applied Filters:");
+
+        for (auto* filter : filters)
+        {
+            mResults.addHeightMetaInfo(filter->info());
+        }
+    }
 
     auto n = mPlotInfo->size();
 
@@ -279,7 +297,7 @@ void cFileProcessor::computePlotHeights()
             height = nPlotUtils::computePlotHeights(plot, groundLevelBound_mm, heightPercentile, heightPercentile - 1, heightPercentile + 1);
         }
 
-        mResults.addPlotData(plot.id(), mDayOfYear, plot.size(), height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
+        mResults.addPlotHeight(plot.id(), mDayOfYear, plot.size(), height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
     }
 }
 
@@ -289,6 +307,27 @@ void cFileProcessor::computePlotBioMasses()
     int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
     double voxel_size_mm = parameters.getVoxelSize_mm();
 
+    mResults.clearBiomassMetaInfo();
+    mResults.addBiomassMetaInfo("algorithm: voxelization");
+
+    std::string info = "voxel size (mm): ";
+    info += std::to_string(voxel_size_mm);
+    mResults.addBiomassMetaInfo(info);
+
+    bool hasFilters = parameters.hasFilters();
+    const auto& filters = parameters.getFilters();
+
+    if (hasFilters)
+    {
+        mResults.addBiomassMetaInfo("");
+        mResults.addBiomassMetaInfo("Biomass Applied Filters:");
+
+        for (auto* filter : filters)
+        {
+            mResults.addBiomassMetaInfo(filter->info());
+        }
+    }
+
     auto n = mPlotInfo->size();
 
     for (std::size_t i = 0; i < n; ++i)
@@ -296,6 +335,14 @@ void cFileProcessor::computePlotBioMasses()
         update_progress(mID, static_cast<int>((100.0 * i) / n));
 
         auto plot = *((*mPlotInfo)[i]);
+
+        if (hasFilters)
+        {
+            for (auto* filter : filters)
+            {
+                filter->apply(plot);
+            }
+        }
 
         double biomass = 0.0;
 

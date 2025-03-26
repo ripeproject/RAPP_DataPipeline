@@ -77,7 +77,26 @@ void cPlotData::addDate(int month, int day, int year, int doy)
 	mDates.insert(date);
 }
 
-void cPlotData::addPlotData(int plot_id, int doy, int num_of_points, double height_mm, double lowerBound_mm, double upperBount_mm)
+void cPlotData::clearHeightMetaInfo()
+{
+	mHeightMetaData.clear();
+}
+
+void cPlotData::addHeightMetaInfo(std::string_view info)
+{
+	mHeightMetaData.push_back(std::string(info));
+}
+
+void cPlotData::addHeightMetaInfo(const std::vector<std::string>& info)
+{
+	if (info.empty())
+		return;
+
+	std::copy(info.begin(), info.end(), std::back_inserter(mHeightMetaData));
+}
+
+
+void cPlotData::addPlotHeight(int plot_id, int doy, int num_of_points, double height_mm, double lowerBound_mm, double upperBount_mm)
 {
 	{
 		sPlotNumPointData_t data;
@@ -96,6 +115,24 @@ void cPlotData::addPlotData(int plot_id, int doy, int num_of_points, double heig
 	data.upperBount_mm = upperBount_mm;
 
 	mPlotHeights[plot_id].push_back(data);
+}
+
+void cPlotData::clearBiomassMetaInfo()
+{
+	mBioMassMetaData.clear();
+}
+
+void cPlotData::addBiomassMetaInfo(std::string_view info)
+{
+	mBioMassMetaData.push_back(std::string(info));
+}
+
+void cPlotData::addBiomassMetaInfo(const std::vector<std::string>& info)
+{
+	if (info.empty())
+		return;
+
+	std::copy(info.begin(), info.end(), std::back_inserter(mBioMassMetaData));
 }
 
 void cPlotData::addPlotBiomass(int plot_id, int doy, double biomass)
@@ -246,7 +283,36 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 
 	out << "\n";
 
-	out << "\nExperiment Information: \n";
+	if (!mHeightMetaData.empty())
+	{
+		out << "\n";
+
+		out << "Plot Height Info:\n";
+
+		for (const auto& info : mHeightMetaData)
+		{
+			out << info << "\n";
+		}
+
+		out << "\n";
+	}
+
+	if (!mBioMassMetaData.empty())
+	{
+		out << "\n";
+
+		out << "Plot Biomass Info:\n";
+
+		for (const auto& info : mBioMassMetaData)
+		{
+			out << info << "\n";
+		}
+
+		out << "\n";
+	}
+
+	out << "\n";
+	out << "Experiment Information: \n";
 	out << "Title: " << mExperimentInfo.title() << "\n";
 
 	const auto& comments = mExperimentInfo.comments();

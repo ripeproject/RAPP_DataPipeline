@@ -121,6 +121,17 @@ void cPlotDataConfigFilter_Histogram::load(const nlohmann::json& jdoc)
 void cPlotDataConfigFilter_Histogram::save(nlohmann::json& jdoc)
 {}
 
+std::vector<std::string> cPlotDataConfigFilter_Histogram::info()
+{
+	std::vector<std::string> info;
+
+	info.emplace_back("filter type: outliers removal");
+	info.emplace_back("algorithm: histogram");
+	info.emplace_back("min bin count: " + std::to_string(mMinBinCount));
+
+	return info;
+}
+
 void cPlotDataConfigFilter_Histogram::apply(cPlotPointCloud& plot)
 {
 	nPlotUtils::removeHeightOutliers_Histogram(plot, mMinBinCount);
