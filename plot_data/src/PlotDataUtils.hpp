@@ -23,7 +23,8 @@ namespace nPlotUtils
 	double computePlotHeights(const cPlotPointCloud& plot, int groundHeight_mm, double plotHeight_pct);
 	sHeightResults_t computePlotHeights(const cPlotPointCloud& plot, int groundHeight_mm, double plotHeight_pct, double lowerBound_pct, double upperBound_pct);
 
-	double computeDigitalBiomass(const cPlotPointCloud& plot, double voxel_size_mm);
-	double computeDigitalBiomass(const cPlotPointCloud& plot, int groundHeight_mm, double voxel_size_mm);
+	double computeDigitalBiomass_oct_tree(const cPlotPointCloud& plot, double voxel_size_mm, int min_bin_count);
+	double computeDigitalBiomass_pcl(const cPlotPointCloud& plot, double voxel_size_mm);
+//	double computeDigitalBiomass_open3d(const cPlotPointCloud& plot, double voxel_size_mm);
 }
 

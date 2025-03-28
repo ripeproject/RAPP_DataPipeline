@@ -13,6 +13,8 @@
 #include <memory>
 
 
+enum class eBiomassAlgorithmType {OCT_TREE, PCL, OPEN3D, QHULL};
+
 class cPlotDataConfigBiomass
 {
 public:
@@ -23,11 +25,17 @@ public:
 
 	bool isDirty() const;
 
+	eBiomassAlgorithmType getAlgorithmType() const;
+
 	double getGroundLevelBound_mm() const;
 	double getVoxelSize_mm() const;
 
+	int getMinBinCount() const;
+
+	void setAlgorithmType(eBiomassAlgorithmType algorithm_type);
 	void setGroundLevelBound_mm(double ground_level_mm);
 	void setVoxelSize_mm(double voxel_size_mm);
+	void setMinBinCount(int min_bin_count);
 
 	bool hasFilters() const;
 	const std::vector<cPlotDataConfigFilter*>& getFilters() const;
@@ -41,9 +49,13 @@ protected:
 private:
 	bool mDirty = false;
 
+	eBiomassAlgorithmType mAlgorithmType = eBiomassAlgorithmType::OCT_TREE;
+
 	double mGroundLevelBound_mm = 0.0;
 
 	double mVoxelSize_mm = 1.0;
+
+	int mMinBinCount = 1;
 
 	cPlotDataConfigFilters mFilters;
 

@@ -29,6 +29,12 @@ set(PLOT_DATA_COMMON_FILES
 	PlotDataConfigFilters.hpp
 	PlotDataConfigFilters.cpp
 
+	OctTree.hpp
+	OctTree.cpp
+
+	OctNode.hpp
+	OctNode.cpp
+
 	FileProcessor.hpp
 	FileProcessor.cpp
 )
@@ -71,6 +77,7 @@ target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE fmt::fmt)
 target_link_libraries(console_app PRIVATE ${PCL_LIBRARIES} )
 target_link_libraries(console_app PRIVATE Eigen3::Eigen )
+#target_link_libraries(console_app PRIVATE Open3D)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
@@ -147,6 +154,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE fmt::fmt)
 	target_link_libraries(gui_app PRIVATE ${PCL_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE Eigen3::Eigen)
+#	target_link_libraries(gui_app PRIVATE Open3D)
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

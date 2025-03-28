@@ -304,8 +304,11 @@ void cFileProcessor::computePlotHeights()
 void cFileProcessor::computePlotBioMasses()
 {
     const auto& parameters = mConfigInfo.getBiomassParameters();
+
+    auto algorithm_type = parameters.getAlgorithmType();
     int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
     double voxel_size_mm = parameters.getVoxelSize_mm();
+    int min_bin_count = parameters.getMinBinCount();
 
     mResults.clearBiomassMetaInfo();
     mResults.addBiomassMetaInfo("algorithm: voxelization");
@@ -344,11 +347,9 @@ void cFileProcessor::computePlotBioMasses()
             }
         }
 
-        double biomass = 0.0;
-
         if (plot.vegetationOnly())
         {
-            biomass = nPlotUtils::computeDigitalBiomass(plot, voxel_size_mm);
+            // Nothing to do...
         }
         else if (plot.groundLevel_mm().has_value())
         {
@@ -358,12 +359,23 @@ void cFileProcessor::computePlotBioMasses()
 
             plot::translate(plot, 0, 0, -groundLevelBound_mm);
             plot.clearGroundLevel_mm();
-
-            biomass = nPlotUtils::computeDigitalBiomass(plot, voxel_size_mm);
         }
         else
         {
-            biomass = nPlotUtils::computeDigitalBiomass(plot, groundLevelBound_mm, voxel_size_mm);
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
+            plot::translate(plot, 0, 0, -groundLevelBound_mm);
+        }
+
+        double biomass = 0.0;
+
+        switch (algorithm_type)
+        {
+        case eBiomassAlgorithmType::OCT_TREE:
+            biomass = nPlotUtils::computeDigitalBiomass_oct_tree(plot, voxel_size_mm, min_bin_count);
+            break;
+        case eBiomassAlgorithmType::PCL:
+            biomass = nPlotUtils::computeDigitalBiomass_pcl(plot, voxel_size_mm);
+            break;
         }
 
         mResults.addPlotBiomass(plot.id(), mDayOfYear, biomass);
