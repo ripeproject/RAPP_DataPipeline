@@ -312,10 +312,30 @@ void cFileProcessor::computePlotBioMasses()
 
     mResults.clearBiomassMetaInfo();
     mResults.addBiomassMetaInfo("algorithm: voxelization");
+    switch (algorithm_type)
+    {
+    case eBiomassAlgorithmType::OCT_TREE:
+        mResults.addBiomassMetaInfo("algorithm: voxelization (oct tree)");
+        break;
+    case eBiomassAlgorithmType::PCL:
+        mResults.addBiomassMetaInfo("algorithm: voxelization (pcl)");
+        break;
+    }
 
     std::string info = "voxel size (mm): ";
     info += std::to_string(voxel_size_mm);
     mResults.addBiomassMetaInfo(info);
+
+    switch (algorithm_type)
+    {
+    case eBiomassAlgorithmType::OCT_TREE:
+        info = "min bim count: ";
+        info += std::to_string(min_bin_count);
+        mResults.addBiomassMetaInfo(info);
+        break;
+    case eBiomassAlgorithmType::PCL:
+        break;
+    }
 
     bool hasFilters = parameters.hasFilters();
     const auto& filters = parameters.getFilters();
