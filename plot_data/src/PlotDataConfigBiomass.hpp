@@ -13,7 +13,7 @@
 #include <memory>
 
 
-enum class eBiomassAlgorithmType {OCT_TREE, PCL, OPEN3D, QHULL};
+enum class eBiomassAlgorithmType {OCT_TREE, VOXEL_GRID, OPEN3D, QHULL};
 
 class cPlotDataConfigBiomass
 {

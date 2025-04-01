@@ -77,6 +77,7 @@ target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE fmt::fmt)
 target_link_libraries(console_app PRIVATE ${PCL_LIBRARIES} )
 target_link_libraries(console_app PRIVATE Eigen3::Eigen )
+target_link_libraries(console_app PRIVATE smirnov_grubbs)
 #target_link_libraries(console_app PRIVATE Open3D)
 
 #
@@ -154,6 +155,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE fmt::fmt)
 	target_link_libraries(gui_app PRIVATE ${PCL_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE Eigen3::Eigen)
+	target_link_libraries(gui_app PRIVATE smirnov_grubbs)
 #	target_link_libraries(gui_app PRIVATE Open3D)
 
 	#

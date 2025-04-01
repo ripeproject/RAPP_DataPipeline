@@ -98,9 +98,9 @@ void cPlotDataConfigBiomass::load(const nlohmann::json& jdoc)
 		mAlgorithmType = eBiomassAlgorithmType::OCT_TREE;
 		mMinBinCount = biomass["min_bin_count"];
 	}
-	else if (type == "pcl")
+	else if (type == "voxel_grid")
 	{
-		mAlgorithmType = eBiomassAlgorithmType::PCL;
+		mAlgorithmType = eBiomassAlgorithmType::VOXEL_GRID;
 	}
 	else if (type == "open3d")
 	{
@@ -127,8 +127,8 @@ void cPlotDataConfigBiomass::save(nlohmann::json& jdoc)
 		biomass["algorithm_type"] = "oct_tree";
 		biomass["min_bin_count"] = mMinBinCount;
 		break;
-	case eBiomassAlgorithmType::PCL:
-		biomass["algorithm_type"] = "pcl";
+	case eBiomassAlgorithmType::VOXEL_GRID:
+		biomass["algorithm_type"] = "voxel_grid";
 		break;
 	case eBiomassAlgorithmType::OPEN3D:
 		biomass["algorithm_type"] = "open3d";

@@ -13,6 +13,8 @@
 #include <cstdint>
 #include <algorithm>
 
+#include <smirnov_grubbs/Grubbs.h>
+
 #include <pcl/point_types.h>
 #include <pcl/conversions.h>
 #include <pcl/filters/voxel_grid.h>
@@ -91,6 +93,66 @@ void nPlotUtils::removeHeightOutliers_Histogram(cPlotPointCloud& plot, int min_b
     }
 
     plot = plot::trim_above(plot::trim_below(plot, lowerBound_mm), upperBound_mm);
+}
+
+void nPlotUtils::removeHeightOutliers_Grubbs(cPlotPointCloud& plot, double alpha)
+{
+    std::vector<double> heights;
+
+    for (const auto& point : plot)
+    {
+        heights.push_back(point.z_mm);
+    }
+
+    std::sort(heights.begin(), heights.end());
+
+    if (heights.size() > 100)
+    {
+        cOneSidedGrubbsTest lt;
+
+        auto last = heights.begin();
+        std::advance(last, 100);
+
+        lt.load_data(heights.begin(), last, false);
+
+        std::vector<double> resultAfterOutliersRemoved;
+        auto outliers = lt.run(alpha, &resultAfterOutliersRemoved);
+
+        std::sort(resultAfterOutliersRemoved.begin(), resultAfterOutliersRemoved.end());
+
+        int lowerBound_mm = static_cast<int>(resultAfterOutliersRemoved.front());
+
+        plot = plot::trim_below(plot, lowerBound_mm);
+
+        cOneSidedGrubbsTest ut;
+
+        auto first = heights.end();
+        std::advance(first, -100);
+
+        ut.load_data(first, heights.end(), true);
+        outliers = ut.run(alpha, &resultAfterOutliersRemoved);
+
+        std::sort(resultAfterOutliersRemoved.begin(), resultAfterOutliersRemoved.end());
+
+        int upperBound_mm = static_cast<int>(resultAfterOutliersRemoved.back());
+
+        plot = plot::trim_above(plot, upperBound_mm);
+    }
+    else
+    {
+        cTwoSidedGrubbsTest tt;
+        tt.load_data(heights);
+
+        std::vector<double> resultAfterOutliersRemoved;
+        tt.run(alpha, &resultAfterOutliersRemoved);
+
+        std::sort(resultAfterOutliersRemoved.begin(), resultAfterOutliersRemoved.end());
+
+        int lowerBound_mm = static_cast<int>(resultAfterOutliersRemoved.front());
+        int upperBound_mm = static_cast<int>(resultAfterOutliersRemoved.back());
+
+        plot = plot::trim_above(plot::trim_below(plot, lowerBound_mm), upperBound_mm);
+    }
 }
 
 double nPlotUtils::computePlotHeights(const cPlotPointCloud& plot, double plotHeight_pct)
@@ -216,46 +278,14 @@ double nPlotUtils::computeDigitalBiomass_oct_tree(const cPlotPointCloud& plot, d
     return biomass;
 }
 
-double nPlotUtils::computeDigitalBiomass_pcl(const cPlotPointCloud& plot, double voxel_size_mm)
+double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot, double voxel_size_mm)
 {
     auto num_points_in_cloud = plot.size();
-
-    auto minX_mm = plot.minX_mm();
-    auto maxX_mm = plot.maxX_mm();
-    auto minY_mm = plot.minY_mm();
-    auto maxY_mm = plot.maxY_mm();
-    auto minZ_mm = plot.minZ_mm();
-    auto maxZ_mm = plot.maxZ_mm();
-
-    double mx = plot.maxX_mm() - plot.minX_mm();
-    double my = plot.maxY_mm() - plot.minY_mm();
-    double mz = plot.maxZ_mm() - plot.minZ_mm();
-
-    double max_side = std::max(mx, my);
-    max_side = std::max(max_side, mz);
-
-    double half_size = max_side / 2.0;
-
-    double half_size_voxel = (std::floor(half_size / voxel_size_mm) + 1) * voxel_size_mm;
-
-    double cx = (plot.maxX_mm() + plot.minX_mm()) / 2.0;
-    double cy = (plot.maxY_mm() + plot.minY_mm()) / 2.0;
-    double cz = (plot.maxZ_mm() + plot.minZ_mm()) / 2.0;
-
-    minX_mm = cx - half_size_voxel;
-    maxX_mm = cx + half_size_voxel;
-    minY_mm = cy - half_size_voxel;
-    maxY_mm = cy + half_size_voxel;
-    minZ_mm = cz - half_size_voxel;
-    maxZ_mm = cz + half_size_voxel;
-
-    std::unique_ptr<cOctTree> tree = std::make_unique<cOctTree>( minX_mm, maxX_mm, minY_mm, maxY_mm, minZ_mm, maxZ_mm, voxel_size_mm );
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
 
     for (const auto& point : plot)
     {
-        tree->addPoint(point.x_mm, point.y_mm, point.z_mm);
         points->emplace_back(pcl::PointXYZ(point.x_mm, point.y_mm, point.z_mm));
     }
 
@@ -270,6 +300,8 @@ double nPlotUtils::computeDigitalBiomass_pcl(const cPlotPointCloud& plot, double
     sor.setInputCloud(cloud);
     sor.setLeafSize(voxel_size_mm, voxel_size_mm, voxel_size_mm);
     sor.filter(*voxels);
+
+    auto leaf_size = sor.getLeafSize();
 
     double single_voxel_volume_mm3 = voxel_size_mm * voxel_size_mm * voxel_size_mm;
 
@@ -286,7 +318,6 @@ double nPlotUtils::computeDigitalBiomass_pcl(const cPlotPointCloud& plot, double
     auto n = voxels->height * voxels->width;
 
     double volume_mm3 = single_voxel_volume_mm3 * n;
-    double test_volume = tree->volume_mm3(0);
 
     double dx = plot.maxX_mm() - plot.minX_mm();
     double dy = plot.maxY_mm() - plot.minY_mm();

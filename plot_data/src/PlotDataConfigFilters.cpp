@@ -1,6 +1,7 @@
 
 #include "PlotDataConfigFilters.hpp"
 #include "PlotDataUtils.hpp"
+#include "PlotSplitUtils.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -73,15 +74,28 @@ void cPlotDataConfigFilters::load(const nlohmann::json& jdoc)
 
 		cPlotDataConfigFilter* pFilter = nullptr;
 
-		if (type == "histogram")
+		if (type == "trim_below")
+		{
+			pFilter = new cPlotDataConfigFilter_TrimBelow();
+		}
+		else if (type == "trim_above")
+		{
+			pFilter = new cPlotDataConfigFilter_TrimAbove();
+		}
+		else if (type == "histogram")
 		{
 			pFilter = new cPlotDataConfigFilter_Histogram();
-
-			pFilter->load(filter);
+		}
+		else if (type == "grubbs")
+		{
+			pFilter = new cPlotDataConfigFilter_Grubbs();
 		}
 
 		if (pFilter)
+		{
+			pFilter->load(filter);
 			mFilters.push_back(pFilter);
+		}
 	}
 }
 
@@ -107,11 +121,82 @@ void cPlotDataConfigFilter::setDirty(bool dirty)
 }
 
 
+/*
+ *  Trim Below: removes all points below a certain level
+ */
+
+int cPlotDataConfigFilter_TrimBelow::lowerBound_mm() const
+{
+	return mLowerBound_mm;
+}
+
+void cPlotDataConfigFilter_TrimBelow::load(const nlohmann::json& jdoc)
+{
+	mLowerBound_mm = jdoc["lower_bound_mm"];
+}
+
+void cPlotDataConfigFilter_TrimBelow::save(nlohmann::json& jdoc)
+{
+}
+
+std::vector<std::string> cPlotDataConfigFilter_TrimBelow::info()
+{
+	std::vector<std::string> info;
+
+	info.emplace_back("filter type: trim below");
+	info.emplace_back("lower bound (mm): " + std::to_string(mLowerBound_mm));
+
+	return info;
+}
+
+void cPlotDataConfigFilter_TrimBelow::apply(cPlotPointCloud& plot)
+{
+	plot = plot::trim_below(plot, mLowerBound_mm);
+}
+
+
+ /*
+  *  Trim Above: removes all points above a certain level
+  */
+
+int cPlotDataConfigFilter_TrimAbove::upperBound_mm() const
+{
+	return mUpperBound_mm;
+}
+
+void cPlotDataConfigFilter_TrimAbove::load(const nlohmann::json& jdoc)
+{
+	mUpperBound_mm = jdoc["upper_bound_mm"];
+}
+
+void cPlotDataConfigFilter_TrimAbove::save(nlohmann::json& jdoc)
+{
+}
+
+std::vector<std::string> cPlotDataConfigFilter_TrimAbove::info()
+{
+	std::vector<std::string> info;
+
+	info.emplace_back("filter type: upper bound");
+	info.emplace_back("upper bound (mm): " + std::to_string(mUpperBound_mm));
+
+	return info;
+}
+
+void cPlotDataConfigFilter_TrimAbove::apply(cPlotPointCloud& plot)
+{
+	plot = plot::trim_above(plot, mUpperBound_mm);
+}
+
+
+/*
+ *  Simple histogram filter
+ */
+
 int cPlotDataConfigFilter_Histogram::minBinCount() const
 {
 	return mMinBinCount;
 }
-
 
 void cPlotDataConfigFilter_Histogram::load(const nlohmann::json& jdoc)
 {
@@ -137,5 +222,39 @@ void cPlotDataConfigFilter_Histogram::apply(cPlotPointCloud& plot)
 	nPlotUtils::removeHeightOutliers_Histogram(plot, mMinBinCount);
 }
 
+
+/*
+ *  Smirnov Grubbs filter
+ */
+double cPlotDataConfigFilter_Grubbs::alpha() const
+{
+	return mAlpha;
+}
+
+
+void cPlotDataConfigFilter_Grubbs::load(const nlohmann::json& jdoc)
+{
+	mAlpha = jdoc["alpha"];
+}
+
+void cPlotDataConfigFilter_Grubbs::save(nlohmann::json& jdoc)
+{
+}
+
+std::vector<std::string> cPlotDataConfigFilter_Grubbs::info()
+{
+	std::vector<std::string> info;
+
+	info.emplace_back("filter type: outliers removal");
+	info.emplace_back("algorithm: smirnov grubbs");
+	info.emplace_back("alpha: " + std::to_string(mAlpha));
+
+	return info;
+}
+
+void cPlotDataConfigFilter_Grubbs::apply(cPlotPointCloud& plot)
+{
+	nPlotUtils::removeHeightOutliers_Grubbs(plot, mAlpha);
+}
 
 

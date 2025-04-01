@@ -40,6 +40,50 @@ private:
 };
 
 
+class cPlotDataConfigFilter_TrimBelow : public cPlotDataConfigFilter
+{
+public:
+	cPlotDataConfigFilter_TrimBelow() = default;
+	~cPlotDataConfigFilter_TrimBelow() = default;
+
+	int lowerBound_mm() const;
+
+protected:
+	void load(const nlohmann::json& jdoc) override;
+	void save(nlohmann::json& jdoc) override;
+
+	std::vector<std::string> info() override;
+	void apply(cPlotPointCloud& plot) override;
+
+private:
+	int mLowerBound_mm = 0;
+
+	friend class cPlotDataConfigFile;
+};
+
+
+class cPlotDataConfigFilter_TrimAbove : public cPlotDataConfigFilter
+{
+public:
+	cPlotDataConfigFilter_TrimAbove() = default;
+	~cPlotDataConfigFilter_TrimAbove() = default;
+
+	int upperBound_mm() const;
+
+protected:
+	void load(const nlohmann::json& jdoc) override;
+	void save(nlohmann::json& jdoc) override;
+
+	std::vector<std::string> info() override;
+	void apply(cPlotPointCloud& plot) override;
+
+private:
+	int mUpperBound_mm = 0;
+
+	friend class cPlotDataConfigFile;
+};
+
+
 class cPlotDataConfigFilter_Histogram : public cPlotDataConfigFilter
 {
 public:
@@ -57,6 +101,28 @@ protected:
 
 private:
 	int mMinBinCount = 5;
+
+	friend class cPlotDataConfigFile;
+};
+
+
+class cPlotDataConfigFilter_Grubbs : public cPlotDataConfigFilter
+{
+public:
+	cPlotDataConfigFilter_Grubbs() = default;
+	~cPlotDataConfigFilter_Grubbs() = default;
+
+	double alpha() const;
+
+protected:
+	void load(const nlohmann::json& jdoc) override;
+	void save(nlohmann::json& jdoc) override;
+
+	std::vector<std::string> info() override;
+	void apply(cPlotPointCloud& plot) override;
+
+private:
+	double mAlpha = 0.05;
 
 	friend class cPlotDataConfigFile;
 };

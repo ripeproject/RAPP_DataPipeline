@@ -317,8 +317,8 @@ void cFileProcessor::computePlotBioMasses()
     case eBiomassAlgorithmType::OCT_TREE:
         mResults.addBiomassMetaInfo("algorithm: voxelization (oct tree)");
         break;
-    case eBiomassAlgorithmType::PCL:
-        mResults.addBiomassMetaInfo("algorithm: voxelization (pcl)");
+    case eBiomassAlgorithmType::VOXEL_GRID:
+        mResults.addBiomassMetaInfo("algorithm: voxelization (voxel grid)");
         break;
     }
 
@@ -333,7 +333,7 @@ void cFileProcessor::computePlotBioMasses()
         info += std::to_string(min_bin_count);
         mResults.addBiomassMetaInfo(info);
         break;
-    case eBiomassAlgorithmType::PCL:
+    case eBiomassAlgorithmType::VOXEL_GRID:
         break;
     }
 
@@ -393,8 +393,8 @@ void cFileProcessor::computePlotBioMasses()
         case eBiomassAlgorithmType::OCT_TREE:
             biomass = nPlotUtils::computeDigitalBiomass_oct_tree(plot, voxel_size_mm, min_bin_count);
             break;
-        case eBiomassAlgorithmType::PCL:
-            biomass = nPlotUtils::computeDigitalBiomass_pcl(plot, voxel_size_mm);
+        case eBiomassAlgorithmType::VOXEL_GRID:
+            biomass = nPlotUtils::computeDigitalBiomass_voxel_grid(plot, voxel_size_mm);
             break;
         }
 
