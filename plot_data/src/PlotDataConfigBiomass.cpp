@@ -91,14 +91,19 @@ void cPlotDataConfigBiomass::load(const nlohmann::json& jdoc)
 		
 	auto biomass = jdoc[BIOMASS_SECTION_NAME];
 
-	std::string type = biomass["algorithm_type"];
+	std::string type;
+	
+	if (biomass.contains("algorithm type"))
+		type = biomass["algorithm type"];
+	else
+		type = biomass["algorithm_type"];
 
-	if (type == "oct_tree")
+	if ((type == "oct_tree") || (type == "oct tree"))
 	{
 		mAlgorithmType = eBiomassAlgorithmType::OCT_TREE;
 		mMinBinCount = biomass["min_bin_count"];
 	}
-	else if (type == "voxel_grid")
+	else if ((type == "voxel_grid") || (type == "voxel grid"))
 	{
 		mAlgorithmType = eBiomassAlgorithmType::VOXEL_GRID;
 	}
@@ -111,8 +116,15 @@ void cPlotDataConfigBiomass::load(const nlohmann::json& jdoc)
 		mAlgorithmType = eBiomassAlgorithmType::QHULL;
 	}
 
-	mGroundLevelBound_mm = biomass["ground level bound (mm)"];
-	mVoxelSize_mm = biomass["voxel size (mm)"];
+	if (biomass.contains("ground_level_bound_mm"))
+		mGroundLevelBound_mm = biomass["ground_level_bound_mm"];
+	else
+		mGroundLevelBound_mm = biomass["ground level bound (mm)"];
+
+	if (biomass.contains("voxel_size_mm"))
+		mVoxelSize_mm = biomass["voxel_size_mm"];
+	else
+		mVoxelSize_mm = biomass["voxel size (mm)"];
 
 	mFilters.load(biomass);
 }

@@ -74,11 +74,11 @@ void cPlotDataConfigFilters::load(const nlohmann::json& jdoc)
 
 		cPlotDataConfigFilter* pFilter = nullptr;
 
-		if (type == "trim_below")
+		if ((type == "trim_below") || (type == "trim below"))
 		{
 			pFilter = new cPlotDataConfigFilter_TrimBelow();
 		}
-		else if (type == "trim_above")
+		else if ((type == "trim_above") || (type == "trim above"))
 		{
 			pFilter = new cPlotDataConfigFilter_TrimAbove();
 		}

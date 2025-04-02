@@ -70,8 +70,15 @@ void cPlotDataConfigHeight::load(const nlohmann::json& jdoc)
 		
 	auto height = jdoc[PLOT_HEIGHT_SECTION_NAME];
 
-	mGroundLevelBound_mm = height["ground level bound (mm)"];
-	mHeightPercentile = height["height percentile"];
+	if (height.contains("ground_level_bound_mm"))
+		mGroundLevelBound_mm = height["ground_level_bound_mm"];
+	else
+		mGroundLevelBound_mm = height["ground level bound (mm)"];
+
+	if (height.contains("height_percentile"))
+		mGroundLevelBound_mm = height["height_percentile"];
+	else
+		mHeightPercentile = height["height percentile"];
 
 	mFilters.load(height);
 }
