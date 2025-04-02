@@ -270,7 +270,7 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 	std::filesystem::path meta_file = directory;
 
 	meta_file /= filename;
-	meta_file.replace_extension("metadata");
+	meta_file.replace_extension("metadata.txt");
 
 	std::ofstream out;
 	out.open(meta_file, std::ios::trunc);
