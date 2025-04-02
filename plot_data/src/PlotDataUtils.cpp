@@ -188,43 +188,6 @@ nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointClou
     return result;
 }
 
-double nPlotUtils::computePlotHeights(const cPlotPointCloud& plot, int groundHeight_mm, double plotHeight_pct)
-{
-    return computePlotHeights(plot, groundHeight_mm, plotHeight_pct, plotHeight_pct - 1.0, plotHeight_pct + 1.0).height_mm;
-}
-
-nPlotUtils::sHeightResults_t nPlotUtils::computePlotHeights(const cPlotPointCloud& plot, int groundHeight_mm, double plotHeight_pct, double lowerBound_pct, double upperBound_pct)
-{
-    sHeightResults_t result;
-
-    if (plot.vegetationOnly())
-        groundHeight_mm = 0;
-
-    std::vector<int> heights;
-    for (const auto& point : plot)
-    {
-        if (point.z_mm >= groundHeight_mm)
-            heights.push_back(point.z_mm);
-    }
-
-    if (heights.empty())
-        return result;
-
-    std::sort(heights.begin(), heights.end());
-
-    auto n = heights.size();
-
-    int i = static_cast<int>(n * (plotHeight_pct / 100.0));
-    int l = static_cast<int>(n * (lowerBound_pct / 100.0));
-    int u = static_cast<int>(n * (upperBound_pct / 100.0));
-
-    result.height_mm = heights[i];
-    result.lowerHeight_mm = heights[l];
-    result.upperHeight_mm = heights[u];
-
-	return result;
-}
-
 double nPlotUtils::computeDigitalBiomass_oct_tree(const cPlotPointCloud& plot, double voxel_size_mm, int min_bin_count)
 {
     auto minX_mm = plot.minX_mm();
@@ -303,7 +266,7 @@ double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot,
 
     auto leaf_size = sor.getLeafSize();
 
-    double single_voxel_volume_mm3 = voxel_size_mm * voxel_size_mm * voxel_size_mm;
+    double single_voxel_volume_mm3 = leaf_size[0] * leaf_size[1] * leaf_size[2];
 
     auto v = voxels->data;
     auto num_points_in_voxels = voxels->data.size();
