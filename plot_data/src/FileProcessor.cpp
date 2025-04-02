@@ -275,27 +275,26 @@ void cFileProcessor::computePlotHeights()
             }
         }
 
-        nPlotUtils::sHeightResults_t height;
-
         if (plot.vegetationOnly())
         {
-            height = nPlotUtils::computePlotHeights(plot, heightPercentile, heightPercentile - 1, heightPercentile + 1);
+            // Nothing to do...
         }
         else if (plot.groundLevel_mm().has_value())
         {
             groundLevelBound_mm = plot.groundLevel_mm().value();
 
             plot::trim_below_in_place(plot, groundLevelBound_mm);
-
             plot::translate(plot, 0, 0, -groundLevelBound_mm);
-            plot.clearGroundLevel_mm();
 
-            height = nPlotUtils::computePlotHeights(plot, heightPercentile, heightPercentile - 1, heightPercentile + 1);
+            plot.clearGroundLevel_mm();
         }
         else
         {
-            height = nPlotUtils::computePlotHeights(plot, groundLevelBound_mm, heightPercentile, heightPercentile - 1, heightPercentile + 1);
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
+            plot::translate(plot, 0, 0, -groundLevelBound_mm);
         }
+
+        nPlotUtils::sHeightResults_t height = nPlotUtils::computePlotHeights(plot, heightPercentile, heightPercentile - 1, heightPercentile + 1);
 
         mResults.addPlotHeight(plot.id(), mDayOfYear, plot.size(), height.height_mm, height.lowerHeight_mm, height.upperHeight_mm);
     }
@@ -311,7 +310,6 @@ void cFileProcessor::computePlotBioMasses()
     int min_bin_count = parameters.getMinBinCount();
 
     mResults.clearBiomassMetaInfo();
-    mResults.addBiomassMetaInfo("algorithm: voxelization");
     switch (algorithm_type)
     {
     case eBiomassAlgorithmType::OCT_TREE:
@@ -319,6 +317,9 @@ void cFileProcessor::computePlotBioMasses()
         break;
     case eBiomassAlgorithmType::VOXEL_GRID:
         mResults.addBiomassMetaInfo("algorithm: voxelization (voxel grid)");
+        break;
+    default:
+        mResults.addBiomassMetaInfo("algorithm: voxelization");
         break;
     }
 
@@ -329,7 +330,7 @@ void cFileProcessor::computePlotBioMasses()
     switch (algorithm_type)
     {
     case eBiomassAlgorithmType::OCT_TREE:
-        info = "min bim count: ";
+        info = "min bin count: ";
         info += std::to_string(min_bin_count);
         mResults.addBiomassMetaInfo(info);
         break;
