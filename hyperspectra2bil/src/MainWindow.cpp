@@ -1,11 +1,14 @@
 
 #include "MainWindow.hpp"
-#include "HySpexVNIR3000N_2_PNG.hpp"
-#include "HySpexSWIR384_2_PNG.hpp"
+#include "HySpexVNIR3000N_BIL.hpp"
+#include "HySpexSWIR384_BIL.hpp"
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
 
 #include <wx/thread.h>
+#include <wx/config.h>
+#include <wx/radiobut.h>
+#include <wx/radiobox.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -67,10 +70,20 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 	CreateControls();
 	CreateLayout();
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Bil");
+
+	config->Read("Files/Source", &mSource);
+	config->Read("Files/Destination", &mDestinationDataDirectory);
 }
 
 cMainWindow::~cMainWindow()
 {
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Bil");
+
+	config->Write("Files/Source", mSource);
+	config->Write("Files/Destination", mDestinationDataDirectory);
+
 	g_pEventHandler = nullptr;
 
 	delete mpOriginalLog;
@@ -92,21 +105,10 @@ void cMainWindow::CreateControls()
 	mpDstDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpDstDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDestinationDirectory, this);
 
-	mpVnirRedCtrl   = new wxTextCtrl(this, wxID_ANY);
-	mpVnirGreenCtrl = new wxTextCtrl(this, wxID_ANY);
-	mpVnirBlueCtrl  = new wxTextCtrl(this, wxID_ANY);
-
-	mpVnirRedCtrl->SetValue(wxString::Format(wxT("%4.2f"), mVnirRed_nm) );
-	mpVnirGreenCtrl->SetValue(wxString::Format(wxT("%4.2f"), mVnirGreen_nm));
-	mpVnirBlueCtrl->SetValue(wxString::Format(wxT("%4.2f"), mVnirBlue_nm));
-
-	mpSwirRedCtrl   = new wxTextCtrl(this, wxID_ANY);
-	mpSwirGreenCtrl = new wxTextCtrl(this, wxID_ANY);
-	mpSwirBlueCtrl  = new wxTextCtrl(this, wxID_ANY);
-
-	mpSwirRedCtrl->SetValue(wxString::Format(wxT("%5.2f"), mSwirRed_nm));
-	mpSwirGreenCtrl->SetValue(wxString::Format(wxT("%5.2f"), mSwirGreen_nm));
-	mpSwirBlueCtrl->SetValue(wxString::Format(wxT("%5.2f"), mSwirBlue_nm));
+	mpBIL = new wxRadioButton(this, wxID_ANY, "BIL");
+	mpBIP = new wxRadioButton(this, wxID_ANY, "BIP");
+	mpBSQ = new wxRadioButton(this, wxID_ANY, "BSQ");
+	mpBIL->SetValue(true);
 
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
@@ -143,39 +145,15 @@ void cMainWindow::CreateLayout()
 	
 	topsizer->AddSpacer(10);
 
-	wxBoxSizer* options_sizer = new wxBoxSizer(wxHORIZONTAL);
+	auto* format_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "File Format");
+	format_sz->Add(mpBIL, wxSizerFlags().Proportion(0).Expand());
+	format_sz->AddSpacer(10);
+	format_sz->Add(mpBIP, wxSizerFlags().Proportion(0).Expand());
+	format_sz->AddSpacer(10);
+	format_sz->Add(mpBSQ, wxSizerFlags().Proportion(0).Expand());
+	format_sz->AddStretchSpacer(1);
 
-	auto* vnir_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "VNIR");
-	vnir_sz->Add(new wxStaticText(this, wxID_ANY, "Red (nm) : "), 0, wxALIGN_CENTER_VERTICAL);
-	vnir_sz->AddSpacer(10);
-	vnir_sz->Add(mpVnirRedCtrl, wxSizerFlags().Proportion(0).Expand());
-	vnir_sz->AddSpacer(10);
-	vnir_sz->Add(new wxStaticText(this, wxID_ANY, "Green (nm) : "), 0, wxALIGN_CENTER_VERTICAL);
-	vnir_sz->AddSpacer(10);
-	vnir_sz->Add(mpVnirGreenCtrl, wxSizerFlags().Proportion(0).Expand());
-	vnir_sz->AddSpacer(10);
-	vnir_sz->Add(new wxStaticText(this, wxID_ANY, "Blue (nm) : "), 0, wxALIGN_CENTER_VERTICAL);
-	vnir_sz->AddSpacer(10);
-	vnir_sz->Add(mpVnirBlueCtrl, wxSizerFlags().Proportion(0).Expand());
-
-	auto* swir_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "SWIR");
-	swir_sz->Add(new wxStaticText(this, wxID_ANY, "Red (nm) : "), 0, wxALIGN_CENTER_VERTICAL);
-	swir_sz->AddSpacer(10);
-	swir_sz->Add(mpSwirRedCtrl, wxSizerFlags().Proportion(0).Expand());
-	swir_sz->AddSpacer(10);
-	swir_sz->Add(new wxStaticText(this, wxID_ANY, "Green (nm) : "), 0, wxALIGN_CENTER_VERTICAL);
-	swir_sz->AddSpacer(10);
-	swir_sz->Add(mpSwirGreenCtrl, wxSizerFlags().Proportion(0).Expand());
-	swir_sz->AddSpacer(10);
-	swir_sz->Add(new wxStaticText(this, wxID_ANY, "Blue (nm) : "), 0, wxALIGN_CENTER_VERTICAL);
-	swir_sz->AddSpacer(10);
-	swir_sz->Add(mpSwirBlueCtrl, wxSizerFlags().Proportion(0).Expand());
-
-	options_sizer->Add(vnir_sz, 1);
-	options_sizer->AddSpacer(10);
-	options_sizer->Add(swir_sz, 1);
-
-	topsizer->Add(options_sizer, wxSizerFlags().Proportion(0).Expand());
+	topsizer->Add(format_sz, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(10);
 
@@ -197,7 +175,18 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), "", "",
+	std::filesystem::path fname = mSource.ToStdString();
+
+	std::filesystem::path fpath;
+	if (fname.has_extension())
+		fpath = fname.parent_path();
+	else
+	{
+		fpath = fname;
+		fname.clear();
+	}
+
+	wxFileDialog dlg(this, _("Open file"), wxString(fpath.string()), wxString(fname.filename().string()),
 		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -214,7 +203,15 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", "",
+	std::filesystem::path fname = mSource.ToStdString();
+
+	std::filesystem::path fpath;
+	if (fname.has_extension())
+		fpath = fname.parent_path();
+	else
+		fpath = fname;
+
+	wxDirDialog dlg(NULL, "Choose directory", wxString(fpath.string()),
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -231,7 +228,7 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnDestinationDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose Destination Directory", "",
+	wxDirDialog dlg(NULL, "Choose Destination Directory", mDestinationDataDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -247,25 +244,6 @@ void cMainWindow::OnDestinationDirectory(wxCommandEvent& WXUNUSED(event))
 void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 {
 	using namespace nStringUtils;
-
-	double value;
-	mpVnirRedCtrl->GetValue().ToDouble(&value);
-	mVnirRed_nm = static_cast<float>(value);
-
-	mpVnirGreenCtrl->GetValue().ToDouble(&value);
-	mVnirGreen_nm = static_cast<float>(value);
-
-	mpVnirBlueCtrl->GetValue().ToDouble(&value);
-	mVnirBlue_nm = static_cast<float>(value);
-
-	mpSwirRedCtrl->GetValue().ToDouble(&value);
-	mSwirRed_nm = static_cast<float>(value);
-
-	mpSwirGreenCtrl->GetValue().ToDouble(&value);
-	mSwirGreen_nm = static_cast<float>(value);
-
-	mpSwirBlueCtrl->GetValue().ToDouble(&value);
-	mSwirBlue_nm = static_cast<float>(value);
 
 	const std::filesystem::path input{ mSource.ToStdString() };
 
@@ -341,8 +319,12 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 
 		cFileProcessor* fp = new cFileProcessor(mNumFilesToProcess++, in_file, out_file);
 
-		fp->setVnirRgb(mVnirRed_nm, mVnirGreen_nm, mVnirBlue_nm);
-		fp->setSwirRgb(mSwirRed_nm, mSwirGreen_nm, mSwirBlue_nm);
+		if (mpBIL->GetValue())
+			fp->setFormat(eExportFormat::BIL);
+		else if (mpBIP->GetValue())
+			fp->setFormat(eExportFormat::BIP);
+		else if (mpBSQ->GetValue())
+			fp->setFormat(eExportFormat::BSQ);
 
 		mFileProcessors.push(fp);
 	}

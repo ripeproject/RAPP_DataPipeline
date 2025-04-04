@@ -53,21 +53,9 @@ private:
 	wxTextCtrl* mpDstCtrl = nullptr;
 	wxButton* mpDstDirButton = nullptr;
 
-	wxTextCtrl* mpVnirRedCtrl = nullptr;
-	wxTextCtrl* mpVnirGreenCtrl = nullptr;
-	wxTextCtrl* mpVnirBlueCtrl = nullptr;
-
-	float mVnirRed_nm   = 641.07f;
-	float mVnirGreen_nm = 547.95f;
-	float mVnirBlue_nm  = 463.30f;
-
-	wxTextCtrl* mpSwirRedCtrl = nullptr;
-	wxTextCtrl* mpSwirGreenCtrl = nullptr;
-	wxTextCtrl* mpSwirBlueCtrl = nullptr;
-
-	float mSwirRed_nm   = 1220.19f;
-	float mSwirGreen_nm = 1655.20f;
-	float mSwirBlue_nm  = 2144.57f;
+	wxRadioButton* mpBIL = nullptr;
+	wxRadioButton* mpBIP = nullptr;
+	wxRadioButton* mpBSQ = nullptr;
 
 	wxButton* mpExportButton = nullptr;
 

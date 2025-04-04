@@ -4,11 +4,29 @@ set(HYPER_SPECTRA_2_BIL_COMMON_FILES
 
 	ParserExceptions.hpp
 
-	HySpexVNIR3000N_2_PNG.hpp
-	HySpexVNIR3000N_2_PNG.cpp
+	HySpexVNIR3000N_File.hpp
+	HySpexVNIR3000N_File.cpp
 
-	HySpexSWIR384_2_PNG.hpp
-	HySpexSWIR384_2_PNG.cpp
+	HySpexVNIR3000N_BIL.hpp
+	HySpexVNIR3000N_BIL.cpp
+
+	HySpexVNIR3000N_BIP.hpp
+	HySpexVNIR3000N_BIP.cpp
+
+	HySpexVNIR3000N_BSQ.hpp
+	HySpexVNIR3000N_BSQ.cpp
+
+	HySpexSWIR384_File.hpp
+	HySpexSWIR384_File.cpp
+
+	HySpexSWIR384_BIL.hpp
+	HySpexSWIR384_BIL.cpp
+
+	HySpexSWIR384_BIP.hpp
+	HySpexSWIR384_BIP.cpp
+
+	HySpexSWIR384_BSQ.hpp
+	HySpexSWIR384_BSQ.cpp
 
 	FileProcessor.hpp
 	FileProcessor.cpp

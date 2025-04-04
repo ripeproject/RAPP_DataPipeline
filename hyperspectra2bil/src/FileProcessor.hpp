@@ -8,9 +8,10 @@
 #include <memory>
 
 // Forward Declarations
-class cHySpexVNIR3000N_2_Png;
-class cHySpexSWIR384_2_Png;
+class cHySpexVNIR3000N_File;
+class cHySpexSWIR384_File;
 
+enum class eExportFormat {BIL, BIP, BSQ};
 
 class cFileProcessor
 {
@@ -19,23 +20,23 @@ public:
 				std::filesystem::path out);
 	~cFileProcessor();
 
-	void setVnirRgb(float red_nm, float green_nm, float blue_nm);
-	void setSwirRgb(float red_nm, float green_nm, float blue_nm);
-
-	bool open(std::filesystem::path out);
+	void setFormat(eExportFormat format);
 
 	void process_file();
 	void run();
 
+protected:
+	bool open(std::filesystem::path out);
+
 private:
 	const int mID;
 
-	std::uintmax_t mFileSize;
+	std::uintmax_t mFileSize = 0;
 	cBlockDataFileReader mFileReader;
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
 
-	std::unique_ptr<cHySpexVNIR3000N_2_Png> mVnirConverter;
-	std::unique_ptr<cHySpexSWIR384_2_Png>   mSwirConverter;
+	std::unique_ptr<cHySpexVNIR3000N_File> mVnirConverter;
+	std::unique_ptr<cHySpexSWIR384_File>   mSwirConverter;
 };

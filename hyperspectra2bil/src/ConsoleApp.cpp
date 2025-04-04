@@ -1,8 +1,8 @@
 
 #include "BS_thread_pool.hpp"
 
-#include "HySpexVNIR3000N_2_PNG.hpp"
-#include "HySpexSWIR384_2_PNG.hpp"
+#include "HySpexVNIR3000N_BIL.hpp"
+#include "HySpexSWIR384_BIL.hpp"
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
 

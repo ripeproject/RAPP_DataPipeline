@@ -1,7 +1,13 @@
 
 #include "FileProcessor.hpp"
-#include "HySpexVNIR3000N_2_PNG.hpp"
-#include "HySpexSWIR384_2_PNG.hpp"
+
+#include "HySpexVNIR3000N_BIL.hpp"
+#include "HySpexVNIR3000N_BIP.hpp"
+#include "HySpexVNIR3000N_BSQ.hpp"
+
+#include "HySpexSWIR384_BIL.hpp"
+#include "HySpexSWIR384_BIP.hpp"
+#include "HySpexSWIR384_BSQ.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -21,8 +27,7 @@ extern void update_file_progress(const int id, const int progress_pct);
 cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
-    mID(id), mVnirConverter{new cHySpexVNIR3000N_2_Png()}, mSwirConverter {new cHySpexSWIR384_2_Png()
-}
+    mID(id)
 {
     mInputFile = in;
     mOutputFile = out;
@@ -33,14 +38,23 @@ cFileProcessor::~cFileProcessor()
     mFileReader.close();
 }
 
-void cFileProcessor::setVnirRgb(float red_nm, float green_nm, float blue_nm)
+void cFileProcessor::setFormat(eExportFormat format)
 {
-    mVnirConverter->setRgbWavelengths_nm(red_nm, green_nm, blue_nm);
-}
-
-void cFileProcessor::setSwirRgb(float red_nm, float green_nm, float blue_nm)
-{
-    mSwirConverter->setRgbWavelengths_nm(red_nm, green_nm, blue_nm);
+    switch (format)
+    {
+    case eExportFormat::BIL:
+        mVnirConverter.reset(new cHySpexVNIR3000N_BIL());
+        mSwirConverter.reset(new cHySpexSWIR384_BIL());
+        break;
+    case eExportFormat::BIP:
+        mVnirConverter.reset(new cHySpexVNIR3000N_BIP());
+        mSwirConverter.reset(new cHySpexSWIR384_BIP());
+        break;
+    case eExportFormat::BSQ:
+        mVnirConverter.reset(new cHySpexVNIR3000N_BSQ());
+        mSwirConverter.reset(new cHySpexSWIR384_BSQ());
+        break;
+    };
 }
 
 bool cFileProcessor::open(std::filesystem::path out)
@@ -64,6 +78,11 @@ bool cFileProcessor::open(std::filesystem::path out)
 
 void cFileProcessor::process_file()
 {
+    if (!mVnirConverter || !mSwirConverter)
+    {
+        throw std::logic_error("File format was not set.");
+    }
+
     if (open(mOutputFile))
     {
         new_file_progress(mID, mInputFile.string());
@@ -79,11 +98,11 @@ void cFileProcessor::run()
         throw std::logic_error("No file is open for reading.");
 	}
 
-    cHySpexVNIR3000N_2_Png* pVnir = mVnirConverter.get();
+    cHySpexVNIR3000N_File* pVnir = mVnirConverter.get();
 	mFileReader.attach(static_cast<cHySpexVNIR_3000N_Parser*>(pVnir));
     mFileReader.attach(static_cast<cSpidercamParser*>(pVnir));
 
-    cHySpexSWIR384_2_Png* pSwir = mSwirConverter.get();
+    cHySpexSWIR384_File* pSwir = mSwirConverter.get();
     mFileReader.attach(static_cast<cHySpexSWIR_384_Parser*>(pSwir));
     mFileReader.attach(static_cast<cSpidercamParser*>(pSwir));
 

@@ -13,15 +13,13 @@
 
 
 
-class cHySpexVNIR3000N_2_Png : public cHySpexVNIR_3000N_Parser, public cSpidercamParser
+class cHySpexVNIR3000N_File : public cHySpexVNIR_3000N_Parser, public cSpidercamParser
 {
 public:
-    cHySpexVNIR3000N_2_Png();
-	~cHySpexVNIR3000N_2_Png();
+	cHySpexVNIR3000N_File();
+	~cHySpexVNIR3000N_File();
 
     void setOutputPath(std::filesystem::path out);
-
-	void setRgbWavelengths_nm(float red_nm, float green_nm, float blue_nm);
 
 private:
 	void onID(std::string id) override;
@@ -56,34 +54,36 @@ private:
 	void onNumOfBackgrounds(uint32_t numOfBackgrounds) override;
 	void onBackgroundMatrix(HySpexConnect::cSpatialMajorData<float> background) override;
 
-	void onImage(HySpexConnect::cImageData<uint16_t> image) override;
-	void onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip) override;
-
 	void onSensorTemperature_C(float temp_C) override;
 
     void onPosition(spidercam::sPosition_1_t pos) override;
 
-    void writeRgbImage(std::filesystem::path filename);
+protected:
+	virtual void openDataFile() = 0;
+	virtual void writeHeader() = 0;
 
-private:
+protected:
     std::filesystem::path mOutputPath;
+	std::ofstream mOutputFile;
 
 	std::size_t mSpatialSize = 0;
-	std::size_t mMaxRows = 0;
+	std::size_t mSpectralSize = 0;
 
-	float mColorScale = 1.0;
+	std::size_t mMaxSpatialSize = 0;
+	std::size_t mMaxSpectralSize = 0;
 
-	float mRed_nm   = 641.07f;
-	float mGreen_nm = 547.95f;
-	float mBlue_nm  = 463.30f;
+	uint16_t mMaxPixelValue = 0;
 
-	std::size_t mRedIndex   = 279;
-	std::size_t mGreenIndex = 169;
-	std::size_t mBlueIndex  = 69;
+	enum eNumBits { ONE = 1, FOUR = 4, EIGHT = 8, SIXTEEN = 16 };
+	eNumBits  mNumBits = ONE;
+
+	double mFieldOfView_rad = 0.0;
+	uint32_t mFramePeriod_us = 0;
+	uint32_t mIntegrationTime_us = 0;
+
+	std::size_t mNumFrames = 0;
 
 	std::size_t mActiveRow = 0;
-
-	cv::Mat mImage;
 
     uint32_t    mFrameCount = 0;
 
