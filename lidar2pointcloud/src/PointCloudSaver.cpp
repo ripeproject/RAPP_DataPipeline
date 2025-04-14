@@ -322,20 +322,20 @@ bool cPointCloudSaver::save(bool isFlattened)
 
 
 /** Ouster Info **/
-void cPointCloudSaver::onConfigParam(ouster::config_param_2_t config_param) {}
-void cPointCloudSaver::onSensorInfo(ouster::sensor_info_2_t sensor_info) {}
-void cPointCloudSaver::onTimestamp(ouster::timestamp_2_t timestamp) {}
-void cPointCloudSaver::onSyncPulseIn(ouster::sync_pulse_in_2_t pulse_info) {}
-void cPointCloudSaver::onSyncPulseOut(ouster::sync_pulse_out_2_t pulse_info) {}
-void cPointCloudSaver::onMultipurposeIo(ouster::multipurpose_io_2_t io) {}
-void cPointCloudSaver::onNmea(ouster::nmea_2_t nmea) {}
-void cPointCloudSaver::onTimeInfo(ouster::time_info_2_t time_info) {}
-void cPointCloudSaver::onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsics) {}
-void cPointCloudSaver::onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics) {}
-void cPointCloudSaver::onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics) {}
-void cPointCloudSaver::onLidarDataFormat(ouster::lidar_data_format_2_t format) {}
-void cPointCloudSaver::onImuData(ouster::imu_data_t data) {}
-void cPointCloudSaver::onLidarData(cOusterLidarData data) {}
+void cPointCloudSaver::onConfigParam(uint8_t device_id, ouster::config_param_2_t config_param) {}
+void cPointCloudSaver::onSensorInfo(uint8_t device_id, ouster::sensor_info_2_t sensor_info) {}
+void cPointCloudSaver::onTimestamp(uint8_t device_id, ouster::timestamp_2_t timestamp) {}
+void cPointCloudSaver::onSyncPulseIn(uint8_t device_id, ouster::sync_pulse_in_2_t pulse_info) {}
+void cPointCloudSaver::onSyncPulseOut(uint8_t device_id, ouster::sync_pulse_out_2_t pulse_info) {}
+void cPointCloudSaver::onMultipurposeIo(uint8_t device_id, ouster::multipurpose_io_2_t io) {}
+void cPointCloudSaver::onNmea(uint8_t device_id, ouster::nmea_2_t nmea) {}
+void cPointCloudSaver::onTimeInfo(uint8_t device_id, ouster::time_info_2_t time_info) {}
+void cPointCloudSaver::onBeamIntrinsics(uint8_t device_id, ouster::beam_intrinsics_2_t intrinsics) {}
+void cPointCloudSaver::onImuIntrinsics(uint8_t device_id, ouster::imu_intrinsics_2_t intrinsics) {}
+void cPointCloudSaver::onLidarIntrinsics(uint8_t device_id, ouster::lidar_intrinsics_2_t intrinsics) {}
+void cPointCloudSaver::onLidarDataFormat(uint8_t device_id, ouster::lidar_data_format_2_t format) {}
+void cPointCloudSaver::onImuData(uint8_t device_id, ouster::imu_data_t data) {}
+void cPointCloudSaver::onLidarData(uint8_t device_id, cOusterLidarData data) {}
 
 void cPointCloudSaver::processBlock(const cBlockID& id)
 {

@@ -4,19 +4,8 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
 	ParserExceptions.hpp
 
-#	LidarMapConfigScan.hpp
-#	LidarMapConfigScan.cpp
-#	LidarMapConfigOptions.hpp
-#	LidarMapConfigOptions.cpp
-#	LidarMapConfigDefaults.hpp
-#	LidarMapConfigDefaults.cpp
-#	LidarMapConfigFile.hpp
-#	LidarMapConfigFile.cpp
-
 	OusterInfo.hpp
 	OusterInfo.cpp
-	OusterInfoLoader.hpp
-	OusterInfoLoader.cpp
 
 	PointCloudInfo.hpp
 	PointCloudInfo.cpp

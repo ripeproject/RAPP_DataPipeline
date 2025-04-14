@@ -3,14 +3,13 @@
 
 #include "FieldScanDataModel.hpp"
 
-#include "OusterInfoLoader.hpp"
-
 #include <cbdf/ProcessingInfoLoader.hpp>
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentInfoLoader.hpp>
 #include <cbdf/SsnxInfoLoader.hpp>
 #include <cbdf/SpiderCamInfoLoader.hpp>
+#include <cbdf/OusterInfoLoader.hpp>
 
 #include <iostream>
 #include <filesystem>

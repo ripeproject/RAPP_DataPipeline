@@ -32,17 +32,18 @@ public:
 	const std::deque<nOusterTypes::imu_data_t>&	getImuData() const;
 
 protected:
-	void setUpdateRate_Hz(double rate_hz);
+	void setUpdateRate_Hz(uint8_t device_id, double rate_hz);
 
-	void setBeamIntrinsics(nOusterTypes::beam_intrinsics_2_t intrinsics);
-	void setImuIntrinsics(nOusterTypes::imu_intrinsics_2_t intrinsics);
-	void setLidarIntrinsics(nOusterTypes::lidar_intrinsics_2_t intrinsics);
-	void setLidarDataFormat(nOusterTypes::lidar_data_format_2_t format);
+	void setBeamIntrinsics(uint8_t device_id, nOusterTypes::beam_intrinsics_2_t intrinsics);
+	void setImuIntrinsics(uint8_t device_id, nOusterTypes::imu_intrinsics_2_t intrinsics);
+	void setLidarIntrinsics(uint8_t device_id, nOusterTypes::lidar_intrinsics_2_t intrinsics);
+	void setLidarDataFormat(uint8_t device_id, nOusterTypes::lidar_data_format_2_t format);
 
 	void clearImuData();
-	void addImuData(nOusterTypes::imu_data_t data);
+	void addImuData(uint8_t device_id, nOusterTypes::imu_data_t data);
 
-	void addLidarData(const cOusterLidarData& data);
+	void clearLidarData();
+	void addLidarData(uint8_t device_id, const cOusterLidarData& data);
 
 private:
 	double mUpdateRate_Hz = 10.0;

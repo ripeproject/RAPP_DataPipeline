@@ -54,30 +54,30 @@ const std::deque<nOusterTypes::imu_data_t>& cOusterInfo::getImuData() const
 /**********************************************************
 * Setters
 ***********************************************************/
-void cOusterInfo::setUpdateRate_Hz(double rate_hz)
+void cOusterInfo::setUpdateRate_Hz(uint8_t device_id, double rate_hz)
 {
 	if (rate_hz > 0.0)
 		mUpdateRate_Hz = rate_hz;
 }
 
-void cOusterInfo::setBeamIntrinsics(nOusterTypes::beam_intrinsics_2_t intrinsics)
+void cOusterInfo::setBeamIntrinsics(uint8_t device_id, nOusterTypes::beam_intrinsics_2_t intrinsics)
 {
 	mPointCloudGenerator->setBeamOffset(intrinsics.lidar_to_beam_origins_mm);
 	mPointCloudGenerator->setBeamAzimuthAngles_deg(intrinsics.azimuth_angles_deg);
 	mPointCloudGenerator->setBeamAltitudeAngles_deg(intrinsics.altitude_angles_deg);
 }
 
-void cOusterInfo::setImuIntrinsics(nOusterTypes::imu_intrinsics_2_t intrinsics)
+void cOusterInfo::setImuIntrinsics(uint8_t device_id, nOusterTypes::imu_intrinsics_2_t intrinsics)
 {
 	mImuIntrinsics = intrinsics;
 }
 
-void cOusterInfo::setLidarIntrinsics(nOusterTypes::lidar_intrinsics_2_t intrinsics)
+void cOusterInfo::setLidarIntrinsics(uint8_t device_id, nOusterTypes::lidar_intrinsics_2_t intrinsics)
 {
 	mPointCloudGenerator->setLidarToSensorTransform(intrinsics.lidar_to_sensor_transform);
 }
 
-void cOusterInfo::setLidarDataFormat(nOusterTypes::lidar_data_format_2_t format)
+void cOusterInfo::setLidarDataFormat(uint8_t device_id, nOusterTypes::lidar_data_format_2_t format)
 {
 	mPointCloudGenerator->setDimensions(format.columns_per_frame, format.pixels_per_column);
 
@@ -91,12 +91,16 @@ void cOusterInfo::clearImuData()
 	mImuData.clear();
 }
 
-void cOusterInfo::addImuData(nOusterTypes::imu_data_t data)
+void cOusterInfo::addImuData(uint8_t device_id, nOusterTypes::imu_data_t data)
 {
 	mImuData.push_back(data);
 }
 
-void cOusterInfo::addLidarData(const cOusterLidarData& data)
+void cOusterInfo::clearLidarData()
+{
+}
+
+void cOusterInfo::addLidarData(uint8_t device_id, const cOusterLidarData& data)
 {
 	mPointCloudGenerator->addLidarData(data);
 }
