@@ -53,6 +53,9 @@ cLidarMapConfigDefaults_SensorLimits& cLidarMapConfigDefaults::getSensorLimits()
 const cLidarMapConfigDefaults_Options& cLidarMapConfigDefaults::getOptions() const { return mOptions; }
 cLidarMapConfigDefaults_Options& cLidarMapConfigDefaults::getOptions() { return mOptions; }
 
+const cLidarMapConfigDefaults_Flattening& cLidarMapConfigDefaults::getFlattening() const { return mFlattening; }
+cLidarMapConfigDefaults_Flattening& cLidarMapConfigDefaults::getFlattening() { return mFlattening; }
+
 void cLidarMapConfigDefaults::setDirty(bool dirty)
 {
 	mDirty = dirty;
@@ -70,6 +73,7 @@ void cLidarMapConfigDefaults::load(const nlohmann::json& jdoc)
 	mSensorOrientation.load(defaults);
 	mSensorLimits.load(defaults);
 	mOptions.load(defaults);
+	mFlattening.load(defaults);
 }
 
 nlohmann::json cLidarMapConfigDefaults::save()
@@ -81,6 +85,7 @@ nlohmann::json cLidarMapConfigDefaults::save()
 	defaults["sensor orientation"] = mSensorOrientation.save();
 	defaults["sensor limits"] = mSensorLimits.save();
 	defaults["options"] = mOptions.save();
+	defaults["flattening"] = mFlattening.save();
 
 	mDirty = false;
 
@@ -562,6 +567,92 @@ nlohmann::json cLidarMapConfigDefaults_Options::save()
 	mDirty = false;
 
 	return options;
+}
+
+
+//
+//  Lidar Map Config Defaults - Flattening
+//
+cLidarMapConfigDefaults_Flattening::cLidarMapConfigDefaults_Flattening()
+{
+}
+
+void cLidarMapConfigDefaults_Flattening::clear()
+{
+	mDirty = false;
+
+	mFlattenPointCloud = true;
+	mMaxAngle_deg = 10.0;
+	mThreshold_pct = 0.1;
+}
+
+bool cLidarMapConfigDefaults_Flattening::isDirty() const
+{
+	return mDirty;
+}
+
+bool cLidarMapConfigDefaults_Flattening::getFlatteningPointCloud() const { return mFlattenPointCloud; }
+double cLidarMapConfigDefaults_Flattening::getThreshold_pct() const { return mThreshold_pct; }
+double cLidarMapConfigDefaults_Flattening::getMaxAngle_deg() const { return mMaxAngle_deg; }
+
+
+void cLidarMapConfigDefaults_Flattening::setFlattenPointCloud(bool enable)
+{
+	mDirty |= (mFlattenPointCloud != enable);
+	mFlattenPointCloud = enable;
+}
+
+void cLidarMapConfigDefaults_Flattening::setThreshold_pct(double threshold_pct)
+{
+	mDirty |= (mThreshold_pct != threshold_pct);
+	mThreshold_pct = threshold_pct;
+}
+
+void cLidarMapConfigDefaults_Flattening::setMaxAngle_deg(double max_angle_deg)
+{
+	mDirty |= (mMaxAngle_deg != max_angle_deg);
+	mMaxAngle_deg = max_angle_deg;
+}
+
+bool cLidarMapConfigDefaults_Flattening::operator==(const cLidarMapConfigDefaults_Flattening& rhs) const
+{
+	return (mFlattenPointCloud == rhs.mFlattenPointCloud) && (mThreshold_pct == rhs.mThreshold_pct)
+		&& (mMaxAngle_deg == rhs.mMaxAngle_deg);
+}
+
+bool cLidarMapConfigDefaults_Flattening::operator!=(const cLidarMapConfigDefaults_Flattening& rhs) const
+{
+	return !operator==(rhs);
+}
+
+void cLidarMapConfigDefaults_Flattening::load(const nlohmann::json& jdoc)
+{
+	if (!jdoc.contains("flattening"))
+		return;
+
+	auto flattening = jdoc["flattening"];
+
+	if (flattening.contains("flatten point cloud"))
+		mFlattenPointCloud = flattening["flatten point cloud"];
+
+	if (flattening.contains("threshold (%)"))
+		mThreshold_pct = flattening["translation threshold (%)"].get<double>();
+
+	if (flattening.contains("maximum angle (deg)"))
+		mMaxAngle_deg = flattening["maximum angle (deg)"].get<double>();
+}
+
+nlohmann::json cLidarMapConfigDefaults_Flattening::save()
+{
+	nlohmann::json flattening;
+
+	flattening["flatten point cloud"] = mFlattenPointCloud;
+	flattening["threshold (%)"] = mThreshold_pct;
+	flattening["maximum angle (deg)"] = mMaxAngle_deg;
+
+	mDirty = false;
+
+	return flattening;
 }
 
 

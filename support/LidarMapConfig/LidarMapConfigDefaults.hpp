@@ -208,6 +208,43 @@ private:
 };
 
 
+class cLidarMapConfigDefaults_Flattening
+{
+public:
+	cLidarMapConfigDefaults_Flattening();
+	~cLidarMapConfigDefaults_Flattening() = default;
+
+	void clear();
+
+	bool isDirty() const;
+
+	bool getFlatteningPointCloud() const;
+	double getThreshold_pct() const;
+	double getMaxAngle_deg() const;
+
+
+	void setFlattenPointCloud(bool enable);
+	void setThreshold_pct(double threshold_pct);
+	void setMaxAngle_deg(double max_angle_deg);
+
+	bool operator==(const cLidarMapConfigDefaults_Flattening& rhs) const;
+	bool operator!=(const cLidarMapConfigDefaults_Flattening& rhs) const;
+
+protected:
+	void load(const nlohmann::json& jdoc);
+	nlohmann::json save();
+
+private:
+	bool mDirty = false;
+
+	bool	mFlattenPointCloud = true;
+	double	mMaxAngle_deg = 10.0;
+	double	mThreshold_pct = 0.1;
+
+	friend class cLidarMapConfigDefaults;
+};
+
+
 class cLidarMapConfigDefaults
 {
 public:
@@ -233,6 +270,9 @@ public:
 	const cLidarMapConfigDefaults_Options& getOptions() const;
 	cLidarMapConfigDefaults_Options& getOptions();
 
+	const cLidarMapConfigDefaults_Flattening& getFlattening() const;
+	cLidarMapConfigDefaults_Flattening& getFlattening();
+
 
 protected:
 	void setDirty(bool dirty);
@@ -248,6 +288,7 @@ private:
 	cLidarMapConfigDefaults_SensorOrientation	mSensorOrientation;
 	cLidarMapConfigDefaults_SensorLimits		mSensorLimits;
 	cLidarMapConfigDefaults_Options				mOptions;
+	cLidarMapConfigDefaults_Flattening			mFlattening;
 
 	friend class cLidarMapConfigFile;
 };
