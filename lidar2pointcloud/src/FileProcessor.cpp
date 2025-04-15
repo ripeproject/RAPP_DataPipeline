@@ -6,6 +6,7 @@
 #include "PointCloudUtils.hpp"
 #include "ExportUtils.hpp"
 #include "GroundModelUtils.hpp"
+#include "MathUtils.hpp"
 #include "PointCloudSaver.hpp"
 
 #include <cbdf/PointCloudSerializer.hpp>
@@ -141,6 +142,11 @@ void cFileProcessor::process_file()
         to_value<double>(mParameters.getVy_mmps(), speeds.getVy_mmps()),
         to_value<double>(mParameters.getVz_mmps(), speeds.getVz_mmps()));
 
+    const auto& flatten = mDefaults.getFlattening();
+
+    mFlattenPointCloud = flatten.getFlatteningPointCloud();
+    mMaxAngle_deg      = flatten.getMaxAngle_deg();
+    mThreshold_pct     = flatten.getThreshold_pct();
 
     auto om = mParameters.getOrientationModel();
     if (om.has_value())
@@ -312,13 +318,16 @@ void cFileProcessor::process_file()
     if (mFlattenPointCloud)
     {
         update_prefix_progress(mID, "Flattening Point Cloud...", 0);
-        shiftPointCloudToAGL(mID, pointCloud);
 
+        shiftPointCloudToAGL(mID, pointCloud);
         pointCloud.recomputeBounds();
 
         sPitchAndRoll_t result = computePcToGroundMeshRotationUsingGrid_deg(pointCloud, mThreshold_pct);
 
-        if (result.valid && (std::abs(result.pitch_deg) < mMaxAngle_deg) && (std::abs(result.roll_deg) < mMaxAngle_deg))
+        result.pitch_deg = nMathUtils::bound(result.pitch_deg, -mMaxAngle_deg, mMaxAngle_deg);
+        result.roll_deg = nMathUtils::bound(result.roll_deg, -mMaxAngle_deg, mMaxAngle_deg);
+
+        if (result.valid)
         {
             pointCloud.rotate(0.0, result.pitch_deg, result.roll_deg);
         }

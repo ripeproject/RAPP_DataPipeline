@@ -66,9 +66,9 @@ private:
 	bool mSavePixelInfo = false;
 
 	bool mHasGroundData = false;
-	bool mFlattenPointCloud = true;
 
-	double mMaxAngle_deg = 5.0;
+	bool mFlattenPointCloud = true;
+	double mMaxAngle_deg = 10.0;
 	double mThreshold_pct = 0.1;
 
 	cLidarMapConfigDefaults mDefaults;
