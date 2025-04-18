@@ -162,6 +162,7 @@ find_package(CBDF REQUIRED cbdf sensors)
 # Required for the cbdf::sensors library
 find_package(ouster REQUIRED)
 find_package(ssnx REQUIRED)
+find_package(Spidercam REQUIRED)
 
 
 #******************************************************************************
@@ -205,6 +206,8 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 # Add the support library source code directory
 # Note: the support directory is a symlink 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/FieldUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/PlotConfig)
 
 #print_all_variables()

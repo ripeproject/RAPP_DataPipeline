@@ -9,6 +9,7 @@
 
 // Forward Declarations
 class cExportJpegs;
+class cPlotConfigFile;
 
 
 class cFileProcessor
@@ -17,6 +18,8 @@ public:
 	cFileProcessor(int id, std::filesystem::directory_entry in,
 				std::filesystem::path out);
 	~cFileProcessor();
+
+	void setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file);
 
 	bool open(std::filesystem::path out);
 

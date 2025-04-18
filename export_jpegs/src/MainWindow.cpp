@@ -4,6 +4,8 @@
 #include "StringUtils.hpp"
 
 #include <wx/thread.h>
+#include <wx/config.h>
+#include <wx/filename.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -65,10 +67,22 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 	CreateControls();
 	CreateLayout();
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("ExportJpegs");
+
+	config->Read("Files/Source", &mSource);
+	config->Read("Files/Destination", &mDestinationDataDirectory);
+	config->Read("Files/Configuration", &mCfgFilename);
 }
 
 cMainWindow::~cMainWindow()
 {
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("ExportJpegs");
+
+	config->Write("Files/Source", mSource);
+	config->Write("Files/Destination", mDestinationDataDirectory);
+	config->Write("Files/Configuration", mCfgFilename);
+
 	g_pEventHandler = nullptr;
 }
 
@@ -86,6 +100,10 @@ void cMainWindow::CreateControls()
 
 	mpDstDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpDstDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDestinationDirectory, this);
+
+	mpLoadCfgFile = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
+	mpLoadCfgButton = new wxButton(this, wxID_ANY, "Browse");
+	mpLoadCfgButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgFileBrowse, this);
 
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
@@ -118,6 +136,12 @@ void cMainWindow::CreateLayout()
 	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Destination Directory: "), 0, wxALIGN_CENTER_VERTICAL);
 	grid_sizer->Add(mpDstCtrl, 1, wxEXPAND);
 	grid_sizer->Add(mpDstDirButton, 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->AddStretchSpacer();
+
+	grid_sizer->Add(new wxStaticText(this, wxID_ANY, "Config File: "), 0, wxALIGN_CENTER_VERTICAL);
+	grid_sizer->Add(mpLoadCfgFile, 1, wxEXPAND);
+	grid_sizer->Add(mpLoadCfgButton, 0, wxALIGN_CENTER_VERTICAL);
+
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
@@ -139,7 +163,10 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), mSource, "",
+	std::filesystem::path fname = mSource.ToStdString();
+	auto fpath = fname.parent_path();
+
+	wxFileDialog dlg(this, _("Open file"), wxString(fpath.string()), wxString(fname.filename().string()),
 		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -188,6 +215,29 @@ void cMainWindow::OnDestinationDirectory(wxCommandEvent& WXUNUSED(event))
 
 	if (!mpSrcCtrl->GetValue().IsEmpty())
 		mpExportButton->Enable();
+}
+
+void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
+{
+	wxFileName fullname(mCfgFilename);
+	auto path = fullname.GetPath();
+	auto name = fullname.GetName();
+
+	wxFileDialog dlg(this, _("Configuration file"), path, name,
+		"Config files (*.json;*.plotsplit)|*.json;*.plotsplit", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return;     // the user changed their mind...
+
+	mCfgFilename = dlg.GetPath();
+
+	std::string config_file = mCfgFilename.ToStdString();
+
+	mpLoadCfgFile->SetValue(mCfgFilename);
+
+	mPlotConfigData = std::make_shared<cPlotConfigFile>();
+
+	mPlotConfigData->open(config_file);
 }
 
 void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
@@ -267,6 +317,9 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		}
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+
+		if (mPlotConfigData)
+			fp->setPlotFile(mPlotConfigData);
 
 		mFileProcessors.push(fp);
 	}

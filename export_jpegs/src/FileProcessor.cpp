@@ -33,6 +33,11 @@ cFileProcessor::~cFileProcessor()
     mFileReader.close();
 }
 
+void cFileProcessor::setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file)
+{
+    mConverter->setPlotFile(plot_file);
+}
+
 bool cFileProcessor::open(std::filesystem::path out)
 {
     std::filesystem::path outFile  = out.replace_extension();
@@ -76,8 +81,12 @@ void cFileProcessor::run()
 	}
 
     cExportJpegs* p = mConverter.get();
-	mFileReader.attach(static_cast<cAxisCommunicationsParser*>(p));
+    mFileReader.attach(static_cast<cExperimentParser*>(p));
+    mFileReader.attach(static_cast<cAxisCommunicationsParser*>(p));
     mFileReader.attach(static_cast<cSsnxParser*>(p));
+    mFileReader.attach(static_cast<cSpidercamParser*>(p));
+
+    mFileSize = mFileReader.file_size();
 
 	try
     {

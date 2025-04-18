@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "PlotConfigFile.hpp"
+
 // For compilers that support precompilation, includes "wx/wx.h".
 #include <wx/wxprec.h>
 
@@ -13,6 +15,7 @@
 #include <cbdf/BlockDataFile.hpp>
 
 #include <queue>
+#include <memory>
 
 // Forward Declarations
 class cFileProcessor;
@@ -35,8 +38,9 @@ protected:
 	void OnSourceFile(wxCommandEvent& event);
 	void OnSourceDirectory(wxCommandEvent& event);
 	void OnDestinationDirectory(wxCommandEvent& event);
-	void OnExport(wxCommandEvent& event);
+	void OnCfgFileBrowse(wxCommandEvent& event);
 
+	void OnExport(wxCommandEvent& event);
 
 protected:
 	virtual wxThread::ExitCode Entry();
@@ -53,6 +57,9 @@ private:
 	wxTextCtrl* mpDstCtrl = nullptr;
 	wxButton* mpDstDirButton = nullptr;
 
+	wxTextCtrl* mpLoadCfgFile = nullptr;
+	wxButton* mpLoadCfgButton = nullptr;
+
 	wxButton* mpExportButton = nullptr;
 
 	cFileProgressCtrl* mpProgressCtrl = nullptr;
@@ -66,6 +73,9 @@ private:
 	bool mIsFile = false;
 	wxString mSource;
 	wxString mDestinationDataDirectory;
+	wxString mCfgFilename;
+
+	std::shared_ptr<cPlotConfigFile> mPlotConfigData;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();
