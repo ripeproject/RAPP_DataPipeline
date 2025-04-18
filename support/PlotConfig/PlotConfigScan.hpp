@@ -65,6 +65,9 @@ public:
 	const cPlotConfigPlotInfo& operator[](int index) const;
 	cPlotConfigPlotInfo& operator[](int index);
 
+	std::vector<cPlotConfigPlotInfo>& data();
+	const std::vector<cPlotConfigPlotInfo>& data() const;
+
 	void setDirtyFlag(bool dirty);
 
 protected:
@@ -95,6 +98,8 @@ public:
 
 	bool isDirty() const;
 
+	bool empty() const;
+
 	uint32_t	getPlotNumber() const;
 /*
 	bool		hasSubPlotNumber() const;
@@ -111,6 +116,9 @@ public:
 	const std::string& getCopyNumber() const;
 	const std::string& getLeafType() const;
 	const std::vector<std::string>& getTreatments() const;
+
+	bool contains(rfm::rappPoint2D_t point);
+	bool contains(std::int32_t x_mm, std::int32_t y_mm);
 
 	const cPlotConfigBoundary& getBounds() const;
 	cPlotConfigBoundary& getBounds();

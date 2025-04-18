@@ -11,7 +11,19 @@
 
 
 cPlotConfigBoundary::cPlotConfigBoundary()
-{}
+{
+	mNorthEastCorner.x_mm = -1;
+	mNorthEastCorner.y_mm = -1;
+
+	mNorthWestCorner.x_mm = -1;
+	mNorthWestCorner.y_mm = -1;
+
+	mSouthEastCorner.x_mm = -1;
+	mSouthEastCorner.y_mm = -1;
+
+	mSouthWestCorner.x_mm = -1;
+	mSouthWestCorner.y_mm = -1;
+}
 
 void cPlotConfigBoundary::clear()
 {
@@ -29,6 +41,14 @@ void cPlotConfigBoundary::clear()
 
 	mSouthWestCorner.x_mm = -1;
 	mSouthWestCorner.y_mm = -1;
+}
+
+bool cPlotConfigBoundary::empty() const
+{
+	return !mDirty && (mNorthEastCorner.x_mm <= 0) && (mNorthEastCorner.y_mm <0)
+		&& (mNorthWestCorner.x_mm <= 0) && (mNorthWestCorner.y_mm <= 0)
+		&& (mSouthEastCorner.x_mm <= 0) && (mSouthEastCorner.y_mm <= 0)
+		&& (mSouthWestCorner.x_mm <= 0) && (mSouthWestCorner.y_mm <= 0);
 }
 
 bool cPlotConfigBoundary::isDirty() const
@@ -109,6 +129,36 @@ uint8_t cPlotConfigBoundary::getNumOfSubPlots() const
 ePlotOrientation cPlotConfigBoundary::getSubPlotOrientation() const
 {
 	return mSubPlotOrientation;
+}
+
+rfm::rappPoint2D_t cPlotConfigBoundary::center() const
+{
+	double x = (((mSouthEastCorner.x_mm + mNorthEastCorner.x_mm) / 2.0) + ((mSouthWestCorner.x_mm + mNorthWestCorner.x_mm) / 2.0)) / 2.0;
+	double y = (((mNorthEastCorner.x_mm + mNorthWestCorner.x_mm) / 2.0) + ((mSouthEastCorner.x_mm + mSouthWestCorner.x_mm) / 2.0)) / 2.0;
+
+	return {static_cast<std::int32_t>(x), static_cast<std::int32_t>(y)};
+}
+
+bool cPlotConfigBoundary::contains(rfm::rappPoint2D_t point)
+{
+	return contains(point.x_mm, point.y_mm);
+}
+
+bool cPlotConfigBoundary::contains(std::int32_t x_mm, std::int32_t y_mm)
+{
+	if (x_mm < mNorthEastCorner.x_mm) return false;
+	if (x_mm < mNorthWestCorner.x_mm) return false;
+
+	if (x_mm > mSouthEastCorner.x_mm) return false;
+	if (x_mm > mSouthWestCorner.x_mm) return false;
+
+	if (y_mm < mNorthWestCorner.y_mm) return false;
+	if (y_mm < mSouthWestCorner.y_mm) return false;
+
+	if (y_mm > mNorthEastCorner.y_mm) return false;
+	if (y_mm > mSouthEastCorner.y_mm) return false;
+
+	return true;
 }
 
 

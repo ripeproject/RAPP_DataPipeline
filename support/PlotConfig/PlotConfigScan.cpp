@@ -189,6 +189,16 @@ cPlotConfigPlotInfo& cPlotConfigScan::operator[](int index)
 	return mPlots[index];
 }
 
+std::vector<cPlotConfigPlotInfo>& cPlotConfigScan::data()
+{
+	return mPlots;
+}
+
+const std::vector<cPlotConfigPlotInfo>& cPlotConfigScan::data() const
+{
+	return mPlots;
+}
+
 void cPlotConfigScan::setDirtyFlag(bool dirty)
 {
 	mDirty = dirty;
@@ -287,6 +297,11 @@ bool cPlotConfigPlotInfo::isDirty() const
 	return mDirty || mBounds.isDirty() || mIsolationMethod.isDirty();
 }
 
+bool cPlotConfigPlotInfo::empty() const
+{
+	return mBounds.empty();
+}
+
 uint32_t cPlotConfigPlotInfo::getPlotNumber() const
 {
 /*
@@ -370,6 +385,16 @@ const std::string& cPlotConfigPlotInfo::getLeafType() const
 const std::vector<std::string>& cPlotConfigPlotInfo::getTreatments() const
 {
 	return mTreatments;
+}
+
+bool cPlotConfigPlotInfo::contains(rfm::rappPoint2D_t point)
+{
+	return mBounds.contains(point);
+}
+
+bool cPlotConfigPlotInfo::contains(std::int32_t x_mm, std::int32_t y_mm)
+{
+	return mBounds.contains(x_mm, y_mm);
 }
 
 const cPlotConfigBoundary& cPlotConfigPlotInfo::getBounds() const
