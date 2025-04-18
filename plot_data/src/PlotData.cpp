@@ -51,6 +51,11 @@ void cPlotData::setExperimentInfo(const cExperimentInfo& info)
 	mExperimentInfo = info;
 }
 
+void cPlotData::setExperimentTitle(const std::string& title)
+{
+	mExperimentInfo.setTitle(title);
+}
+
 void cPlotData::addPlotInfo(const cPlotMetaData& info)
 {
 	for (const auto& plot : mpPlots)

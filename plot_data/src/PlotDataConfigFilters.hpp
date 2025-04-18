@@ -44,7 +44,7 @@ class cPlotDataConfigFilter_TrimBelow : public cPlotDataConfigFilter
 {
 public:
 	cPlotDataConfigFilter_TrimBelow() = default;
-	~cPlotDataConfigFilter_TrimBelow() = default;
+	virtual ~cPlotDataConfigFilter_TrimBelow() = default;
 
 	int lowerBound_mm() const;
 
@@ -66,7 +66,7 @@ class cPlotDataConfigFilter_TrimAbove : public cPlotDataConfigFilter
 {
 public:
 	cPlotDataConfigFilter_TrimAbove() = default;
-	~cPlotDataConfigFilter_TrimAbove() = default;
+	virtual ~cPlotDataConfigFilter_TrimAbove() = default;
 
 	int upperBound_mm() const;
 
@@ -88,7 +88,7 @@ class cPlotDataConfigFilter_Histogram : public cPlotDataConfigFilter
 {
 public:
 	cPlotDataConfigFilter_Histogram() = default;
-	~cPlotDataConfigFilter_Histogram() = default;
+	virtual ~cPlotDataConfigFilter_Histogram() = default;
 
 	int minBinCount() const;
 
@@ -110,7 +110,7 @@ class cPlotDataConfigFilter_Grubbs : public cPlotDataConfigFilter
 {
 public:
 	cPlotDataConfigFilter_Grubbs() = default;
-	~cPlotDataConfigFilter_Grubbs() = default;
+	virtual ~cPlotDataConfigFilter_Grubbs() = default;
 
 	double alpha() const;
 

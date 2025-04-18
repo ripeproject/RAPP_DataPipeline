@@ -24,6 +24,7 @@ public:
 	void saveRowMajor(bool row_major);
 
 	void setExperimentInfo(const cExperimentInfo& info);
+	void setExperimentTitle(const std::string& title);
 
 	void addPlotInfo(const cPlotMetaData& info);
 

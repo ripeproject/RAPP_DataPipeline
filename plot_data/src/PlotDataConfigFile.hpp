@@ -36,6 +36,9 @@ public:
 
 	const std::string& getResultsRootFileName() const;
 
+	bool hasExperimentTitle() const;
+	const std::string& getExperimentTitle() const;
+
 	const cPlotDataConfigOptions& getOptions() const;
 	cPlotDataConfigOptions& getOptions();
 
@@ -51,6 +54,7 @@ private:
 	std::string mTmpFileName;
 
 	std::string mResultsRootFileName;
+	std::string mExperimentTitle;
 
 	cPlotDataConfigOptions mOptions;
 	cPlotDataConfigHeight  mHeightParameters;

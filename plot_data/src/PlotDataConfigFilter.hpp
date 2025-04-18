@@ -14,7 +14,7 @@ class cPlotDataConfigFilter
 {
 public:
 	cPlotDataConfigFilter() = default;
-	~cPlotDataConfigFilter() = default;
+	virtual ~cPlotDataConfigFilter() = default;
 
 	bool isDirty() const;
 

@@ -83,12 +83,6 @@ void cFileProcessor::run()
         return;
 	}
 
-    if (mExpInfo->title() == "Bishal Soybean 1 Pass 14")
-    {
-        auto n = mPlotInfo->size();
-
-    }
-
     if (mPlotInfo->empty())
     {
         update_prefix_progress(mID, "    No plots found!      ", 100);
@@ -97,6 +91,9 @@ void cFileProcessor::run()
     }
 
     mResults.setExperimentInfo(*mExpInfo);
+    if (mConfigInfo.hasExperimentTitle())
+        mResults.setExperimentTitle(mConfigInfo.getExperimentTitle());
+
     fillPlotInfo();
 
     update_prefix_progress(mID, "Computing Plot Heights...    ", 0);

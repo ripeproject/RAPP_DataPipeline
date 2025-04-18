@@ -210,7 +210,7 @@ std::vector<std::string> cPlotDataConfigFilter_Histogram::info()
 {
 	std::vector<std::string> info;
 
-	info.emplace_back("filter type: outliers removal");
+	info.emplace_back("filter type: outlier removal");
 	info.emplace_back("algorithm: histogram");
 	info.emplace_back("min bin count: " + std::to_string(mMinBinCount));
 
@@ -245,7 +245,7 @@ std::vector<std::string> cPlotDataConfigFilter_Grubbs::info()
 {
 	std::vector<std::string> info;
 
-	info.emplace_back("filter type: outliers removal");
+	info.emplace_back("filter type: outlier removal");
 	info.emplace_back("algorithm: smirnov grubbs");
 	info.emplace_back("alpha: " + std::to_string(mAlpha));
 

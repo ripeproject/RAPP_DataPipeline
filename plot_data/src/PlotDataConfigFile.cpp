@@ -72,6 +72,10 @@ bool cPlotDataConfigFile::open(const std::string& file_name)
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
 	mResultsRootFileName = configDoc["result file name"];
+
+	if (configDoc.contains("experiment title"))
+		mExperimentTitle = configDoc["experiment title"];
+
 	mOptions.load(configDoc);
 	mHeightParameters.load(configDoc);
 	mBiomassParameters.load(configDoc);
@@ -209,6 +213,16 @@ void cPlotDataConfigFile::save_temporary_file()
 const std::string& cPlotDataConfigFile::getResultsRootFileName() const
 {
 	return mResultsRootFileName;
+}
+
+bool cPlotDataConfigFile::hasExperimentTitle() const
+{
+	return !mExperimentTitle.empty();
+}
+
+const std::string& cPlotDataConfigFile::getExperimentTitle() const
+{
+	return mExperimentTitle;
 }
 
 const cPlotDataConfigOptions& cPlotDataConfigFile::getOptions() const
