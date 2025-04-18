@@ -47,7 +47,6 @@ protected:
 	void OnDstBrowse(wxCommandEvent& event);
 	void OnCfgFileBrowse(wxCommandEvent& event);
 
-	void OnModelChange(wxCommandEvent& event);
 	void OnCompute(wxCommandEvent& event);
 
 protected:
