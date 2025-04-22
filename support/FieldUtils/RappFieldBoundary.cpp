@@ -141,6 +141,8 @@ rfm::rappPoint_t rfb::fromGPS(const double lat_rad, const double lng_rad, const 
 
 	rfm::rappPoint_t result;
 
+	double elevation_m = mUIUC_ReferenceElevation_m;
+
 	result = { static_cast<std::int32_t>(northing_m * nConstants::M_TO_MM),
 		static_cast<std::int32_t>(easting_m * nConstants::M_TO_MM),
 		static_cast<std::int32_t>((height_m - mUIUC_ReferenceElevation_m) * nConstants::M_TO_MM) };
