@@ -284,7 +284,7 @@ void cFileProcessor::doPlotSplit()
             case ePlotIsolationMethod::NONE:
             {
                 {
-                    auto plotPointCloud = plot::isolate_basic(pointCloud.data(), bounds.getBoundingBox());
+                    auto plotPointCloud = plot::isolate_basic(pointCloud, bounds.getBoundingBox());
 
                     if (plotPointCloud.empty())
                     {
@@ -314,7 +314,7 @@ void cFileProcessor::doPlotSplit()
 
                 if (hasSubPlot)
                 {
-                    auto plotPointClouds = plot::isolate_basic(pointCloud.data(), bounds.getBoundingBox(),
+                    auto plotPointClouds = plot::isolate_basic(pointCloud, bounds.getBoundingBox(),
                         bounds.getNumOfSubPlots(), bounds.getSubPlotOrientation(), 
                         method.getPlotWidth_mm(), method.getPlotLength_mm());
 
@@ -345,7 +345,7 @@ void cFileProcessor::doPlotSplit()
             }
             case ePlotIsolationMethod::CENTER_OF_PLOT:
             {
-                auto plotPointCloud = plot::isolate_center_of_plot(pointCloud.data(), bounds.getBoundingBox(),
+                auto plotPointCloud = plot::isolate_center_of_plot(pointCloud, bounds.getBoundingBox(),
                     method.getPlotWidth_mm(), method.getPlotLength_mm());
 
                 if (plotPointCloud.empty())
@@ -371,7 +371,7 @@ void cFileProcessor::doPlotSplit()
                 if (hasSubPlot)
                 {
                     {
-                        auto plotPointCloud = plot::isolate_basic(pointCloud.data(), bounds.getBoundingBox());
+                        auto plotPointCloud = plot::isolate_basic(pointCloud, bounds.getBoundingBox());
 
                         if (plotPointCloud.empty())
                         {
@@ -391,36 +391,36 @@ void cFileProcessor::doPlotSplit()
                         mPlots.push_back(plot);
                     }
 
-                    auto plotPointClouds = plot::isolate_center_of_height(pointCloud.data(), bounds.getBoundingBox(),
-                        bounds.getNumOfSubPlots(), bounds.getSubPlotOrientation(),
-                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct());
+                    auto plotPointClouds = plot::isolate_center_of_height(pointCloud, bounds.getBoundingBox(),
+//                        bounds.getNumOfSubPlots(), bounds.getSubPlotOrientation(),
+                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct().value());
 
                     int subPlotId = 0;
-                    for (const auto& plotPointCloud : plotPointClouds)
-                    {
-                        if (plotPointCloud.empty())
-                        {
-                            std::string msg = "Point cloud \"";
-                            msg += pointCloud.name();
-                            msg += "\" is empty!";
-                            console_message(msg);
-                            continue;
-                        }
+                    //for (const auto& plotPointCloud : plotPointClouds)
+                    //{
+                    //    if (plotPointCloud.empty())
+                    //    {
+                    //        std::string msg = "Point cloud \"";
+                    //        msg += pointCloud.name();
+                    //        msg += "\" is empty!";
+                    //        console_message(msg);
+                    //        continue;
+                    //    }
 
-                        cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
+                    //    cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber(), ++subPlotId);
 
-                        fillPlotInformation(plot, plotInfo);
+                    //    fillPlotInformation(plot, plotInfo);
 
-                        plot->setPointCloud(plotPointCloud);
+                    //    plot->setPointCloud(plotPointCloud);
 
-                        mPlots.push_back(plot);
+                    //    mPlots.push_back(plot);
 
-                    }
+                    //}
                 }
                 else
                 {
-                    auto plotPointCloud = plot::isolate_center_of_height(pointCloud.data(), bounds.getBoundingBox(),
-                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct());
+                    auto plotPointCloud = plot::isolate_center_of_height(pointCloud, bounds.getBoundingBox(),
+                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct().value());
 
                     if (plotPointCloud.empty())
                     {
