@@ -51,6 +51,7 @@ namespace nStringUtils
 	 * The filename filename_YYYYmmddHHMM.extension results in YYYYmmddHHMM
 	 */
 	std::tm extractMeasurementTimestamp(std::string filename);
+	void extractMeasurementTimestamp(std::string filename, std::string& timestamp);
 
 	/**
 	 * Add a process timestamp to a filename

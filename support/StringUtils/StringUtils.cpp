@@ -157,6 +157,31 @@ std::tm nStringUtils::extractMeasurementTimestamp(std::string filename)
 	return tm;
 }
 
+
+void nStringUtils::extractMeasurementTimestamp(std::string filename, std::string& timestamp)
+{
+	timestamp.clear();
+
+	auto start_process_mark = filename.find("_p");
+	if (start_process_mark != std::string::npos)
+	{
+		filename.erase(start_process_mark);
+	}
+
+	auto start_measure_mark = filename.find_last_of('_');
+	if (start_measure_mark != std::string::npos)
+	{
+		++start_measure_mark;	// Skip the leading dash
+
+		auto ext = filename.find_last_of('.');
+
+		if (ext != std::string::npos)
+			ext -= start_measure_mark;
+
+		timestamp = filename.substr(start_measure_mark, ext);
+	}
+}
+
 std::string nStringUtils::addProcessedTimestamp(std::string filename)
 {
 	return addProcessedTimestamp(filename, std::time(nullptr));
