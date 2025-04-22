@@ -13,6 +13,22 @@
 #include <fstream>
 
 
+struct sPosTime_t
+{
+    bool    positionValid = false;
+    double	lat_deg = 0;
+    double	lon_deg = 0;
+    double	elevation_m = 0;
+
+    bool    dateTimeValid = false;
+    int     utcYear = 0;
+    int     utcMonth = 0;
+    int     utcDay = 0;
+    int     utcHour = 0;
+    int     utcMinute = 0;
+    int     utcSecond = 0;
+};
+
 
 class cExportJpegs : public cExperimentParser, public cAxisCommunicationsParser, public cSsnxParser, public cSpidercamParser
 {
@@ -20,8 +36,11 @@ public:
     cExportJpegs();
 	~cExportJpegs();
 
+    bool abort() const;
+
     void setOutputPath(std::filesystem::path out);
     void setRootFileName(const std::string& filename);
+    void setTimeStamp(const std::string& time_stamp);
 
     void setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file);
 
@@ -88,8 +107,6 @@ private:
     void onJPEG(uint8_t device_id, const cJpegBuffer& buffer) override;
     void onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer) override;
 
-    void writeJpeg(std::filesystem::path filename);
-
 // Spidercam handlers
     void onPosition(spidercam::sPosition_1_t position) override;
 
@@ -113,8 +130,13 @@ private:
         double stdLat_rad, double stdLng_rad, double stdHeight_m, bool heightComputed) override;
 
 private:
+    bool mAbort = false;
+
     std::filesystem::path mOutputPath;
     std::string mRootFileName;
+    std::string mTimeStamp;
+
+    bool mUsePlotPrefix = false;
 
     std::shared_ptr<cPlotConfigFile> mPlotConfigData;
     std::vector<cPlotConfigPlotInfo> mPlots;
@@ -122,6 +144,7 @@ private:
     std::string mTitle;
 
     uint32_t    mFrameCount = 0;
+    sPosTime_t  mCenterPos;
 
     int mWidth = 0;
     int mHeight = 0;
@@ -129,6 +152,7 @@ private:
     double	mX_mm = 0;
     double	mY_mm = 0;
     double	mZ_mm = 0;
+    double	mDistance = 0;
 
     bool    mPositionValid = false;
     double	mLat_deg = 0;

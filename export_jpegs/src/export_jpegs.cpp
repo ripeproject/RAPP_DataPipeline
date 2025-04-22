@@ -79,6 +79,60 @@ namespace
         return result;
     }
 
+    void writeImage(const std::filesystem::path& filename, const cImageBuffer& buffer)
+    {
+        std::filebuf binary_buffer;
+        binary_buffer.open(filename, std::ios::out | std::ios::binary);
+        std::ostream outstream_binary(&binary_buffer);
+        if (outstream_binary.fail())
+            throw std::runtime_error("failed to open " + filename.string());
+
+        outstream_binary.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+        binary_buffer.close();
+    }
+
+    void writeImage(const std::filesystem::path& filename, const cImageBuffer& buffer, const sPosTime_t& pos_time)
+    {
+        using namespace Exiv2;
+
+        auto image = ImageFactory::open(reinterpret_cast<const byte*>(buffer.data()), buffer.size());
+
+        if (image)
+        {
+            image->readMetadata();
+            Exiv2::ExifData& exifData = image->exifData();
+
+            exifData["Exif.GPSInfo.GPSProcessingMethod"] = "charset=Ascii HYBRID-FIX";
+            exifData["Exif.GPSInfo.GPSVersionID"] = "2 2 0 0";
+            exifData["Exif.GPSInfo.GPSMapDatum"] = "WGS-84";
+
+            exifData["Exif.GPSInfo.GPSLatitude"] = latToExifString(pos_time.lat_deg, true);
+            exifData["Exif.GPSInfo.GPSLongitude"] = lonToExifString(pos_time.lon_deg, true);
+            exifData["Exif.GPSInfo.GPSAltitude"] = toExifString(pos_time.elevation_m);
+
+            exifData["Exif.GPSInfo.GPSAltitudeRef"] = pos_time.elevation_m < 0.0 ? "1" : "0";
+            exifData["Exif.GPSInfo.GPSLatitudeRef"] = pos_time.lat_deg > 0 ? "N" : "S";
+            exifData["Exif.GPSInfo.GPSLongitudeRef"] = pos_time.lon_deg > 0 ? "E" : "W";
+
+            if (pos_time.dateTimeValid)
+            {
+                exifData["Exif.GPSInfo.GPSDateStamp"] = toExifDateStamp(pos_time.utcYear, pos_time.utcMonth, pos_time.utcDay);
+                exifData["Exif.GPSInfo.GPSTimeStamp"] = toExifTimeStamp(pos_time.utcHour, pos_time.utcMinute, pos_time.utcSecond);
+            }
+            exifData["Exif.Image.GPSTag"] = 4908;
+
+            //            printf("%s %s % 2d\n", path.c_str(), pPos->toString().c_str(), pPos->delta());
+
+            image->writeMetadata();
+
+            Exiv2::FileIo file(filename.string());
+
+            file.open("wb");
+            file.write(image->io());
+            file.close();
+        }
+
+    }
 }
 
 
@@ -90,6 +144,11 @@ cExportJpegs::~cExportJpegs()
 {
 }
 
+bool cExportJpegs::abort() const
+{
+    return mAbort;
+}
+
 void cExportJpegs::setOutputPath(std::filesystem::path out)
 {
     mOutputPath = out;
@@ -98,6 +157,11 @@ void cExportJpegs::setOutputPath(std::filesystem::path out)
 void cExportJpegs::setRootFileName(const std::string& filename)
 {
     mRootFileName = filename;
+}
+
+void cExportJpegs::setTimeStamp(const std::string& time_stamp)
+{
+    mTimeStamp = time_stamp;
 }
 
 void cExportJpegs::setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file)
@@ -124,6 +188,10 @@ void cExportJpegs::onTitle(const std::string& title)
         if (it != mPlotConfigData->end())
         {
             mPlots = it->data();
+        }
+        else
+        {
+            mAbort = true;
         }
     }
 }
@@ -199,12 +267,77 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
         if (plot.contains(mX_mm, mY_mm))
         {
             info = plot;
-            break;
+            auto center = plot.getBounds().center();
+            double d = (center.x_mm - mX_mm) * (center.x_mm - mX_mm) + (center.y_mm - mY_mm) * (center.y_mm - mY_mm);
+
+            if (d < mDistance)
+            {
+                mDistance = d;
+
+                mCenterPos.positionValid = mPositionValid;
+                mCenterPos.lat_deg = mLat_deg;
+                mCenterPos.lon_deg = mLon_deg;
+                mCenterPos.elevation_m = mElevation_m;
+
+                mCenterPos.dateTimeValid = mDateTimeValid;
+                mCenterPos.utcYear = mUtcYear;
+                mCenterPos.utcMonth = mUtcMonth;
+                mCenterPos.utcDay = mUtcDay;
+                mCenterPos.utcHour = mUtcHour;
+                mCenterPos.utcMinute = mUtcMinute;
+                mCenterPos.utcSecond = mUtcSecond;
+            }
+
+            if (d > mDistance)
+            {
+                if (!mCenterPos.positionValid)
+                    return;
+
+                std::filesystem::path filename;
+
+                if (mUsePlotPrefix)
+                {
+                    std::string fname = "Plot_" + std::to_string(info.getPlotNumber());
+
+                    fname += "_";
+                    fname += mRootFileName;
+                    fname += "_";
+                    fname += mTimeStamp;
+
+                    filename = mOutputPath / fname;
+
+                    std::string ext = ".jpeg";
+                    filename.replace_extension(ext);
+                }
+                else
+                {
+                    std::string fname = mRootFileName;
+                    fname += "_";
+                    fname += mTimeStamp;
+
+                    filename = mOutputPath / fname;
+
+                    std::string ext;
+                    ext = "plot_" + std::to_string(info.getPlotNumber());
+                    ext += ".jpeg";
+                    filename.replace_extension(ext);
+                }
+
+                ::writeImage(filename, buffer, mCenterPos);
+
+                mCenterPos.positionValid = false;
+                mCenterPos.dateTimeValid = false;
+            }
+
+            return;
         }
     }
 
     if (!mPlots.empty() && info.empty())
+    {
+        mDistance = std::numeric_limits<double>::max();
         return;
+    }
 
     std::filesystem::path filename = mOutputPath / mRootFileName;
 
@@ -229,63 +362,19 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 
     if (mPositionValid)
     {
-        using namespace Exiv2;
+        sPosTime_t pt = { mPositionValid,  mLat_deg, mLon_deg, mElevation_m, 
+            mDateTimeValid, mUtcYear, mUtcMonth, mUtcDay, mUtcHour, mUtcMinute, mUtcSecond };
 
-        auto image = ImageFactory::open(reinterpret_cast<const byte*>(buffer.data()), buffer.size());
-
-        if (image)
-        {
-            image->readMetadata();
-            Exiv2::ExifData& exifData = image->exifData();
-
-            exifData["Exif.GPSInfo.GPSProcessingMethod"] = "charset=Ascii HYBRID-FIX";
-            exifData["Exif.GPSInfo.GPSVersionID"] = "2 2 0 0";
-            exifData["Exif.GPSInfo.GPSMapDatum"] = "WGS-84";
-
-            exifData["Exif.GPSInfo.GPSLatitude"] = latToExifString(mLat_deg, true);
-            exifData["Exif.GPSInfo.GPSLongitude"] = lonToExifString(mLon_deg, true);
-            exifData["Exif.GPSInfo.GPSAltitude"] = toExifString(mElevation_m);
-
-            exifData["Exif.GPSInfo.GPSAltitudeRef"] = mElevation_m < 0.0 ? "1" : "0";
-            exifData["Exif.GPSInfo.GPSLatitudeRef"] = mLat_deg > 0 ? "N" : "S";
-            exifData["Exif.GPSInfo.GPSLongitudeRef"] = mLon_deg > 0 ? "E" : "W";
-
-            if (mDateTimeValid)
-            {
-                exifData["Exif.GPSInfo.GPSDateStamp"] = toExifDateStamp(mUtcYear, mUtcMonth, mUtcDay);
-                exifData["Exif.GPSInfo.GPSTimeStamp"] = toExifTimeStamp(mUtcHour, mUtcMinute, mUtcSecond);
-            }
-            exifData["Exif.Image.GPSTag"] = 4908;
-
-            //            printf("%s %s % 2d\n", path.c_str(), pPos->toString().c_str(), pPos->delta());
-
-            image->writeMetadata();
-
-            Exiv2::FileIo file(filename.string());
-
-            file.open("wb");
-            file.write(image->io());
-            file.close();
-        }
+        ::writeImage(filename, buffer, pt);
     }
     else
     {
-        std::filebuf binary_buffer;
-        binary_buffer.open(filename, std::ios::out | std::ios::binary);
-        std::ostream outstream_binary(&binary_buffer);
-        if (outstream_binary.fail())
-            throw std::runtime_error("failed to open " + filename.string());
-
-        outstream_binary.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
-        binary_buffer.close();
+        ::writeImage(filename, buffer);
     }
 
     ++mFrameCount;
 }
 
-void cExportJpegs::writeJpeg(std::filesystem::path filename)
-{
-}
 
 // Spidercam handlers
 void cExportJpegs::onPosition(spidercam::sPosition_1_t position)

@@ -177,14 +177,19 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 
 	mIsFile = true;
 
-	mpLogCtrl->Clear();
-
 	if (!mpDstCtrl->GetValue().IsEmpty())
 		mpExportButton->Enable();
 }
 
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
+	std::filesystem::path fname = mSource.ToStdString();
+	if (fname.has_extension())
+	{
+		auto fpath = fname.parent_path();
+		mSource = wxString(fpath.string());
+	}
+
 	wxDirDialog dlg(NULL, "Choose directory", mSource,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
@@ -245,8 +250,11 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	using namespace nStringUtils;
 
 	const std::filesystem::path input{ mSource.ToStdString() };
+	std::string output_directory = mDestinationDataDirectory.ToStdString();
 
 	std::vector<directory_entry> files_to_process;
+
+	std::string month_dir;
 
 	/*
 	 * Create list of files to process
@@ -268,6 +276,20 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	}
 	else
 	{
+		if (input.has_parent_path())
+		{
+			month_dir = input.filename().string();
+			if (!isMonthDirectory(month_dir))
+				month_dir.clear();
+		}
+
+		{
+			wxString msg = "Scanning input directory: ";
+			msg += mSource;
+			wxLogMessage(msg);
+		}
+
+		// Scan input directory for all CERES files to operate on
 		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 		{
 			if (!dir_entry.is_regular_file())
@@ -290,9 +312,107 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		return;
 	}
 
+
+	/*
+	 * Make sure the output directory exists
+	 */
+	std::filesystem::path output{ output_directory };
+
+	std::filesystem::directory_entry output_dir;
+
+	if (mIsFile && output.has_extension())
+	{
+		output_dir = std::filesystem::directory_entry{ output.parent_path() };
+	}
+	else
+	{
+		if (!month_dir.empty())
+		{
+			std::string last_dir;
+			if (output.has_parent_path())
+			{
+				last_dir = output.filename().string();
+			}
+
+			if (month_dir != last_dir)
+			{
+				output /= month_dir;
+			}
+		}
+
+		output_dir = std::filesystem::directory_entry{ output };
+	}
+
+
+
+
+
+	int numFilesToProcess = 0;
+
+	/*
+	 * Add all of the files to process to the thread pool
+	 */
+	for (auto& in_file : files_to_process)
+	{
+		std::filesystem::path out_file;
+		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
+
+		if (mIsFile)
+		{
+			std::string out_filename = fe.filename;
+			out_file = output;
+			out_file /= addProcessedTimestamp(out_filename);
+
+			if (!fe.extension.empty())
+			{
+				out_file += ".";
+				out_file += fe.extension;
+			}
+		}
+		else
+		{
+			if (mPlotConfigData)
+			{
+				auto it = mPlotConfigData->find_by_filename(in_file.path().filename().string());
+
+				if (it == mPlotConfigData->end())
+					continue;
+
+			}
+
+			if (out_file.empty())
+			{
+				std::string out_filename = fe.filename;
+				out_file = output;
+				out_file /= addProcessedTimestamp(out_filename);
+
+				if (!fe.extension.empty())
+				{
+					out_file += ".";
+					out_file += fe.extension;
+				}
+			}
+		}
+
+		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
+
+		numFilesToProcess += 1;
+
+		if (mPlotConfigData)
+			fp->setPlotFile(mPlotConfigData);
+
+		mFileProcessors.push(fp);
+	}
+
+
+
+
+
+
 	/*
 	 * Add all of the files to process
 	 */
+/*
 	int numFilesToProcess = 0;
 	for (auto& in_file : files_to_process)
 	{
@@ -302,6 +422,25 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		if (mIsFile)
 		{
 			out_file = std::filesystem::path{ mDestinationDataDirectory.ToStdString()};
+		}
+		else
+		{
+			if (!month_dir.empty())
+			{
+				std::string last_dir;
+				out_file = mDestinationDataDirectory.ToStdString();
+
+				if (out_file.has_parent_path())
+				{
+					last_dir = out_file.filename().string();
+				}
+
+				if (month_dir != last_dir)
+				{
+					out_file /= month_dir;
+				}
+			}
+
 		}
 
 		if (out_file.empty())
@@ -322,6 +461,53 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 			fp->setPlotFile(mPlotConfigData);
 
 		mFileProcessors.push(fp);
+	}
+*/
+
+
+
+
+
+
+	mpExportButton->Disable();
+
+	if (mIsFile)
+	{
+		wxString msg = "Processing ";
+		msg += input.filename().string();
+		msg += " from ";
+		msg += mSource;
+		wxLogMessage(msg);
+	}
+	else if (numFilesToProcess > 1)
+	{
+		wxString msg = "Processing ";
+		msg += wxString::Format("%d", numFilesToProcess);
+		msg += " files from ";
+		msg += mSource;
+		wxLogMessage(msg);
+	}
+	else if (numFilesToProcess == 1)
+	{
+		wxString msg = "Processing ";
+		msg += wxString::Format("%d", numFilesToProcess);
+		msg += " file from ";
+		msg += mSource;
+		wxLogMessage(msg);
+	}
+
+	if (!output_dir.exists() && (numFilesToProcess > 0))
+	{
+		try
+		{
+			std::filesystem::create_directories(output_dir);
+		}
+		catch (const std::filesystem::filesystem_error& e)
+		{
+			wxString msg = e.what();
+			wxLogMessage(msg);
+			return;
+		}
 	}
 
 	startDataProcessing();

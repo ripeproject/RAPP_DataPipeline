@@ -40,23 +40,30 @@ void cFileProcessor::setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file)
 
 bool cFileProcessor::open(std::filesystem::path out)
 {
-    std::filesystem::path outFile  = out.replace_extension();
+//    std::filesystem::path outFile  = out.replace_extension();
+    std::filesystem::path outPath = out.remove_filename();
 
     auto temp = nStringUtils::removeMeasurementTimestamp(mInputFile.filename().string());
 
+    std::string timestamp;
+    nStringUtils::extractMeasurementTimestamp(mInputFile.filename().string(), timestamp);
+
     std::string root_filename = temp.filename;
 
-    std::filesystem::path testFile = outFile / root_filename;
+//    std::filesystem::path testFile = outFile / root_filename;
+    std::filesystem::path testFile = outPath / root_filename;
 
-    testFile.replace_extension(".0.jpeg");
+    testFile.replace_extension("*.jpeg");
 
     if (std::filesystem::exists(testFile))
     {
         return false;
     }
 
-    mConverter->setOutputPath(outFile);
-    mConverter->setRootFileName(root_filename);
+//    mConverter->setOutputPath(outFile);
+    mConverter->setOutputPath(outPath);
+    mConverter->setRootFileName(root_filename); 
+    mConverter->setTimeStamp(timestamp);
 
     mFileReader.open(mInputFile.string());
 
@@ -103,6 +110,9 @@ void cFileProcessor::run()
             auto file_pos = static_cast<double>(mFileReader.filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
             update_file_progress(mID, static_cast<int>(file_pos));
+
+            if (mConverter->abort())
+                break;
         }
     }
     catch (const bdf::stream_error& e)
