@@ -134,7 +134,7 @@ ePlotOrientation cPlotConfigBoundary::getSubPlotOrientation() const
 rfm::rappPoint2D_t cPlotConfigBoundary::center() const
 {
 	double x = (((mSouthEastCorner.x_mm + mNorthEastCorner.x_mm) / 2.0) + ((mSouthWestCorner.x_mm + mNorthWestCorner.x_mm) / 2.0)) / 2.0;
-	double y = (((mNorthEastCorner.x_mm + mNorthWestCorner.x_mm) / 2.0) + ((mSouthEastCorner.x_mm + mSouthWestCorner.x_mm) / 2.0)) / 2.0;
+	double y = (((mNorthEastCorner.y_mm + mNorthWestCorner.y_mm) / 2.0) + ((mSouthEastCorner.y_mm + mSouthWestCorner.y_mm) / 2.0)) / 2.0;
 
 	return {static_cast<std::int32_t>(x), static_cast<std::int32_t>(y)};
 }
