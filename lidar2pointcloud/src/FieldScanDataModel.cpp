@@ -44,12 +44,18 @@ const std::string& cFieldScanDataModel::getExperimentTitle() const
     return mExperimentTitle;
 }
 
+const std::string& cFieldScanDataModel::getMeasurementTitle() const
+{
+    return mMeasurementTitle;
+}
+
 void cFieldScanDataModel::clear()
 {
     mScanTime_sec = 0.0;
     mGroundTrack_deg = cSsnxInfo::INVALID_GROUND_TRACK;
     mFilename.clear();
     mExperimentTitle.clear();
+    mMeasurementTitle.clear();
     mProcessingInfo->clear();
 	mExperimentInfo->clear();
     mSpiderCamInfo->clear();
@@ -140,13 +146,14 @@ void cFieldScanDataModel::loadFieldScanData(const std::string& filename)
 
     mFilename = filename;
 
-    mExperimentTitle = mExperimentInfo->title();
+    mExperimentTitle = mExperimentInfo->experimentTitle();
+    mMeasurementTitle = mExperimentInfo->measurementTitle();
 
     if (mExperimentTitle.empty())
     {
         nStringUtils::sPathAndFilename pf = nStringUtils::splitPathname(mFilename);
         auto fe = nStringUtils::removeMeasurementTimestamp(pf.filename);
-        mExperimentInfo->setTitle(fe.filename);
+        mExperimentInfo->setExperimentTitle(fe.filename);
 
         mExperimentTitle = fe.filename;
     }

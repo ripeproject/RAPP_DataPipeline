@@ -33,6 +33,7 @@ public:
 	const std::string& getFileName() const;
 
 	const std::string& getExperimentTitle() const;
+	const std::string& getMeasurementTitle() const;
 
 	double getScanTime_sec() const;
 	double getGroundTrack_deg() const;
@@ -73,6 +74,7 @@ private:
 
 private:
 	std::string mExperimentTitle;
+	std::string mMeasurementTitle;
 
 	double mScanTime_sec = 0.0;
 	double mGroundTrack_deg = 0.0;

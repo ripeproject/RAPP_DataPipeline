@@ -531,8 +531,11 @@ void cFileProcessor::writeExperimentInfo(const cExperimentInfo& info, cExperimen
 {
     serializer.writeBeginHeader();
 
-    if (!info.title().empty())
-        serializer.writeTitle(info.title());
+    if (!info.experimentTitle().empty())
+        serializer.writeExperimentTitle(info.experimentTitle());
+
+    if (!info.measurementTitle().empty())
+        serializer.writeMeasurementTitle(info.measurementTitle());
 
     if (!info.experimentDoc().empty())
         serializer.writeExperimentDoc(info.experimentDoc());
