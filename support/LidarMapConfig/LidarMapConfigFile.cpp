@@ -294,7 +294,7 @@ bool cLidarMapConfigFile::contains(const std::string& name)
 {
 	for (const auto& scan : mScans)
 	{
-		if (scan.getExperimentName() == name)
+		if (scan.getMeasurementName() == name)
 			return true;
 	}
 
@@ -321,7 +321,7 @@ cLidarMapConfigFile::const_iterator	cLidarMapConfigFile::find_by_filename(const 
 
 	for (auto it = mScans.cbegin(); it != mScans.cend(); ++it)
 	{
-		auto name = safeFilename(it->getExperimentName());
+		auto name = safeFilename(it->getMeasurementName());
 		if (filename == name)
 			return it;
 	}
@@ -339,7 +339,7 @@ cLidarMapConfigFile::iterator cLidarMapConfigFile::find_by_filename(const std::s
 
 	for (auto it = mScans.begin(); it != mScans.end(); ++it)
 	{
-		auto name = safeFilename(it->getExperimentName());
+		auto name = safeFilename(it->getMeasurementName());
 		if (filename == name)
 			return it;
 	}
@@ -351,7 +351,7 @@ cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const std::string&
 {
 	for (auto it = mScans.cbegin(); it != mScans.cend(); ++it)
 	{
-		if (it->getExperimentName() == name)
+		if (it->getMeasurementName() == name)
 			return it;
 	}
 
@@ -362,7 +362,7 @@ cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const std::string& name)
 {
 	for (auto it = mScans.begin(); it != mScans.end(); ++it)
 	{
-		if (it->getExperimentName() == name)
+		if (it->getMeasurementName() == name)
 			return it;
 	}
 
@@ -373,13 +373,13 @@ cLidarMapConfigScan& cLidarMapConfigFile::add(const std::string& name)
 {
 	for (auto& scan : mScans)
 	{
-		if (scan.getExperimentName() == name)
+		if (scan.getMeasurementName() == name)
 			return scan;
 	}
 
 	cLidarMapConfigScan scan;
 
-	scan.setExperimentName(name);
+	scan.setMeasurementName(name);
 
 	mScans.push_back(std::move(scan));
 

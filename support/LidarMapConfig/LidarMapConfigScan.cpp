@@ -38,9 +38,9 @@ bool cLidarMapConfigScan::isDirty() const
 	return dirty;
 }
 
-const std::string& cLidarMapConfigScan::getExperimentName() const
+const std::string& cLidarMapConfigScan::getMeasurementName() const
 {
-	return mExperimentName;
+	return mMeasurementName;
 }
 
 const std::optional<eKinematicModel>& cLidarMapConfigScan::getKinematicModel() const { return mKinematicModel; }
@@ -101,10 +101,10 @@ const std::optional<double>& cLidarMapConfigScan::getEnd_Z_m() const { return mE
 const std::optional<rfm::rappPoint_t>& cLidarMapConfigScan::getReferencePoint() const { return mReferencePoint; }
 
 
-void cLidarMapConfigScan::setExperimentName(const std::string& name)
+void cLidarMapConfigScan::setMeasurementName(const std::string& name)
 {
-	mDirty |= (mExperimentName != name);
-	mExperimentName = name;
+	mDirty |= (mMeasurementName != name);
+	mMeasurementName = name;
 }
 
 void cLidarMapConfigScan::resetKinematicModel()
@@ -568,10 +568,16 @@ void cLidarMapConfigScan::setDirty(bool dirty)
 void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 {
 	if (jdoc.contains("experiment_name"))
-		mExperimentName = jdoc["experiment_name"];
+		mMeasurementName = jdoc["experiment_name"];
 
 	if (jdoc.contains("experiment name"))
-		mExperimentName = jdoc["experiment name"];
+		mMeasurementName = jdoc["experiment name"];
+
+	if (jdoc.contains("measurement_name"))
+		mMeasurementName = jdoc["measurement_name"];
+
+	if (jdoc.contains("measurement name"))
+		mMeasurementName = jdoc["measurement name"];
 
 
 	if (jdoc.contains("sensor mount orientation"))
@@ -937,7 +943,7 @@ nlohmann::json cLidarMapConfigScan::save()
 {
 	nlohmann::json scanDoc;
 
-	scanDoc["experiment name"] = mExperimentName;
+	scanDoc["measurement name"] = mMeasurementName;
 
 	if (mStart_X_m.has_value() || mStart_Y_m.has_value() || mStart_Z_m.has_value())
 	{

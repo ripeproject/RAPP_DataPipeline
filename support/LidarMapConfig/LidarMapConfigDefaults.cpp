@@ -636,7 +636,7 @@ void cLidarMapConfigDefaults_Flattening::load(const nlohmann::json& jdoc)
 		mFlattenPointCloud = flattening["flatten point cloud"];
 
 	if (flattening.contains("threshold (%)"))
-		mThreshold_pct = flattening["translation threshold (%)"].get<double>();
+		mThreshold_pct = flattening["threshold (%)"].get<double>();
 
 	if (flattening.contains("maximum angle (deg)"))
 		mMaxAngle_deg = flattening["maximum angle (deg)"].get<double>();

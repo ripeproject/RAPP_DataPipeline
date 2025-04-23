@@ -24,7 +24,7 @@ public:
 
 	bool isDirty() const;
 
-	const std::string& getExperimentName() const;
+	const std::string& getMeasurementName() const;
 
 	const std::optional<eKinematicModel>&			getKinematicModel() const;
 	const std::optional<eOrientationModel>&			getOrientationModel() const;
@@ -83,7 +83,7 @@ public:
 
 	const std::optional<rfm::rappPoint_t>& getReferencePoint() const;
 
-	void setExperimentName(const std::string& name);
+	void setMeasurementName(const std::string& name);
 
 	void resetKinematicModel();
 	void setKinematicModel(const std::optional<eKinematicModel>& model);
@@ -184,7 +184,7 @@ private:
 private:
 	bool mDirty = false;
 
-	std::string mExperimentName;
+	std::string mMeasurementName;
 
 	std::optional<eKinematicModel>			mKinematicModel;
 	std::optional<eOrientationModel>		mOrientationModel;
