@@ -33,15 +33,15 @@ bool cPlotConfigScan::isDirty() const
 	return mDirty;
 }
 
-const std::string& cPlotConfigScan::getExperimentName() const
+const std::string& cPlotConfigScan::getMeasurementName() const
 {
-	return mExperimentName;
+	return mMeasurementName;
 }
 
-void cPlotConfigScan::setExperimentName(const std::string& name)
+void cPlotConfigScan::setMeasurementName(const std::string& name)
 {
-	mDirty |= (mExperimentName != name);
-	mExperimentName = name;
+	mDirty |= (mMeasurementName != name);
+	mMeasurementName = name;
 }
 
 bool cPlotConfigScan::empty() const
@@ -207,10 +207,16 @@ void cPlotConfigScan::setDirtyFlag(bool dirty)
 void cPlotConfigScan::load(const nlohmann::json& jdoc)
 {
 	if (jdoc.contains("experiment_name"))
-		mExperimentName = jdoc["experiment_name"];
+		mMeasurementName = jdoc["experiment_name"];
 
 	if (jdoc.contains("experiment name"))
-		mExperimentName = jdoc["experiment name"];
+		mMeasurementName = jdoc["experiment name"];
+
+	if (jdoc.contains("measurement_name"))
+		mMeasurementName = jdoc["measurement_name"];
+
+	if (jdoc.contains("measurement name"))
+		mMeasurementName = jdoc["measurement name"];
 
 	if (!jdoc.contains("plots"))
 		return;
@@ -231,7 +237,7 @@ nlohmann::json cPlotConfigScan::save()
 {
 	nlohmann::json scanDoc;
 
-	scanDoc["experiment name"] = mExperimentName;
+	scanDoc["measurement name"] = mMeasurementName;
 
 	nlohmann::json plots;
 

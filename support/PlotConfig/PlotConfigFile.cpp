@@ -273,7 +273,7 @@ bool cPlotConfigFile::contains(const std::string& name)
 {
 	for (const auto& scan : mScans)
 	{
-		if (scan.getExperimentName() == name)
+		if (scan.getMeasurementName() == name)
 			return true;
 	}
 
@@ -300,7 +300,7 @@ cPlotConfigFile::const_iterator	cPlotConfigFile::find_by_filename(const std::str
 
 	for (auto it = mScans.cbegin(); it != mScans.cend(); ++it)
 	{
-		auto name = safeFilename(it->getExperimentName());
+		auto name = safeFilename(it->getMeasurementName());
 		if (filename == name)
 			return it;
 	}
@@ -318,7 +318,7 @@ cPlotConfigFile::iterator cPlotConfigFile::find_by_filename(const std::string& e
 
 	for (auto it = mScans.begin(); it != mScans.end(); ++it)
 	{
-		auto name = safeFilename(it->getExperimentName());
+		auto name = safeFilename(it->getMeasurementName());
 		if (filename == name)
 			return it;
 	}
@@ -326,22 +326,22 @@ cPlotConfigFile::iterator cPlotConfigFile::find_by_filename(const std::string& e
 	return mScans.end();
 }
 
-cPlotConfigFile::const_iterator cPlotConfigFile::find_by_experiment_name(const std::string& name) const
+cPlotConfigFile::const_iterator cPlotConfigFile::find_by_measurement_name(const std::string& name) const
 {
 	for (auto it = mScans.cbegin(); it != mScans.cend(); ++it)
 	{
-		if (it->getExperimentName() == name)
+		if (it->getMeasurementName() == name)
 			return it;
 	}
 
 	return mScans.cend();
 }
 
-cPlotConfigFile::iterator cPlotConfigFile::find_by_experiment_name(const std::string& name)
+cPlotConfigFile::iterator cPlotConfigFile::find_by_measurement_name(const std::string& name)
 {
 	for (auto it = mScans.begin(); it != mScans.end(); ++it)
 	{
-		if (it->getExperimentName() == name)
+		if (it->getMeasurementName() == name)
 			return it;
 	}
 
@@ -352,13 +352,13 @@ cPlotConfigScan& cPlotConfigFile::add(const std::string& name)
 {
 	for (auto& scan : mScans)
 	{
-		if (scan.getExperimentName() == name)
+		if (scan.getMeasurementName() == name)
 			return scan;
 	}
 
 	cPlotConfigScan scan;
 
-	scan.setExperimentName(name);
+	scan.setMeasurementName(name);
 
 	mScans.push_back(std::move(scan));
 

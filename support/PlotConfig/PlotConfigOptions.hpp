@@ -47,8 +47,8 @@ private:
 	bool mSavePlotsInSingleFile = true;
 	bool mSavePlyFiles = false;
 	bool mPlysUseBinaryFormat = true;
-	bool mSaveFrameIds = false;
-	bool mSavePixelInfo = false;
+	bool mSaveFrameIds = true;
+	bool mSavePixelInfo = true;
 
 	friend class cPlotConfigFile;
 };

@@ -57,8 +57,8 @@ public:
 	const_iterator	find_by_filename(const std::string& experiment_filename) const;
 	iterator		find_by_filename(const std::string& experiment_filename);
 
-	const_iterator	find_by_experiment_name(const std::string& name) const;
-	iterator		find_by_experiment_name(const std::string& name);
+	const_iterator	find_by_measurement_name(const std::string& name) const;
+	iterator		find_by_measurement_name(const std::string& name);
 
 	cPlotConfigScan& add(const std::string& name);
 	void remove(const std::string& name);

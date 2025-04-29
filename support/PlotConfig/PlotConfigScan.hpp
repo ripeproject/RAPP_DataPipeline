@@ -32,9 +32,9 @@ public:
 
 	bool isDirty() const;
 
-	const std::string& getExperimentName() const;
+	const std::string& getMeasurementName() const;
 
-	void setExperimentName(const std::string& name);
+	void setMeasurementName(const std::string& name);
 
 	bool empty() const;
 	std::size_t size() const;
@@ -77,7 +77,7 @@ protected:
 private:
 	bool mDirty = false;
 
-	std::string mExperimentName;
+	std::string mMeasurementName;
 
 	std::vector<cPlotConfigPlotInfo> mPlots;
 
