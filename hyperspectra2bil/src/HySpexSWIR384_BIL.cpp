@@ -80,7 +80,7 @@ void cHySpexSWIR384_BIL::writeHeader()
 */
 }
 
-void cHySpexSWIR384_BIL::onImage(HySpexConnect::cImageData<uint16_t> image)
+void cHySpexSWIR384_BIL::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
     ++mNumFrames;
 
@@ -96,7 +96,7 @@ void cHySpexSWIR384_BIL::onImage(HySpexConnect::cImageData<uint16_t> image)
     }
 }
 
-void cHySpexSWIR384_BIL::onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
+void cHySpexSWIR384_BIL::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
     ++mNumFrames;
 

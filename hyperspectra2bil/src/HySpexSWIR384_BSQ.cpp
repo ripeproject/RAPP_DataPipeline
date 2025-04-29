@@ -39,7 +39,7 @@ void cHySpexSWIR384_BSQ::writeHeader()
     filename += ext;
 }
 
-void cHySpexSWIR384_BSQ::onImage(HySpexConnect::cImageData<uint16_t> image)
+void cHySpexSWIR384_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
     ++mNumFrames;
 
@@ -49,7 +49,7 @@ void cHySpexSWIR384_BSQ::onImage(HySpexConnect::cImageData<uint16_t> image)
     //    mImage = image.image().data();
 }
 
-void cHySpexSWIR384_BSQ::onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
+void cHySpexSWIR384_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
     ++mNumFrames;
 

@@ -79,7 +79,7 @@ void cHySpexVNIR3000N_BIL::writeHeader()
     */
 }
 
-void cHySpexVNIR3000N_BIL::onImage(HySpexConnect::cImageData<uint16_t> image)
+void cHySpexVNIR3000N_BIL::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
     ++mNumFrames;
 
@@ -95,7 +95,7 @@ void cHySpexVNIR3000N_BIL::onImage(HySpexConnect::cImageData<uint16_t> image)
     }
 }
 
-void cHySpexVNIR3000N_BIL::onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
+void cHySpexVNIR3000N_BIL::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
     ++mNumFrames;
 

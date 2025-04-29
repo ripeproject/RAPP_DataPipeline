@@ -40,7 +40,7 @@ void cHySpexVNIR3000N_BSQ::writeHeader()
     filename += ext;
 }
 
-void cHySpexVNIR3000N_BSQ::onImage(HySpexConnect::cImageData<uint16_t> image)
+void cHySpexVNIR3000N_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
     ++mNumFrames;
 
@@ -50,7 +50,7 @@ void cHySpexVNIR3000N_BSQ::onImage(HySpexConnect::cImageData<uint16_t> image)
     //    mImage = image.image().data();
 }
 
-void cHySpexVNIR3000N_BSQ::onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
+void cHySpexVNIR3000N_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
     ++mNumFrames;
 

@@ -21,8 +21,8 @@ public:
 	~cHySpexSWIR384_BIP();
 
 protected:
-	void onImage(HySpexConnect::cImageData<uint16_t> image) override;
-	void onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip) override;
+	void onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image) override;
+	void onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip) override;
 
 protected:
 	void openDataFile() override;

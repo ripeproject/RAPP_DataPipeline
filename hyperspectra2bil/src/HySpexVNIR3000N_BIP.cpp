@@ -62,17 +62,23 @@ void cHySpexVNIR3000N_BIP::writeHeader()
     header << "NODATA         0" << std::endl;
 }
 
-void cHySpexVNIR3000N_BIP::onImage(HySpexConnect::cImageData<uint16_t> image)
+void cHySpexVNIR3000N_BIP::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
     ++mNumFrames;
 
     auto n = image.spatialSize();
     auto m = image.spectralSize();
     auto data = image.image();
-    //    mImage = image.image().data();
+
+    for (int channel = 0; channel < n; ++channel)
+    {
+        auto bands = data.channel(channel);
+        for (auto pixel : bands)
+            mOutputFile << pixel;
+    }
 }
 
-void cHySpexVNIR3000N_BIP::onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
+void cHySpexVNIR3000N_BIP::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
     ++mNumFrames;
 
