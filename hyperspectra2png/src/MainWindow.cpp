@@ -197,7 +197,18 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog dlg(this, _("Open file"), "", "",
+	std::filesystem::path fname = mSource.ToStdString();
+
+	std::filesystem::path fpath;
+	if (fname.has_extension())
+		fpath = fname.parent_path();
+	else
+	{
+		fpath = fname;
+		fname.clear();
+	}
+
+	wxFileDialog dlg(this, _("Open file"), wxString(fpath.string()), wxString(fname.filename().string()),
 		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
@@ -214,7 +225,15 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
-	wxDirDialog dlg(NULL, "Choose directory", mSource,
+	std::filesystem::path fname = mSource.ToStdString();
+
+	std::filesystem::path fpath;
+	if (fname.has_extension())
+		fpath = fname.parent_path();
+	else
+		fpath = fname;
+
+	wxDirDialog dlg(NULL, "Choose directory", wxString(fpath.string()),
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)

@@ -140,7 +140,8 @@ void cFileProcessor::onEndOfHeader() {}
 void cFileProcessor::onBeginFooter() {}
 void cFileProcessor::onEndOfFooter() {}
 
-void cFileProcessor::onTitle(const std::string& title) {}
+void cFileProcessor::onExperimentTitle(const std::string& title) {}
+void cFileProcessor::onMeasurementTitle(const std::string& title) {}
 void cFileProcessor::onPrincipalInvestigator(const std::string& investigator) {}
 
 void cFileProcessor::onBeginResearcherList() {}

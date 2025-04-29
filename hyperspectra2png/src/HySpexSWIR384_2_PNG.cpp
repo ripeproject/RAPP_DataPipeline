@@ -44,47 +44,47 @@ void cHySpexSWIR384_2_Png::setRgbWavelengths_nm(float red_nm, float green_nm, fl
     mBlue_nm = blue_nm;
 }
 
-void cHySpexSWIR384_2_Png::onID(std::string id) {}
-void cHySpexSWIR384_2_Png::onSerialNumber(std::string serialNumber) {}
-void cHySpexSWIR384_2_Png::onWavelengthRange_nm(uint16_t minWavelength_nm, uint16_t maxWavelength_nm) {}
-void cHySpexSWIR384_2_Png::onSpatialSize(uint64_t spatialSize)
+void cHySpexSWIR384_2_Png::onID(uint8_t device_id, std::string id) {}
+void cHySpexSWIR384_2_Png::onSerialNumber(uint8_t device_id, std::string serialNumber) {}
+void cHySpexSWIR384_2_Png::onWavelengthRange_nm(uint8_t device_id, uint16_t minWavelength_nm, uint16_t maxWavelength_nm) {}
+void cHySpexSWIR384_2_Png::onSpatialSize(uint8_t device_id, uint64_t spatialSize)
 {
     mSpatialSize = spatialSize;
     mMaxRows = spatialSize;
     mImage.create(spatialSize, spatialSize, CV_8UC3);
 }
 
-void cHySpexSWIR384_2_Png::onSpectralSize(uint64_t spectralSize)
+void cHySpexSWIR384_2_Png::onSpectralSize(uint8_t device_id, uint64_t spectralSize)
 {
     mSpectralSize = spectralSize;
 }
 
-void cHySpexSWIR384_2_Png::onMaxSpatialSize(uint64_t maxSpatialSize) {}
-void cHySpexSWIR384_2_Png::onMaxSpectralSize(uint64_t maxSpectralSize) {}
-void cHySpexSWIR384_2_Png::onMaxPixelValue(uint16_t maxPixelValue)
+void cHySpexSWIR384_2_Png::onMaxSpatialSize(uint8_t device_id, uint64_t maxSpatialSize) {}
+void cHySpexSWIR384_2_Png::onMaxSpectralSize(uint8_t device_id, uint64_t maxSpectralSize) {}
+void cHySpexSWIR384_2_Png::onMaxPixelValue(uint8_t device_id, uint16_t maxPixelValue)
 {
     mColorScale = 255.0 / maxPixelValue;
     mColorScale *= 4.0;
 }
 
-void cHySpexSWIR384_2_Png::onResponsivityMatrix(HySpexConnect::cSpatialMajorData<float> re) {}
-void cHySpexSWIR384_2_Png::onQuantumEfficiencyData(HySpexConnect::cSpectralData<float> qe) {}
-void cHySpexSWIR384_2_Png::onLensName(std::string name) {}
-void cHySpexSWIR384_2_Png::onLensWorkingDistance_cm(double workingDistance_cm) {}
-void cHySpexSWIR384_2_Png::onLensFieldOfView_rad(double fieldOfView_rad) {}
-void cHySpexSWIR384_2_Png::onLensFieldOfView_deg(double fieldOfView_deg) {}
+void cHySpexSWIR384_2_Png::onResponsivityMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> re) {}
+void cHySpexSWIR384_2_Png::onQuantumEfficiencyData(uint8_t device_id, HySpexConnect::cSpectralData<float> qe) {}
+void cHySpexSWIR384_2_Png::onLensName(uint8_t device_id, std::string name) {}
+void cHySpexSWIR384_2_Png::onLensWorkingDistance_cm(uint8_t device_id, double workingDistance_cm) {}
+void cHySpexSWIR384_2_Png::onLensFieldOfView_rad(uint8_t device_id, double fieldOfView_rad) {}
+void cHySpexSWIR384_2_Png::onLensFieldOfView_deg(uint8_t device_id, double fieldOfView_deg) {}
 
-void cHySpexSWIR384_2_Png::onAverageFrames(uint16_t averageFrames) {}
-void cHySpexSWIR384_2_Png::onFramePeriod_us(uint32_t framePeriod_us) {}
-void cHySpexSWIR384_2_Png::onIntegrationTime_us(uint32_t integrationTime_us) {}
+void cHySpexSWIR384_2_Png::onAverageFrames(uint8_t device_id, uint16_t averageFrames) {}
+void cHySpexSWIR384_2_Png::onFramePeriod_us(uint8_t device_id, uint32_t framePeriod_us) {}
+void cHySpexSWIR384_2_Png::onIntegrationTime_us(uint8_t device_id, uint32_t integrationTime_us) {}
 
-void cHySpexSWIR384_2_Png::onBadPixels(HySpexConnect::cBadPixelData bad_pixels) {}
-void cHySpexSWIR384_2_Png::onBadPixelCorrection(HySpexConnect::cBadPixelCorrectionData corrections) {}
-void cHySpexSWIR384_2_Png::onBadPixelMatrix(HySpexConnect::cSpatialMajorData<uint8_t> matrix) {}
+void cHySpexSWIR384_2_Png::onBadPixels(uint8_t device_id, HySpexConnect::cBadPixelData bad_pixels) {}
+void cHySpexSWIR384_2_Png::onBadPixelCorrection(uint8_t device_id, HySpexConnect::cBadPixelCorrectionData corrections) {}
+void cHySpexSWIR384_2_Png::onBadPixelMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<uint8_t> matrix) {}
 
-void cHySpexSWIR384_2_Png::onAmbientTemperature_C(float temp_C) {}
+void cHySpexSWIR384_2_Png::onAmbientTemperature_C(uint8_t device_id, float temp_C) {}
 
-void cHySpexSWIR384_2_Png::onSpectralCalibration(HySpexConnect::cSpectralData<float> wavelengths_nm)
+void cHySpexSWIR384_2_Png::onSpectralCalibration(uint8_t device_id, HySpexConnect::cSpectralData<float> wavelengths_nm)
 {
     mRedIndex = 279;
     mGreenIndex = 169;
@@ -118,11 +118,11 @@ void cHySpexSWIR384_2_Png::onSpectralCalibration(HySpexConnect::cSpectralData<fl
     }
 }
 
-void cHySpexSWIR384_2_Png::onBackgroundMatrixAge_ms(int64_t age_ms) {}
-void cHySpexSWIR384_2_Png::onNumOfBackgrounds(uint32_t numOfBackgrounds) {}
-void cHySpexSWIR384_2_Png::onBackgroundMatrix(HySpexConnect::cSpatialMajorData<float> background) {}
+void cHySpexSWIR384_2_Png::onBackgroundMatrixAge_ms(uint8_t device_id, int64_t age_ms) {}
+void cHySpexSWIR384_2_Png::onNumOfBackgrounds(uint8_t device_id, uint32_t numOfBackgrounds) {}
+void cHySpexSWIR384_2_Png::onBackgroundMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> background) {}
 
-void cHySpexSWIR384_2_Png::onImage(HySpexConnect::cImageData<uint16_t> image)
+void cHySpexSWIR384_2_Png::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
     if (mActiveRow >= mMaxRows)
     {
@@ -148,7 +148,7 @@ void cHySpexSWIR384_2_Png::onImage(HySpexConnect::cImageData<uint16_t> image)
     ++mActiveRow;
 }
 
-void cHySpexSWIR384_2_Png::onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
+void cHySpexSWIR384_2_Png::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
     for (int i = 0; image.spatialSize(); ++i)
     {
@@ -156,7 +156,7 @@ void cHySpexSWIR384_2_Png::onImage(HySpexConnect::cImageData<uint16_t> image, ui
     }
 }
 
-void cHySpexSWIR384_2_Png::onSensorTemperature_K(float temp_K) {}
+void cHySpexSWIR384_2_Png::onSensorTemperature_K(uint8_t device_id, float temp_K) {}
 
 void cHySpexSWIR384_2_Png::onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps)
 {

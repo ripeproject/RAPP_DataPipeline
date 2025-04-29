@@ -33,42 +33,42 @@ public:
 
 private:
 	// HySpex VNIR 3000N Parser Methods
-	void onID(std::string id) override;
-	void onSerialNumber(std::string serialNumber) override;
-	void onWavelengthRange_nm(uint16_t minWavelength_nm, uint16_t maxWavelength_nm) override;
-	void onSpatialSize(uint64_t spatialSize) override;
-	void onSpectralSize(uint64_t spectralSize) override;
-	void onMaxSpatialSize(uint64_t maxSpatialSize) override;
-	void onMaxSpectralSize(uint64_t maxSpectralSize) override;
-	void onMaxPixelValue(uint16_t maxPixelValue) override;
+	void onID(uint8_t device_id, std::string id) override;
+	void onSerialNumber(uint8_t device_id, std::string serialNumber) override;
+	void onWavelengthRange_nm(uint8_t device_id, uint16_t minWavelength_nm, uint16_t maxWavelength_nm) override;
+	void onSpatialSize(uint8_t device_id, uint64_t spatialSize) override;
+	void onSpectralSize(uint8_t device_id, uint64_t spectralSize) override;
+	void onMaxSpatialSize(uint8_t device_id, uint64_t maxSpatialSize) override;
+	void onMaxSpectralSize(uint8_t device_id, uint64_t maxSpectralSize) override;
+	void onMaxPixelValue(uint8_t device_id, uint16_t maxPixelValue) override;
 
-	void onResponsivityMatrix(HySpexConnect::cSpatialMajorData<float> re) override;
-	void onQuantumEfficiencyData(HySpexConnect::cSpectralData<float> qe) override;
-	void onLensName(std::string name) override;
-	void onLensWorkingDistance_cm(double workingDistance_cm) override;
-	void onLensFieldOfView_rad(double fieldOfView_rad) override;
-	void onLensFieldOfView_deg(double fieldOfView_deg) override;
+	void onResponsivityMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> re) override;
+	void onQuantumEfficiencyData(uint8_t device_id, HySpexConnect::cSpectralData<float> qe) override;
+	void onLensName(uint8_t device_id, std::string name) override;
+	void onLensWorkingDistance_cm(uint8_t device_id, double workingDistance_cm) override;
+	void onLensFieldOfView_rad(uint8_t device_id, double fieldOfView_rad) override;
+	void onLensFieldOfView_deg(uint8_t device_id, double fieldOfView_deg) override;
 
-	void onAverageFrames(uint16_t averageFrames) override;
-	void onFramePeriod_us(uint32_t framePeriod_us) override;
-	void onIntegrationTime_us(uint32_t integrationTime_us) override;
+	void onAverageFrames(uint8_t device_id, uint16_t averageFrames) override;
+	void onFramePeriod_us(uint8_t device_id, uint32_t framePeriod_us) override;
+	void onIntegrationTime_us(uint8_t device_id, uint32_t integrationTime_us) override;
 
-	void onBadPixels(HySpexConnect::cBadPixelData bad_pixels) override;
-	void onBadPixelCorrection(HySpexConnect::cBadPixelCorrectionData corrections) override;
-	void onBadPixelMatrix(HySpexConnect::cSpatialMajorData<uint8_t> matrix) override;
+	void onBadPixels(uint8_t device_id, HySpexConnect::cBadPixelData bad_pixels) override;
+	void onBadPixelCorrection(uint8_t device_id, HySpexConnect::cBadPixelCorrectionData corrections) override;
+	void onBadPixelMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<uint8_t> matrix) override;
 
-	void onAmbientTemperature_C(float temp_C) override;
+	void onAmbientTemperature_C(uint8_t device_id, float temp_C) override;
 
-	void onSpectralCalibration(HySpexConnect::cSpectralData<float> wavelengths_nm) override;
+	void onSpectralCalibration(uint8_t device_id, HySpexConnect::cSpectralData<float> wavelengths_nm) override;
 
-	void onBackgroundMatrixAge_ms(int64_t age_ms) override;
-	void onNumOfBackgrounds(uint32_t numOfBackgrounds) override;
-	void onBackgroundMatrix(HySpexConnect::cSpatialMajorData<float> background) override;
+	void onBackgroundMatrixAge_ms(uint8_t device_id, int64_t age_ms) override;
+	void onNumOfBackgrounds(uint8_t device_id, uint32_t numOfBackgrounds) override;
+	void onBackgroundMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> background) override;
 
-	void onImage(HySpexConnect::cImageData<uint16_t> image) override;
-	void onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip) override;
+	void onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image) override;
+	void onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip) override;
 
-	void onSensorTemperature_C(float temp_C) override;
+	void onSensorTemperature_C(uint8_t device_id, float temp_C) override;
 
 
     void writeRgbImage(std::filesystem::path filename);

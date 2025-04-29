@@ -36,7 +36,8 @@ private:
 	void onBeginFooter() override;
 	void onEndOfFooter() override;
 
-	void onTitle(const std::string& title) override;
+	void onExperimentTitle(const std::string& title) override;
+	void onMeasurementTitle(const std::string& title) override;
 	void onPrincipalInvestigator(const std::string& investigator) override;
 
 	void onBeginResearcherList() override;
