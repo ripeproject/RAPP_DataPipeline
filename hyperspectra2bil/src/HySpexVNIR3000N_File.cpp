@@ -12,6 +12,7 @@ cHySpexVNIR3000N_File::cHySpexVNIR3000N_File() : cHySpexVNIR_3000N_Parser(), cSp
 
 cHySpexVNIR3000N_File::~cHySpexVNIR3000N_File()
 {
+    mOutputFile.close();
 }
 
 void cHySpexVNIR3000N_File::setOutputPath(std::filesystem::path out)
@@ -76,32 +77,12 @@ void cHySpexVNIR3000N_File::onAmbientTemperature_C(uint8_t device_id, float temp
 
 void cHySpexVNIR3000N_File::onSpectralCalibration(uint8_t device_id, HySpexConnect::cSpectralData<float> wavelengths_nm)
 {
+    mSpectralCalibration = wavelengths_nm;
 }
 
 void cHySpexVNIR3000N_File::onBackgroundMatrixAge_ms(uint8_t device_id, int64_t age_ms) {}
 void cHySpexVNIR3000N_File::onNumOfBackgrounds(uint8_t device_id, uint32_t numOfBackgrounds) {}
 void cHySpexVNIR3000N_File::onBackgroundMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> background) {}
-
-/*
-void cHySpexVNIR3000N_File::onImage(HySpexConnect::cImageData<uint16_t> image)
-{
-    if (mActiveRow >= mMaxRows)
-    {
-        mImage.resize(mActiveRow + mSpatialSize);
-        mMaxRows = mActiveRow + mSpatialSize;
-    }
-
-    ++mActiveRow;
-}
-
-void cHySpexVNIR3000N_File::onImage(HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
-{
-    for (int i = 0; image.spatialSize(); ++i)
-    {
-//        mImage[i] = { 128,128,128 };
-    }
-}
-*/
 
 void cHySpexVNIR3000N_File::onSensorTemperature_C(uint8_t device_id, float temp_C) {}
 

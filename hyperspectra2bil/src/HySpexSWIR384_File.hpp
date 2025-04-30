@@ -16,7 +16,7 @@ class cHySpexSWIR384_File : public cHySpexSWIR_384_Parser, public cSpidercamPars
 {
 public:
     cHySpexSWIR384_File();
-	~cHySpexSWIR384_File();
+	virtual ~cHySpexSWIR384_File();
 
     void setOutputPath(std::filesystem::path out);
 

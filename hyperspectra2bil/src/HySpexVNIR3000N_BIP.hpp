@@ -3,19 +3,12 @@
 
 #include "HySpexVNIR3000N_File.hpp"
 
-#include <opencv2/core.hpp>
-
-#include <filesystem>
-#include <string>
-#include <fstream>
-
-
 
 class cHySpexVNIR3000N_BIP : public cHySpexVNIR3000N_File
 {
 public:
 	cHySpexVNIR3000N_BIP();
-	~cHySpexVNIR3000N_BIP();
+	virtual ~cHySpexVNIR3000N_BIP();
 
 protected:
 	void onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image) override;
@@ -23,5 +16,4 @@ protected:
 
 protected:
 	void openDataFile() override;
-	void writeHeader() override;
 };

@@ -17,7 +17,7 @@ class cHySpexVNIR3000N_File : public cHySpexVNIR_3000N_Parser, public cSpidercam
 {
 public:
 	cHySpexVNIR3000N_File();
-	~cHySpexVNIR3000N_File();
+	virtual ~cHySpexVNIR3000N_File();
 
     void setOutputPath(std::filesystem::path out);
 
@@ -80,6 +80,8 @@ protected:
 	double mFieldOfView_rad = 0.0;
 	uint32_t mFramePeriod_us = 0;
 	uint32_t mIntegrationTime_us = 0;
+
+	HySpexConnect::cSpectralData<float> mSpectralCalibration;
 
 	std::size_t mNumFrames = 0;
 

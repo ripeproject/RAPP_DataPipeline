@@ -1,24 +1,20 @@
 
 #include "HySpexVNIR3000N_BSQ.hpp"
 
-#include <opencv2/opencv.hpp>
-
 #include <iostream>
 
 
 cHySpexVNIR3000N_BSQ::cHySpexVNIR3000N_BSQ() : cHySpexVNIR3000N_File()
-{
-}
+{}
 
 cHySpexVNIR3000N_BSQ::~cHySpexVNIR3000N_BSQ()
-{
-}
+{}
 
 void cHySpexVNIR3000N_BSQ::openDataFile()
 {
     std::filesystem::path filename = mOutputPath;
 
-    std::string ext = ".bsq";
+    std::string ext = ".vnir.bsq";
     filename += ext;
 
     mOutputFile.open(filename, std::ios_base::binary);
@@ -29,15 +25,6 @@ void cHySpexVNIR3000N_BSQ::openDataFile()
         msg += filename.string();
         throw std::runtime_error(msg);
     }
-}
-
-void cHySpexVNIR3000N_BSQ::writeHeader()
-{
-    std::filesystem::path filename = mOutputPath;
-
-    std::string ext = ".hdr";
-
-    filename += ext;
 }
 
 void cHySpexVNIR3000N_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)

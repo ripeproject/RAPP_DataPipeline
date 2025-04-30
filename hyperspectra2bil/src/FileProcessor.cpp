@@ -1,13 +1,21 @@
 
 #include "FileProcessor.hpp"
 
-#include "HySpexVNIR3000N_BIL.hpp"
-#include "HySpexVNIR3000N_BIP.hpp"
-#include "HySpexVNIR3000N_BSQ.hpp"
+#include "HySpexVNIR3000N_BIL_ArcMap.hpp"
+#include "HySpexVNIR3000N_BIP_ArcMap.hpp"
+#include "HySpexVNIR3000N_BSQ_ArcMap.hpp"
 
-#include "HySpexSWIR384_BIL.hpp"
-#include "HySpexSWIR384_BIP.hpp"
-#include "HySpexSWIR384_BSQ.hpp"
+#include "HySpexVNIR3000N_BIL_ENVI.hpp"
+#include "HySpexVNIR3000N_BIP_ENVI.hpp"
+#include "HySpexVNIR3000N_BSQ_ENVI.hpp"
+
+#include "HySpexSWIR384_BIL_ArcMap.hpp"
+#include "HySpexSWIR384_BIP_ArcMap.hpp"
+#include "HySpexSWIR384_BSQ_ArcMap.hpp"
+
+#include "HySpexSWIR384_BIL_ENVI.hpp"
+#include "HySpexSWIR384_BIP_ENVI.hpp"
+#include "HySpexSWIR384_BSQ_ENVI.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -43,16 +51,16 @@ void cFileProcessor::setFormat(eExportFormat format)
     switch (format)
     {
     case eExportFormat::BIL:
-        mVnirConverter.reset(new cHySpexVNIR3000N_BIL());
-        mSwirConverter.reset(new cHySpexSWIR384_BIL());
+        mVnirConverter.reset(new cHySpexVNIR3000N_BIL_ENVI());
+        mSwirConverter.reset(new cHySpexSWIR384_BIL_ENVI());
         break;
     case eExportFormat::BIP:
-        mVnirConverter.reset(new cHySpexVNIR3000N_BIP());
-        mSwirConverter.reset(new cHySpexSWIR384_BIP());
+        mVnirConverter.reset(new cHySpexVNIR3000N_BIP_ENVI());
+        mSwirConverter.reset(new cHySpexSWIR384_BIP_ENVI());
         break;
     case eExportFormat::BSQ:
-        mVnirConverter.reset(new cHySpexVNIR3000N_BSQ());
-        mSwirConverter.reset(new cHySpexSWIR384_BSQ());
+        mVnirConverter.reset(new cHySpexVNIR3000N_BSQ_ENVI());
+        mSwirConverter.reset(new cHySpexSWIR384_BSQ_ENVI());
         break;
     };
 }
@@ -105,6 +113,7 @@ void cFileProcessor::run()
     cHySpexSWIR384_File* pSwir = mSwirConverter.get();
     mFileReader.attach(static_cast<cHySpexSWIR_384_Parser*>(pSwir));
     mFileReader.attach(static_cast<cSpidercamParser*>(pSwir));
+
 
 	try
     {

@@ -10,11 +10,29 @@ set(HYPER_SPECTRA_2_BIL_COMMON_FILES
 	HySpexVNIR3000N_BIL.hpp
 	HySpexVNIR3000N_BIL.cpp
 
+	HySpexVNIR3000N_BIL_ENVI.hpp
+	HySpexVNIR3000N_BIL_ENVI.cpp
+
+	HySpexVNIR3000N_BIL_ArcMap.hpp
+	HySpexVNIR3000N_BIL_ArcMap.cpp
+
 	HySpexVNIR3000N_BIP.hpp
 	HySpexVNIR3000N_BIP.cpp
 
+	HySpexVNIR3000N_BIP_ENVI.hpp
+	HySpexVNIR3000N_BIP_ENVI.cpp
+
+	HySpexVNIR3000N_BIP_ArcMap.hpp
+	HySpexVNIR3000N_BIP_ArcMap.cpp
+
 	HySpexVNIR3000N_BSQ.hpp
 	HySpexVNIR3000N_BSQ.cpp
+
+	HySpexVNIR3000N_BSQ_ENVI.hpp
+	HySpexVNIR3000N_BSQ_ENVI.cpp
+
+	HySpexVNIR3000N_BSQ_ArcMap.hpp
+	HySpexVNIR3000N_BSQ_ArcMap.cpp
 
 	HySpexSWIR384_File.hpp
 	HySpexSWIR384_File.cpp
@@ -22,11 +40,29 @@ set(HYPER_SPECTRA_2_BIL_COMMON_FILES
 	HySpexSWIR384_BIL.hpp
 	HySpexSWIR384_BIL.cpp
 
+	HySpexSWIR384_BIL_ENVI.hpp
+	HySpexSWIR384_BIL_ENVI.cpp
+
+	HySpexSWIR384_BIL_ArcMap.hpp
+	HySpexSWIR384_BIL_ArcMap.cpp
+
 	HySpexSWIR384_BIP.hpp
 	HySpexSWIR384_BIP.cpp
 
+	HySpexSWIR384_BIP_ENVI.hpp
+	HySpexSWIR384_BIP_ENVI.cpp
+
+	HySpexSWIR384_BIP_ArcMap.hpp
+	HySpexSWIR384_BIP_ArcMap.cpp
+
 	HySpexSWIR384_BSQ.hpp
 	HySpexSWIR384_BSQ.cpp
+
+	HySpexSWIR384_BSQ_ENVI.hpp
+	HySpexSWIR384_BSQ_ENVI.cpp
+
+	HySpexSWIR384_BSQ_ArcMap.hpp
+	HySpexSWIR384_BSQ_ArcMap.cpp
 
 	FileProcessor.hpp
 	FileProcessor.cpp
