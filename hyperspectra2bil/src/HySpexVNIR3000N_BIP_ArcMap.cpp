@@ -10,17 +10,15 @@ cHySpexVNIR3000N_BIP_ArcMap::cHySpexVNIR3000N_BIP_ArcMap() : cHySpexVNIR3000N_BI
 
 cHySpexVNIR3000N_BIP_ArcMap::~cHySpexVNIR3000N_BIP_ArcMap()
 {
-    writeHeader();
+    if (mOutputFile.is_open())
+    {
+        mHeaderFilename = createHeaderFilename(mPlotID);
+        writeHeader(mHeaderFilename);
+    }
 }
 
-void cHySpexVNIR3000N_BIP_ArcMap::writeHeader()
+void cHySpexVNIR3000N_BIP_ArcMap::writeHeader(std::filesystem::path filename)
 {
-    std::filesystem::path filename = mOutputPath;
-
-    std::string ext = ".vnir.hdr";
-
-    filename += ext;
-
     std::ofstream header(filename, std::ios_base::binary);
 
     if (!header.is_open())
@@ -31,7 +29,7 @@ void cHySpexVNIR3000N_BIP_ArcMap::writeHeader()
 
     header << "BYTEORDER      I" << std::endl;
     header << "LAYOUT         BIP" << std::endl;
-    header << "NROWS          " << mNumFrames << std::endl;
+    header << "NROWS          " << mActiveRow << std::endl;
     header << "NCOLS          " << mSpatialSize << std::endl;
     header << "NBANDS         " << mSpectralSize << std::endl;
     header << "NBITS          " << static_cast<int>(mNumBits) << std::endl;

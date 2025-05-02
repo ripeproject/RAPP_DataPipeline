@@ -10,17 +10,15 @@ cHySpexVNIR3000N_BIL_ENVI::cHySpexVNIR3000N_BIL_ENVI() : cHySpexVNIR3000N_BIL()
 
 cHySpexVNIR3000N_BIL_ENVI::~cHySpexVNIR3000N_BIL_ENVI()
 {
-    writeHeader();
+    if (mOutputFile.is_open())
+    {
+        mHeaderFilename = createHeaderFilename(mPlotID);
+        writeHeader(mHeaderFilename);
+    }
 }
 
-void cHySpexVNIR3000N_BIL_ENVI::writeHeader()
+void cHySpexVNIR3000N_BIL_ENVI::writeHeader(std::filesystem::path filename)
 {
-    std::filesystem::path filename = mOutputPath;
-
-    std::string ext = ".vnir.hdr";
-
-    filename += ext;
-
     std::ofstream header(filename, std::ios_base::binary);
 
     if (!header.is_open())
@@ -34,7 +32,7 @@ void cHySpexVNIR3000N_BIL_ENVI::writeHeader()
     header << "data type = 12" << std::endl;
     header << "byte order = 0" << std::endl;
     header << "bands = " << mSpectralSize << std::endl;
-    header << "lines = " << mNumFrames << std::endl;
+    header << "lines = " << mActiveRow << std::endl;
     header << "samples = " << mSpatialSize << std::endl;
     header << "wavelength units = nm" << std::endl;
 

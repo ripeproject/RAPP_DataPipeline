@@ -4,21 +4,26 @@
 #include <cbdf/HySpexSWIR_384_Parser.hpp>
 #include <cbdf/SpidercamParser.hpp>
 
-#include <opencv2/core.hpp>
-
 #include <filesystem>
 #include <string>
 #include <fstream>
 
 
 
-class cHySpexSWIR384_File : public cHySpexSWIR_384_Parser, public cSpidercamParser
+class cHySpexSWIR384_File : public cHySpexSWIR_384_Parser
 {
 public:
     cHySpexSWIR384_File();
 	virtual ~cHySpexSWIR384_File();
 
     void setOutputPath(std::filesystem::path out);
+
+	// Spidercam Parser Data
+	void onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps);
+
+	// Experiment Info Parser Data
+	void onStartRecordingTimestamp(uint64_t timestamp_ns);
+	void onEndRecordingTimestamp(uint64_t timestamp_ns);
 
 private:
 	void onID(uint8_t device_id, std::string id) override;
@@ -55,18 +60,25 @@ private:
 
 	void onSensorTemperature_K(uint8_t device_id, float temp_K) override;
 
-    void onPosition(spidercam::sPosition_1_t pos) override;
+protected:
+	virtual std::filesystem::path createHeaderFilename(char plotID);
 
 protected:
-	virtual void openDataFile() = 0;
-	virtual void writeHeader() = 0;
+	virtual std::filesystem::path createDataFilename(char plotID) = 0;
+	virtual void writeHeader(std::filesystem::path filename) = 0;
+
+private:
+	void openDataFile();
 
 protected:
     std::filesystem::path mOutputPath;
 	std::ofstream mOutputFile;
 
-	std::size_t mSpatialSize;
-	std::size_t mSpectralSize;
+	std::filesystem::path mDataFilename;
+	std::filesystem::path mHeaderFilename;
+
+	std::size_t mSpatialSize = 0;
+	std::size_t mSpectralSize = 0;
 
 	std::size_t mMaxSpatialSize = 0;
 	std::size_t mMaxSpectralSize = 0;
@@ -80,13 +92,13 @@ protected:
 	uint32_t mFramePeriod_us = 0;
 	uint32_t mIntegrationTime_us = 0;
 
-	std::size_t mNumFrames = 0;
-
 	HySpexConnect::cSpectralData<float> mSpectralCalibration;
 
-    uint32_t    mFrameCount = 0;
+	char mPlotID = 'A';
 
-    struct float3 { float x, y, z; };
+	std::size_t mActiveRow = 0;
+
+	struct float3 { float x, y, z; };
     struct float4 { float x, y, z, s; };
     struct uint3 { uint16_t s, r, a; };
 

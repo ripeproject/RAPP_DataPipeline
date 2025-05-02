@@ -11,17 +11,15 @@ cHySpexSWIR384_BIP_ArcMap::cHySpexSWIR384_BIP_ArcMap() : cHySpexSWIR384_BIP()
 
 cHySpexSWIR384_BIP_ArcMap::~cHySpexSWIR384_BIP_ArcMap()
 {
-    writeHeader();
+    if (mOutputFile.is_open())
+    {
+        mHeaderFilename = createHeaderFilename(mPlotID);
+        writeHeader(mHeaderFilename);
+    }
 }
 
-void cHySpexSWIR384_BIP_ArcMap::writeHeader()
+void cHySpexSWIR384_BIP_ArcMap::writeHeader(std::filesystem::path filename)
 {
-    std::filesystem::path filename = mOutputPath;
-
-    std::string ext = ".swir.hdr";
-
-    filename += ext;
-
     std::ofstream header(filename, std::ios_base::binary);
 
     if (!header.is_open())
@@ -32,7 +30,7 @@ void cHySpexSWIR384_BIP_ArcMap::writeHeader()
 
     header << "BYTEORDER      I" << std::endl;
     header << "LAYOUT         BIP" << std::endl;
-    header << "NROWS          " << mNumFrames << std::endl;
+    header << "NROWS          " << mActiveRow << std::endl;
     header << "NCOLS          " << mSpatialSize << std::endl;
     header << "NBANDS         " << mSpectralSize << std::endl;
     header << "NBITS          " << static_cast<int>(mNumBits) << std::endl;

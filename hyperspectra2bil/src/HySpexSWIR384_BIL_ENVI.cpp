@@ -10,17 +10,15 @@ cHySpexSWIR384_BIL_ENVI::cHySpexSWIR384_BIL_ENVI() : cHySpexSWIR384_BIL()
 
 cHySpexSWIR384_BIL_ENVI::~cHySpexSWIR384_BIL_ENVI()
 {
-    writeHeader();
+    if (mOutputFile.is_open())
+    {
+        mHeaderFilename = createHeaderFilename(mPlotID);
+        writeHeader(mHeaderFilename);
+    }
 }
 
-void cHySpexSWIR384_BIL_ENVI::writeHeader()
+void cHySpexSWIR384_BIL_ENVI::writeHeader(std::filesystem::path filename)
 {
-    std::filesystem::path filename = mOutputPath;
-
-    std::string ext = ".swir.hdr";
-
-    filename += ext;
-
     std::ofstream header(filename, std::ios_base::binary);
 
     if (!header.is_open())
@@ -34,7 +32,7 @@ void cHySpexSWIR384_BIL_ENVI::writeHeader()
     header << "data type = 12" << std::endl;
     header << "byte order = 0" << std::endl;
     header << "bands = " << mSpectralSize << std::endl;
-    header << "lines = " << mNumFrames << std::endl;
+    header << "lines = " << mActiveRow << std::endl;
     header << "samples = " << mSpatialSize << std::endl;
     header << "wavelength units = nm" << std::endl;
 
@@ -47,7 +45,7 @@ void cHySpexSWIR384_BIL_ENVI::writeHeader()
         for (std::size_t i = 0; i < n; ++i)
             header << mSpectralCalibration[i] << ", ";
 
-        header << *mSpectralCalibration.rbegin() << "}" << std::endl;
+        header << mSpectralCalibration.back() << "}" << std::endl;
     }
 }
 

@@ -3,6 +3,9 @@
 
 #include "HySpexSWIR384_File.hpp"
 
+#include <deque>
+#include <list>
+
 
 class cHySpexSWIR384_BIL : public cHySpexSWIR384_File
 {
@@ -15,5 +18,5 @@ protected:
 	void onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip) override;
 
 protected:
-	void openDataFile() override;
+	std::filesystem::path createDataFilename(char plotID) override;
 };

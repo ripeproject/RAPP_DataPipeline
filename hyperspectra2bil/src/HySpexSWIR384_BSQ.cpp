@@ -1,8 +1,6 @@
 
 #include "HySpexSWIR384_BSQ.hpp"
 
-#include <opencv2/opencv.hpp>
-
 #include <iostream>
 
 
@@ -10,28 +8,39 @@ cHySpexSWIR384_BSQ::cHySpexSWIR384_BSQ() : cHySpexSWIR384_File()
 {}
 
 cHySpexSWIR384_BSQ::~cHySpexSWIR384_BSQ()
-{}
+{
+    mOutputFile.close();
 
-void cHySpexSWIR384_BSQ::openDataFile()
+    if (mPlotID == 'B')
+    {
+        auto filename = createDataFilename('\0');
+        std::filesystem::rename(mDataFilename, filename);
+    }
+}
+
+std::filesystem::path cHySpexSWIR384_BSQ::createDataFilename(char plotID)
 {
     std::filesystem::path filename = mOutputPath;
 
-    std::string ext = ".swir.bsq";
+    std::string ext;
+
+    if (plotID > '@')
+    {
+        ext = ".";
+        ext += mPlotID;
+        ext += ".swir.bsq";
+    }
+    else
+        ext = ".swir.bsq";
+
     filename += ext;
 
-    mOutputFile.open(filename, std::ios_base::binary);
-
-    if (!mOutputFile.is_open())
-    {
-        std::string msg = "Could not open: ";
-        msg += filename.string();
-        throw std::runtime_error(msg);
-    }
+    return filename;
 }
 
 void cHySpexSWIR384_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
-    ++mNumFrames;
+    ++mActiveRow;
 
     auto n = image.spatialSize();
     auto m = image.spectralSize();
@@ -41,7 +50,10 @@ void cHySpexSWIR384_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<ui
 
 void cHySpexSWIR384_BSQ::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
-    ++mNumFrames;
+    if (!mOutputFile.is_open())
+        return;
+
+    ++mActiveRow;
 
     for (int i = 0; image.spatialSize(); ++i)
     {

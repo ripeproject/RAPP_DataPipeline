@@ -46,21 +46,48 @@ cFileProcessor::~cFileProcessor()
     mFileReader.close();
 }
 
-void cFileProcessor::setFormat(eExportFormat format)
+void cFileProcessor::setFormat(eExportFormat file_format, eHeaderFormat header_format)
 {
-    switch (format)
+    switch (file_format)
     {
     case eExportFormat::BIL:
-        mVnirConverter.reset(new cHySpexVNIR3000N_BIL_ENVI());
-        mSwirConverter.reset(new cHySpexSWIR384_BIL_ENVI());
+        switch (header_format)
+        {
+        case eHeaderFormat::ArcMap:
+            mVnirConverter.reset(new cHySpexVNIR3000N_BIL_ArcMap());
+            mSwirConverter.reset(new cHySpexSWIR384_BIL_ArcMap());
+            break;
+        case eHeaderFormat::ENVI:
+            mVnirConverter.reset(new cHySpexVNIR3000N_BIL_ENVI());
+            mSwirConverter.reset(new cHySpexSWIR384_BIL_ENVI());
+            break;
+        }
         break;
     case eExportFormat::BIP:
-        mVnirConverter.reset(new cHySpexVNIR3000N_BIP_ENVI());
-        mSwirConverter.reset(new cHySpexSWIR384_BIP_ENVI());
+        switch (header_format)
+        {
+        case eHeaderFormat::ArcMap:
+            mVnirConverter.reset(new cHySpexVNIR3000N_BIP_ArcMap());
+            mSwirConverter.reset(new cHySpexSWIR384_BIP_ArcMap());
+            break;
+        case eHeaderFormat::ENVI:
+            mVnirConverter.reset(new cHySpexVNIR3000N_BIP_ENVI());
+            mSwirConverter.reset(new cHySpexSWIR384_BIP_ENVI());
+            break;
+        }
         break;
     case eExportFormat::BSQ:
-        mVnirConverter.reset(new cHySpexVNIR3000N_BSQ_ENVI());
-        mSwirConverter.reset(new cHySpexSWIR384_BSQ_ENVI());
+        switch (header_format)
+        {
+        case eHeaderFormat::ArcMap:
+            mVnirConverter.reset(new cHySpexVNIR3000N_BSQ_ArcMap());
+            mSwirConverter.reset(new cHySpexSWIR384_BSQ_ArcMap());
+            break;
+        case eHeaderFormat::ENVI:
+            mVnirConverter.reset(new cHySpexVNIR3000N_BSQ_ENVI());
+            mSwirConverter.reset(new cHySpexSWIR384_BSQ_ENVI());
+            break;
+        }
         break;
     };
 }
@@ -106,13 +133,14 @@ void cFileProcessor::run()
         throw std::logic_error("No file is open for reading.");
 	}
 
+    mFileReader.attach(static_cast<cExperimentParser*>(this));
+    mFileReader.attach(static_cast<cSpidercamParser*>(this));
+
     cHySpexVNIR3000N_File* pVnir = mVnirConverter.get();
 	mFileReader.attach(static_cast<cHySpexVNIR_3000N_Parser*>(pVnir));
-    mFileReader.attach(static_cast<cSpidercamParser*>(pVnir));
 
     cHySpexSWIR384_File* pSwir = mSwirConverter.get();
     mFileReader.attach(static_cast<cHySpexSWIR_384_Parser*>(pSwir));
-    mFileReader.attach(static_cast<cSpidercamParser*>(pSwir));
 
 
 	try
@@ -159,5 +187,77 @@ void cFileProcessor::run()
 
     update_file_progress(mID, 100);
 }
+
+
+void cFileProcessor::onBeginHeader() {}
+void cFileProcessor::onEndOfHeader() {}
+
+void cFileProcessor::onBeginFooter() {}
+void cFileProcessor::onEndOfFooter() {}
+
+void cFileProcessor::onExperimentTitle(const std::string& title) {}
+void cFileProcessor::onMeasurementTitle(const std::string& title) {}
+void cFileProcessor::onPrincipalInvestigator(const std::string& investigator) {}
+
+void cFileProcessor::onBeginResearcherList() {}
+void cFileProcessor::onEndOfResearcherList() {}
+void cFileProcessor::onResearcher(const std::string& researcher) {}
+
+void cFileProcessor::onSpecies(const std::string& species) {}
+void cFileProcessor::onCultivar(const std::string& cultivar) {}
+void cFileProcessor::onPermitInfo(const std::string& permit) {}
+void cFileProcessor::onExperimentDoc(const std::string& doc) {}
+
+void cFileProcessor::onBeginTreatmentList() {}
+void cFileProcessor::onEndOfTreatmentList() {}
+void cFileProcessor::onTreatment(const std::string& treatment) {}
+
+void cFileProcessor::onConstructName(const std::string& name) {}
+
+void cFileProcessor::onBeginEventNumberList() {}
+void cFileProcessor::onEndOfEventNumberList() {}
+void cFileProcessor::onEventNumber(const std::string& event) {}
+
+void cFileProcessor::onFieldDesign(const std::string& design) {}
+void cFileProcessor::onPlantingDate(std::uint16_t year, std::uint8_t month, std::uint8_t day, std::uint16_t doy) {}
+void cFileProcessor::onHarvestDate(std::uint16_t year, std::uint8_t month, std::uint8_t day, std::uint16_t doy) {}
+
+void cFileProcessor::onBeginCommentList() {}
+void cFileProcessor::onEndOfCommentList() {}
+void cFileProcessor::onComment(const std::string& comment) {}
+
+void cFileProcessor::onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) {}
+void cFileProcessor::onFileTime(std::uint8_t hour, std::uint8_t minute, std::uint8_t seconds) {}
+
+void cFileProcessor::onDayOfYear(std::uint16_t day_of_year) {}
+
+void cFileProcessor::onBeginSensorList() {}
+void cFileProcessor::onEndOfSensorList() {}
+void cFileProcessor::onSensorBlockInfo(uint16_t class_id, const std::string& name) {}
+
+void cFileProcessor::onStartTime(sExperimentTime_t time) {}
+void cFileProcessor::onEndTime(sExperimentTime_t time) {}
+
+void cFileProcessor::onStartRecordingTimestamp(uint64_t timestamp_ns)
+{
+    mVnirConverter->onStartRecordingTimestamp(timestamp_ns);
+    mSwirConverter->onStartRecordingTimestamp(timestamp_ns);
+}
+
+void cFileProcessor::onEndRecordingTimestamp(uint64_t timestamp_ns)
+{
+    mVnirConverter->onEndRecordingTimestamp(timestamp_ns);
+    mSwirConverter->onEndRecordingTimestamp(timestamp_ns);
+}
+
+void cFileProcessor::onHeartbeatTimestamp(uint64_t timestamp_ns) {}
+
+
+void cFileProcessor::onPosition(spidercam::sPosition_1_t pos)
+{
+    mVnirConverter->onPosition(pos.X_mm, pos.Y_mm, pos.Z_mm, pos.speed_mmps);
+    mSwirConverter->onPosition(pos.X_mm, pos.Y_mm, pos.Z_mm, pos.speed_mmps);
+}
+
 
 

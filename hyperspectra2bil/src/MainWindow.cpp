@@ -105,10 +105,15 @@ void cMainWindow::CreateControls()
 	mpDstDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpDstDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnDestinationDirectory, this);
 
-	mpBIL = new wxRadioButton(this, wxID_ANY, "BIL");
+	mpBIL = new wxRadioButton(this, wxID_ANY, "BIL", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	mpBIP = new wxRadioButton(this, wxID_ANY, "BIP");
 	mpBSQ = new wxRadioButton(this, wxID_ANY, "BSQ");
 	mpBIL->SetValue(true);
+
+
+	mpENVI = new wxRadioButton(this, wxID_ANY, "ENVI", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	mpArcMap = new wxRadioButton(this, wxID_ANY, "ArcMap");
+	mpENVI->SetValue(true);
 
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
@@ -145,13 +150,27 @@ void cMainWindow::CreateLayout()
 	
 	topsizer->AddSpacer(10);
 
-	auto* format_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "File Format");
-	format_sz->Add(mpBIL, wxSizerFlags().Proportion(0).Expand());
+	auto* format_sz = new wxBoxSizer(wxHORIZONTAL);
+
+	auto* file_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "File Format");
+	file_sz->Add(mpBIL, wxSizerFlags().Proportion(0).Expand());
+	file_sz->AddSpacer(10);
+	file_sz->Add(mpBIP, wxSizerFlags().Proportion(0).Expand());
+	file_sz->AddSpacer(10);
+	file_sz->Add(mpBSQ, wxSizerFlags().Proportion(0).Expand());
+	file_sz->AddStretchSpacer(1);
+
+	format_sz->Add(file_sz, wxSizerFlags().Proportion(1).Expand());
+
 	format_sz->AddSpacer(10);
-	format_sz->Add(mpBIP, wxSizerFlags().Proportion(0).Expand());
-	format_sz->AddSpacer(10);
-	format_sz->Add(mpBSQ, wxSizerFlags().Proportion(0).Expand());
-	format_sz->AddStretchSpacer(1);
+
+	auto* header_sz = new wxStaticBoxSizer(wxHORIZONTAL, this, "Header Format");
+	header_sz->Add(mpENVI, wxSizerFlags().Proportion(0).Expand());
+	header_sz->AddSpacer(10);
+	header_sz->Add(mpArcMap, wxSizerFlags().Proportion(0).Expand());
+	header_sz->AddStretchSpacer(1);
+
+	format_sz->Add(header_sz, wxSizerFlags().Proportion(1).Expand());
 
 	topsizer->Add(format_sz, wxSizerFlags().Proportion(0).Expand());
 
@@ -319,12 +338,17 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 
 		cFileProcessor* fp = new cFileProcessor(mNumFilesToProcess++, in_file, out_file);
 
+		eHeaderFormat hdr_format = eHeaderFormat::ENVI;
+
+		if (mpArcMap->GetValue())
+			hdr_format = eHeaderFormat::ArcMap;
+
 		if (mpBIL->GetValue())
-			fp->setFormat(eExportFormat::BIL);
+			fp->setFormat(eExportFormat::BIL, hdr_format);
 		else if (mpBIP->GetValue())
-			fp->setFormat(eExportFormat::BIP);
+			fp->setFormat(eExportFormat::BIP, hdr_format);
 		else if (mpBSQ->GetValue())
-			fp->setFormat(eExportFormat::BSQ);
+			fp->setFormat(eExportFormat::BSQ, hdr_format);
 
 		mFileProcessors.push(fp);
 	}

@@ -11,5 +11,5 @@ public:
 	virtual ~cHySpexSWIR384_BIP_ENVI();
 
 protected:
-	void writeHeader() override;
+	void writeHeader(std::filesystem::path filename) override;
 };

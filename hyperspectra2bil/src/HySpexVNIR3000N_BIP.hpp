@@ -15,5 +15,5 @@ protected:
 	void onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip) override;
 
 protected:
-	void openDataFile() override;
+	std::filesystem::path createDataFilename(char plotID) override;
 };

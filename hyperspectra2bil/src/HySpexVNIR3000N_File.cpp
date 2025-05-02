@@ -6,20 +6,93 @@
 #include <iostream>
 
 
-cHySpexVNIR3000N_File::cHySpexVNIR3000N_File() : cHySpexVNIR_3000N_Parser(), cSpidercamParser()
+cHySpexVNIR3000N_File::cHySpexVNIR3000N_File() : cHySpexVNIR_3000N_Parser()
 {
 }
 
 cHySpexVNIR3000N_File::~cHySpexVNIR3000N_File()
 {
     mOutputFile.close();
+
+    if (mPlotID == 'B')
+    {
+        auto filename = createHeaderFilename('\0');
+        std::filesystem::rename(mHeaderFilename, filename);
+    }
 }
 
 void cHySpexVNIR3000N_File::setOutputPath(std::filesystem::path out)
 {
     mOutputPath = out;
-    openDataFile();
 }
+
+std::filesystem::path cHySpexVNIR3000N_File::createHeaderFilename(char plotID)
+{
+    std::filesystem::path filename = mOutputPath;
+
+    std::string ext;
+
+    if (plotID > '@')
+    {
+        ext = ".";
+        ext += mPlotID;
+        ext += ".vnir.hdr";
+    }
+    else
+        ext = ".vnir.hdr";
+
+    filename += ext;
+
+    return filename;
+}
+
+void cHySpexVNIR3000N_File::openDataFile()
+{
+    mDataFilename = createDataFilename(mPlotID);
+
+    mOutputFile.open(mDataFilename, std::ios_base::binary);
+
+    if (!mOutputFile.is_open())
+    {
+        std::string msg = "Could not open: ";
+        msg += mDataFilename.string();
+        throw std::runtime_error(msg);
+    }
+}
+
+void cHySpexVNIR3000N_File::onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps)
+{
+    mResyncTimestamp = true;
+
+    float4 xyz;
+    xyz.x = x_mm / 1000.0;
+    xyz.y = y_mm / 1000.0;
+    xyz.z = z_mm / 1000.0;
+    xyz.s = speed_mmps / 1000.0;
+
+    mPositions.push_back(xyz);
+}
+
+void cHySpexVNIR3000N_File::onStartRecordingTimestamp(uint64_t timestamp_ns)
+{
+    openDataFile();
+
+    mActiveRow = 0;
+}
+
+void cHySpexVNIR3000N_File::onEndRecordingTimestamp(uint64_t timestamp_ns)
+{
+    mOutputFile.close();
+
+    mHeaderFilename = createHeaderFilename(mPlotID);
+
+    writeHeader(mHeaderFilename);
+
+    ++mPlotID;
+
+    mActiveRow = 0;
+}
+
 
 void cHySpexVNIR3000N_File::onID(uint8_t device_id, std::string id) {}
 void cHySpexVNIR3000N_File::onSerialNumber(uint8_t device_id, std::string serialNumber) {}
@@ -85,18 +158,5 @@ void cHySpexVNIR3000N_File::onNumOfBackgrounds(uint8_t device_id, uint32_t numOf
 void cHySpexVNIR3000N_File::onBackgroundMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> background) {}
 
 void cHySpexVNIR3000N_File::onSensorTemperature_C(uint8_t device_id, float temp_C) {}
-
-void cHySpexVNIR3000N_File::onPosition(spidercam::sPosition_1_t pos)
-{
-    mResyncTimestamp = true;
-
-    float4 xyz;
-    xyz.x = pos.X_mm / 1000.0;
-    xyz.y = pos.Y_mm / 1000.0;
-    xyz.z = pos.Z_mm / 1000.0;
-    xyz.s = pos.speed_mmps / 1000.0;
-
-    mPositions.push_back(xyz);
-}
 
 

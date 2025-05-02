@@ -1,8 +1,6 @@
 
 #include "HySpexSWIR384_File.hpp"
 
-#include <opencv2/opencv.hpp>
-
 #include <iostream>
 
 
@@ -12,12 +10,84 @@ cHySpexSWIR384_File::cHySpexSWIR384_File() : cHySpexSWIR_384_Parser()
 cHySpexSWIR384_File::~cHySpexSWIR384_File()
 {
     mOutputFile.close();
+
+    if (mPlotID == 'B')
+    {
+        auto filename = createHeaderFilename('\0');
+        std::filesystem::rename(mHeaderFilename, filename);
+    }
 }
 
 void cHySpexSWIR384_File::setOutputPath(std::filesystem::path out)
 {
     mOutputPath = out;
+}
+
+std::filesystem::path cHySpexSWIR384_File::createHeaderFilename(char plotID)
+{
+    std::filesystem::path filename = mOutputPath;
+
+    std::string ext;
+
+    if (plotID > '@')
+    {
+        ext = ".";
+        ext += mPlotID;
+        ext += ".swir.hdr";
+    }
+    else
+        ext = ".swir.hdr";
+
+    filename += ext;
+
+    return filename;
+}
+
+void cHySpexSWIR384_File::openDataFile()
+{
+    mDataFilename = createDataFilename(mPlotID);
+
+    mOutputFile.open(mDataFilename, std::ios_base::binary);
+
+    if (!mOutputFile.is_open())
+    {
+        std::string msg = "Could not open: ";
+        msg += mDataFilename.string();
+        throw std::runtime_error(msg);
+    }
+}
+
+void cHySpexSWIR384_File::onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps)
+{
+    mResyncTimestamp = true;
+
+    float4 xyz;
+    xyz.x = x_mm / 1000.0;
+    xyz.y = y_mm / 1000.0;
+    xyz.z = z_mm / 1000.0;
+    xyz.s = speed_mmps / 1000.0;
+
+    mPositions.push_back(xyz);
+}
+
+void cHySpexSWIR384_File::onStartRecordingTimestamp(uint64_t timestamp_ns)
+{
     openDataFile();
+
+    mActiveRow = 0;
+}
+
+void cHySpexSWIR384_File::onEndRecordingTimestamp(uint64_t timestamp_ns)
+{
+    mOutputFile.close();
+
+    mHeaderFilename = createHeaderFilename(mPlotID);
+
+    writeHeader(mHeaderFilename);
+
+    ++mPlotID;
+
+    mActiveRow = 0;
 }
 
 void cHySpexSWIR384_File::onID(uint8_t device_id, std::string id) {}
@@ -84,18 +154,5 @@ void cHySpexSWIR384_File::onNumOfBackgrounds(uint8_t device_id, uint32_t numOfBa
 void cHySpexSWIR384_File::onBackgroundMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> background) {}
 
 void cHySpexSWIR384_File::onSensorTemperature_K(uint8_t device_id, float temp_K) {}
-
-void cHySpexSWIR384_File::onPosition(spidercam::sPosition_1_t pos)
-{
-    mResyncTimestamp = true;
-
-    float4 xyz;
-    xyz.x = pos.X_mm / 1000.0;
-    xyz.y = pos.Y_mm / 1000.0;
-    xyz.z = pos.Z_mm / 1000.0;
-    xyz.s = pos.speed_mmps / 1000.0;
-
-    mPositions.push_back(xyz);
-}
 
 

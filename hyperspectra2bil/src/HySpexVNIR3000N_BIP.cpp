@@ -8,28 +8,42 @@ cHySpexVNIR3000N_BIP::cHySpexVNIR3000N_BIP() : cHySpexVNIR3000N_File()
 {}
 
 cHySpexVNIR3000N_BIP::~cHySpexVNIR3000N_BIP()
-{}
+{
+    mOutputFile.close();
 
-void cHySpexVNIR3000N_BIP::openDataFile()
+    if (mPlotID == 'B')
+    {
+        auto filename = createDataFilename('\0');
+        std::filesystem::rename(mDataFilename, filename);
+    }
+}
+
+std::filesystem::path cHySpexVNIR3000N_BIP::createDataFilename(char plotID)
 {
     std::filesystem::path filename = mOutputPath;
 
-    std::string ext = ".vnir.bip";
+    std::string ext;
+
+    if (plotID > '@')
+    {
+        ext = ".";
+        ext += mPlotID;
+        ext += ".vnir.bip";
+    }
+    else
+        ext = ".vnir.bip";
+
     filename += ext;
 
-    mOutputFile.open(filename, std::ios_base::binary);
-
-    if (!mOutputFile.is_open())
-    {
-        std::string msg = "Could not open: ";
-        msg += filename.string();
-        throw std::runtime_error(msg);
-    }
+    return filename;
 }
 
 void cHySpexVNIR3000N_BIP::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
-    ++mNumFrames;
+    if (!mOutputFile.is_open())
+        return;
+
+    ++mActiveRow;
 
     auto n = image.spatialSize();
     auto m = image.spectralSize();
@@ -45,7 +59,10 @@ void cHySpexVNIR3000N_BIP::onImage(uint8_t device_id, HySpexConnect::cImageData<
 
 void cHySpexVNIR3000N_BIP::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
-    ++mNumFrames;
+    if (!mOutputFile.is_open())
+        return;
+
+    ++mActiveRow;
 
     for (int i = 0; image.spatialSize(); ++i)
     {

@@ -57,6 +57,9 @@ private:
 	wxRadioButton* mpBIP = nullptr;
 	wxRadioButton* mpBSQ = nullptr;
 
+	wxRadioButton* mpArcMap = nullptr;
+	wxRadioButton* mpENVI   = nullptr;
+
 	wxButton* mpExportButton = nullptr;
 
 	cFileProgressCtrl* mpProgressCtrl = nullptr;

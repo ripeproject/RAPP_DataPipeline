@@ -9,17 +9,15 @@ cHySpexSWIR384_BSQ_ENVI::cHySpexSWIR384_BSQ_ENVI() : cHySpexSWIR384_BSQ()
 
 cHySpexSWIR384_BSQ_ENVI::~cHySpexSWIR384_BSQ_ENVI()
 {
-    writeHeader();
+    if (mOutputFile.is_open())
+    {
+        mHeaderFilename = createHeaderFilename(mPlotID);
+        writeHeader(mHeaderFilename);
+    }
 }
 
-void cHySpexSWIR384_BSQ_ENVI::writeHeader()
+void cHySpexSWIR384_BSQ_ENVI::writeHeader(std::filesystem::path filename)
 {
-    std::filesystem::path filename = mOutputPath;
-
-    std::string ext = ".swir.hdr";
-
-    filename += ext;
-
     std::ofstream header(filename, std::ios_base::binary);
 
     if (!header.is_open())
@@ -33,7 +31,7 @@ void cHySpexSWIR384_BSQ_ENVI::writeHeader()
     header << "data type = 12" << std::endl;
     header << "byte order = 0" << std::endl;
     header << "bands = " << mSpectralSize << std::endl;
-    header << "lines = " << mNumFrames << std::endl;
+    header << "lines = " << mActiveRow << std::endl;
     header << "samples = " << mSpatialSize << std::endl;
     header << "wavelength units = nm" << std::endl;
 
