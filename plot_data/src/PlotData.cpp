@@ -53,7 +53,12 @@ void cPlotData::setExperimentInfo(const cExperimentInfo& info)
 
 void cPlotData::setExperimentTitle(const std::string& title)
 {
-	mExperimentInfo.setTitle(title);
+	mExperimentInfo.setExperimentTitle(title);
+}
+
+void cPlotData::setMeasurementTitle(const std::string& title)
+{
+	mExperimentInfo.setMeasurementTitle(title);
 }
 
 void cPlotData::addPlotInfo(const cPlotMetaData& info)
@@ -318,7 +323,12 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 
 	out << "\n";
 	out << "Experiment Information: \n";
-	out << "Title: " << mExperimentInfo.title() << "\n";
+
+	auto title = mExperimentInfo.experimentTitle();
+	if (title.empty())
+		auto title = mExperimentInfo.measurementTitle();
+
+	out << "Title: " << title << "\n";
 
 	const auto& comments = mExperimentInfo.comments();
 	if (!comments.empty())
@@ -562,23 +572,23 @@ void cPlotData::write_plot_num_points_file_by_row(std::ofstream& out)
 {
 	auto doy_last = --(mDates.end());
 
-	out << "Date,\t";
+	out << "Date, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "DayOfYear,\t";
+	out << "DayOfYear, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->doy << ",\t";
+		out << it->doy << ", ";
 	}
 	out << doy_last->doy << "\n";
 
 	for (const auto& plot : mPlotSizes)
 	{
-		out << "Plot_" << plot.first << ",\t";
+		out << "Plot_" << plot.first << ", ";
 
 		const auto& numPoints = plot.second;
 
@@ -593,9 +603,9 @@ void cPlotData::write_plot_num_points_file_by_row(std::ofstream& out)
 			);
 
 			if (points == numPoints.end())
-				out << ",\t";
+				out << ", ";
 			else
-				out << points->num_points << ",\t";
+				out << points->num_points << ", ";
 		}
 
 		auto doy = doy_last->doy;
@@ -615,7 +625,7 @@ void cPlotData::write_plot_num_points_file_by_row(std::ofstream& out)
 
 void cPlotData::write_plot_num_points_file_by_column(std::ofstream& out)
 {
-	out << "Date,\t" << "DayOfYear,\t";
+	out << "Date, " << "DayOfYear, ";
 
 	auto plot_last = --(mPlotSizes.end());
 	for (auto it = mPlotSizes.begin(); it != plot_last; ++it)
@@ -626,8 +636,8 @@ void cPlotData::write_plot_num_points_file_by_column(std::ofstream& out)
 
 	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
-		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
-		out << date_it->doy << ",\t";
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
 
 		auto doy = date_it->doy;
 
@@ -666,23 +676,23 @@ void cPlotData::write_plot_height_file_by_row(std::ofstream& out)
 {
 	auto doy_last = --(mDates.end());
 
-	out << "Date,\t";
+	out << "Date, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "DayOfYear,\t";
+	out << "DayOfYear, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->doy << ",\t";
+		out << it->doy << ", ";
 	}
 	out << doy_last->doy << "\n";
 
 	for (const auto& plot : mPlotHeights)
 	{
-		out << "Plot_" << plot.first << ",\t";
+		out << "Plot_" << plot.first << ", ";
 
 		const auto& heights = plot.second;
 
@@ -697,9 +707,9 @@ void cPlotData::write_plot_height_file_by_row(std::ofstream& out)
 			);
 
 			if (height == heights.end())
-				out << ",\t";
+				out << ", ";
 			else
-				out << height->height_mm << ",\t";
+				out << height->height_mm << ", ";
 		}
 
 		auto doy = doy_last->doy;
@@ -719,7 +729,7 @@ void cPlotData::write_plot_height_file_by_row(std::ofstream& out)
 
 void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 {
-	out << "Date,\t" << "DayOfYear,\t";
+	out << "Date, " << "DayOfYear, ";
 
 	auto plot_last = --(mPlotHeights.end());
 	for (auto it = mPlotHeights.begin(); it != plot_last; ++it)
@@ -730,8 +740,8 @@ void cPlotData::write_plot_height_file_by_column(std::ofstream& out)
 
 	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
-		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
-		out << date_it->doy << ",\t";
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
 
 		auto doy = date_it->doy;
 
@@ -816,17 +826,17 @@ void cPlotData::write_replicate_height_file_by_row(std::ofstream& out)
 {
 	auto doy_last = --(mDates.end());
 
-	out << "Date,\t";
+	out << "Date, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "Day of Year,\t";
+	out << "Day of Year, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->doy << ",\t";
+		out << it->doy << ", ";
 	}
 	out << doy_last->doy << "\n";
 
@@ -834,7 +844,7 @@ void cPlotData::write_replicate_height_file_by_row(std::ofstream& out)
 	{
 		const auto& info = mGroups[group.first].front();
 
-		out << info->event() << ",\t";
+		out << info->event() << ", ";
 
 		const auto& heights = group.second;
 
@@ -843,7 +853,7 @@ void cPlotData::write_replicate_height_file_by_row(std::ofstream& out)
 
 		for (auto it = heights.begin(); it != last; ++it)
 		{
-			out << it->avgHeight_mm << ", " << it->stdHeight_mm << ",\t";
+			out << it->avgHeight_mm << ", " << it->stdHeight_mm << ", ";
 		}
 		out << last->avgHeight_mm << ", " << last->stdHeight_mm << "\n";
 	}
@@ -851,7 +861,7 @@ void cPlotData::write_replicate_height_file_by_row(std::ofstream& out)
 
 void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 {
-	out << "Date,\t" << "DayOfYear,\t";
+	out << "Date, " << "DayOfYear, ";
 
 	auto group_last = --(mGroups.end());
 	for (auto it = mGroups.begin(); it != group_last; ++it)
@@ -866,8 +876,8 @@ void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 
 	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
-		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
-		out << date_it->doy << ",\t";
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
 
 		auto doy = date_it->doy;
 
@@ -937,23 +947,23 @@ void cPlotData::write_plot_biomass_file_by_row(std::ofstream& out)
 {
 	auto doy_last = --(mDates.end());
 
-	out << "Date,\t";
+	out << "Date, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "DayOfYear,\t";
+	out << "DayOfYear, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->doy << ",\t";
+		out << it->doy << ", ";
 	}
 	out << doy_last->doy << "\n";
 
 	for (const auto& plot : mPlotBioMasses)
 	{
-		out << "Plot_" << plot.first << ",\t";
+		out << "Plot_" << plot.first << ", ";
 
 		const auto& biomasses = plot.second;
 
@@ -968,9 +978,9 @@ void cPlotData::write_plot_biomass_file_by_row(std::ofstream& out)
 			);
 
 			if (biomass == biomasses.end())
-				out << ",\t";
+				out << ", ";
 			else
-				out << biomass->biomass << ",\t";
+				out << biomass->biomass << ", ";
 		}
 
 		auto doy = doy_last->doy;
@@ -990,7 +1000,7 @@ void cPlotData::write_plot_biomass_file_by_row(std::ofstream& out)
 
 void cPlotData::write_plot_biomass_file_by_column(std::ofstream& out)
 {
-	out << "Date,\t" << "DayOfYear,\t";
+	out << "Date, " << "DayOfYear, ";
 
 	auto plot_last = --(mPlotBioMasses.end());
 	for (auto it = mPlotBioMasses.begin(); it != plot_last; ++it)
@@ -1001,8 +1011,8 @@ void cPlotData::write_plot_biomass_file_by_column(std::ofstream& out)
 
 	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
-		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
-		out << date_it->doy << ",\t";
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
 
 		auto doy = date_it->doy;
 
@@ -1087,17 +1097,17 @@ void cPlotData::write_replicate_biomass_file_by_row(std::ofstream& out)
 {
 	auto doy_last = --(mDates.end());
 
-	out << "Date,\t";
+	out << "Date, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->month << "/" << it->day << "/" << it->year << ",\t";
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
 	}
 	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
 
-	out << "DayOfYear,\t";
+	out << "DayOfYear, ";
 	for (auto it = mDates.begin(); it != doy_last; ++it)
 	{
-		out << it->doy << ",\t";
+		out << it->doy << ", ";
 	}
 	out << doy_last->doy << "\n";
 
@@ -1105,7 +1115,7 @@ void cPlotData::write_replicate_biomass_file_by_row(std::ofstream& out)
 	{
 		const auto& info = mGroups[group.first].front();
 
-		out << info->event() << ",\t";
+		out << info->event() << ", ";
 
 		const auto& biomasses = group.second;
 
@@ -1114,7 +1124,7 @@ void cPlotData::write_replicate_biomass_file_by_row(std::ofstream& out)
 
 		for (auto it = biomasses.begin(); it != last; ++it)
 		{
-			out << it->avgBioMass << ", " << it->stdBioMass << ",\t";
+			out << it->avgBioMass << ", " << it->stdBioMass << ", ";
 		}
 		out << last->avgBioMass << ", " << last->stdBioMass << "\n";
 	}
@@ -1122,7 +1132,7 @@ void cPlotData::write_replicate_biomass_file_by_row(std::ofstream& out)
 
 void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
 {
-	out << "Date,\t" << "DayOfYear,\t";
+	out << "Date, " << "DayOfYear, ";
 
 	auto group_last = --(mGroups.end());
 	for (auto it = mGroups.begin(); it != group_last; ++it)
@@ -1137,8 +1147,8 @@ void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
 	auto date_it = mDates.begin();
 	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
 	{
-		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ",\t";
-		out << date_it->doy << ",\t";
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
 
 		auto doy = date_it->doy;
 

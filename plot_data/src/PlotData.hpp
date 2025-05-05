@@ -25,6 +25,7 @@ public:
 
 	void setExperimentInfo(const cExperimentInfo& info);
 	void setExperimentTitle(const std::string& title);
+	void setMeasurementTitle(const std::string& title);
 
 	void addPlotInfo(const cPlotMetaData& info);
 
