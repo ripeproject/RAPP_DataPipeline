@@ -322,20 +322,27 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 
 	std::string config_file = dlg.GetPath().ToStdString();
 
-	if (!mConfigData.open(config_file))
+	try
 	{
-		mpLoadConfigFile->SetValue("");
-		mpComputeButton->Disable();
-		return;
+		if (!mConfigData.open(config_file))
+		{
+			mpLoadConfigFile->SetValue("");
+			mpComputeButton->Disable();
+			return;
+		}
+
+		mConfigFileName = dlg.GetPath();
+		mpLoadConfigFile->SetValue(mConfigFileName);
+
+		mpSaveDataAsRowMajor->SetValue(mConfigData.getOptions().getSaveDataRowMajor());
+
+		if (!mDstDirectory.IsEmpty() && !mSrcDirectory.IsEmpty())
+			mpComputeButton->Enable();
 	}
-
-	mConfigFileName = dlg.GetPath();
-	mpLoadConfigFile->SetValue(mConfigFileName);
-
-	mpSaveDataAsRowMajor->SetValue(mConfigData.getOptions().getSaveDataRowMajor());
-
-	if (!mDstDirectory.IsEmpty() && !mSrcDirectory.IsEmpty())
-		mpComputeButton->Enable();
+	catch (const std::logic_error& e)
+	{
+		console_message(e.what());
+	}
 }
 
 void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))

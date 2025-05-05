@@ -105,7 +105,10 @@ void cPlotDataConfigBiomass::load(const nlohmann::json& jdoc)
 	if ((type == "oct_tree") || (type == "oct tree"))
 	{
 		mAlgorithmType = eBiomassAlgorithmType::OCT_TREE;
-		mMinBinCount = biomass["min_bin_count"];
+		if (biomass.contains("min_bin_count"))
+			mMinBinCount = biomass["min_bin_count"];
+		else
+			throw std::logic_error("Algorithm type \"oct tree\" requires the \"min_bin_count\" parameter!");
 	}
 	else if ((type == "voxel_grid") || (type == "voxel grid"))
 	{
