@@ -95,8 +95,12 @@ void cPlotDataConfigBiomass::load(const nlohmann::json& jdoc)
 	
 	if (biomass.contains("algorithm type"))
 		type = biomass["algorithm type"];
-	else
+	else if(biomass.contains("algorithm_type"))
 		type = biomass["algorithm_type"];
+	else
+	{
+		throw std::logic_error("Configuration file missing \"algorithm type\" entry!");
+	}
 
 	if ((type == "oct_tree") || (type == "oct tree"))
 	{
