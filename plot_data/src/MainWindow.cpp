@@ -572,6 +572,8 @@ wxThread::ExitCode cMainWindow::Entry()
 	mResults.write_plot_biomass_file(mDstDirectory.ToStdString());
 //	mResults.write_replicate_biomass_file(mDstDirectory.ToStdString());
 
+	mResults.clear();
+
 	wxString msg = "Finished processing ";
 	msg += mSrcDirectory;
 	wxLogMessage(msg);

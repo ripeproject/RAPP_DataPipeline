@@ -18,6 +18,8 @@ public:
 	cPlotData() = default;
 	~cPlotData();
 
+	void clear();
+
 	void setRootFileName(const std::string& filename);
 
 	bool saveRowMajor() const;

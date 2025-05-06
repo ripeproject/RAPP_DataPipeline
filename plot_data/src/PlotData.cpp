@@ -31,6 +31,33 @@ cPlotData::~cPlotData()
 	mGroups.clear();
 }
 
+void cPlotData::clear()
+{
+	mExperimentInfo.clear();
+
+	for (auto plot : mpPlots)
+	{
+		delete plot;
+	}
+
+	mpPlots.clear();
+
+	for (auto& group : mGroups)
+	{
+		group.clear();
+	}
+
+	mGroups.clear();
+
+	mDates.clear();
+	mPlotSizes.clear();
+	mHeightMetaData.clear();
+	mPlotHeights.clear();
+	mGroupHeights.clear();
+	mPlotBioMasses.clear();
+	mGroupBioMasses.clear();
+}
+
 void cPlotData::setRootFileName(const std::string& filename)
 {
 	mRootFileName = filename;
