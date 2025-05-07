@@ -17,8 +17,9 @@ void cPlotDataConfigHeight::clear()
 	mDirty = false;
 
 	mGroundLevelBound_mm = 0.0;
-
 	mHeightPercentile = 95.0;
+
+	mFilters.clear();
 }
 
 bool cPlotDataConfigHeight::isDirty() const

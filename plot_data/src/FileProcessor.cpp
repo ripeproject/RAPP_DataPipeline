@@ -373,16 +373,18 @@ void cFileProcessor::computePlotBioMasses()
 
         if (plot.vegetationOnly())
         {
-            // Nothing to do...
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
         }
         else if (plot.groundLevel_mm().has_value())
         {
-            groundLevelBound_mm = plot.groundLevel_mm().value();
+            auto groundShift_mm = plot.groundLevel_mm().value();
+
+            plot::trim_below_in_place(plot, groundShift_mm);
+
+            plot::translate(plot, 0, 0, -groundShift_mm);
+            plot.clearGroundLevel_mm();
 
             plot::trim_below_in_place(plot, groundLevelBound_mm);
-
-            plot::translate(plot, 0, 0, -groundLevelBound_mm);
-            plot.clearGroundLevel_mm();
         }
         else
         {

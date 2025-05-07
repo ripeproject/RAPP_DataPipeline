@@ -51,9 +51,12 @@ void cPlotData::clear()
 
 	mDates.clear();
 	mPlotSizes.clear();
+
 	mHeightMetaData.clear();
 	mPlotHeights.clear();
 	mGroupHeights.clear();
+
+	mBioMassMetaData.clear();
 	mPlotBioMasses.clear();
 	mGroupBioMasses.clear();
 }

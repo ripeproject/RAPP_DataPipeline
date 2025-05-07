@@ -18,6 +18,9 @@ void cPlotDataConfigBiomass::clear()
 
 	mGroundLevelBound_mm = 0.0;
 	mVoxelSize_mm = 1.0;
+	mMinBinCount = 1;
+
+	mFilters.clear();
 }
 
 bool cPlotDataConfigBiomass::isDirty() const

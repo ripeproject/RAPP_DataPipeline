@@ -68,6 +68,8 @@ bool cPlotDataConfigFile::open(const std::string& file_name)
 		return false;
 	}
 
+	clear();
+
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
