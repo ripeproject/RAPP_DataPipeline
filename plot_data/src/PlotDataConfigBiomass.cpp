@@ -113,14 +113,18 @@ void cPlotDataConfigBiomass::load(const nlohmann::json& jdoc)
 	else if ((type == "voxel_grid") || (type == "voxel grid"))
 	{
 		mAlgorithmType = eBiomassAlgorithmType::VOXEL_GRID;
+		if (biomass.contains("min_bin_count"))
+			mMinBinCount = biomass["min_bin_count"];
+		else
+			mMinBinCount = 0;
 	}
 	else if (type == "open3d")
 	{
 		mAlgorithmType = eBiomassAlgorithmType::OPEN3D;
 	}
-	else if (type == "qhull")
+	else if (type == "convex_hull")
 	{
-		mAlgorithmType = eBiomassAlgorithmType::QHULL;
+		mAlgorithmType = eBiomassAlgorithmType::CONVEX_HULL;
 	}
 
 	if (biomass.contains("ground_level_bound_mm"))
@@ -148,12 +152,14 @@ void cPlotDataConfigBiomass::save(nlohmann::json& jdoc)
 		break;
 	case eBiomassAlgorithmType::VOXEL_GRID:
 		biomass["algorithm_type"] = "voxel_grid";
+		if (mMinBinCount > 0)
+			biomass["min_bin_count"] = mMinBinCount;
 		break;
 	case eBiomassAlgorithmType::OPEN3D:
 		biomass["algorithm_type"] = "open3d";
 		break;
-	case eBiomassAlgorithmType::QHULL:
-		biomass["algorithm_type"] = "qhull";
+	case eBiomassAlgorithmType::CONVEX_HULL:
+		biomass["algorithm_type"] = "convex_hull";
 		break;
 	};
 

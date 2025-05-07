@@ -332,6 +332,12 @@ void cFileProcessor::computePlotBioMasses()
         mResults.addBiomassMetaInfo(info);
         break;
     case eBiomassAlgorithmType::VOXEL_GRID:
+        if (min_bin_count > 0)
+        {
+            info = "min bin count: ";
+            info += std::to_string(min_bin_count);
+            mResults.addBiomassMetaInfo(info);
+        }
         break;
     }
 
@@ -392,7 +398,7 @@ void cFileProcessor::computePlotBioMasses()
             biomass = nPlotUtils::computeDigitalBiomass_oct_tree(plot, voxel_size_mm, min_bin_count);
             break;
         case eBiomassAlgorithmType::VOXEL_GRID:
-            biomass = nPlotUtils::computeDigitalBiomass_voxel_grid(plot, voxel_size_mm);
+            biomass = nPlotUtils::computeDigitalBiomass_voxel_grid(plot, voxel_size_mm, min_bin_count);
             break;
         }
 

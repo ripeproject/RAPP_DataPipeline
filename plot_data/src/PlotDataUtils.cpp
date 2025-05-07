@@ -241,7 +241,7 @@ double nPlotUtils::computeDigitalBiomass_oct_tree(const cPlotPointCloud& plot, d
     return biomass;
 }
 
-double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot, double voxel_size_mm)
+double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot, double voxel_size_mm, int min_points_per_voxel)
 {
     auto num_points_in_cloud = plot.size();
 
@@ -262,30 +262,23 @@ double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot,
     pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
     sor.setInputCloud(cloud);
     sor.setLeafSize(voxel_size_mm, voxel_size_mm, voxel_size_mm);
+    sor.setMinimumPointsNumberPerVoxel(min_points_per_voxel);
     sor.filter(*voxels);
 
     auto leaf_size = sor.getLeafSize();
 
     double single_voxel_volume_mm3 = leaf_size[0] * leaf_size[1] * leaf_size[2];
 
-    auto v = voxels->data;
     auto num_points_in_voxels = voxels->data.size();
 
-    std::sort(v.begin(), v.end());
+    auto num_voxels = voxels->height * voxels->width;
 
-    auto last = std::unique(v.begin(), v.end());
-    v.erase(last, v.end());
+    double volume_mm3 = single_voxel_volume_mm3 * num_voxels;
 
-    auto m = v.size();
+    double dx_mm = plot.maxX_mm() - plot.minX_mm();
+    double dy_mm = plot.maxY_mm() - plot.minY_mm();
 
-    auto n = voxels->height * voxels->width;
-
-    double volume_mm3 = single_voxel_volume_mm3 * n;
-
-    double dx = plot.maxX_mm() - plot.minX_mm();
-    double dy = plot.maxY_mm() - plot.minY_mm();
-
-    double area_mm2 = dx * dy;
+    double area_mm2 = dx_mm * dy_mm;
 
     double biomass = 0;
 
@@ -293,6 +286,11 @@ double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot,
         biomass = volume_mm3 / area_mm2;
 
     return biomass;
+}
+
+double nPlotUtils::computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot, double voxel_size_mm, int min_points_per_voxel)
+{
+    return 0;
 }
 
 /*
