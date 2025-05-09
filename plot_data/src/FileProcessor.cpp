@@ -315,6 +315,9 @@ void cFileProcessor::computePlotBioMasses()
     case eBiomassAlgorithmType::VOXEL_GRID:
         mResults.addBiomassMetaInfo("algorithm: voxelization (voxel grid)");
         break;
+    case eBiomassAlgorithmType::CONVEX_HULL:
+        mResults.addBiomassMetaInfo("algorithm: convex hull");
+        break;
     default:
         mResults.addBiomassMetaInfo("algorithm: voxelization");
         break;
@@ -338,6 +341,8 @@ void cFileProcessor::computePlotBioMasses()
             info += std::to_string(min_bin_count);
             mResults.addBiomassMetaInfo(info);
         }
+        break;
+    case eBiomassAlgorithmType::CONVEX_HULL:
         break;
     }
 
@@ -401,6 +406,9 @@ void cFileProcessor::computePlotBioMasses()
             break;
         case eBiomassAlgorithmType::VOXEL_GRID:
             biomass = nPlotUtils::computeDigitalBiomass_voxel_grid(plot, voxel_size_mm, min_bin_count);
+            break;
+        case eBiomassAlgorithmType::CONVEX_HULL:
+            biomass = nPlotUtils::computeDigitalBiomass_convex_hull(plot);
             break;
         }
 

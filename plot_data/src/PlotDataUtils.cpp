@@ -19,6 +19,15 @@
 #include <pcl/conversions.h>
 #include <pcl/filters/voxel_grid.h>
 
+#include <pcl/ModelCoefficients.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/filters/project_inliers.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/surface/convex_hull.h>
+
 //#include <open3d/Open3D.h>
 
 
@@ -288,9 +297,118 @@ double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot,
     return biomass;
 }
 
-double nPlotUtils::computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot, double voxel_size_mm, int min_points_per_voxel)
+double nPlotUtils::computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot)
 {
-    return 0;
+/*
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>),
+                                        cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>),
+                                        cloud_projected(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCDReader reader;
+   
+    reader.read("table_scene_mug_stereo_textured.pcd", *cloud);
+    // Build a filter to remove spurious NaNs and scene background
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pass.setInputCloud(cloud);
+    pass.setFilterFieldName("z");
+    pass.setFilterLimits(0, 1.1);
+    pass.filter(*cloud_filtered);
+    std::cerr << "PointCloud after filtering has: " << cloud_filtered->size() << " data points." << std::endl;
+   
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+    // Create the segmentation object
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    // Optional
+    seg.setOptimizeCoefficients(true);
+    // Mandatory
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setDistanceThreshold(0.01);
+   
+    seg.setInputCloud(cloud_filtered);
+    seg.segment(*inliers, *coefficients);
+    std::cerr << "PointCloud after segmentation has: " << inliers->indices.size() << " inliers." << std::endl;
+   
+    // Project the model inliers
+    pcl::ProjectInliers<pcl::PointXYZ> proj;
+    proj.setModelType(pcl::SACMODEL_PLANE);
+    // proj.setIndices (inliers);
+    proj.setInputCloud(cloud_filtered);
+    proj.setModelCoefficients(coefficients);
+    proj.filter(*cloud_projected);
+    std::cerr << "PointCloud after projection has: " << cloud_projected->size() << " data points." << std::endl;
+   
+    // Create a Concave Hull representation of the projected inliers
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::ConcaveHull<pcl::PointXYZ> chull;
+    chull.setInputCloud(cloud_projected);
+    chull.setAlpha(0.1);
+    chull.reconstruct(*cloud_hull);
+   
+    std::cerr << "Concave hull has: " << cloud_hull->size() << " data points." << std::endl;
+   
+    pcl::PCDWriter writer;
+    writer.write("table_scene_mug_stereo_textured_hull.pcd", *cloud_hull, false);
+   
+    return (0);
+*/
+
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
+
+    for (const auto& point : plot)
+    {
+        points->emplace_back(pcl::PointXYZ(point.x_mm, point.y_mm, point.z_mm));
+    }
+
+    pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+
+    // Create the segmentation object
+    pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+    // Optional
+    seg.setOptimizeCoefficients(true);
+
+    // Mandatory
+    seg.setModelType(pcl::SACMODEL_PLANE);
+    seg.setMethodType(pcl::SAC_RANSAC);
+    seg.setDistanceThreshold(0.01);
+
+    seg.setInputCloud(points);
+    seg.segment(*inliers, *coefficients);
+//    std::cerr << "PointCloud after segmentation has: " << inliers->indices.size() << " inliers." << std::endl;
+
+    // Project the model inliers
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::ProjectInliers<pcl::PointXYZ> proj;
+    proj.setModelType(pcl::SACMODEL_PLANE);
+    proj.setInputCloud(points);
+    proj.setModelCoefficients(coefficients);
+    proj.filter(*cloud_projected);
+//    std::cerr << "PointCloud after projection has: " << cloud_projected->size() << " data points." << std::endl;
+
+    // Create a Convex Hull representation of the projected inliers
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::ConvexHull<pcl::PointXYZ> chull;
+    chull.setInputCloud(cloud_projected);
+    chull.reconstruct(*cloud_hull);
+
+//    std::cerr << "Convex hull has: " << cloud_hull->size() << " data points." << std::endl;
+
+    double volume_mm3 = 0;
+
+    double dx_mm = plot.maxX_mm() - plot.minX_mm();
+    double dy_mm = plot.maxY_mm() - plot.minY_mm();
+
+    double area_mm2 = dx_mm * dy_mm;
+
+    double biomass = 0;
+
+    if (area_mm2 > 0.0)
+        biomass = volume_mm3 / area_mm2;
+
+    return biomass;
 }
 
 /*
