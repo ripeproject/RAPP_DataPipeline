@@ -177,13 +177,32 @@ void cExportJpegs::onEndOfHeader() {}
 void cExportJpegs::onBeginFooter() {}
 void cExportJpegs::onEndOfFooter() {}
 
-void cExportJpegs::onTitle(const std::string& title)
+void cExportJpegs::onExperimentTitle(const std::string& title)
 {
-    mTitle = title;
+    mExperimentTitle = title;
 
     if (mPlotConfigData)
     {
-        auto it = mPlotConfigData->find_by_experiment_name(mTitle);
+        auto it = mPlotConfigData->find_by_measurement_name(mExperimentTitle);
+
+        if (it != mPlotConfigData->end())
+        {
+            mPlots = it->data();
+        }
+        else
+        {
+            mAbort = true;
+        }
+    }
+}
+
+void cExportJpegs::onMeasurementTitle(const std::string& title)
+{
+    mMeasurementTitle = title;
+
+    if (mPlotConfigData)
+    {
+        auto it = mPlotConfigData->find_by_measurement_name(mMeasurementTitle);
 
         if (it != mPlotConfigData->end())
         {
