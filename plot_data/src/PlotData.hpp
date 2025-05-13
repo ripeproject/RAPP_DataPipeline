@@ -45,6 +45,12 @@ public:
 
 	void addPlotBiomass(int plot_id, int doy, double biomass);
 
+	void clearLAI_MetaInfo();
+	void addLAI_MetaInfo(std::string_view info);
+	void addLAI_MetaInfo(const std::vector<std::string>& info);
+
+	void addPlotLAI(int plot_id, int doy, double lai);
+
 	void computeReplicateData();
 
 	void write_metadata_file(const std::string& directory);
@@ -65,6 +71,12 @@ public:
 	void write_replicate_biomass_file(const std::string& directory);
 	void write_replicate_biomass_file(const std::string& directory, const std::string& filename);
 
+	void write_plot_lai_file(const std::string& directory);
+	void write_plot_lai_file(const std::string& directory, const std::string& filename);
+
+	void write_replicate_lai_file(const std::string& directory);
+	void write_replicate_lai_file(const std::string& directory, const std::string& filename);
+
 protected:
 	void write_plot_num_points_file_by_row(std::ofstream& out);
 	void write_plot_num_points_file_by_column(std::ofstream& out);
@@ -80,6 +92,12 @@ protected:
 
 	void write_replicate_biomass_file_by_row(std::ofstream& out);
 	void write_replicate_biomass_file_by_column(std::ofstream& out);
+
+	void write_plot_lai_file_by_row(std::ofstream& out);
+	void write_plot_lai_file_by_column(std::ofstream& out);
+
+	void write_replicate_lai_file_by_row(std::ofstream& out);
+	void write_replicate_lai_file_by_column(std::ofstream& out);
 
 	void splitIntoGroups(cPlotMetaData* pPlotInfo);
 	bool inGroup(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2);
@@ -158,5 +176,24 @@ private:
 	};
 
 	std::map<int, std::vector<sGroupBioMassData_t> > mGroupBioMasses;
+
+	std::vector<std::string> mLAI_MetaData;
+
+	struct sPlotLAI_Data_t
+	{
+		int doy = 0;
+		double lai = 0;
+	};
+
+	std::map<int, std::vector<sPlotLAI_Data_t> > mPlotLAIs;
+
+	struct sGroupLAI_Data_t
+	{
+		int doy = 0;
+		double avgLAI = 0;
+		double stdLAI = 0;
+	};
+
+	std::map<int, std::vector<sGroupLAI_Data_t> > mGroupLAIs;
 };
 

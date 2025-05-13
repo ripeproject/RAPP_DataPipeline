@@ -102,6 +102,9 @@ void cFileProcessor::run()
     update_prefix_progress(mID, "Computing Plot Digital Biomass...    ", 0);
     computePlotBioMasses();
 
+//    update_prefix_progress(mID, "Computing Plot LAI...    ", 0);
+//    computePlotLAIs();
+
 //    update_prefix_progress(mID, "Saving...                ", 0);
 //    if (mSavePlotsInSingleFile)
 //        savePlotFile();
@@ -274,16 +277,18 @@ void cFileProcessor::computePlotHeights()
 
         if (plot.vegetationOnly())
         {
-            // Nothing to do...
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
         }
         else if (plot.groundLevel_mm().has_value())
         {
-            groundLevelBound_mm = plot.groundLevel_mm().value();
+            auto groundShift_mm = plot.groundLevel_mm().value();
 
-            plot::trim_below_in_place(plot, groundLevelBound_mm);
-            plot::translate(plot, 0, 0, -groundLevelBound_mm);
+            plot::trim_below_in_place(plot, groundShift_mm);
+            plot::translate(plot, 0, 0, -groundShift_mm);
 
             plot.clearGroundLevel_mm();
+
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
         }
         else
         {
@@ -416,5 +421,125 @@ void cFileProcessor::computePlotBioMasses()
     }
 }
 
+void cFileProcessor::computePlotLAIs()
+{
+/*
+    const auto& parameters = mConfigInfo.getLAI_Parameters();
+
+    auto algorithm_type = parameters.getAlgorithmType();
+    int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
+    double voxel_size_mm = parameters.getVoxelSize_mm();
+    int min_bin_count = parameters.getMinBinCount();
+
+    mResults.clearLAI_MetaInfo();
+    switch (algorithm_type)
+    {
+    case eBiomassAlgorithmType::OCT_TREE:
+        mResults.addBiomassMetaInfo("algorithm: voxelization (oct tree)");
+        break;
+    case eBiomassAlgorithmType::VOXEL_GRID:
+        mResults.addBiomassMetaInfo("algorithm: voxelization (voxel grid)");
+        break;
+    case eBiomassAlgorithmType::CONVEX_HULL:
+        mResults.addBiomassMetaInfo("algorithm: convex hull");
+        break;
+    default:
+        mResults.addBiomassMetaInfo("algorithm: voxelization");
+        break;
+    }
+
+    std::string info = "voxel size (mm): ";
+    info += std::to_string(voxel_size_mm);
+    mResults.addBiomassMetaInfo(info);
+
+    switch (algorithm_type)
+    {
+    case eBiomassAlgorithmType::OCT_TREE:
+        info = "min bin count: ";
+        info += std::to_string(min_bin_count);
+        mResults.addBiomassMetaInfo(info);
+        break;
+    case eBiomassAlgorithmType::VOXEL_GRID:
+        if (min_bin_count > 0)
+        {
+            info = "min bin count: ";
+            info += std::to_string(min_bin_count);
+            mResults.addBiomassMetaInfo(info);
+        }
+        break;
+    case eBiomassAlgorithmType::CONVEX_HULL:
+        break;
+    }
+
+    bool hasFilters = parameters.hasFilters();
+    const auto& filters = parameters.getFilters();
+
+    if (hasFilters)
+    {
+        mResults.addBiomassMetaInfo("");
+        mResults.addBiomassMetaInfo("Biomass Applied Filters:");
+
+        for (auto* filter : filters)
+        {
+            mResults.addBiomassMetaInfo(filter->info());
+        }
+    }
+
+    auto n = mPlotInfo->size();
+
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        update_progress(mID, static_cast<int>((100.0 * i) / n));
+
+        auto plot = *((*mPlotInfo)[i]);
+
+        if (hasFilters)
+        {
+            for (auto* filter : filters)
+            {
+                filter->apply(plot);
+            }
+        }
+
+        if (plot.vegetationOnly())
+        {
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
+        }
+        else if (plot.groundLevel_mm().has_value())
+        {
+            auto groundShift_mm = plot.groundLevel_mm().value();
+
+            plot::trim_below_in_place(plot, groundShift_mm);
+
+            plot::translate(plot, 0, 0, -groundShift_mm);
+            plot.clearGroundLevel_mm();
+
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
+        }
+        else
+        {
+            plot::trim_below_in_place(plot, groundLevelBound_mm);
+            plot::translate(plot, 0, 0, -groundLevelBound_mm);
+        }
+
+        double lai = 0.0;
+
+        switch (algorithm_type)
+        {
+        case eBiomassAlgorithmType::OCT_TREE:
+            biomass = nPlotUtils::computeDigitalBiomass_oct_tree(plot, voxel_size_mm, min_bin_count);
+            break;
+        case eBiomassAlgorithmType::VOXEL_GRID:
+            biomass = nPlotUtils::computeDigitalBiomass_voxel_grid(plot, voxel_size_mm, min_bin_count);
+            break;
+        case eBiomassAlgorithmType::CONVEX_HULL:
+            biomass = nPlotUtils::computeDigitalBiomass_convex_hull(plot);
+            break;
+        }
+
+        mResults.addPlotLAI(plot.id(), mDayOfYear, biomass);
+    }
+*/
+}
 
 

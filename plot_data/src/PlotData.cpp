@@ -59,6 +59,10 @@ void cPlotData::clear()
 	mBioMassMetaData.clear();
 	mPlotBioMasses.clear();
 	mGroupBioMasses.clear();
+
+	mLAI_MetaData.clear();
+	mPlotLAIs.clear();
+	mGroupLAIs.clear();
 }
 
 void cPlotData::setRootFileName(const std::string& filename)
@@ -183,6 +187,34 @@ void cPlotData::addPlotBiomass(int plot_id, int doy, double biomass)
 	data.biomass = biomass;
 
 	mPlotBioMasses[plot_id].push_back(data);
+}
+
+void cPlotData::clearLAI_MetaInfo()
+{
+	mLAI_MetaData.clear();
+}
+
+void cPlotData::addLAI_MetaInfo(std::string_view info)
+{
+	mLAI_MetaData.push_back(std::string(info));
+}
+
+void cPlotData::addLAI_MetaInfo(const std::vector<std::string>& info)
+{
+	if (info.empty())
+		return;
+
+	std::copy(info.begin(), info.end(), std::back_inserter(mLAI_MetaData));
+}
+
+void cPlotData::addPlotLAI(int plot_id, int doy, double lai)
+{
+	sPlotLAI_Data_t data;
+
+	data.doy = doy;
+	data.lai = lai;
+
+	mPlotLAIs[plot_id].push_back(data);
 }
 
 void cPlotData::computeReplicateData()
@@ -1212,6 +1244,279 @@ void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
 			out << biomass->avgBioMass << ", " << biomass->stdBioMass << "\n";
 	}
 }
+
+
+void cPlotData::write_plot_lai_file(const std::string& directory)
+{
+	write_plot_lai_file(directory, mRootFileName);
+}
+
+void cPlotData::write_plot_lai_file(const std::string& directory, const std::string& filename)
+{
+	if (mDates.empty())
+		return;
+
+	if (mPlotLAIs.empty())
+		return;
+
+	std::filesystem::path plot_lai_file = directory;
+
+	plot_lai_file /= filename;
+	plot_lai_file.replace_extension("plot_lai.csv");
+
+	std::ofstream out;
+	out.open(plot_lai_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	if (mSaveRowMajor)
+		write_plot_lai_file_by_row(out);
+	else
+		write_plot_lai_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_plot_lai_file_by_row(std::ofstream& out)
+{
+	auto doy_last = --(mDates.end());
+
+	out << "Date, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "DayOfYear, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ", ";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& plot : mPlotLAIs)
+	{
+		out << "Plot_" << plot.first << ", ";
+
+		const auto& lais = plot.second;
+
+		for (auto date = mDates.begin(); date != doy_last; ++date)
+		{
+			auto doy = date->doy;
+
+			auto lai = std::find_if(lais.begin(), lais.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (lai == lais.end())
+				out << ", ";
+			else
+				out << lai->lai << ", ";
+		}
+
+		auto doy = doy_last->doy;
+
+		auto lai = std::find_if(lais.begin(), lais.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (lai == lais.end())
+			out << "\n";
+		else
+			out << lai->lai << "\n";
+	}
+}
+
+void cPlotData::write_plot_lai_file_by_column(std::ofstream& out)
+{
+	out << "Date, " << "DayOfYear, ";
+
+	auto plot_last = --(mPlotLAIs.end());
+	for (auto it = mPlotLAIs.begin(); it != plot_last; ++it)
+	{
+		out << "Plot_" << it->first << ", ";
+	}
+	out << "Plot_" << plot_last->first << "\n";
+
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
+
+		auto doy = date_it->doy;
+
+		for (auto it = mPlotLAIs.begin(); it != plot_last; ++it)
+		{
+			const auto& lais = it->second;
+
+			auto biomass = std::find_if(lais.begin(), lais.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (biomass == lais.end())
+				out << ", ";
+			else
+				out << biomass->lai << ", ";
+		}
+
+		const auto& lais = plot_last->second;
+
+		auto lai = std::find_if(lais.begin(), lais.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (lai == lais.end())
+			out << "\n";
+		else
+			out << lai->lai << "\n";
+	}
+}
+
+void cPlotData::write_replicate_lai_file(const std::string& directory)
+{
+	write_replicate_lai_file(directory, mRootFileName);
+}
+
+void cPlotData::write_replicate_lai_file(const std::string& directory, const std::string& filename)
+{
+	if (mDates.empty())
+		return;
+
+	if (mGroupLAIs.empty())
+		return;
+
+	bool useEvent = true;
+	bool useSpecies = false;
+	bool useCultivar = false;
+	bool useConstructName = false;
+	bool useSeedGeneration = false;
+	bool useCopyNumber = false;
+	bool useLeafType = false;
+
+	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
+	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
+	//useCultivar = false; same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
+	//useConstructName = false; same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
+	//useSeedGeneration = false; same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
+	//useCopyNumber = false; same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
+
+	std::filesystem::path lai_file = directory;
+
+	lai_file /= filename;
+	lai_file.replace_extension("lai.csv");
+
+	std::ofstream out;
+	out.open(lai_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	if (mSaveRowMajor)
+		write_replicate_lai_file_by_row(out);
+	else
+		write_replicate_lai_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_replicate_lai_file_by_row(std::ofstream& out)
+{
+	auto doy_last = --(mDates.end());
+
+	out << "Date, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "DayOfYear, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ", ";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& group : mGroupLAIs)
+	{
+		const auto& info = mGroups[group.first].front();
+
+		out << info->event() << ", ";
+
+		const auto& lais = group.second;
+
+		auto last = lais.end();
+		--last;
+
+		for (auto it = lais.begin(); it != last; ++it)
+		{
+			out << it->avgLAI << ", " << it->stdLAI << ", ";
+		}
+		out << last->avgLAI << ", " << last->stdLAI << "\n";
+	}
+}
+
+void cPlotData::write_replicate_lai_file_by_column(std::ofstream& out)
+{
+	out << "Date, " << "DayOfYear, ";
+
+	auto group_last = --(mGroups.end());
+	for (auto it = mGroups.begin(); it != group_last; ++it)
+	{
+		const auto& info = (*it).front();
+		out << info->event() << " (avg), " << info->event() << " (std dev), ";
+	}
+	const auto& info = (*group_last).front();
+	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
+
+	auto lai_last = --(mGroupLAIs.end());
+	auto date_it = mDates.begin();
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
+
+		auto doy = date_it->doy;
+
+		for (auto it = mGroupLAIs.begin(); it != lai_last; ++it)
+		{
+			const auto& lais = it->second;
+
+			auto lai = std::find_if(lais.begin(), lais.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (lai == lais.end())
+				out << ", , ";
+			else
+				out << lai->avgLAI << ", " << lai->stdLAI << ", ";
+		}
+
+		const auto& lais = lai_last->second;
+
+		auto lai = std::find_if(lais.begin(), lais.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (lai == lais.end())
+			out << ", \n";
+		else
+			out << lai->avgLAI << ", " << lai->stdLAI << "\n";
+	}
+}
+
 
 void cPlotData::splitIntoGroups(cPlotMetaData* pPlotInfo)
 {

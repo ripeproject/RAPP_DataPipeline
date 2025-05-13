@@ -42,6 +42,7 @@ private:
 	void fillPlotInfo();
 	void computePlotHeights();
 	void computePlotBioMasses();
+	void computePlotLAIs();
 
 private:
 	int mDayOfYear = 0;
