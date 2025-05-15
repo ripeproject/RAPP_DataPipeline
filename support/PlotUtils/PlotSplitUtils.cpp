@@ -566,6 +566,22 @@ cPlotPointCloud plot::trim_above(const cPlotPointCloud& pc, int z_mm)
 	return ::trim_above(pc.data(), z_mm, pc.vegetationOnly(), pc.groundLevel_mm());
 }
 
+void plot::trim_above_in_place(cPlotPointCloud& pc, int z_mm)
+{
+	auto points = pc.data();
+
+	auto it = std::remove_if(points.begin(), points.end(), [z_mm](auto a)
+		{
+			return a.z_mm > z_mm;
+		});
+
+	points.erase(it, points.end());
+
+	pc.assign(points);
+
+	pc.recomputeBounds();
+}
+
 void plot::translate(cPlotPointCloud& pc, int dx_mm, int dy_mm, int dz_mm)
 {
 	for (auto& point : pc)

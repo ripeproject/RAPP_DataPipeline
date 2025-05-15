@@ -75,6 +75,8 @@ namespace plot
 	cPlotPointCloud trim_above(const cRappPointCloud& pc, int z_mm);
 	cPlotPointCloud trim_above(const cPlotPointCloud& pc, int z_mm);
 
+	void trim_above_in_place(cPlotPointCloud& pc, int z_mm);
+
 	void translate(cPlotPointCloud& pc, int dx_mm, int dy_mm, int dz_mm);
 
 
