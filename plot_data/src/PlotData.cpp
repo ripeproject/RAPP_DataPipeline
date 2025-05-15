@@ -42,6 +42,16 @@ void cPlotData::clear()
 
 	mpPlots.clear();
 
+	mUseEvent = false;
+	mUseSpecies = false;
+	mUseCultivar = false;
+	mUseTreatment = false;
+	mUseConstructName = false;
+	mUsePotLabel = false;
+	mUseSeedGeneration = false;
+	mUseCopyNumber = false;
+	mUseLeafType = false;
+
 	for (auto& group : mGroups)
 	{
 		group.clear();
@@ -50,7 +60,8 @@ void cPlotData::clear()
 	mGroups.clear();
 
 	mDates.clear();
-	mPlotSizes.clear();
+	mPlotNumPoints.clear();
+	mGroupNumPoints.clear();
 
 	mHeightMetaData.clear();
 	mPlotHeights.clear();
@@ -95,6 +106,56 @@ void cPlotData::setMeasurementTitle(const std::string& title)
 	mExperimentInfo.setMeasurementTitle(title);
 }
 
+void cPlotData::useEvent(bool use)
+{
+	mUseEvent = use;
+}
+
+void cPlotData::useSpecies(bool use)
+{
+	mUseSpecies = use;
+}
+
+void cPlotData::useCultivar(bool use)
+{
+	mUseCultivar = use;
+}
+
+void cPlotData::useTreatment(bool use)
+{
+	mUseTreatment = use;
+}
+
+void cPlotData::useConstructName(bool use)
+{
+	mUseConstructName = use;
+}
+
+void cPlotData::usePotLabel(bool use)
+{
+	mUsePotLabel = use;
+}
+
+void cPlotData::useSeedGeneration(bool use)
+{
+	mUseSeedGeneration = use;
+}
+
+void cPlotData::useCopyNumber(bool use)
+{
+	mUseCopyNumber = use;
+}
+
+void cPlotData::useLeafType(bool use)
+{
+	mUseLeafType = use;
+}
+
+bool cPlotData::hasGroupInfo()
+{
+	return mGroups.size() > 0;
+}
+
 void cPlotData::addPlotInfo(const cPlotMetaData& info)
 {
 	for (const auto& plot : mpPlots)
@@ -107,8 +168,6 @@ void cPlotData::addPlotInfo(const cPlotMetaData& info)
 	mpPlots.push_back(pPlotInfo);
 
 	std::sort(mpPlots.begin(), mpPlots.end(), [](const auto* a, const auto* b) { return a->id() < b->id(); });
-
-	splitIntoGroups(pPlotInfo);
 }
 
 void cPlotData::addDate(int month, int day, int year, int doy)
@@ -148,7 +207,7 @@ void cPlotData::addPlotHeight(int plot_id, int doy, int num_of_points, double he
 		data.doy = doy;
 		data.num_points = num_of_points;
 
-		mPlotSizes[plot_id].push_back(data);
+		mPlotNumPoints[plot_id].push_back(data);
 	}
 
 	sPlotHeightData_t data;
@@ -219,6 +278,62 @@ void cPlotData::addPlotLAI(int plot_id, int doy, double lai)
 
 void cPlotData::computeReplicateData()
 {
+	// Compute Plot Num Points Data
+	for (auto& group : mGroupNumPoints)
+	{
+		group.second.clear();
+	}
+	mGroupNumPoints.clear();
+
+	for (int groupNum = 0; groupNum < mGroups.size(); ++groupNum)
+	{
+		auto& group = mGroups[groupNum];
+
+		std::vector<sGroupNumPoints_t> data;
+
+		for (const auto& date : mDates)
+		{
+			std::valarray<double> num_points(group.size());
+
+			int count = 0;
+
+			for (std::size_t i = 0; i < group.size(); ++i)
+			{
+				const auto& plot_num_points = mPlotNumPoints[group[i]->id()];
+
+				for (const auto& plot_num_point : plot_num_points)
+				{
+					if (plot_num_point.doy == date.doy)
+					{
+						num_points[i] = plot_num_point.num_points;
+						++count;
+						break;
+					}
+				}
+			}
+
+			if (count > 0)
+			{
+				double mean = num_points.sum() / count;
+
+				num_points -= mean;
+				auto h2 = std::pow(num_points, 2);
+
+				double err = 0.0;
+
+				if (count > 1)
+				{
+					h2 /= (count - 1);
+					err = sqrt(h2.sum());
+				}
+
+				data.emplace_back(sGroupNumPoints_t{ date.doy, mean, err });
+			}
+		}
+
+		mGroupNumPoints[groupNum] = data;
+	}
+
 	// Compute Plot Height Data
 	for (auto& group : mGroupHeights)
 	{
@@ -376,6 +491,20 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 		out << "Plot Biomass Info:\n";
 
 		for (const auto& info : mBioMassMetaData)
+		{
+			out << info << "\n";
+		}
+
+		out << "\n";
+	}
+
+	if (!mLAI_MetaData.empty())
+	{
+		out << "\n";
+
+		out << "Plot LAI Info:\n";
+
+		for (const auto& info : mLAI_MetaData)
 		{
 			out << info << "\n";
 		}
@@ -542,27 +671,79 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 			out << "Leaf Type: " << plot->leafType() << "\n";
 		}
 
-/*
-		if (mPlotSizes.contains(plot->id()))
-		{
-			auto& num_points = mPlotSizes[plot->id()];
-
-			if (num_points.size() > 0)
-			{
-				double n = num_points.size();
-
-				double mean = std::accumulate(num_points.begin(), num_points.end(), 0, [mean](auto a, auto x)
-					{ return a + x.num_points; }) / n;
-
-				double sd = sqrt(std::accumulate(num_points.begin(), num_points.end(), 0.0, [mean](auto a, auto x)
-					{ return a + (x.num_points - mean) * (x.num_points - mean); }) / n);
-
-				out << "Number of points: " << mean << " +/- " << sd << "\n";
-			}
-		}
-*/
-
 		out << "\n\n";
+	}
+
+	if (!mGroups.empty())
+	{
+		out << "\n\nGroup Information:\n";
+
+		for (int group_num = 0; group_num < mGroups.size(); ++group_num)
+		{
+			const auto& group = mGroups[group_num];
+			const auto* plot = group.front();
+
+			out << "Group Number: " << group_num + 1 << "\n";
+
+			if (group.size() == 1)
+			{
+				out << "Plot Number: " << plot->id() << "\n";
+			}
+			else
+			{
+				out << "Plot Numbers: ";
+
+				auto last = group.end();
+				--last;
+				for (auto plot = group.begin(); plot != last; ++plot)
+				{
+					out << (*plot)->id() << ", ";
+				}
+				out << group.back()->id() << "\n";
+			}
+
+			if (mUseSpecies && !plot->species().empty())
+			{
+				out << "Species: " << plot->species() << "\n";
+			}
+
+			if (mUseCultivar && !plot->cultivar().empty())
+			{
+				out << "Cultivar: " << plot->cultivar() << "\n";
+			}
+
+			if (mUseEvent && !plot->event().empty())
+			{
+				out << "Event: " << plot->event() << "\n";
+			}
+
+			if (mUseConstructName && !plot->constructName().empty())
+			{
+				out << "Construct Name: " << plot->constructName() << "\n";
+			}
+
+			if (mUseSeedGeneration && !plot->seedGeneration().empty())
+			{
+				out << "Seed Generation: " << plot->seedGeneration() << "\n";
+			}
+
+			if (mUseCopyNumber && !plot->copyNumber().empty())
+			{
+				out << "Copy Number: " << plot->copyNumber() << "\n";
+			}
+
+			if (mUsePotLabel && !plot->potLabel().empty())
+			{
+				out << "Pot Label: " << plot->potLabel() << "\n";
+			}
+
+			if (mUseLeafType && !plot->leafType().empty())
+			{
+				out << "Leaf Type: " << plot->leafType() << "\n";
+			}
+
+			out << "\n\n";
+		}
 	}
 
 	out.close();
@@ -648,7 +829,7 @@ void cPlotData::write_plot_num_points_file_by_row(std::ofstream& out)
 	}
 	out << doy_last->doy << "\n";
 
-	for (const auto& plot : mPlotSizes)
+	for (const auto& plot : mPlotNumPoints)
 	{
 		out << "Plot_" << plot.first << ", ";
 
@@ -689,8 +870,8 @@ void cPlotData::write_plot_num_points_file_by_column(std::ofstream& out)
 {
 	out << "Date, " << "DayOfYear, ";
 
-	auto plot_last = --(mPlotSizes.end());
-	for (auto it = mPlotSizes.begin(); it != plot_last; ++it)
+	auto plot_last = --(mPlotNumPoints.end());
+	for (auto it = mPlotNumPoints.begin(); it != plot_last; ++it)
 	{
 		out << "Plot_" << it->first << ", ";
 	}
@@ -703,7 +884,7 @@ void cPlotData::write_plot_num_points_file_by_column(std::ofstream& out)
 
 		auto doy = date_it->doy;
 
-		for (auto it = mPlotSizes.begin(); it != plot_last; ++it)
+		for (auto it = mPlotNumPoints.begin(); it != plot_last; ++it)
 		{
 			const auto& numPoints = it->second;
 
@@ -731,6 +912,129 @@ void cPlotData::write_plot_num_points_file_by_column(std::ofstream& out)
 			out << "\n";
 		else
 			out << points->num_points << "\n";
+	}
+}
+
+void cPlotData::write_replicate_num_points_file(const std::string& directory)
+{
+	write_replicate_num_points_file(directory, mRootFileName);
+}
+
+void cPlotData::write_replicate_num_points_file(const std::string& directory, const std::string& filename)
+{
+	if (mDates.empty())
+		return;
+
+	if (mGroupNumPoints.empty())
+		return;
+
+	std::filesystem::path height_file = directory;
+
+	height_file /= filename;
+	height_file.replace_extension("num_points.csv");
+
+	std::ofstream out;
+	out.open(height_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	if (mSaveRowMajor)
+		write_replicate_num_points_file_by_row(out);
+	else
+		write_replicate_num_points_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_replicate_num_points_file_by_row(std::ofstream& out)
+{
+	auto doy_last = --(mDates.end());
+
+	out << "Date, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "Day of Year, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ", ";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& group : mGroupNumPoints)
+	{
+		auto group_num = group.first + 1;
+
+		out << "Group_" << group_num << ", ";
+
+		const auto& num_points = group.second;
+
+		auto last = num_points.end();
+		--last;
+
+		for (auto it = num_points.begin(); it != last; ++it)
+		{
+			out << it->avgNumPoints << ", " << it->stdNumPoints << ", ";
+		}
+		out << last->avgNumPoints << ", " << last->stdNumPoints << "\n";
+	}
+}
+
+void cPlotData::write_replicate_num_points_file_by_column(std::ofstream& out)
+{
+	out << "Date, " << "DayOfYear, ";
+
+	auto group_last = mGroups.size();
+	--group_last;
+
+	for (auto i = 0; i < group_last; ++i)
+	{
+		auto group_num = i + 1;
+		out << "Group_" << group_num << " (avg), " << "Group_" << group_num << " (std dev), ";
+	}
+	++group_last;
+	out << "Group_" << group_last << " (avg), " << "Group_" << group_last << " (std dev)\n";
+
+	auto num_points_last = --(mGroupNumPoints.end());
+
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
+
+		auto doy = date_it->doy;
+
+		for (auto it = mGroupNumPoints.begin(); it != num_points_last; ++it)
+		{
+			const auto& num_points = it->second;
+
+			auto num_point = std::find_if(num_points.begin(), num_points.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (num_point == num_points.end())
+				out << ", , ";
+			else
+				out << num_point->avgNumPoints << ", " << num_point->stdNumPoints << ", ";
+		}
+
+		const auto& num_points = num_points_last->second;
+
+		auto num_point = std::find_if(num_points.begin(), num_points.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (num_point == num_points.end())
+			out << ",,\n";
+		else
+			out << num_point->avgNumPoints << ", " << num_point->stdNumPoints << "\n";
 	}
 }
 
@@ -851,21 +1155,6 @@ void cPlotData::write_replicate_height_file(const std::string& directory, const 
 	if (mGroupHeights.empty())
 		return;
 
-	bool useEvent = true;
-	bool useSpecies = false;
-	bool useCultivar = false;
-	bool useConstructName= false;
-	bool useSeedGeneration = false;
-	bool useCopyNumber = false;
-	bool useLeafType = false;
-
-	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
-	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
-	//useCultivar = false; same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
-	//useConstructName = false; same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
-	//useSeedGeneration = false; same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
-	//useCopyNumber = false; same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
-
 	std::filesystem::path height_file = directory;
 
 	height_file /= filename;
@@ -904,9 +1193,9 @@ void cPlotData::write_replicate_height_file_by_row(std::ofstream& out)
 
 	for (const auto& group : mGroupHeights)
 	{
-		const auto& info = mGroups[group.first].front();
+		auto group_num = group.first + 1;
 
-		out << info->event() << ", ";
+		out << "Group_" << group_num << ", ";
 
 		const auto& heights = group.second;
 
@@ -925,14 +1214,14 @@ void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 {
 	out << "Date, " << "DayOfYear, ";
 
-	auto group_last = --(mGroups.end());
-	for (auto it = mGroups.begin(); it != group_last; ++it)
+	auto group_last = mGroups.size();
+	--group_last;
+	for (auto i = 0; i < group_last; ++i)
 	{
-		const auto& info = (*it).front();
-		out << info->event() << " (avg), " << info->event() << " (std dev), ";
+		auto group_num = i + 1;
+		out << "Group_" << group_num << " (avg), " << "Group_" << group_num << " (std dev), ";
 	}
-	const auto& info = (*group_last).front();
-	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
+	out << "Group_" << group_last + 1 << " (avg), " << "Group_" << group_last + 1 << " (std dev)\n";
 
 	auto height_last = --(mGroupHeights.end());
 
@@ -1122,21 +1411,6 @@ void cPlotData::write_replicate_biomass_file(const std::string& directory, const
 	if (mGroupBioMasses.empty())
 		return;
 
-	bool useEvent = true;
-	bool useSpecies = false;
-	bool useCultivar = false;
-	bool useConstructName = false;
-	bool useSeedGeneration = false;
-	bool useCopyNumber = false;
-	bool useLeafType = false;
-
-	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
-	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
-	//useCultivar = false; same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
-	//useConstructName = false; same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
-	//useSeedGeneration = false; same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
-	//useCopyNumber = false; same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
-
 	std::filesystem::path biomass_file = directory;
 
 	biomass_file /= filename;
@@ -1175,9 +1449,9 @@ void cPlotData::write_replicate_biomass_file_by_row(std::ofstream& out)
 
 	for (const auto& group : mGroupBioMasses)
 	{
-		const auto& info = mGroups[group.first].front();
+		auto group_num = group.first + 1;
 
-		out << info->event() << ", ";
+		out << "Group_" << group_num << ", ";
 
 		const auto& biomasses = group.second;
 
@@ -1196,14 +1470,15 @@ void cPlotData::write_replicate_biomass_file_by_column(std::ofstream& out)
 {
 	out << "Date, " << "DayOfYear, ";
 
-	auto group_last = --(mGroups.end());
-	for (auto it = mGroups.begin(); it != group_last; ++it)
+	auto group_last = mGroups.size();
+	--group_last;
+	for (auto i = 0; i < group_last; ++i)
 	{
-		const auto& info = (*it).front();
-		out << info->event() << " (avg), " << info->event() << " (std dev), ";
+		auto group_num = i + 1;
+		out << "Group_" << group_num << " (avg), " << "Group_" << group_num << " (std dev), ";
 	}
-	const auto& info = (*group_last).front();
-	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
+	++group_last;
+	out << "Group_" << group_last << " (avg), " << "Group_"  << group_last << " (std dev)\n";
 
 	auto biomass_last = --(mGroupBioMasses.end());
 	auto date_it = mDates.begin();
@@ -1394,21 +1669,6 @@ void cPlotData::write_replicate_lai_file(const std::string& directory, const std
 	if (mGroupLAIs.empty())
 		return;
 
-	bool useEvent = true;
-	bool useSpecies = false;
-	bool useCultivar = false;
-	bool useConstructName = false;
-	bool useSeedGeneration = false;
-	bool useCopyNumber = false;
-	bool useLeafType = false;
-
-	//useEvent = false; pPlotInfo1->event() == pPlotInfo2->event();
-	//useSpecies = false; same &= pPlotInfo1->species() == pPlotInfo2->species();
-	//useCultivar = false; same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
-	//useConstructName = false; same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
-	//useSeedGeneration = false; same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
-	//useCopyNumber = false; same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
-
 	std::filesystem::path lai_file = directory;
 
 	lai_file /= filename;
@@ -1447,9 +1707,9 @@ void cPlotData::write_replicate_lai_file_by_row(std::ofstream& out)
 
 	for (const auto& group : mGroupLAIs)
 	{
-		const auto& info = mGroups[group.first].front();
+		auto group_num = group.first + 1;
 
-		out << info->event() << ", ";
+		out << "Group_" << group_num << ", ";
 
 		const auto& lais = group.second;
 
@@ -1468,14 +1728,15 @@ void cPlotData::write_replicate_lai_file_by_column(std::ofstream& out)
 {
 	out << "Date, " << "DayOfYear, ";
 
-	auto group_last = --(mGroups.end());
-	for (auto it = mGroups.begin(); it != group_last; ++it)
+	auto group_last = mGroups.size();
+	--group_last;
+	for (auto i = 0; i < group_last; ++i)
 	{
-		const auto& info = (*it).front();
-		out << info->event() << " (avg), " << info->event() << " (std dev), ";
+		auto group_num = i + 1;
+		out << "Group_" << group_num << " (avg), " << "Group_" << group_num << " (std dev), ";
 	}
-	const auto& info = (*group_last).front();
-	out << info->event() << " (avg), " << info->event() << " (std dev)\n";
+	++group_last;
+	out << "Group_" << group_last << " (avg), " << "Group_" << group_last << " (std dev)\n";
 
 	auto lai_last = --(mGroupLAIs.end());
 	auto date_it = mDates.begin();
@@ -1517,44 +1778,74 @@ void cPlotData::write_replicate_lai_file_by_column(std::ofstream& out)
 	}
 }
 
-
-void cPlotData::splitIntoGroups(cPlotMetaData* pPlotInfo)
+void cPlotData::clearGroups()
 {
-	// Check to see if the plot is already placed in a group
 	for (auto& group : mGroups)
 	{
-		for (auto plot : group)
-		{
-			if (plot->id() == pPlotInfo->id())
-				return;
-		}
+		group.clear();
 	}
 
-	for (auto& group : mGroups)
+	mGroups.clear();
+}
+
+void cPlotData::splitIntoGroups()
+{
+	if (mpPlots.empty())
+		return;
+
+	if (!mUseEvent && !mUseSpecies && !mUseCultivar && !mUseTreatment && !mUseConstructName
+		&& !mUsePotLabel && !mUseSeedGeneration && !mUseCopyNumber && !mUseLeafType)
+		return;
+
+	if (!mGroups.empty())
+		clearGroups();
+
+	auto plots = mpPlots;
+
+	while (!plots.empty())
 	{
-		if (inGroup(group.front(), pPlotInfo))
+		if (plots.size() == 1)
 		{
-			group.push_back(pPlotInfo);
-			std::sort(group.begin(), group.end(), [](const auto* a, const auto* b) { return a->id() < b->id(); });
+			std::vector<cPlotMetaData*> group;
+			group.push_back(plots[0]);
+			mGroups.push_back(group);
+		}
+		else
+		{
+			std::vector<cPlotMetaData*> group;
+			auto* ref = plots[0];
 
-			return;
+			for (auto it = plots.begin(); it != plots.end();)
+			{
+				if (inGroup(ref, *it))
+				{
+					group.push_back(*it);
+					it = plots.erase(it);
+				}
+				else
+					++it;
+			}
+
+			mGroups.push_back(group);
 		}
 	}
-
-	std::vector<cPlotMetaData*> group;
-	group.push_back(pPlotInfo);
-	mGroups.push_back(group);
 }
 
 bool cPlotData::inGroup(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2)
 {
-	bool same = pPlotInfo1->event() == pPlotInfo2->event();
-	same &= pPlotInfo1->species() == pPlotInfo2->species();
-	same &= pPlotInfo1->cultivar() == pPlotInfo2->cultivar();
-	same &= pPlotInfo1->constructName() == pPlotInfo2->constructName();
-	same &= pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration();
-	same &= pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber();
-	same &= pPlotInfo1->leafType() == pPlotInfo2->leafType();
+	bool group = false;
+	group |= mUseEvent ? pPlotInfo1->event() == pPlotInfo2->event() : false;
+	group |= mUseSpecies ? pPlotInfo1->species() == pPlotInfo2->species() : false;
+	group |= mUseCultivar ? pPlotInfo1->cultivar() == pPlotInfo2->cultivar() : false;
+	group |= mUseConstructName ? pPlotInfo1->constructName() == pPlotInfo2->constructName() : false;
+	group |= mUsePotLabel ? pPlotInfo1->potLabel() == pPlotInfo2->potLabel() : false;
+	group |= mUseSeedGeneration ? pPlotInfo1->seedGeneration() == pPlotInfo2->seedGeneration() : false;
+	group |= mUseCopyNumber ? pPlotInfo1->copyNumber() == pPlotInfo2->copyNumber() : false;
+	group |= mUseLeafType ? pPlotInfo1->leafType() == pPlotInfo2->leafType() : false;
 
-	return same;
+	if (mUseTreatment)
+	{
+	}
+
+	return group;
 }

@@ -37,6 +37,7 @@ private:
 
 	friend class cPlotDataConfigBiomass;
 	friend class cPlotDataConfigHeight;
+	friend class cPlotDataConfigLAI;
 };
 
 

@@ -34,8 +34,10 @@ void cPlotDataConfigFile::clear()
 {
 	mFileName.clear();
 	mOptions.clear();
+	mGroupBy.clear();
 	mHeightParameters.clear();
 	mBiomassParameters.clear();
+	mLaiParameters.clear();
 	mTmpFileName = "~newfile.plotdata";
 }
 
@@ -79,8 +81,10 @@ bool cPlotDataConfigFile::open(const std::string& file_name)
 		mExperimentTitle = configDoc["experiment title"];
 
 	mOptions.load(configDoc);
+	mGroupBy.load(configDoc);
 	mHeightParameters.load(configDoc);
 	mBiomassParameters.load(configDoc);
+	mLaiParameters.load(configDoc);
 
 	return true;
 }
@@ -92,8 +96,10 @@ void cPlotDataConfigFile::save()
 	nlohmann::json configDoc;
 
 	mOptions.save(configDoc);
+	mGroupBy.save(configDoc);
 	mHeightParameters.save(configDoc);
 	mBiomassParameters.save(configDoc);
+	mLaiParameters.save(configDoc);
 
 	std::ofstream out;
 	out.open(mFileName, std::ios::trunc);
@@ -118,8 +124,10 @@ void cPlotDataConfigFile::save_as(const std::string& file_name)
 	nlohmann::json configDoc;
 
 	mOptions.save(configDoc);
+	mGroupBy.save(configDoc);
 	mHeightParameters.save(configDoc);
 	mBiomassParameters.save(configDoc);
+	mLaiParameters.save(configDoc);
 
 	std::ofstream out;
 	out.open(file_name);
@@ -179,11 +187,17 @@ bool cPlotDataConfigFile::open_temporary_file(const std::string& file_name)
 	mOptions.load(configDoc);
 	mOptions.setDirty(true);
 
+	mGroupBy.load(configDoc);
+	mGroupBy.setDirty(true);
+
 	mHeightParameters.load(configDoc);
 	mHeightParameters.setDirty(true);
 
 	mBiomassParameters.load(configDoc);
 	mBiomassParameters.setDirty(true);
+
+	mLaiParameters.load(configDoc);
+	mLaiParameters.setDirty(true);
 
 	return true;
 }
@@ -196,6 +210,10 @@ void cPlotDataConfigFile::save_temporary_file()
 	mOptions.save(configDoc);
 	mOptions.setDirty(options_dirty);
 
+	bool group_by_dirty = mGroupBy.isDirty();
+	mGroupBy.save(configDoc);
+	mGroupBy.setDirty(group_by_dirty);
+
 	bool height_dirty = mHeightParameters.isDirty();
 	mHeightParameters.save(configDoc);
 	mHeightParameters.setDirty(height_dirty);
@@ -203,6 +221,10 @@ void cPlotDataConfigFile::save_temporary_file()
 	bool biomass_dirty = mBiomassParameters.isDirty();
 	mBiomassParameters.save(configDoc);
 	mBiomassParameters.setDirty(biomass_dirty);
+
+	bool lai_dirty = mLaiParameters.isDirty();
+	mLaiParameters.save(configDoc);
+	mLaiParameters.setDirty(lai_dirty);
 
 	std::ofstream out;
 	out.open(mTmpFileName, std::ios::trunc);
@@ -238,6 +260,17 @@ cPlotDataConfigOptions& cPlotDataConfigFile::getOptions()
 	return mOptions;
 }
 
+
+const cPlotDataConfigGroupBy& cPlotDataConfigFile::getGroupBy() const
+{ 
+	return mGroupBy;
+}
+
+cPlotDataConfigGroupBy& cPlotDataConfigFile::getGroupBy()
+{
+	return mGroupBy;
+}
+
 const cPlotDataConfigHeight& cPlotDataConfigFile::getHeightParameters() const
 {
 	return mHeightParameters;
@@ -257,4 +290,15 @@ cPlotDataConfigBiomass& cPlotDataConfigFile::getBiomassParameters()
 {
 	return mBiomassParameters;
 }
+
+const cPlotDataConfigLAI& cPlotDataConfigFile::getLaiParameters() const
+{
+	return mLaiParameters;
+}
+
+cPlotDataConfigLAI& cPlotDataConfigFile::getLaiParameters()
+{
+	return mLaiParameters;
+}
+
 

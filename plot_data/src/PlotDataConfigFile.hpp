@@ -2,8 +2,10 @@
 #pragma once
 
 #include "PlotDataConfigOptions.hpp"
+#include "PlotDataConfigGroupBy.hpp"
 #include "PlotDataConfigHeight.hpp"
 #include "PlotDataConfigBiomass.hpp"
+#include "PlotDataConfigLAI.hpp"
 
 #include <vector>
 #include <string>
@@ -42,11 +44,17 @@ public:
 	const cPlotDataConfigOptions& getOptions() const;
 	cPlotDataConfigOptions& getOptions();
 
+	const cPlotDataConfigGroupBy& getGroupBy() const;
+	cPlotDataConfigGroupBy& getGroupBy();
+
 	const cPlotDataConfigHeight& getHeightParameters() const;
 	cPlotDataConfigHeight& getHeightParameters();
 
 	const cPlotDataConfigBiomass& getBiomassParameters() const;
 	cPlotDataConfigBiomass& getBiomassParameters();
+
+	const cPlotDataConfigLAI& getLaiParameters() const;
+	cPlotDataConfigLAI& getLaiParameters();
 
 
 private:
@@ -57,7 +65,9 @@ private:
 	std::string mExperimentTitle;
 
 	cPlotDataConfigOptions mOptions;
+	cPlotDataConfigGroupBy mGroupBy;
 	cPlotDataConfigHeight  mHeightParameters;
 	cPlotDataConfigBiomass mBiomassParameters;
+	cPlotDataConfigLAI	   mLaiParameters;
 };
 

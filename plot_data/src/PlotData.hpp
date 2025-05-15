@@ -29,6 +29,21 @@ public:
 	void setExperimentTitle(const std::string& title);
 	void setMeasurementTitle(const std::string& title);
 
+	void useEvent(bool use);
+	void useSpecies(bool use);
+	void useCultivar(bool use);
+	void useTreatment(bool use);
+	void useConstructName(bool use);
+	void usePotLabel(bool use);
+	void useSeedGeneration(bool use);
+	void useCopyNumber(bool use);
+	void useLeafType(bool use);
+
+	void clearGroups();
+	void splitIntoGroups();
+
+	bool hasGroupInfo();
+
 	void addPlotInfo(const cPlotMetaData& info);
 
 	void addDate(int month, int day, int year, int doy);
@@ -59,6 +74,9 @@ public:
 	void write_plot_num_points_file(const std::string& directory);
 	void write_plot_num_points_file(const std::string& directory, const std::string& filename);
 
+	void write_replicate_num_points_file(const std::string& directory);
+	void write_replicate_num_points_file(const std::string& directory, const std::string& filename);
+
 	void write_plot_height_file(const std::string& directory);
 	void write_plot_height_file(const std::string& directory, const std::string& filename);
 
@@ -81,6 +99,9 @@ protected:
 	void write_plot_num_points_file_by_row(std::ofstream& out);
 	void write_plot_num_points_file_by_column(std::ofstream& out);
 
+	void write_replicate_num_points_file_by_row(std::ofstream& out);
+	void write_replicate_num_points_file_by_column(std::ofstream& out);
+
 	void write_plot_height_file_by_row(std::ofstream& out);
 	void write_plot_height_file_by_column(std::ofstream& out);
 
@@ -99,7 +120,6 @@ protected:
 	void write_replicate_lai_file_by_row(std::ofstream& out);
 	void write_replicate_lai_file_by_column(std::ofstream& out);
 
-	void splitIntoGroups(cPlotMetaData* pPlotInfo);
 	bool inGroup(cPlotMetaData* pPlotInfo1, cPlotMetaData* pPlotInfo2);
 
 private:
@@ -110,6 +130,17 @@ private:
 	std::vector<cPlotMetaData*> mpPlots;
 
 	bool mSaveRowMajor = false;
+
+	// Group By Information
+	bool mUseEvent = false;
+	bool mUseSpecies = false;
+	bool mUseCultivar = false;
+	bool mUseTreatment = false;
+	bool mUseConstructName = false;
+	bool mUsePotLabel = false;
+	bool mUseSeedGeneration = false;
+	bool mUseCopyNumber = false;
+	bool mUseLeafType = false;
 
 	// Note: mGroups does not own the pointer
 	std::vector<std::vector<cPlotMetaData*>> mGroups;
@@ -135,7 +166,16 @@ private:
 		int num_points = 0;
 	};
 
-	std::map<int, std::vector<sPlotNumPointData_t> > mPlotSizes;
+	std::map<int, std::vector<sPlotNumPointData_t> > mPlotNumPoints;
+
+	struct sGroupNumPoints_t
+	{
+		int doy = 0;
+		double avgNumPoints = 0;
+		double stdNumPoints = 0;
+	};
+
+	std::map<int, std::vector<sGroupNumPoints_t> > mGroupNumPoints;
 
 	std::vector<std::string> mHeightMetaData;
 

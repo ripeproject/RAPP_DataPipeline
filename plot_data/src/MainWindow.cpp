@@ -566,11 +566,31 @@ wxThread::ExitCode cMainWindow::Entry()
 
 	mResults.write_plot_num_points_file(mDstDirectory.ToStdString());
 
+	if (mResults.hasGroupInfo())
+	{
+		mResults.write_replicate_num_points_file(mDstDirectory.ToStdString());
+	}
+
 	mResults.write_plot_height_file(mDstDirectory.ToStdString());
-//	mResults.write_replicate_height_file(mDstDirectory.ToStdString());
+
+	if (mResults.hasGroupInfo())
+	{
+		mResults.write_replicate_height_file(mDstDirectory.ToStdString());
+	}
 
 	mResults.write_plot_biomass_file(mDstDirectory.ToStdString());
-//	mResults.write_replicate_biomass_file(mDstDirectory.ToStdString());
+
+	if (mResults.hasGroupInfo())
+	{
+		mResults.write_replicate_biomass_file(mDstDirectory.ToStdString());
+	}
+
+	mResults.write_plot_lai_file(mDstDirectory.ToStdString());
+
+	if (mResults.hasGroupInfo())
+	{
+		mResults.write_replicate_lai_file(mDstDirectory.ToStdString());
+	}
 
 	mResults.clear();
 

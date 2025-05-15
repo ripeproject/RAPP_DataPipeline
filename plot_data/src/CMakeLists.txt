@@ -24,10 +24,16 @@ set(PLOT_DATA_COMMON_FILES
 	PlotDataConfigBiomass.hpp
 	PlotDataConfigBiomass.cpp
 
+	PlotDataConfigLAI.hpp
+	PlotDataConfigLAI.cpp
+
 	PlotDataConfigFilter.hpp
 
 	PlotDataConfigFilters.hpp
 	PlotDataConfigFilters.cpp
+
+	PlotDataConfigGroupBy.hpp
+	PlotDataConfigGroupBy.cpp
 
 	OctTree.hpp
 	OctTree.cpp

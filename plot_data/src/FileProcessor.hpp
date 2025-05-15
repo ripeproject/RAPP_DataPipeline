@@ -39,6 +39,7 @@ private:
 	bool loadFileData();
 
 private:
+	void fillGroupInfo();
 	void fillPlotInfo();
 	void computePlotHeights();
 	void computePlotBioMasses();

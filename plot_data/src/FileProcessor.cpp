@@ -77,6 +77,8 @@ void cFileProcessor::process_file()
 
 void cFileProcessor::run()
 {
+    fillGroupInfo();
+
     update_prefix_progress(mID, "Loading...              ", 0);
     if (!loadFileData())
 	{
@@ -105,6 +107,11 @@ void cFileProcessor::run()
 //    update_prefix_progress(mID, "Computing Plot LAI...    ", 0);
 //    computePlotLAIs();
 
+    if (mResults.hasGroupInfo())
+    {
+        update_prefix_progress(mID, "Computing Replicate Data...    ", 0);
+        mResults.computeReplicateData();
+    }
 //    update_prefix_progress(mID, "Saving...                ", 0);
 //    if (mSavePlotsInSingleFile)
 //        savePlotFile();
@@ -197,6 +204,47 @@ bool cFileProcessor::loadFileData()
     return true;
 }
 
+void cFileProcessor::fillGroupInfo()
+{
+    auto groupby = mConfigInfo.getGroupBy();
+    if (!groupby.empty())
+    {
+        for (auto type : groupby.getGroupByTypes())
+        {
+            switch (type)
+            {
+                case eGroupByTypes::EVENT:
+                    mResults.useEvent(true);
+                    break;
+                case eGroupByTypes::SPECIES:
+                    mResults.useSpecies(true);
+                    break;
+                case eGroupByTypes::CULTIVAR:
+                    mResults.useCultivar(true);
+                    break;
+                case eGroupByTypes::TREATMENT:
+                    mResults.useTreatment(true);
+                    break;
+                case eGroupByTypes::CONSTRUCT:
+                    mResults.useConstructName(true);
+                    break;
+                case eGroupByTypes::POT_LABEL:
+                    mResults.usePotLabel(true);
+                    break;
+                case eGroupByTypes::SEED_GENERATION:
+                    mResults.useSeedGeneration(true);
+                    break;
+                case eGroupByTypes::COPY_NUMBER:
+                    mResults.useCopyNumber(true);
+                    break;
+                case eGroupByTypes::LEAF_TYPE:
+                    mResults.useLeafType(true);
+                    break;
+            }
+        }
+    }
+}
+
 void cFileProcessor::fillPlotInfo()
 {
     int month = 0;
@@ -230,6 +278,8 @@ void cFileProcessor::fillPlotInfo()
         const auto& plot = (*mPlotInfo)[i];
         mResults.addPlotInfo(*plot);
     }
+
+    mResults.splitIntoGroups();
 }
 
 void cFileProcessor::computePlotHeights()
