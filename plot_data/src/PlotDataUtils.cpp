@@ -476,3 +476,21 @@ double nPlotUtils::computeDigitalBiomass_open3d(const cPlotPointCloud& plot, dou
 */
 
 
+double nPlotUtils::computeLAI_lpi(const cPlotPointCloud& plot, double k, int groundLevel_mm)
+{
+    if (plot.vegetationOnly() || plot.empty())
+        return -1.0;
+
+    if (k <= 0.0)
+        return -1.0;
+
+    double Nt = plot.size();
+
+    auto ground = plot::trim_above(plot, groundLevel_mm);
+
+    double Ng = ground.size();
+
+    double lai = (-1.0/k) * log(Ng/Nt);
+
+    return lai;
+}

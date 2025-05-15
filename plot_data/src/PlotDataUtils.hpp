@@ -25,5 +25,7 @@ namespace nPlotUtils
 	double computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot, double voxel_size_mm, int min_points_per_voxel = 0);
 	double computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot);
 	//	double computeDigitalBiomass_open3d(const cPlotPointCloud& plot, double voxel_size_mm);
+
+	double computeLAI_lpi(const cPlotPointCloud& plot, double k, int groundLevel_mm);
 }
 

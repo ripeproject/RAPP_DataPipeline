@@ -12,10 +12,18 @@ const char* LAI_SECTION_NAME = "lai";
 cPlotDataConfigLAI::cPlotDataConfigLAI()
 {}
 
+bool cPlotDataConfigLAI::hasData() const
+{
+	return mHasData;
+}
+
 void cPlotDataConfigLAI::clear()
 {
+	mHasData = false;
+
 	mDirty = false;
 
+	mExtinctionCoefficient = 0.0;
 	mGroundLevelBound_mm = 0.0;
 	mVoxelSize_mm = 1.0;
 	mMinBinCount = 1;
@@ -31,6 +39,11 @@ bool cPlotDataConfigLAI::isDirty() const
 eLaiAlgorithmType cPlotDataConfigLAI::getAlgorithmType() const
 {
 	return mAlgorithmType;
+}
+
+double cPlotDataConfigLAI::getExtinctionCoefficient() const
+{
+	return mExtinctionCoefficient;
 }
 
 double cPlotDataConfigLAI::getGroundLevelBound_mm() const
@@ -52,6 +65,12 @@ void cPlotDataConfigLAI::setAlgorithmType(eLaiAlgorithmType algorithm_type)
 {
 	mDirty |= (mAlgorithmType != algorithm_type);
 	mAlgorithmType = algorithm_type;
+}
+
+void cPlotDataConfigLAI::setExtinctionCoefficient(double k)
+{
+	mDirty |= (mExtinctionCoefficient != k);
+	mExtinctionCoefficient = k;
 }
 
 void cPlotDataConfigLAI::setGroundLevelBound_mm(double ground_level_mm)
@@ -105,30 +124,15 @@ void cPlotDataConfigLAI::load(const nlohmann::json& jdoc)
 		throw std::logic_error("Configuration file missing \"algorithm type\" entry!");
 	}
 
-	if ((type == "oct_tree") || (type == "oct tree"))
+	if ((type == "light_penetration_index") || (type == "light penetration index") || (type == "lpi"))
 	{
-		mAlgorithmType = eLaiAlgorithmType::OCT_TREE;
-		if (lai.contains("min_bin_count"))
-			mMinBinCount = lai["min_bin_count"];
-		else
-			throw std::logic_error("Algorithm type \"oct tree\" requires the \"min_bin_count\" parameter!");
+		mAlgorithmType = eLaiAlgorithmType::LPI;
 	}
-	else if ((type == "voxel_grid") || (type == "voxel grid"))
-	{
-		mAlgorithmType = eLaiAlgorithmType::VOXEL_GRID;
-		if (lai.contains("min_bin_count"))
-			mMinBinCount = lai["min_bin_count"];
-		else
-			mMinBinCount = 0;
-	}
-	else if (type == "open3d")
-	{
-		mAlgorithmType = eLaiAlgorithmType::OPEN3D;
-	}
-	else if (type == "convex_hull")
-	{
-		mAlgorithmType = eLaiAlgorithmType::CONVEX_HULL;
-	}
+
+	if (lai.contains("extinction_coefficient"))
+		mExtinctionCoefficient = lai["extinction_coefficient"];
+	else
+		mExtinctionCoefficient = lai["extinction coefficient"];
 
 	if (lai.contains("ground_level_bound_mm"))
 		mGroundLevelBound_mm = lai["ground_level_bound_mm"];
@@ -141,6 +145,8 @@ void cPlotDataConfigLAI::load(const nlohmann::json& jdoc)
 		mVoxelSize_mm = lai["voxel size (mm)"];
 
 	mFilters.load(lai);
+
+	mHasData = true;
 }
 
 void cPlotDataConfigLAI::save(nlohmann::json& jdoc)
@@ -149,23 +155,12 @@ void cPlotDataConfigLAI::save(nlohmann::json& jdoc)
 
 	switch (mAlgorithmType)
 	{
-	case eLaiAlgorithmType::OCT_TREE:
-		lai["algorithm_type"] = "oct_tree";
-		lai["min_bin_count"] = mMinBinCount;
-		break;
-	case eLaiAlgorithmType::VOXEL_GRID:
-		lai["algorithm_type"] = "voxel_grid";
-		if (mMinBinCount > 0)
-			lai["min_bin_count"] = mMinBinCount;
-		break;
-	case eLaiAlgorithmType::OPEN3D:
-		lai["algorithm_type"] = "open3d";
-		break;
-	case eLaiAlgorithmType::CONVEX_HULL:
-		lai["algorithm_type"] = "convex_hull";
+	case eLaiAlgorithmType::LPI:
+		lai["algorithm_type"] = "light_penetration_index";
 		break;
 	};
 
+	lai["extinction coefficient"] = mExtinctionCoefficient;
 	lai["ground level bound (mm)"] = mGroundLevelBound_mm;
 	lai["voxel size (mm)"] = mVoxelSize_mm;
 
