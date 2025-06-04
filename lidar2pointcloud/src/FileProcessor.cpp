@@ -303,7 +303,9 @@ void cFileProcessor::process_file()
         return;
     }
 
-    cRappPointCloud pointCloud = converter->getPointCloud();
+    converter->clearLidarData();
+
+    cRappPointCloud& pointCloud = converter->getPointCloudRef();
     
     if (mSaveFrameIds)
         pointCloud.enableFrameIDs();
@@ -407,25 +409,34 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
 
     cBlockDataFileWriter fileWriter;
 
-    cExperimentSerializer       experimentSerializer;
-    cProcessingInfoSerializer   processInfoSerializer;
     cPointCloudSerializer 	    pointCloudSerializer;
 
-    experimentSerializer.setBufferCapacity(4096 * 1024);
-    processInfoSerializer.setBufferCapacity(4096);
-
-    experimentSerializer.attach(&fileWriter);
-    processInfoSerializer.attach(&fileWriter);
     pointCloudSerializer.attach(&fileWriter);
 
     fileWriter.open(filename);
     if (!fileWriter.isOpen())
         return;
 
-    writeProcessingInfo(*processingInfo, processInfoSerializer);
+    {
+        cProcessingInfoSerializer   processInfoSerializer;
+        processInfoSerializer.setBufferCapacity(4096);
+        processInfoSerializer.attach(&fileWriter);
+
+        writeProcessingInfo(*processingInfo, processInfoSerializer);
+
+        processInfoSerializer.detach();
+    }
     update_progress(mID, 33);
 
-    writeExperimentInfo(*experimentInfo, experimentSerializer);
+    {
+        cExperimentSerializer       experimentSerializer;
+        experimentSerializer.setBufferCapacity(4096 * 1024);
+        experimentSerializer.attach(&fileWriter);
+
+        writeExperimentInfo(*experimentInfo, experimentSerializer);
+
+        experimentSerializer.detach();
+    }
     update_progress(mID, 67);
 
     pointCloudSerializer.writeBeginPointCloudBlock();

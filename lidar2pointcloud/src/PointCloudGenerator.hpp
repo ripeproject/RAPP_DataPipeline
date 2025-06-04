@@ -143,6 +143,8 @@ public:
 
 	bool computePointCloud(int id);
 
+	void clearLidarData();
+
 public:
 	void fixTimestampInfo(double updateRate_Hz, uint64_t start_timestamp_ns = 0);
 

@@ -190,6 +190,11 @@ const std::vector<kdt::sDollyInfo_t>& cPointCloudGenerator::getComputedDollyPath
     return mComputedDollyPath;
 }
 
+bool cPointCloudGenerator::hasPointCloud() const
+{
+    return !mPointCloud.empty();
+}
+
 const cRappPointCloud& cPointCloudGenerator::getPointCloud() const
 {
     return mPointCloud;
@@ -459,6 +464,12 @@ void cPointCloudGenerator::setDollyPath(const std::vector<kdt::sDollyInfo_t>& pa
 //{
 //    mAbort = true;
 //}
+
+void cPointCloudGenerator::clearLidarData()
+{
+    mLidarData.clear();
+}
+
 
 void cPointCloudGenerator::clear()
 {

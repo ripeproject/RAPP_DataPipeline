@@ -99,11 +99,14 @@ public:
 	const std::vector<kdt::sDollyInfo_t>& getComputedDollyPath() const;
 
 	const cRappPointCloud& getPointCloud() const;
+	cRappPointCloud& getPointCloudRef() const;
 
 public:
 	bool computeDollyMovement();
 	bool computeDollyOrientation();
 	bool computePointCloud();
+
+	void clearLidarData();
 
 private:
 	void computeDollyMovement_ConstantSpeed();

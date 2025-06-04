@@ -212,6 +212,12 @@ const cRappPointCloud& cLidar2PointCloud::getPointCloud() const
 	return pPointCloudGenerator->getPointCloud();
 }
 
+cRappPointCloud& cLidar2PointCloud::getPointCloudRef() const
+{
+	auto pPointCloudGenerator = getOusterInfo()->getPointCloudGenerator().lock();
+	return pPointCloudGenerator->getPointCloud();
+}
+
 bool cLidar2PointCloud::computeDollyMovement()
 {
 	update_prefix_progress(mID, "Computing Dolly Movement...", 0);
@@ -522,5 +528,10 @@ void cLidar2PointCloud::computeDollyOrientation_IMU()
 		mSensorMountRoll_deg, mSensorMountYaw_deg, imu, transform);
 }
 
+void cLidar2PointCloud::clearLidarData()
+{
+	auto pPointCloudGenerator = getOusterInfo()->getPointCloudGenerator().lock();
+	pPointCloudGenerator->clearLidarData();
+}
 
 
