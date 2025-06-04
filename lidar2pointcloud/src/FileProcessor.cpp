@@ -409,16 +409,30 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
 
     cBlockDataFileWriter fileWriter;
 
-    cPointCloudSerializer 	    pointCloudSerializer;
+    cPointCloudSerializer pointCloudSerializer;
 
     pointCloudSerializer.attach(&fileWriter);
 
+    std::string msg = "Trying to open file ";
+    msg += filename;
+
+//    console_message(msg);
+
     fileWriter.open(filename);
     if (!fileWriter.isOpen())
+    {
+        std::string msg = "Could not open file ";
+        msg += filename;
+
+        console_message(msg);
+
         return;
+    }
 
     {
-        cProcessingInfoSerializer   processInfoSerializer;
+  //      console_message("cProcessingInfoSerializer");
+
+        cProcessingInfoSerializer processInfoSerializer;
         processInfoSerializer.setBufferCapacity(4096);
         processInfoSerializer.attach(&fileWriter);
 
@@ -429,7 +443,9 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
     update_progress(mID, 33);
 
     {
-        cExperimentSerializer       experimentSerializer;
+//        console_message("cExperimentSerializer");
+
+        cExperimentSerializer experimentSerializer;
         experimentSerializer.setBufferCapacity(4096 * 1024);
         experimentSerializer.attach(&fileWriter);
 
@@ -438,6 +454,8 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
         experimentSerializer.detach();
     }
     update_progress(mID, 67);
+
+//    console_message("pointCloudSerializer");
 
     pointCloudSerializer.writeBeginPointCloudBlock();
 
