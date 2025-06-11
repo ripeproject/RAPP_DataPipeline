@@ -18,7 +18,8 @@ class cExperimentInfoFromJson
 public:
 	cExperimentInfoFromJson() = default;
 
-	const std::string& title() const;
+	const std::string& measurementTitle() const;
+	const std::string& experimentTitle() const;
 	const std::vector<std::string>& comments() const;
 
 	const std::string& principalInvestigator() const;
@@ -40,13 +41,14 @@ public:
 	void clear();
 
 	void parse(const nlohmann::json& jdoc);
-	void parse(const std::string& jdoc);
+	void parse(const std::string jdoc); // &jdoc);
 
 	bool operator!=(const cExperimentInfo& rhs) const;
 	bool operator==(const cExperimentInfo& rhs) const;
 
 private:
-	std::string mTitle;
+	std::string mMeasurementTitle;
+	std::string mExperimentTitle;
 	std::string mExperimentDoc;
 	std::vector<std::string> mComments;
 

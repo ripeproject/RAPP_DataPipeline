@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-void cAxisCommunicationsVerificationParser::onActiveCameraId(int id)
+void cAxisCommunicationsVerificationParser::onActiveCameraId(uint8_t instance_id, int id)
 {
     if ((id < 1) || (id > 4))
     {
@@ -13,7 +13,7 @@ void cAxisCommunicationsVerificationParser::onActiveCameraId(int id)
     }
 }
 
-void cAxisCommunicationsVerificationParser::onFramesPerSecond(int frames_per_sec)
+void cAxisCommunicationsVerificationParser::onFramesPerSecond(uint8_t instance_id, int frames_per_sec)
 {
     if ((frames_per_sec < 1) || (frames_per_sec > 30))
     {
@@ -21,7 +21,7 @@ void cAxisCommunicationsVerificationParser::onFramesPerSecond(int frames_per_sec
     }
 }
 
-void cAxisCommunicationsVerificationParser::onImageSize(int width, int height)
+void cAxisCommunicationsVerificationParser::onImageSize(uint8_t instance_id, int width, int height)
 {
     bool validWidth = (width == 480) || (width == 640) || (width == 800) ||
         (width == 854) || (width == 1024) || (width == 1280) || (width == 1920);
@@ -37,13 +37,13 @@ void cAxisCommunicationsVerificationParser::onImageSize(int width, int height)
     }
 }
 
-void cAxisCommunicationsVerificationParser::onBitmap(const cBitmapBuffer& buffer)
+void cAxisCommunicationsVerificationParser::onBitmap(uint8_t instance_id, const cBitmapBuffer& buffer)
 {}
 
-void cAxisCommunicationsVerificationParser::onJPEG(const cJpegBuffer& buffer)
+void cAxisCommunicationsVerificationParser::onJPEG(uint8_t instance_id, const cJpegBuffer& buffer)
 {}
 
-void cAxisCommunicationsVerificationParser::onMpegFrame(const cMpegFrameBuffer& buffer)
+void cAxisCommunicationsVerificationParser::onMpegFrame(uint8_t instance_id, const cMpegFrameBuffer& buffer)
 {}
 
 void cAxisCommunicationsVerificationParser::processActiveCameraId(cDataBuffer& buffer)

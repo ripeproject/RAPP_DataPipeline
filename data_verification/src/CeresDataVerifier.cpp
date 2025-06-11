@@ -199,7 +199,7 @@ void cCeresDataVerifier::run()
             msg += ": Missing experiment information!";
             console_message(msg);
 
-            moveFileToInvalid();
+//            moveFileToInvalid();
 
             complete_file_progress(mID, "Data Invalid");
 
@@ -213,7 +213,7 @@ void cCeresDataVerifier::run()
     {
         if (mExperimentFile.empty())
         {
-            if (mExperimentInfo->title().empty())
+            if (mExperimentInfo->experimentTitle().empty())
             {
                 std::string msg = mFileToCheck.string();
                 msg += ": Missing experiment title!";
@@ -236,7 +236,7 @@ void cCeresDataVerifier::run()
                 in.close();
 
                 // We could not open the experiment file so we can only check the title
-                if (mExperimentInfo->title().empty())
+                if (mExperimentInfo->experimentTitle().empty())
                 {
                     std::string msg = mFileToCheck.string();
                     msg += ": Missing experiment title!";
@@ -275,7 +275,7 @@ void cCeresDataVerifier::run()
                 }
                 catch (const std::exception& e)
                 {
-                    if (mExperimentInfo->title().empty())
+                    if (mExperimentInfo->experimentTitle().empty())
                     {
                         std::string msg = mFileToCheck.string();
                         msg += ": Missing experiment title!";

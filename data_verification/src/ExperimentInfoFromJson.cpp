@@ -29,8 +29,9 @@ namespace
 
 void cExperimentInfoFromJson::clear()
 {
-	mTitle.clear();
-//	mExperimentDoc.clear();
+	mExperimentTitle.clear();
+	mMeasurementTitle.clear();
+	//	mExperimentDoc.clear();
 	mComments.clear();
 	
 	mPrincipalInvestigator.clear();
@@ -52,7 +53,8 @@ void cExperimentInfoFromJson::clear()
 
 bool cExperimentInfoFromJson::operator!=(const cExperimentInfo& rhs) const
 {
-	return (mTitle != rhs.title()) ||
+	return  (mMeasurementTitle != rhs.measurementTitle()) ||
+		(mExperimentTitle != rhs.experimentTitle()) ||
 		(mPrincipalInvestigator != rhs.principalInvestigator()) ||
 		(mResearchers != rhs.researchers()) ||
 		(mComments != rhs.comments()) ||
@@ -70,9 +72,14 @@ bool cExperimentInfoFromJson::operator==(const cExperimentInfo& rhs) const
 	return !operator!=(rhs);
 }
 
-const std::string& cExperimentInfoFromJson::title() const
+const std::string& cExperimentInfoFromJson::experimentTitle() const
 {
-	return mTitle;
+	return mExperimentTitle;
+}
+
+const std::string& cExperimentInfoFromJson::measurementTitle() const
+{
+	return mMeasurementTitle;
 }
 
 /*
@@ -145,18 +152,20 @@ const std::optional<nExpTypes::sDateDoy_t>& cExperimentInfoFromJson::harvestDate
 /**********************************************************
 * Parsing
 ***********************************************************/
-void cExperimentInfoFromJson::parse(const std::string& jdoc)
+void cExperimentInfoFromJson::parse(const std::string jdoc) // &jdoc)
 {
 	try
 	{
-		nlohmann::json jsonDoc = nlohmann::json::parse(jdoc, nullptr, false, true);
+		nlohmann::json jsonDoc = nlohmann::json::parse(jdoc, nullptr, true, true);
 		parse(jsonDoc);
 	}
 	catch (const nlohmann::json::parse_error& e)
 	{
+		std::string msg = e.what();
 	}
 	catch (const std::exception& e)
 	{
+		std::string msg = e.what();
 	}
 }
 
@@ -166,10 +175,15 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 
 	mExperimentDoc = to_string(jdoc);
 
+	if (jdoc.contains("measurement name"))
+		mMeasurementTitle = jdoc["measurement name"];
+	else if (jdoc.contains("measurement_name"))
+		mMeasurementTitle = jdoc["measurement_name"];
+
 	if (jdoc.contains("experiment name"))
-		mTitle = jdoc["experiment name"];
+		mExperimentTitle = jdoc["experiment name"];
 	else
-		mTitle = jdoc["experiment_name"];
+		mExperimentTitle = jdoc["experiment_name"];
 
 	if (jdoc.contains("principal investigator"))
 	{
