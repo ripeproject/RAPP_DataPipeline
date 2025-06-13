@@ -199,7 +199,7 @@ void cCeresDataVerifier::run()
             msg += ": Missing experiment information!";
             console_message(msg);
 
-//            moveFileToInvalid();
+            moveFileToInvalid();
 
             complete_file_progress(mID, "Data Invalid");
 
