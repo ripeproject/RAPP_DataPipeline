@@ -40,7 +40,8 @@ protected:
 	void onBeginFooter() override;
 	void onEndOfFooter() override;
 
-	void onTitle(const std::string& title) override;
+	void onExperimentTitle(const std::string& title) override;
+	void onMeasurementTitle(const std::string& title) override;
 	void onPrincipalInvestigator(const std::string& investigator) override;
 
 	void onBeginResearcherList() override;
@@ -79,6 +80,8 @@ protected:
 	void onBeginSensorList() override;
 	void onEndOfSensorList() override;
 	void onSensorBlockInfo(uint16_t class_id, const std::string& name) override;
+	void onSensorBlockInfo(uint16_t class_id, const std::string& name, const std::string& instance,
+		const std::string& manufacturer, const std::string& model, const std::string& serial_number, uint8_t device_id)  override;
 
 	void onStartTime(sExperimentTime_t time) override;
 	void onEndTime(sExperimentTime_t time) override;
@@ -91,7 +94,8 @@ protected:
 private:
 	bool mNeedsUpdating = false;
 
-	std::string mTitle;
+	std::string mMeasurementTitle;
+	std::string mExperimentTitle;
 	std::string mExperimentDoc;
 	std::vector<std::string> mComments;
 

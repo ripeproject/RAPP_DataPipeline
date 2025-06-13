@@ -18,7 +18,8 @@ class cExperimentInfoFromJson
 public:
 	cExperimentInfoFromJson() = default;
 
-	const std::string& title() const;
+	const std::string& measurementTitle() const;
+	const std::string& experimentTitle() const;
 	const std::string& experimentDoc() const;
 	const std::vector<std::string>& comments() const;
 
@@ -47,7 +48,8 @@ public:
 	bool operator==(const cExperimentInfo& rhs) const;
 
 private:
-	std::string mTitle;
+	std::string mMeasurementTitle;
+	std::string mExperimentTitle;
 	std::string mExperimentDoc;
 	std::vector<std::string> mComments;
 

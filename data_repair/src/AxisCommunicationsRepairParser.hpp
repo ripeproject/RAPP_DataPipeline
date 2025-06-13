@@ -5,17 +5,24 @@
 #pragma once
 
 #include <cbdf/AxisCommunicationsParser.hpp>
+#include <cbdf/AxisCommunicationsSerializer.hpp>
 
 class cAxisCommunicationsRepairParser : public cAxisCommunicationsParser
 {
 public:
-	void onActiveCameraId(int id) override;
-	void onFramesPerSecond(int frames_per_sec) override;
-	void onImageSize(int width, int height) override;
+	cAxisCommunicationsRepairParser();
 
-	void onBitmap(const cBitmapBuffer& buffer) override;
-	void onJPEG(const cJpegBuffer& buffer) override;
-	void onMpegFrame(const cMpegFrameBuffer& buffer) override;
+	void attach(cBlockDataFileWriter* pDataFile);
+	cBlockDataFileWriter* detach();
+
+public:
+	void onActiveCameraId(uint8_t instance_id, int id) override;
+	void onFramesPerSecond(uint8_t instance_id, int frames_per_sec) override;
+	void onImageSize(uint8_t instance_id, int width, int height) override;
+
+	void onBitmap(uint8_t instance_id, const cBitmapBuffer& buffer) override;
+	void onJPEG(uint8_t instance_id, const cJpegBuffer& buffer) override;
+	void onMpegFrame(uint8_t instance_id, const cMpegFrameBuffer& buffer) override;
 
 protected:
 	void processActiveCameraId(cDataBuffer& buffer) override;
@@ -24,6 +31,9 @@ protected:
 	void processJPEG(cDataBuffer& buffer) override;
 	void processMpegFrame(cDataBuffer& buffer) override;
 	void processImageSize(cDataBuffer& buffer) override;
+
+private:
+	cAxisCommunicationsSerializer mSerializer;
 };
 
 

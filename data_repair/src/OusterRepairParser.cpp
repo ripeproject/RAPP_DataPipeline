@@ -21,10 +21,8 @@ cBlockDataFileWriter* cOusterRepairParser::detach()
     return mSerializer.detach();
 }
 
-void cOusterRepairParser::onConfigParam(ouster::config_param_2_t config_param)
+void cOusterRepairParser::onConfigParam(uint8_t instance_id, ouster::config_param_2_t config_param)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
     if (config_param.udp_ip.empty())
         config_param.udp_ip = "fe80::7c35:e17b:e9aa:f24d";
 
@@ -55,13 +53,11 @@ void cOusterRepairParser::onConfigParam(ouster::config_param_2_t config_param)
         config_param.phase_lock_offset_deg = 0;
     }
 
-    mSerializer.write(config_param);
+    mSerializer.write(instance_id, config_param);
 }
 
-void cOusterRepairParser::onSensorInfo(ouster::sensor_info_2_t sensor_info)
+void cOusterRepairParser::onSensorInfo(uint8_t instance_id, ouster::sensor_info_2_t sensor_info)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
     if (sensor_info.product_line.empty())
         sensor_info.product_line = "OS-0-128";
 
@@ -88,55 +84,41 @@ void cOusterRepairParser::onSensorInfo(ouster::sensor_info_2_t sensor_info)
         (static_cast<int>(sensor_info.status) >= static_cast<int>(::ouster::eSENSOR_STATUS::UNCONFIGURED)))
         sensor_info.status = ::ouster::eSENSOR_STATUS::RUNNING;
 
-    mSerializer.write(sensor_info);
+    mSerializer.write(instance_id, sensor_info);
 }
 
-void cOusterRepairParser::onTimestamp(ouster::timestamp_2_t timestamp)
+void cOusterRepairParser::onTimestamp(uint8_t instance_id, ouster::timestamp_2_t timestamp)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(timestamp);
+    mSerializer.write(instance_id, timestamp);
 }
 
-void cOusterRepairParser::onSyncPulseIn(ouster::sync_pulse_in_2_t pulse_info)
+void cOusterRepairParser::onSyncPulseIn(uint8_t instance_id, ouster::sync_pulse_in_2_t pulse_info)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(pulse_info);
+    mSerializer.write(instance_id, pulse_info);
 }
 
-void cOusterRepairParser::onSyncPulseOut(ouster::sync_pulse_out_2_t pulse_info)
+void cOusterRepairParser::onSyncPulseOut(uint8_t instance_id, ouster::sync_pulse_out_2_t pulse_info)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(pulse_info);
+    mSerializer.write(instance_id, pulse_info);
 }
 
-void cOusterRepairParser::onMultipurposeIo(ouster::multipurpose_io_2_t io)
+void cOusterRepairParser::onMultipurposeIo(uint8_t instance_id, ouster::multipurpose_io_2_t io)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(io);
+    mSerializer.write(instance_id, io);
 }
 
-void cOusterRepairParser::onNmea(ouster::nmea_2_t nmea)
+void cOusterRepairParser::onNmea(uint8_t instance_id, ouster::nmea_2_t nmea)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(nmea);
+    mSerializer.write(instance_id, nmea);
 }
 
-void cOusterRepairParser::onTimeInfo(ouster::time_info_2_t time_info)
+void cOusterRepairParser::onTimeInfo(uint8_t instance_id, ouster::time_info_2_t time_info)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(time_info);
+    mSerializer.write(instance_id, time_info);
 }
 
-void cOusterRepairParser::onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsics)
+void cOusterRepairParser::onBeamIntrinsics(uint8_t instance_id, ouster::beam_intrinsics_2_t intrinsics)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
     if (intrinsics.altitude_angles_deg.empty() || intrinsics.azimuth_angles_deg.empty())
     {
         intrinsics.altitude_angles_deg =
@@ -170,39 +152,33 @@ void cOusterRepairParser::onBeamIntrinsics(ouster::beam_intrinsics_2_t intrinsic
         intrinsics.lidar_to_beam_origins_mm = 27.67;
     }
 
-    mSerializer.write(intrinsics);
+    mSerializer.write(instance_id, intrinsics);
 }
 
-void cOusterRepairParser::onImuIntrinsics(ouster::imu_intrinsics_2_t intrinsics)
+void cOusterRepairParser::onImuIntrinsics(uint8_t instance_id, ouster::imu_intrinsics_2_t intrinsics)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
     if (intrinsics.imu_to_sensor_transform.empty())
     {
         intrinsics.imu_to_sensor_transform =
             { 1, 0, 0, 6.253, 0, 1, 0, -11.775, 0, 0, 1, 7.645, 0, 0, 0, 1 };
     }
 
-    mSerializer.write(intrinsics);
+    mSerializer.write(instance_id, intrinsics);
 }
 
-void cOusterRepairParser::onLidarIntrinsics(ouster::lidar_intrinsics_2_t intrinsics)
+void cOusterRepairParser::onLidarIntrinsics(uint8_t instance_id, ouster::lidar_intrinsics_2_t intrinsics)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
     if (intrinsics.lidar_to_sensor_transform.empty())
     {
         intrinsics.lidar_to_sensor_transform =
             { -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 36.18, 0, 0, 0, 1 };
     }
 
-    mSerializer.write(intrinsics);
+    mSerializer.write(instance_id, intrinsics);
 }
 
-void cOusterRepairParser::onLidarDataFormat(ouster::lidar_data_format_2_t format)
+void cOusterRepairParser::onLidarDataFormat(uint8_t instance_id, ouster::lidar_data_format_2_t format)
 {
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
     if ((format.pixels_per_column < 32)
         || (format.pixels_per_column > 128))
     {
@@ -228,10 +204,10 @@ void cOusterRepairParser::onLidarDataFormat(ouster::lidar_data_format_2_t format
     if (format.udp_profile_imu.empty())
         format.udp_profile_imu = "LEGACY";
 
-    mSerializer.write(format);
+    mSerializer.write(instance_id, format);
 }
 
-void cOusterRepairParser::onImuData(ouster::imu_data_t data)
+void cOusterRepairParser::onImuData(uint8_t instance_id, ouster::imu_data_t data)
 {
     if ((data.acceleration_Xaxis_g == 0.0) &&
         (data.acceleration_Yaxis_g == 0.0) &&
@@ -240,21 +216,17 @@ void cOusterRepairParser::onImuData(ouster::imu_data_t data)
         throw bdf::invalid_data("Bad lidar data");
     }
 
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(data);
+    mSerializer.write(instance_id, data);
 }
 
-void cOusterRepairParser::onLidarData(cOusterLidarData data)
+void cOusterRepairParser::onLidarData(uint8_t instance_id, cOusterLidarData data)
 {
     if (data.empty())
     {
         throw bdf::invalid_data("Bad lidar data");
     }
 
-    mSerializer.setVersion(cOusterParser::blockID().majorVersion(), cOusterParser::blockID().minorVersion());
-
-    mSerializer.write(data.frame_id(), data);
+    mSerializer.write(instance_id, data.frame_id(), data);
 }
 
 void cOusterRepairParser::processConfigParam_2(cDataBuffer& buffer)

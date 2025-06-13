@@ -5,23 +5,42 @@
 
 #include <stdexcept>
 
-void cAxisCommunicationsRepairParser::onActiveCameraId(int id)
+cAxisCommunicationsRepairParser::cAxisCommunicationsRepairParser()
+{
+    mSerializer.setBufferCapacity(256 * 1024 * 1024);
+}
+
+void cAxisCommunicationsRepairParser::attach(cBlockDataFileWriter* pDataFile)
+{
+    mSerializer.attach(pDataFile);
+}
+
+cBlockDataFileWriter* cAxisCommunicationsRepairParser::detach()
+{
+    return mSerializer.detach();
+}
+
+void cAxisCommunicationsRepairParser::onActiveCameraId(uint8_t instance_id, int id)
 {
     if ((id < 1) || (id > 4))
     {
         throw bdf::invalid_data("Invalid active camera id!");
     }
+
+    mSerializer.writeActiveCameraId(instance_id, id);
 }
 
-void cAxisCommunicationsRepairParser::onFramesPerSecond(int frames_per_sec)
+void cAxisCommunicationsRepairParser::onFramesPerSecond(uint8_t instance_id, int frames_per_sec)
 {
     if ((frames_per_sec < 1) || (frames_per_sec > 30))
     {
         throw bdf::invalid_data("Invalid frames per second!");
     }
+
+    mSerializer.writeFramesPerSecond(instance_id, frames_per_sec);
 }
 
-void cAxisCommunicationsRepairParser::onImageSize(int width, int height)
+void cAxisCommunicationsRepairParser::onImageSize(uint8_t instance_id, int width, int height)
 {
     bool validWidth = (width == 480) || (width == 640) || (width == 800) ||
         (width == 854) || (width == 1024) || (width == 1280) || (width == 1920);
@@ -35,16 +54,24 @@ void cAxisCommunicationsRepairParser::onImageSize(int width, int height)
     {
         throw bdf::invalid_data("Invalid image size!");
     }
+
+    mSerializer.writeImageSize(instance_id, width, height);
 }
 
-void cAxisCommunicationsRepairParser::onBitmap(const cBitmapBuffer& buffer)
-{}
+void cAxisCommunicationsRepairParser::onBitmap(uint8_t instance_id, const cBitmapBuffer& buffer)
+{
+    mSerializer.write(instance_id, buffer);
+}
 
-void cAxisCommunicationsRepairParser::onJPEG(const cJpegBuffer& buffer)
-{}
+void cAxisCommunicationsRepairParser::onJPEG(uint8_t instance_id, const cJpegBuffer& buffer)
+{
+    mSerializer.write(instance_id, buffer);
+}
 
-void cAxisCommunicationsRepairParser::onMpegFrame(const cMpegFrameBuffer& buffer)
-{}
+void cAxisCommunicationsRepairParser::onMpegFrame(uint8_t instance_id, const cMpegFrameBuffer& buffer)
+{
+    mSerializer.write(instance_id, buffer);
+}
 
 void cAxisCommunicationsRepairParser::processActiveCameraId(cDataBuffer& buffer)
 {

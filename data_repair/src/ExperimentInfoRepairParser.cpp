@@ -80,7 +80,8 @@ cBlockDataFileWriter* cExperimentInfoRepairParser::detach()
 
 void cExperimentInfoRepairParser::setReferenceInfo(const cExperimentInfoFromJson& info)
 {
-	mNeedsUpdating |= update(mTitle, info.title());
+	mNeedsUpdating |= update(mMeasurementTitle, info.measurementTitle());
+	mNeedsUpdating |= update(mExperimentTitle, info.experimentTitle());
 	mNeedsUpdating |= update(mExperimentDoc, info.experimentDoc());
 	mNeedsUpdating |= update(mComments, info.comments());
 	mNeedsUpdating |= update(mPrincipalInvestigator, info.principalInvestigator());
@@ -102,8 +103,11 @@ void cExperimentInfoRepairParser::onBeginHeader()
 	{
 		mSerializer.writeBeginHeader();
 
-		if (!mTitle.empty())
-			mSerializer.writeTitle(mTitle);
+		if (!mExperimentTitle.empty())
+			mSerializer.writeExperimentTitle(mExperimentTitle);
+
+		if (!mMeasurementTitle.empty())
+			mSerializer.writeMeasurementTitle(mMeasurementTitle);
 
 		if (!mComments.empty())
 			mSerializer.writeComments(mComments);
@@ -155,7 +159,8 @@ void cExperimentInfoRepairParser::onBeginHeader()
 		return;
 	}
 
-	mTitle.clear();
+	mExperimentTitle.clear();
+	mMeasurementTitle.clear();
 	mExperimentDoc.clear();
 
 	mResearchers.clear();
@@ -185,17 +190,30 @@ void cExperimentInfoRepairParser::onEndOfFooter()
 		mSerializer.writeEndOfFooter();
 }
 
-void cExperimentInfoRepairParser::onTitle(const std::string& title)
+void cExperimentInfoRepairParser::onExperimentTitle(const std::string& title)
 {
 	if (mSerializer)
 	{
 		if (!mNeedsUpdating)
-			mSerializer.writeTitle(title);
+			mSerializer.writeExperimentTitle(title);
 
 		return;
 	}
 
-	mTitle = title;
+	mExperimentTitle = title;
+}
+
+void cExperimentInfoRepairParser::onMeasurementTitle(const std::string& title)
+{
+	if (mSerializer)
+	{
+		if (!mNeedsUpdating)
+			mSerializer.writeMeasurementTitle(title);
+
+		return;
+	}
+
+	mMeasurementTitle = title;
 }
 
 void cExperimentInfoRepairParser::onPrincipalInvestigator(const std::string& investigator)
@@ -494,6 +512,13 @@ void cExperimentInfoRepairParser::onSensorBlockInfo(uint16_t class_id, const std
 {
 	if (mSerializer)
 		mSerializer.writeSensorBlockInfo(class_id, name);
+}
+
+void cExperimentInfoRepairParser::onSensorBlockInfo(uint16_t class_id, const std::string& name, const std::string& instance,
+	const std::string& manufacturer, const std::string& model, const std::string& serial_number, uint8_t device_id)
+{
+	if (mSerializer)
+		mSerializer.writeSensorBlockInfo(class_id, name, instance, manufacturer, model, serial_number, device_id);
 }
 
 void cExperimentInfoRepairParser::onStartTime(sExperimentTime_t time)
