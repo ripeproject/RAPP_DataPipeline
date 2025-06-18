@@ -596,7 +596,9 @@ void cFileProcessor::writeExperimentInfo(const cExperimentInfo& info, cExperimen
     if (!info.fieldDesign().empty())
         serializer.writeFieldDesign(info.fieldDesign());
 
-    if (!info.permit().empty())
+    if (!info.authorization().empty() && !info.permit().empty())
+        serializer.writePermitInfo(info.authorization(), info.permit());
+    else if (!info.permit().empty())
         serializer.writePermitInfo(info.permit());
 
     if (info.plantingDate().has_value())

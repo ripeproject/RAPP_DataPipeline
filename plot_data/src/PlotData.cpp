@@ -607,6 +607,11 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 		out << "Field Design: " << mExperimentInfo.fieldDesign() << "\n";
 	}
 
+	if (!mExperimentInfo.authorization().empty())
+	{
+		out << "Authorization: " << mExperimentInfo.authorization() << "\n";
+	}
+
 	if (!mExperimentInfo.permit().empty())
 	{
 		out << "Permit: " << mExperimentInfo.permit() << "\n";
