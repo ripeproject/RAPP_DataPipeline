@@ -45,6 +45,7 @@ void cExperimentInfoFromJson::clear()
 	mTreatments.clear();
 
 	mFieldDesign.clear();
+	mAuthorization.clear();
 	mPermit.clear();
 
 	mPlantingDate.reset();
@@ -64,6 +65,7 @@ bool cExperimentInfoFromJson::operator!=(const cExperimentInfo& rhs) const
 		(mConstruct != rhs.construct()) ||
 		(mTreatments != rhs.treatments()) ||
 		(mFieldDesign != rhs.fieldDesign()) ||
+		(mAuthorization != rhs.authorization()) ||
 		(mPermit != rhs.permit());
 }
 
@@ -132,6 +134,11 @@ const std::vector<std::string>& cExperimentInfoFromJson::treatments() const
 const std::string& cExperimentInfoFromJson::fieldDesign() const
 {
 	return mFieldDesign;
+}
+
+const std::string& cExperimentInfoFromJson::authorization() const
+{
+	return mAuthorization;
 }
 
 const std::string& cExperimentInfoFromJson::permit() const
@@ -214,7 +221,16 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 
 	if (jdoc.contains("permit info"))
 	{
-		mPermit = jdoc["permit info"];
+		auto permit_info = jdoc["permit info"];
+		if (permit_info.is_string())
+		{
+			mPermit = permit_info;
+		}
+		if (permit_info.is_object())
+		{
+			mAuthorization = permit_info["authorization"];
+			mPermit = permit_info["permit"];
+		}
 	}
 
 	if (jdoc.contains("construct"))
