@@ -34,6 +34,7 @@ public:
 	const std::vector<std::string>& treatments() const;
 
 	const std::string& fieldDesign() const;
+	const std::string& authorization() const;
 	const std::string& permit() const;
 
 	const std::optional<nExpTypes::sDateDoy_t>& plantingDate() const;
@@ -64,6 +65,7 @@ private:
 	std::vector<std::string> mTreatments;
 
 	std::string mFieldDesign;
+	std::string mAuthorization;
 	std::string mPermit;
 
 	std::optional<nExpTypes::sDateDoy_t> mPlantingDate;

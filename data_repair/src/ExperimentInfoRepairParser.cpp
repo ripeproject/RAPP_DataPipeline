@@ -92,6 +92,7 @@ void cExperimentInfoRepairParser::setReferenceInfo(const cExperimentInfoFromJson
 	mNeedsUpdating |= update(mEventNumbers, info.eventNumbers());
 	mNeedsUpdating |= update(mTreatments, info.treatments());
 	mNeedsUpdating |= update(mFieldDesign, info.fieldDesign());
+	mNeedsUpdating |= update(mAuthorization, info.authorization());
 	mNeedsUpdating |= update(mPermit, info.permit());
 	mNeedsUpdating |= update(mPlantingDate, info.plantingDate());
 	mNeedsUpdating |= update(mHarvestDate, info.harvestDate());
@@ -138,8 +139,10 @@ void cExperimentInfoRepairParser::onBeginHeader()
 
 		if (!mFieldDesign.empty())
 			mSerializer.writeFieldDesign(mFieldDesign);
-		
-		if (!mPermit.empty())
+
+		if (!mAuthorization.empty() && !mPermit.empty())
+			mSerializer.writePermitInfo(mAuthorization, mPermit);
+		else if (!mPermit.empty())
 			mSerializer.writePermitInfo(mPermit);
 
 		if (mPlantingDate.has_value())
@@ -311,6 +314,20 @@ void cExperimentInfoRepairParser::onPermitInfo(const std::string& permit)
 		return;
 	}
 
+	mPermit = permit;
+}
+
+void cExperimentInfoRepairParser::onPermitInfo(const std::string& authorization, const std::string& permit)
+{
+	if (mSerializer)
+	{
+		if (!mNeedsUpdating)
+			mSerializer.writePermitInfo(authorization, permit);
+
+		return;
+	}
+
+	mAuthorization = authorization;
 	mPermit = permit;
 }
 

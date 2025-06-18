@@ -53,6 +53,7 @@ protected:
 	void onExperimentDoc(const std::string& doc) override;
 
 	void onPermitInfo(const std::string& permit) override;
+	void onPermitInfo(const std::string& authorization, const std::string& permit) override;
 
 	void onBeginTreatmentList() override;
 	void onEndOfTreatmentList() override;
@@ -110,6 +111,7 @@ private:
 	std::vector<std::string> mTreatments;
 
 	std::string mFieldDesign;
+	std::string mAuthorization;
 	std::string mPermit;
 
 	std::optional<nExpTypes::sDateDoy_t> mPlantingDate;
