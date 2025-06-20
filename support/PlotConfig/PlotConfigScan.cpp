@@ -44,6 +44,23 @@ void cPlotConfigScan::setMeasurementName(const std::string& name)
 	mMeasurementName = name;
 }
 
+
+bool cPlotConfigScan::hasGroundLevel() const
+{
+	return (mGroundLevel_mm != std::numeric_limits<std::int32_t>::lowest());
+}
+
+std::int32_t cPlotConfigScan::getGroundLevel_mm() const
+{
+	return mGroundLevel_mm;
+}
+
+void cPlotConfigScan::setGroundLevel_mm(std::int32_t ground_level_mm)
+{
+	mDirty |= (mGroundLevel_mm != ground_level_mm);
+	mGroundLevel_mm = ground_level_mm;
+}
+
 bool cPlotConfigScan::empty() const
 {
 	return mPlots.empty();
@@ -206,17 +223,20 @@ void cPlotConfigScan::setDirtyFlag(bool dirty)
 
 void cPlotConfigScan::load(const nlohmann::json& jdoc)
 {
-	if (jdoc.contains("experiment_name"))
-		mMeasurementName = jdoc["experiment_name"];
-
-	if (jdoc.contains("experiment name"))
-		mMeasurementName = jdoc["experiment name"];
-
 	if (jdoc.contains("measurement_name"))
 		mMeasurementName = jdoc["measurement_name"];
 
-	if (jdoc.contains("measurement name"))
+	else if (jdoc.contains("measurement name"))
 		mMeasurementName = jdoc["measurement name"];
+
+	else if (jdoc.contains("experiment_name"))
+		mMeasurementName = jdoc["experiment_name"];
+
+	else if (jdoc.contains("experiment name"))
+		mMeasurementName = jdoc["experiment name"];
+
+	if (jdoc.contains("ground_level_mm"))
+		mGroundLevel_mm = jdoc["ground_level_mm"];
 
 	if (!jdoc.contains("plots"))
 		return;
@@ -238,6 +258,11 @@ nlohmann::json cPlotConfigScan::save()
 	nlohmann::json scanDoc;
 
 	scanDoc["measurement name"] = mMeasurementName;
+
+	if (mGroundLevel_mm != std::numeric_limits<std::int32_t>::lowest())
+	{
+		scanDoc["ground_level_mm"] = mGroundLevel_mm;
+	}
 
 	nlohmann::json plots;
 
