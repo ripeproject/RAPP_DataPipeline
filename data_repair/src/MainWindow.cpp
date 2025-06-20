@@ -30,7 +30,7 @@ namespace
 				load_experiments(std::filesystem::directory_iterator(entry), exp_files);
 			}
 
-			if (entry.is_regular_file())
+			else if (entry.is_regular_file())
 			{
 				try
 				{
@@ -45,21 +45,24 @@ namespace
 
 					nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
 
-					std::string exp_name;
-					if (jsonDoc.contains("experiment name"))
-						exp_name = jsonDoc["experiment name"];
+					std::string measurement_name;
+					if (jsonDoc.contains("measurement name"))
+						measurement_name = jsonDoc["measurement name"];
+					else if (jsonDoc.contains("measurement_name"))
+						measurement_name = jsonDoc["measurement_name"];
+					else if (jsonDoc.contains("experiment name"))
+						measurement_name = jsonDoc["experiment name"];
+					else if (jsonDoc.contains("experiment_name"))
+						measurement_name = jsonDoc["experiment_name"];
 
-					if (jsonDoc.contains("experiment_name"))
-						exp_name = jsonDoc["experiment_name"];
-
-					if (exp_name.empty())
+					if (measurement_name.empty())
 					{
 						in.close();
 						continue;
 					}
 
 					in.close();
-					auto filename = nStringUtils::safeFilename(exp_name);
+					auto filename = nStringUtils::safeFilename(measurement_name);
 
 					exp_files.insert(std::make_pair(filename, entry));
 				}
