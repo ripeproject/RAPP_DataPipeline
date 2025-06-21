@@ -216,6 +216,14 @@ const std::vector<cPlotConfigPlotInfo>& cPlotConfigScan::data() const
 	return mPlots;
 }
 
+void cPlotConfigScan::clearDirtyFlag()
+{
+	for (auto& plot : mPlots)
+		plot.clearDirtyFlag();
+
+	mDirty = false;
+}
+
 void cPlotConfigScan::setDirtyFlag(bool dirty)
 {
 	mDirty = dirty;
@@ -615,6 +623,13 @@ void cPlotConfigPlotInfo::setIsolationMethod(const cPlotConfigIsolationMethod& m
 {
 	mDirty |= (mIsolationMethod != method);
 	mIsolationMethod = method;
+}
+
+void cPlotConfigPlotInfo::clearDirtyFlag()
+{
+	mDirty = false;
+	mBounds.setDirtyFlag(false);
+	mIsolationMethod.setDirtyFlag(false);
 }
 
 void cPlotConfigPlotInfo::setDirtyFlag(bool dirty)

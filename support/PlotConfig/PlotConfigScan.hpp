@@ -74,6 +74,7 @@ public:
 	std::vector<cPlotConfigPlotInfo>& data();
 	const std::vector<cPlotConfigPlotInfo>& data() const;
 
+	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);
 
 protected:
@@ -155,6 +156,7 @@ public:
 	void setBounds(const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
 
+	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);
 
 protected:
