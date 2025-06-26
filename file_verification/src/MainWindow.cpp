@@ -153,6 +153,8 @@ void cMainWindow::CreateControls()
 
 	mpFailedDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpFailedDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnFailedDirectory, this);
+	mpFailedDirButton->Enable(false);
+	mpFailedDirButton->Show(false);
 
 	mpVerifyButton = new wxButton(this, wxID_ANY, "Verify");
 	mpVerifyButton->Disable();
