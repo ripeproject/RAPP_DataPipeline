@@ -79,6 +79,10 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
 
+	if (configDoc.contains("effective dates"))
+	{
+	}
+
 	if (configDoc.contains("scans"))
 	{
 		const auto& scans = configDoc["scans"];

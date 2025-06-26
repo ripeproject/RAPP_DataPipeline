@@ -6,8 +6,10 @@
 #include "LidarMapConfigScan.hpp"
 
 #include <vector>
+#include <map>
 #include <string>
 #include <memory>
+#include <system_error>
 
 
 class cLidarMapConfigFile
@@ -78,5 +80,7 @@ private:
 	cLidarMapConfigDefaults mDefaults;
 
 	LidarScan_t mScans;
+
+	std::map<std::string, LidarScan_t> mDates;
 };
 
