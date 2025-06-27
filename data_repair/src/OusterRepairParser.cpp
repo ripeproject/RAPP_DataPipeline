@@ -226,6 +226,33 @@ void cOusterRepairParser::onLidarData(uint8_t instance_id, cOusterLidarData data
         throw bdf::invalid_data("Bad lidar data");
     }
 
+    const auto& matrix = data.data();
+
+    bool data_valid = false;
+
+    for (const auto& pixels : matrix.data())
+    {
+        if (pixels.range_mm > 0)
+        {
+            mNumBadFrames = 0;
+            data_valid = true;
+            break;
+        }
+    }
+
+    if (data_valid)
+    {
+        mSerializer.write(instance_id, data.frame_id(), data);
+        return;
+    }
+
+    ++mNumBadFrames;
+
+    if (mNumBadFrames > mMaxNumBadFrames)
+    {
+        throw bdf::invalid_data("Missing lidar data!");
+    }
+
     mSerializer.write(instance_id, data.frame_id(), data);
 }
 

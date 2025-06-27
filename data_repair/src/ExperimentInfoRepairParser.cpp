@@ -304,6 +304,19 @@ void cExperimentInfoRepairParser::onExperimentDoc(const std::string& doc)
 	mExperimentDoc = doc;
 }
 
+void cExperimentInfoRepairParser::onTrialInfo(const std::string& trial)
+{
+	if (mSerializer)
+	{
+		if (!mNeedsUpdating)
+			mSerializer.writeTrialInfo(trial);
+
+		return;
+	}
+
+	mTrial = trial;
+}
+
 void cExperimentInfoRepairParser::onPermitInfo(const std::string& permit)
 {
 	if (mSerializer)

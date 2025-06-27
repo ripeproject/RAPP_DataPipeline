@@ -36,6 +36,7 @@ public:
 	const std::string& fieldDesign() const;
 	const std::string& authorization() const;
 	const std::string& permit() const;
+	const std::string& trial() const;
 
 	const std::optional<nExpTypes::sDateDoy_t>& plantingDate() const;
 	const std::optional<nExpTypes::sDateDoy_t>& harvestDate() const;
@@ -67,6 +68,7 @@ private:
 	std::string mFieldDesign;
 	std::string mAuthorization;
 	std::string mPermit;
+	std::string mTrial;
 
 	std::optional<nExpTypes::sDateDoy_t> mPlantingDate;
 	std::optional<nExpTypes::sDateDoy_t> mHarvestDate;

@@ -144,6 +144,11 @@ const std::string& cExperimentInfoFromJson::permit() const
 	return mPermit;
 }
 
+const std::string& cExperimentInfoFromJson::trial() const
+{
+	return mTrial;
+}
+
 const std::optional<nExpTypes::sDateDoy_t>& cExperimentInfoFromJson::plantingDate() const
 {
 	return mPlantingDate;
@@ -217,6 +222,11 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 	if (jdoc.contains("cultivar"))
 	{
 		mCultivar = jdoc["cultivar"];
+	}
+
+	if (jdoc.contains("trial"))
+	{
+		mTrial = jdoc["trial"];
 	}
 
 	if (jdoc.contains("permit info"))

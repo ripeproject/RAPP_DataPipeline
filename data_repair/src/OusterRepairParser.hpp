@@ -50,6 +50,9 @@ protected:
 	void processLidarDataFrameTimestamp(cDataBuffer& buffer) override;
 
 private:
+	int mNumBadFrames = 0;
+	const int mMaxNumBadFrames = 10;
+
 	cOusterSerializer mSerializer;
 };
 
