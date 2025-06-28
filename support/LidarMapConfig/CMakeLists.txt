@@ -93,6 +93,7 @@ target_compile_features(lidar_map_config PRIVATE cxx_std_20)
 
 target_sources(lidar_map_config
 PUBLIC
+	LidarMapConfigCatalog.hpp
 	LidarMapConfigScan.hpp
 	LidarMapConfigOptions.hpp
 	LidarMapConfigDefaults.hpp
@@ -100,6 +101,7 @@ PUBLIC
 
 PRIVATE
 
+	LidarMapConfigCatalog.cpp
 	LidarMapConfigScan.cpp
 	LidarMapConfigOptions.cpp
 	LidarMapConfigDefaults.cpp
