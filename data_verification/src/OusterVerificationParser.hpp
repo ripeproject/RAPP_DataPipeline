@@ -41,5 +41,8 @@ protected:
 	void processImuData(cDataBuffer& buffer) override;
 	void processLidarData(cDataBuffer& buffer) override;
 	void processLidarDataFrameTimestamp(cDataBuffer& buffer) override;
+
+	int mNumBadFrames = 0;
+	const int mMaxNumBadFrames = 10;
 };
 

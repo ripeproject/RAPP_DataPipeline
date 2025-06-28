@@ -66,7 +66,30 @@ void cOusterVerificationParser::onImuData(uint8_t instance_id, ouster::imu_data_
 {}
 
 void cOusterVerificationParser::onLidarData(uint8_t instance_id, cOusterLidarData data)
-{}
+{
+    auto n = data.columnsPerFrame();
+
+    for (std::size_t col = 0; col < n; ++col)
+    {
+        const auto& channel = data.channels(col);
+
+        for (const auto& pixels : channel)
+        {
+            if (pixels.range_mm > 1000)
+            {
+                mNumBadFrames = 0;
+                return;
+            }
+        }
+    }
+
+    ++mNumBadFrames;
+
+    if (mNumBadFrames > mMaxNumBadFrames)
+    {
+        throw bdf::invalid_data("Missing lidar data!");
+    }
+}
 
 void cOusterVerificationParser::processConfigParam_2(cDataBuffer& buffer)
 {

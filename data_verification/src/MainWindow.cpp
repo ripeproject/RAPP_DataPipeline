@@ -192,6 +192,8 @@ void cMainWindow::CreateControls()
 
 	mpInvalidDataDirButton = new wxButton(this, wxID_ANY, "Browse");
 	mpInvalidDataDirButton->Bind(wxEVT_BUTTON, &cMainWindow::OnInvalidDirectory, this);
+	mpInvalidDataDirButton->Enable(false);
+	mpInvalidDataDirButton->Show(false);
 
 	mpExperimentCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxSize(500, -1), wxTE_READONLY);
 	mpExperimentCtrl->SetValue(mExperimentDirectory);
