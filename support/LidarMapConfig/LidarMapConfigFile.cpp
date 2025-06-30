@@ -79,26 +79,32 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
 
-	if (configDoc.contains("effective dates"))
+	if (configDoc.contains("catalog"))
 	{
-	}
+		nlohmann::json catalogDoc = configDoc["catalog"];
 
-/*
-	if (configDoc.contains("scans"))
-	{
-		const auto& scans = configDoc["scans"];
-
-		for (const auto& entry : scans)
+		for (const auto& entry : catalogDoc)
 		{
+			if (entry.contains("date"))
+			{
+				std::string date = entry["date"];
+				auto pos = date.find('/');
+				int month = std::stoi(date.substr(0, pos));
+				int day = std::stoi(date.substr(pos+1));
+				cLidarMapConfigCatalog catalog(month, day);
+				catalog.load(entry);
 
-			cLidarMapConfigScan scan;
-
-			scan.load(entry);
-
-			mScans.push_back(std::move(scan));
+				mCatalog.insert(std::make_pair(catalog.date(), std::move(catalog)));
+			}
 		}
 	}
-*/
+	else if (configDoc.contains("scans"))
+	{
+		cLidarMapConfigCatalog catalog(0, 0);
+		catalog.load(configDoc);
+
+		mCatalog.insert(std::make_pair(0, std::move(catalog)));
+	}
 
 	return true;
 }
@@ -112,17 +118,16 @@ void cLidarMapConfigFile::save()
 	configDoc["options"]  = mOptions.save();
 	configDoc["defaults"] = mDefaults.save();
 
-/*
-	nlohmann::json scansDoc;
+	nlohmann::json catalogDoc;
 
-	for (auto& scan : mScans)
+	for (auto& entry : mCatalog)
 	{
-		scansDoc.push_back(scan.save());
+		auto& date = entry.second;
+		catalogDoc.push_back(date.save());
 	}
 
-	if (!scansDoc.is_null())
-		configDoc["scans"] = scansDoc;
-*/
+	if (!catalogDoc.is_null())
+		configDoc["catalog"] = catalogDoc;
 
 	std::ofstream out;
 	out.open(mFileName, std::ios::trunc);
@@ -149,16 +154,16 @@ void cLidarMapConfigFile::save_as(const std::string& file_name)
 	configDoc["options"]  = mOptions.save();
 	configDoc["defaults"] = mDefaults.save();
 
-/*
-	nlohmann::json scansDoc;
+	nlohmann::json catalogDoc;
 
-	for (auto& scan : mScans)
+	for (auto& entry : mCatalog)
 	{
-		scansDoc.push_back(scan.save());
+		auto& date = entry.second;
+		catalogDoc.push_back(date.save());
 	}
 
-	configDoc["scans"] = scansDoc;
-*/
+	if (!catalogDoc.is_null())
+		configDoc["catalog"] = catalogDoc;
 
 	std::ofstream out;
 	out.open(file_name);
@@ -218,8 +223,11 @@ bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
 
+	if (configDoc.contains("effective dates"))
+	{
 
-	if (configDoc.contains("scans"))
+	}
+	else if (configDoc.contains("scans"))
 	{
 		cLidarMapConfigCatalog catalog(0, 0);
 		catalog.load(configDoc);
@@ -245,19 +253,18 @@ void cLidarMapConfigFile::save_temporary_file()
 	configDoc["defaults"] = mDefaults.save();
 	mDefaults.setDirty(defaults_dirty);
 
-/*
-	nlohmann::json scansDoc;
+	nlohmann::json catalogDoc;
 
-	for (auto& scan : mScans)
+	for (auto& entry : mCatalog)
 	{
-		bool scan_dirty = scan.isDirty();
-		scansDoc.push_back(scan.save());
-		scan.setDirty(scan_dirty);
+		auto& date = entry.second;
+		bool catalog_dirty = date.isDirty();
+		catalogDoc.push_back(date.save());
+		date.setDirty(catalog_dirty);
 	}
 
-	if (!scansDoc.is_null())
-		configDoc["scans"] = scansDoc;
-*/
+	if (!catalogDoc.is_null())
+		configDoc["catalog"] = catalogDoc;
 
 	std::ofstream out;
 	out.open(mTmpFileName, std::ios::trunc);
@@ -367,12 +374,32 @@ std::optional<cLidarMapConfigCatalog::iterator> cLidarMapConfigFile::find_by_fil
 
 cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int date) const
 {
-	return mCatalog.lower_bound(date);
+	cLidarMapConfigFile::const_iterator result = end();
+
+	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
+	{
+		if (it->first > date)
+			return result;
+
+		result = it;
+	}
+
+	return result;
 }
 
 cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int date)
 {
-	return mCatalog.lower_bound(date);
+	cLidarMapConfigFile::iterator result = end();
+
+	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
+	{
+		if (it->first > date)
+			return result;
+
+		result = it;
+	}
+
+	return result;
 }
 
 cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int month, const int day) const
