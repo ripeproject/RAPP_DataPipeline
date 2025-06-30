@@ -26,6 +26,22 @@ namespace
 cLidarMapConfigScan::cLidarMapConfigScan()
 {}
 
+const int cLidarMapConfigScan::date() const
+{
+	return (mEffectiveMonth * 100) + mEffectiveDay;
+}
+
+const int cLidarMapConfigScan::month() const
+{
+	return mEffectiveMonth;
+}
+
+const int cLidarMapConfigScan::day() const
+{
+	return mEffectiveDay;
+}
+
+
 void cLidarMapConfigScan::clear()
 {
 	mDirty = false;
@@ -557,6 +573,12 @@ void cLidarMapConfigScan::setReferencePoint(const std::optional<rfm::rappPoint_t
 {
 	mDirty |= (mReferencePoint != rp);
 	mReferencePoint = rp;
+}
+
+void cLidarMapConfigScan::setEffectiveDate(int month, int day)
+{
+	mEffectiveMonth = month;
+	mEffectiveDay = day;
 }
 
 void cLidarMapConfigScan::setDirty(bool dirty)

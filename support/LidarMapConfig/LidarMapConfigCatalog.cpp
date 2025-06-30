@@ -1,5 +1,5 @@
 
-#include "LidarMapConfigConfiguration.hpp"
+#include "LidarMapConfigCatalog.hpp"
 
 #include "StringUtils.hpp"
 
@@ -9,16 +9,33 @@
 #include <algorithm>
 #include <stdexcept>
 
-cLidarMapConfigConfiguration::cLidarMapConfigConfiguration()
+cLidarMapConfigCatalog::cLidarMapConfigCatalog(int month, int day)
+	: mEffectiveMonth(month), mEffectiveDay(day)
+
 {}
 
-void cLidarMapConfigConfiguration::clear()
+const int cLidarMapConfigCatalog::date() const
+{
+	return (mEffectiveMonth * 100) + mEffectiveDay;
+}
+
+const int cLidarMapConfigCatalog::month() const
+{
+	return mEffectiveMonth;
+}
+
+const int cLidarMapConfigCatalog::day() const
+{
+	return mEffectiveDay;
+}
+
+void cLidarMapConfigCatalog::clear()
 {
 	mDirty = false;
 	mScans.clear();
 }
 
-bool cLidarMapConfigConfiguration::isDirty() const
+bool cLidarMapConfigCatalog::isDirty() const
 {
 	for (const auto& scan : mScans)
 	{
@@ -29,22 +46,22 @@ bool cLidarMapConfigConfiguration::isDirty() const
 	return mDirty;
 }
 
-void cLidarMapConfigConfiguration::setDirty(bool dirty)
+void cLidarMapConfigCatalog::setDirty(bool dirty)
 {
 	mDirty = dirty;
 }
 
-bool cLidarMapConfigConfiguration::empty() const
+bool cLidarMapConfigCatalog::empty() const
 {
 	return mScans.empty();
 }
 
-std::size_t cLidarMapConfigConfiguration::size() const
+std::size_t cLidarMapConfigCatalog::size() const
 {
 	return mScans.size();
 }
 
-bool cLidarMapConfigConfiguration::contains(const std::string& name)
+bool cLidarMapConfigCatalog::contains(const std::string& name)
 {
 	for (const auto& scan : mScans)
 	{
@@ -55,17 +72,17 @@ bool cLidarMapConfigConfiguration::contains(const std::string& name)
 	return false;
 }
 
-const cLidarMapConfigScan& cLidarMapConfigConfiguration::front() const { return mScans.front(); }
-cLidarMapConfigScan& cLidarMapConfigConfiguration::front() { return mScans.front(); }
+const cLidarMapConfigScan& cLidarMapConfigCatalog::front() const { return mScans.front(); }
+cLidarMapConfigScan& cLidarMapConfigCatalog::front() { return mScans.front(); }
 
 
-cLidarMapConfigConfiguration::iterator cLidarMapConfigConfiguration::begin() { return mScans.begin(); }
-cLidarMapConfigConfiguration::iterator cLidarMapConfigConfiguration::end() { return mScans.end(); }
+cLidarMapConfigCatalog::iterator cLidarMapConfigCatalog::begin() { return mScans.begin(); }
+cLidarMapConfigCatalog::iterator cLidarMapConfigCatalog::end() { return mScans.end(); }
 
-cLidarMapConfigConfiguration::const_iterator	cLidarMapConfigConfiguration::begin() const { return mScans.cbegin(); }
-cLidarMapConfigConfiguration::const_iterator	cLidarMapConfigConfiguration::end() const { return mScans.cend(); }
+cLidarMapConfigCatalog::const_iterator	cLidarMapConfigCatalog::begin() const { return mScans.cbegin(); }
+cLidarMapConfigCatalog::const_iterator	cLidarMapConfigCatalog::end() const { return mScans.cend(); }
 
-cLidarMapConfigConfiguration::const_iterator	cLidarMapConfigConfiguration::find_by_filename(const std::string& measurement_filename) const
+cLidarMapConfigCatalog::const_iterator	cLidarMapConfigCatalog::find_by_filename(const std::string& measurement_filename) const
 {
 	using namespace nStringUtils;
 
@@ -83,7 +100,7 @@ cLidarMapConfigConfiguration::const_iterator	cLidarMapConfigConfiguration::find_
 	return mScans.cend();
 }
 
-cLidarMapConfigConfiguration::iterator cLidarMapConfigConfiguration::find_by_filename(const std::string& measurement_filename)
+cLidarMapConfigCatalog::iterator cLidarMapConfigCatalog::find_by_filename(const std::string& measurement_filename)
 {
 	using namespace nStringUtils;
 
@@ -101,7 +118,7 @@ cLidarMapConfigConfiguration::iterator cLidarMapConfigConfiguration::find_by_fil
 	return mScans.end();
 }
 
-cLidarMapConfigConfiguration::const_iterator cLidarMapConfigConfiguration::find(const std::string& name) const
+cLidarMapConfigCatalog::const_iterator cLidarMapConfigCatalog::find(const std::string& name) const
 {
 	for (auto it = mScans.cbegin(); it != mScans.cend(); ++it)
 	{
@@ -112,7 +129,7 @@ cLidarMapConfigConfiguration::const_iterator cLidarMapConfigConfiguration::find(
 	return mScans.cend();
 }
 
-cLidarMapConfigConfiguration::iterator cLidarMapConfigConfiguration::find(const std::string& name)
+cLidarMapConfigCatalog::iterator cLidarMapConfigCatalog::find(const std::string& name)
 {
 	for (auto it = mScans.begin(); it != mScans.end(); ++it)
 	{
@@ -123,7 +140,7 @@ cLidarMapConfigConfiguration::iterator cLidarMapConfigConfiguration::find(const 
 	return mScans.end();
 }
 
-cLidarMapConfigScan& cLidarMapConfigConfiguration::add(const std::string& name)
+cLidarMapConfigScan& cLidarMapConfigCatalog::add(const std::string& name)
 {
 	for (auto& scan : mScans)
 	{
@@ -140,12 +157,12 @@ cLidarMapConfigScan& cLidarMapConfigConfiguration::add(const std::string& name)
 	return mScans.back();
 }
 
-void cLidarMapConfigConfiguration::remove(const std::string& name)
+void cLidarMapConfigCatalog::remove(const std::string& name)
 {
 
 }
 
-const cLidarMapConfigScan& cLidarMapConfigConfiguration::operator[](int index) const
+const cLidarMapConfigScan& cLidarMapConfigCatalog::operator[](int index) const
 {
 	if (index < 0)
 		return mScans.front();
@@ -156,7 +173,7 @@ const cLidarMapConfigScan& cLidarMapConfigConfiguration::operator[](int index) c
 	return mScans[index];
 }
 
-cLidarMapConfigScan& cLidarMapConfigConfiguration::operator[](int index)
+cLidarMapConfigScan& cLidarMapConfigCatalog::operator[](int index)
 {
 	if (index < 0)
 		return mScans.front();
@@ -169,16 +186,48 @@ cLidarMapConfigScan& cLidarMapConfigConfiguration::operator[](int index)
 
 
 
-void cLidarMapConfigConfiguration::load(const nlohmann::json& jdoc)
+void cLidarMapConfigCatalog::load(const nlohmann::json& jdoc)
 {
+	if (jdoc.contains("scans"))
+	{
+		const auto& scans = jdoc["scans"];
+
+		for (const auto& entry : scans)
+		{
+
+			cLidarMapConfigScan scan;
+
+			scan.setEffectiveDate(mEffectiveMonth, mEffectiveDay);
+
+			scan.load(entry);
+
+			mScans.push_back(std::move(scan));
+		}
+	}
+
 }
 
-nlohmann::json cLidarMapConfigConfiguration::save()
+nlohmann::json cLidarMapConfigCatalog::save()
 {
-	nlohmann::json configDoc;
+	nlohmann::json catalogDoc;
 
+	std::string date = std::to_string(mEffectiveMonth);
+	date += "/";
+	date += std::to_string(mEffectiveDay);
 
-	return configDoc;
+	catalogDoc["date"] = date;
+
+	nlohmann::json scansDoc;
+
+	for (auto& scan : mScans)
+	{
+		scansDoc.push_back(scan.save());
+	}
+
+	if (!scansDoc.is_null())
+		catalogDoc["scans"] = scansDoc;
+
+	return catalogDoc;
 }
 
 

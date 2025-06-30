@@ -12,7 +12,7 @@
 #include <optional>
 
 
-class cLidarMapConfigConfiguration
+class cLidarMapConfigCatalog
 {
 public:
 	typedef std::vector<cLidarMapConfigScan> LidarScan_t;
@@ -21,8 +21,13 @@ public:
 	typedef LidarScan_t::const_iterator			const_iterator;
 
 public:
-	cLidarMapConfigConfiguration();
-	~cLidarMapConfigConfiguration() = default;
+	cLidarMapConfigCatalog(int month, int day);
+	~cLidarMapConfigCatalog() = default;
+
+	const int date() const;
+	
+	const int month() const;
+	const int day() const;
 
 	void clear();
 
@@ -67,8 +72,10 @@ private:
 private:
 	bool mDirty = false;
 
-	LidarScan_t mScans;
+	const int mEffectiveMonth;
+	const int mEffectiveDay;
 
+	LidarScan_t mScans;
 
 	friend class cLidarMapConfigFile;
 };
@@ -77,7 +84,7 @@ private:
  * Implementation Details
  ***/
 template<typename T>
-inline void cLidarMapConfigConfiguration::reset(std::optional<T>& var)
+inline void cLidarMapConfigCatalog::reset(std::optional<T>& var)
 {
 	if (var.has_value())
 	{

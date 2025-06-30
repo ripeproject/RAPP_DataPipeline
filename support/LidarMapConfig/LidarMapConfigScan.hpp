@@ -20,6 +20,11 @@ public:
 	cLidarMapConfigScan();
 	~cLidarMapConfigScan() = default;
 
+	const int date() const;
+
+	const int month() const;
+	const int day() const;
+
 	void clear();
 
 	bool isDirty() const;
@@ -171,6 +176,8 @@ public:
 	void resetReferencePoint();
 	void setReferencePoint(const std::optional<rfm::rappPoint_t>& p);
 
+	void setEffectiveDate(int month, int day);
+
 protected:
 	void setDirty(bool dirty);
 
@@ -185,6 +192,8 @@ private:
 	bool mDirty = false;
 
 	std::string mMeasurementName;
+	int mEffectiveMonth = 0;
+	int mEffectiveDay = 0;
 
 	std::optional<eKinematicModel>			mKinematicModel;
 	std::optional<eOrientationModel>		mOrientationModel;
@@ -265,6 +274,7 @@ private:
 	std::optional<rfm::rappPoint_t> mReferencePoint;
 
 	friend class cLidarMapConfigFile;
+	friend class cLidarMapConfigCatalog;
 };
 
 /***

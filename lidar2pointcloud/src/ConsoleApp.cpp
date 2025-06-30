@@ -283,11 +283,12 @@ int main(int argc, char** argv)
 			}
 		}
 
+		auto result = configData.find_by_filename(in_file.path().filename().string());
 
-		auto it = configData.find_by_filename(in_file.path().filename().string());
-
-		if (it == configData.end())
+		if (!result.has_value())
 			continue;
+
+		auto it = result.value();
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
 

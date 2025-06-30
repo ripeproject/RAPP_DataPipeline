@@ -494,10 +494,12 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		nConfigFileData::sParameters_t parameters = options.value();
 */
 
-		auto it = mConfigData->find_by_filename(in_file.path().filename().string());
+		auto result = mConfigData->find_by_filename(in_file.path().filename().string());
 
-		if (it == mConfigData->end())
+		if (!result.has_value())
 			continue;
+
+		auto it = result.value();
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
 
