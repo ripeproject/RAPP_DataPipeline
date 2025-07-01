@@ -68,8 +68,21 @@ public:
 	const_iterator	find(const int date) const;
 	iterator		find(const int date);
 
+	const_iterator	find(const int date, const std::string& measurement_name) const;
+	iterator		find(const int date, const std::string& measurement_name);
+
 	const_iterator	find(const int month, const int day) const;
 	iterator		find(const int month, const int day);
+
+	const_iterator	find(const int month, const int day, const std::string& measurement_name) const;
+	iterator		find(const int month, const int day, const std::string& measurement_name);
+
+	const_iterator	find_exact(const int date) const;
+	iterator		find_exact(const int date);
+
+	const_iterator	find_exact(const int month, const int day) const;
+	iterator		find_exact(const int month, const int day);
+
 
 	cLidarMapConfigCatalog& add(const int month, const int day);
 	cLidarMapConfigScan& add(const int month, const int day, const std::string& name);

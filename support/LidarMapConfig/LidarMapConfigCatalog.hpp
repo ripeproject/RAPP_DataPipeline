@@ -36,7 +36,7 @@ public:
 	bool empty() const;
 	std::size_t size() const;
 
-	bool contains(const std::string& name);
+	bool contains(const std::string& name) const;
 
 	const cLidarMapConfigScan& front() const;
 	cLidarMapConfigScan& front();

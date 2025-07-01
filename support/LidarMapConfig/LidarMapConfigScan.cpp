@@ -45,6 +45,13 @@ const int cLidarMapConfigScan::day() const
 void cLidarMapConfigScan::clear()
 {
 	mDirty = false;
+
+	mMeasurementName.clear();
+}
+
+bool cLidarMapConfigScan::empty() const
+{
+	return mMeasurementName.empty();
 }
 
 bool cLidarMapConfigScan::isDirty() const
@@ -579,6 +586,16 @@ void cLidarMapConfigScan::setEffectiveDate(int month, int day)
 {
 	mEffectiveMonth = month;
 	mEffectiveDay = day;
+}
+
+void cLidarMapConfigScan::clearDirtyFlag()
+{
+	setDirty(false);
+}
+
+void cLidarMapConfigScan::setDirtyFlag()
+{
+	setDirty(true);
 }
 
 void cLidarMapConfigScan::setDirty(bool dirty)

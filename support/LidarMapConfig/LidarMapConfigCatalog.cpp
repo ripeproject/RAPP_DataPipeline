@@ -61,7 +61,7 @@ std::size_t cLidarMapConfigCatalog::size() const
 	return mScans.size();
 }
 
-bool cLidarMapConfigCatalog::contains(const std::string& name)
+bool cLidarMapConfigCatalog::contains(const std::string& name) const
 {
 	for (const auto& scan : mScans)
 	{
@@ -204,7 +204,6 @@ void cLidarMapConfigCatalog::load(const nlohmann::json& jdoc)
 			mScans.push_back(std::move(scan));
 		}
 	}
-
 }
 
 nlohmann::json cLidarMapConfigCatalog::save()
@@ -226,6 +225,8 @@ nlohmann::json cLidarMapConfigCatalog::save()
 
 	if (!scansDoc.is_null())
 		catalogDoc["scans"] = scansDoc;
+
+	mDirty = false;
 
 	return catalogDoc;
 }

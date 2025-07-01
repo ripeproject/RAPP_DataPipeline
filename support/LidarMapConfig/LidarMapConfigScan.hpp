@@ -26,6 +26,7 @@ public:
 	const int day() const;
 
 	void clear();
+	bool empty() const;
 
 	bool isDirty() const;
 
@@ -177,6 +178,9 @@ public:
 	void setReferencePoint(const std::optional<rfm::rappPoint_t>& p);
 
 	void setEffectiveDate(int month, int day);
+
+	void clearDirtyFlag();
+	void setDirtyFlag();
 
 protected:
 	void setDirty(bool dirty);

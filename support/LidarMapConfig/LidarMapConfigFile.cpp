@@ -223,9 +223,24 @@ bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
 
-	if (configDoc.contains("effective dates"))
+	if (configDoc.contains("catalog"))
 	{
+		nlohmann::json catalogDoc = configDoc["catalog"];
 
+		for (const auto& entry : catalogDoc)
+		{
+			if (entry.contains("date"))
+			{
+				std::string date = entry["date"];
+				auto pos = date.find('/');
+				int month = std::stoi(date.substr(0, pos));
+				int day = std::stoi(date.substr(pos + 1));
+				cLidarMapConfigCatalog catalog(month, day);
+				catalog.load(entry);
+
+				mCatalog.insert(std::make_pair(catalog.date(), std::move(catalog)));
+			}
+		}
 	}
 	else if (configDoc.contains("scans"))
 	{
@@ -402,6 +417,38 @@ cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int date)
 	return result;
 }
 
+cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int date, const std::string& measurement_name) const
+{
+	cLidarMapConfigFile::const_iterator result = end();
+
+	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
+	{
+		if (it->first > date)
+			return result;
+
+		if (it->second.contains(measurement_name))
+			result = it;
+	}
+
+	return result;
+}
+
+cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int date, const std::string& measurement_name)
+{
+	cLidarMapConfigFile::iterator result = end();
+
+	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
+	{
+		if (it->first > date)
+			return result;
+
+		if (it->second.contains(measurement_name))
+			result = it;
+	}
+
+	return result;
+}
+
 cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int month, const int day) const
 {
 	return find(month*100 + day);
@@ -410,6 +457,36 @@ cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int month, c
 cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int month, const int day)
 {
 	return find(month * 100 + day);
+}
+
+cLidarMapConfigFile::const_iterator	cLidarMapConfigFile::find(const int month, const int day, const std::string& measurement_name) const
+{
+	return find(month * 100 + day, measurement_name);
+}
+
+cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int month, const int day, const std::string& measurement_name)
+{
+	return find(month * 100 + day, measurement_name);
+}
+
+cLidarMapConfigFile::const_iterator	cLidarMapConfigFile::find_exact(const int date) const
+{
+	return mCatalog.find(date);
+}
+
+cLidarMapConfigFile::iterator cLidarMapConfigFile::find_exact(const int date)
+{
+	return mCatalog.find(date);
+}
+
+cLidarMapConfigFile::const_iterator	cLidarMapConfigFile::find_exact(const int month, const int day) const
+{
+	return find_exact(month * 100 + day);
+}
+
+cLidarMapConfigFile::iterator cLidarMapConfigFile::find_exact(const int month, const int day)
+{
+	return find_exact(month * 100 + day);
 }
 
 cLidarMapConfigCatalog& cLidarMapConfigFile::add(const int month, const int day)
@@ -425,7 +502,10 @@ cLidarMapConfigCatalog& cLidarMapConfigFile::add(const int month, const int day)
 
 	mCatalog.insert( std::make_pair(date, std::move(catalog)) );
 
-	return mCatalog.find(date)->second;
+	cLidarMapConfigCatalog& result = mCatalog.find(date)->second;
+	result.setDirty(true);
+
+	return result;
 }
 
 cLidarMapConfigScan& cLidarMapConfigFile::add(const int month, const int day, const std::string& name)
