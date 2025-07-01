@@ -95,6 +95,7 @@ target_sources(plot_config
 PUBLIC
 	PlotConfigFile.hpp
 	PlotConfigOptions.hpp
+	PlotConfigCatalog.hpp
 	PlotConfigScan.hpp
 	PlotConfigBoundary.hpp
 	PlotConfigIsolationMethod.hpp
@@ -103,6 +104,7 @@ PRIVATE
 
 	PlotConfigFile.cpp
 	PlotConfigOptions.cpp
+	PlotConfigCatalog.cpp
 	PlotConfigScan.cpp
 	PlotConfigBoundary.cpp
 	PlotConfigIsolationMethod.cpp
