@@ -38,8 +38,8 @@ public:
 
 	rfm::rappPoint2D_t center() const;
 
-	bool contains(rfm::rappPoint2D_t point);
-	bool contains(std::int32_t x_mm, std::int32_t y_mm);
+	bool contains(rfm::rappPoint2D_t point) const;
+	bool contains(std::int32_t x_mm, std::int32_t y_mm) const;
 
 	void setNorthEastCorner(rfm::rappPoint2D_t point);
 	void setNorthWestCorner(rfm::rappPoint2D_t point);

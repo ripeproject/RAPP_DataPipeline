@@ -139,12 +139,12 @@ rfm::rappPoint2D_t cPlotConfigBoundary::center() const
 	return {static_cast<std::int32_t>(x), static_cast<std::int32_t>(y)};
 }
 
-bool cPlotConfigBoundary::contains(rfm::rappPoint2D_t point)
+bool cPlotConfigBoundary::contains(rfm::rappPoint2D_t point) const
 {
 	return contains(point.x_mm, point.y_mm);
 }
 
-bool cPlotConfigBoundary::contains(std::int32_t x_mm, std::int32_t y_mm)
+bool cPlotConfigBoundary::contains(std::int32_t x_mm, std::int32_t y_mm) const
 {
 	if (x_mm < mNorthEastCorner.x_mm) return false;
 	if (x_mm < mNorthWestCorner.x_mm) return false;

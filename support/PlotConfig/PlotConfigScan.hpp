@@ -3,6 +3,7 @@
 
 #include "PlotConfigBoundary.hpp"
 #include "PlotConfigIsolationMethod.hpp"
+#include "PlotConfigCorrections.hpp"
 
 #include <nlohmann/json.hpp>
 
