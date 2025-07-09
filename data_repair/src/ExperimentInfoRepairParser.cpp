@@ -10,7 +10,7 @@
 
 namespace
 {
-	bool update(std::string& value, const std::string& default_value)
+	bool update(std::string& value, const std::string& default_value, bool check_same = false)
 	{
 		if (default_value.empty())
 			return false;
@@ -19,6 +19,15 @@ namespace
 		{
 			value = default_value;
 			return true;
+		}
+
+		if (check_same)
+		{
+			if (value != default_value)
+			{
+				value = default_value;
+				return true;
+			}
 		}
 
 		return false;
@@ -80,9 +89,20 @@ cBlockDataFileWriter* cExperimentInfoRepairParser::detach()
 
 void cExperimentInfoRepairParser::setReferenceInfo(const cExperimentInfoFromJson& info)
 {
+	bool valid_json = false;
+
+	try
+	{
+		nlohmann::json jsonDoc = nlohmann::json::parse(mExperimentDoc, nullptr, true, true);
+		valid_json = true;
+	}
+	catch(const std::exception&)
+	{
+	}
+
 	mNeedsUpdating |= update(mMeasurementTitle, info.measurementTitle());
 	mNeedsUpdating |= update(mExperimentTitle, info.experimentTitle());
-	mNeedsUpdating |= update(mExperimentDoc, info.experimentDoc());
+	mNeedsUpdating |= update(mExperimentDoc, info.experimentDoc(), !valid_json);
 	mNeedsUpdating |= update(mComments, info.comments());
 	mNeedsUpdating |= update(mPrincipalInvestigator, info.principalInvestigator());
 	mNeedsUpdating |= update(mResearchers, info.researchers());
