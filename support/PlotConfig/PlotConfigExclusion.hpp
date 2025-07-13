@@ -49,7 +49,7 @@ public:
 
 protected:
 	void load(const nlohmann::json& jdoc);
-	void save(nlohmann::json& jdoc);
+	nlohmann::json save();
 
 private:
 	bool mDirty = false;

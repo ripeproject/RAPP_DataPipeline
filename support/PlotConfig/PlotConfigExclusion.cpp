@@ -120,10 +120,34 @@ void cPlotConfigExclusion::setOrientation_deg(double angle_deg)
 
 void cPlotConfigExclusion::load(const nlohmann::json& jdoc)
 {
+	auto center = jdoc["center"];
+	mCenterX_mm = center["x (mm)"];
+	mCenterY_mm = center["y (mm)"];
+
+	mLength_mm = jdoc["length (mm)"];
+	mWidth_mm = jdoc["width (mm)"];
+
+	mOrientation_deg = jdoc["orientation (deg)"];
+	mDirty = false;
 }
 
-void cPlotConfigExclusion::save(nlohmann::json& jdoc)
+nlohmann::json cPlotConfigExclusion::save()
 {
+	nlohmann::json jdoc;
+
+	nlohmann::json center;
+	center["x (mm)"] = mCenterX_mm;
+	center["y (mm)"] = mCenterY_mm;
+
+	jdoc["center"] = center;
+
+	jdoc["length (mm)"] = mLength_mm;
+	jdoc["width (mm)"] = mWidth_mm;
+
+	jdoc["orientation (deg)"] = mOrientation_deg;
+	mDirty = false;
+
+	return jdoc;
 }
 
 
