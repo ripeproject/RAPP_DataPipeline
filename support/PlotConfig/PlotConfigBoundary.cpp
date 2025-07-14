@@ -25,6 +25,18 @@ cPlotConfigBoundary::cPlotConfigBoundary()
 	mSouthWestCorner.y_mm = -1;
 }
 
+cPlotConfigBoundary& cPlotConfigBoundary::operator=(const cPlotConfigBoundary& rhs)
+{
+	setNorthEastCorner(rhs.mNorthEastCorner);
+	setNorthWestCorner(rhs.mNorthWestCorner);
+	setSouthEastCorner(rhs.mSouthEastCorner);
+	setSouthWestCorner(rhs.mSouthWestCorner);
+	setNumOfSubPlots(rhs.mNumOfSubPlots);
+	setSubPlotOrientation(rhs.mSubPlotOrientation);
+
+	return *this;
+}
+
 void cPlotConfigBoundary::clear()
 {
 	mDirty = false;
@@ -220,6 +232,11 @@ void cPlotConfigBoundary::setSubPlotOrientation(ePlotOrientation orientation)
 {
 	mDirty |= (mSubPlotOrientation != orientation);
 	mSubPlotOrientation = orientation;
+}
+
+void cPlotConfigBoundary::clearDirtyFlag()
+{
+	mDirty = false;
 }
 
 void cPlotConfigBoundary::setDirtyFlag(bool dirty)

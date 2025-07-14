@@ -3,6 +3,7 @@
 
 #include "PlotConfigBoundary.hpp"
 #include "PlotConfigIsolationMethod.hpp"
+#include "PlotConfigExclusion.hpp"
 #include "PlotConfigCorrections.hpp"
 
 #include <nlohmann/json.hpp>
@@ -97,6 +98,10 @@ private:
 class cPlotConfigPlotInfo
 {
 public:
+	typedef cPlotConfigCorrections::iterator		iterator;
+	typedef cPlotConfigCorrections::const_iterator	const_iterator;
+
+public:
 	cPlotConfigPlotInfo() = default;
 	~cPlotConfigPlotInfo() = default;
 
@@ -126,14 +131,33 @@ public:
 	const std::string& getLeafType() const;
 	const std::vector<std::string>& getTreatments() const;
 
-	bool contains(rfm::rappPoint2D_t point);
-	bool contains(std::int32_t x_mm, std::int32_t y_mm);
+	bool contains_point(rfm::rappPoint2D_t point);
+	bool contains_point(std::int32_t x_mm, std::int32_t y_mm);
 
-	const cPlotConfigBoundary& getBounds() const;
-	cPlotConfigBoundary& getBounds();
 
-	const cPlotConfigIsolationMethod& getIsolationMethod() const;
-	cPlotConfigIsolationMethod& getIsolationMethod();
+	bool contains(const int date) const;
+	bool contains(const int month, const int day) const;
+
+	const cPlotConfigCorrection& front() const;
+	cPlotConfigCorrection& front();
+
+	iterator		begin();
+	iterator		end();
+
+	const_iterator	begin() const;
+	const_iterator	end() const;
+
+	const_iterator	find(const int month, const int day) const;
+	iterator		find(const int month, const int day);
+
+	const_iterator	find_exact(const int month, const int day) const;
+	iterator		find_exact(const int month, const int day);
+
+//	const cPlotConfigBoundary& getBounds() const;
+//	cPlotConfigBoundary& getBounds();
+
+//	const cPlotConfigIsolationMethod& getIsolationMethod() const;
+//	cPlotConfigIsolationMethod& getIsolationMethod();
 
 	void setPlotNumber(uint32_t num);
 //	void setSubPlotNumber(uint8_t num);
@@ -154,8 +178,12 @@ public:
 	void clearTreatments();
 	void addTreatment(const std::string& treatment);
 
+	cPlotConfigCorrection& add(const int month, const int day);
+
+/*
 	void setBounds(const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
+*/
 
 	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);
@@ -180,8 +208,10 @@ private:
 	std::string mLeafType;
 	std::vector<std::string> mTreatments;
 
-	cPlotConfigBoundary mBounds;
-	cPlotConfigIsolationMethod mIsolationMethod;
+	cPlotConfigCorrections mCorrections;
+
+//	cPlotConfigBoundary mBounds;
+//	cPlotConfigIsolationMethod mIsolationMethod;
 
 	friend class cPlotConfigScan;
 };

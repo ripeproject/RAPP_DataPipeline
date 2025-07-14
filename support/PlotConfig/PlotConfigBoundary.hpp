@@ -19,6 +19,8 @@ public:
 	cPlotConfigBoundary();
 	~cPlotConfigBoundary() = default;
 
+	cPlotConfigBoundary& operator=(const cPlotConfigBoundary& rhs);
+
 	void clear();
 
 	bool empty() const;
@@ -58,6 +60,7 @@ public:
 	bool operator==(const cPlotConfigBoundary& rhs) const;
 	bool operator!=(const cPlotConfigBoundary& rhs) const;
 
+	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);
 
 protected:
@@ -79,6 +82,7 @@ private:
 
 	friend class cPlotConfigFile;
 	friend class cPlotConfigPlotInfo;
+	friend class cPlotConfigCorrection;
 };
 
 

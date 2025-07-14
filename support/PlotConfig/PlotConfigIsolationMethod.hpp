@@ -19,6 +19,8 @@ public:
 	cPlotConfigIsolationMethod();
 	~cPlotConfigIsolationMethod() = default;
 
+	cPlotConfigIsolationMethod& operator=(const cPlotConfigIsolationMethod& rhs);
+
 	void clear();
 
 	bool isDirty() const;
@@ -42,7 +44,9 @@ public:
 	void setPlotLength_mm(double length_mm);
 	void setPlotWidth_mm(double width_mm);
 
+	void clearHeightThreshold_pct();
 	void setHeightThreshold_pct(double threshold_pct);
+	void clearMaxDisplacement_pct();
 	void setMaxDisplacement_pct(double displacement_pct);
 
 	void setTolerance_mm(double tolerance_mm);
@@ -51,6 +55,7 @@ public:
 	bool operator==(const cPlotConfigIsolationMethod& rhs) const;
 	bool operator!=(const cPlotConfigIsolationMethod& rhs) const;
 
+	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);
 
 protected:
@@ -75,6 +80,7 @@ private:
 
 	friend class cPlotConfigFile;
 	friend class cPlotConfigPlotInfo;
+	friend class cPlotConfigCorrection;
 };
 
 

@@ -22,6 +22,12 @@ void cPlotConfigCorrection::clear()
 
 bool cPlotConfigCorrection::isDirty() const
 {
+	for (const auto& exclusion : mExclusions)
+	{
+		if (exclusion.isDirty())
+			return true;
+	}
+
 	return mBounds.isDirty() || mIsolationMethod.isDirty();
 }
 
@@ -30,12 +36,12 @@ bool cPlotConfigCorrection::empty() const
 	return mBounds.empty();
 }
 
-bool cPlotConfigCorrection::contains(rfm::rappPoint2D_t point) const
+bool cPlotConfigCorrection::contains_point(rfm::rappPoint2D_t point) const
 {
 	return mBounds.contains(point);
 }
 
-bool cPlotConfigCorrection::contains(std::int32_t x_mm, std::int32_t y_mm) const
+bool cPlotConfigCorrection::contains_point(std::int32_t x_mm, std::int32_t y_mm) const
 {
 	return mBounds.contains(x_mm, y_mm);
 }
@@ -60,6 +66,74 @@ cPlotConfigIsolationMethod& cPlotConfigCorrection::getIsolationMethod()
 	return mIsolationMethod;
 }
 
+void cPlotConfigCorrection::setBounds(const cPlotConfigBoundary& bounds)
+{
+	mBounds = bounds;
+}
+
+void cPlotConfigCorrection::setIsolationMethod(const cPlotConfigIsolationMethod& method)
+{
+	mIsolationMethod = method;
+}
+
+void cPlotConfigCorrection::clearDirtyFlag()
+{
+	mBounds.clearDirtyFlag();
+	mIsolationMethod.clearDirtyFlag();
+}
+
+void cPlotConfigCorrection::setDirtyFlag(bool dirty)
+{
+	mBounds.setDirtyFlag(dirty);
+	mIsolationMethod.setDirtyFlag(dirty);
+}
+
+void cPlotConfigCorrection::load(const nlohmann::json& jdoc)
+{
+	mBounds.load(jdoc);
+	mIsolationMethod.load(jdoc);
+
+	if (jdoc.contains("exclusions"))
+	{
+		auto& exclusions = jdoc["exclusions"];
+		for (auto& exclusion : exclusions)
+		{
+			cPlotConfigExclusion e;
+			e.load(exclusion);
+			mExclusions.push_back(e);
+		}
+	}
+}
+
+nlohmann::json cPlotConfigCorrection::save()
+{
+	nlohmann::json correctionDoc;
+
+	std::string date = std::to_string(mEffectiveMonth);
+	date += "/";
+	date += std::to_string(mEffectiveDay);
+
+	correctionDoc["date"] = date;
+
+	mBounds.save(correctionDoc);
+	correctionDoc["isolation method"] = mIsolationMethod.save();
+
+	if (!mExclusions.empty())
+	{
+		nlohmann::json exclusionDoc;
+
+		for (auto& exclusion : mExclusions)
+		{
+			exclusionDoc.push_back(exclusion.save());
+		}
+
+		if (!exclusionDoc.is_null())
+			correctionDoc["exclusions"] = exclusionDoc;
+	}
+
+	return correctionDoc;
+}
+
 
 /**********************************************************
  * The collection of plot corrections
@@ -71,6 +145,11 @@ cPlotConfigCorrections::cPlotConfigCorrections()
 cPlotConfigCorrections::~cPlotConfigCorrections()
 {}
 
+void cPlotConfigCorrections::clear()
+{
+	mCorrections.clear();
+}
+
 bool cPlotConfigCorrections::empty() const
 {
 	return mCorrections.empty();
@@ -81,30 +160,50 @@ bool cPlotConfigCorrections::isDirty() const
 	return mDirty;
 }
 
-bool cPlotConfigCorrections::contains(rfm::rappPoint2D_t point) const
+bool cPlotConfigCorrections::contains_point(rfm::rappPoint2D_t point) const
 {
 	for (const auto& entry : mCorrections)
 	{
 		const auto& correction = entry.second;
 
-		if (correction.contains(point))
+		if (correction.contains_point(point))
 			return true;
 	}
 
 	return false;
 }
 
-bool cPlotConfigCorrections::contains(std::int32_t x_mm, std::int32_t y_mm) const
+bool cPlotConfigCorrections::contains_point(std::int32_t x_mm, std::int32_t y_mm) const
 {
 	for (const auto& entry : mCorrections)
 	{
 		const auto& correction = entry.second;
 
-		if (correction.contains(x_mm, y_mm))
+		if (correction.contains_point(x_mm, y_mm))
 			return true;
 	}
 
 	return false;
+}
+
+bool cPlotConfigCorrections::contains(const int date) const
+{
+	return mCorrections.contains(date);
+}
+
+bool cPlotConfigCorrections::contains(const int month, const int day) const
+{
+	return contains(month * 100 + day);
+}
+
+const cPlotConfigCorrection& cPlotConfigCorrections::front() const
+{
+	return mCorrections.begin()->second;
+}
+
+cPlotConfigCorrection& cPlotConfigCorrections::front()
+{
+	return mCorrections.begin()->second;
 }
 
 const cPlotConfigBoundary& cPlotConfigCorrections::getBounds(int month, int day) const
@@ -170,6 +269,26 @@ cPlotConfigCorrections::PlotCorrections_t::const_iterator cPlotConfigCorrections
 	return result;
 }
 
+cPlotConfigCorrections::iterator cPlotConfigCorrections::begin()
+{
+	return mCorrections.begin();
+}
+
+cPlotConfigCorrections::iterator cPlotConfigCorrections::end()
+{
+	return mCorrections.end();
+}
+
+cPlotConfigCorrections::const_iterator	cPlotConfigCorrections::begin() const
+{
+	return mCorrections.begin();
+}
+
+cPlotConfigCorrections::const_iterator	cPlotConfigCorrections::end() const
+{
+	return mCorrections.end();
+}
+
 cPlotConfigCorrections::PlotCorrections_t::iterator cPlotConfigCorrections::find(int month, int day)
 {
 	int date = month * 100 + day;
@@ -187,14 +306,69 @@ cPlotConfigCorrections::PlotCorrections_t::iterator cPlotConfigCorrections::find
 	return result;
 }
 
+cPlotConfigCorrections::const_iterator	cPlotConfigCorrections::find_exact(const int month, const int day) const
+{
+	int date = month * 100 + day;
+
+	return mCorrections.find(date);
+}
+
+cPlotConfigCorrections::iterator cPlotConfigCorrections::find_exact(const int month, const int day)
+{
+	int date = month * 100 + day;
+
+	return mCorrections.find(date);
+}
+
+
+cPlotConfigCorrection& cPlotConfigCorrections::add(const int month, const int day)
+{
+	int date = month * 100 + day;
+
+	if (mCorrections.contains(date))
+	{
+		return mCorrections.find(date)->second;
+	}
+
+	cPlotConfigCorrection correction = { month, day };
+
+	mCorrections.insert(std::make_pair(date, std::move(correction)));
+
+	cPlotConfigCorrection& result = mCorrections.find(date)->second;
+	result.setDirtyFlag(true);
+
+	return result;
+
+}
+
 void cPlotConfigCorrections::load(const nlohmann::json& jdoc)
 {
+	for (const auto& entry : jdoc)
+	{
+		if (entry.contains("date"))
+		{
+			std::string date = entry["date"];
+			auto pos = date.find('/');
+			int month = std::stoi(date.substr(0, pos));
+			int day = std::stoi(date.substr(pos + 1));
+			cPlotConfigCorrection correction(month, day);
+			correction.load(entry);
+
+			mCorrections.insert(std::make_pair(correction.date(), std::move(correction)));
+		}
+	}
 }
 
 nlohmann::json cPlotConfigCorrections::save()
 {
-	nlohmann::json catalogDoc;
-	return catalogDoc;
+	nlohmann::json correctionDoc;
+
+	for (auto& correction : mCorrections)
+	{
+		correctionDoc.push_back(correction.second.save());
+	}
+
+	return correctionDoc;
 }
 
 

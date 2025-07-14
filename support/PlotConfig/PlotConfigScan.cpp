@@ -304,8 +304,9 @@ const cPlotConfigPlotInfo& cPlotConfigPlotInfo::operator=(const cPlotConfigPlotI
 	mTreatments = rhs.mTreatments;
 	mLeafType = rhs.mLeafType;
 
-	mBounds = rhs.mBounds;
-	mIsolationMethod = rhs.mIsolationMethod;
+	mCorrections = rhs.mCorrections;
+//	mBounds = rhs.mBounds;
+//	mIsolationMethod = rhs.mIsolationMethod;
 
 	return *this;
 }
@@ -327,18 +328,20 @@ void cPlotConfigPlotInfo::clear()
 	mLeafType.clear();
 	mTreatments.clear();
 
-	mBounds.clear();
-	mIsolationMethod.clear();
+	mCorrections.clear();
+
+//	mBounds.clear();
+//	mIsolationMethod.clear();
 }
 
 bool cPlotConfigPlotInfo::isDirty() const
 {
-	return mDirty || mBounds.isDirty() || mIsolationMethod.isDirty();
+	return mDirty || mCorrections.isDirty(); // mBounds.isDirty() || mIsolationMethod.isDirty();
 }
 
 bool cPlotConfigPlotInfo::empty() const
 {
-	return mBounds.empty();
+	return mCorrections.empty(); // mBounds.empty();
 }
 
 uint32_t cPlotConfigPlotInfo::getPlotNumber() const
@@ -426,16 +429,85 @@ const std::vector<std::string>& cPlotConfigPlotInfo::getTreatments() const
 	return mTreatments;
 }
 
-bool cPlotConfigPlotInfo::contains(rfm::rappPoint2D_t point)
+bool cPlotConfigPlotInfo::contains_point(rfm::rappPoint2D_t point)
 {
-	return mBounds.contains(point);
+	return mCorrections.contains_point(point); // mBounds.contains(point);
 }
 
-bool cPlotConfigPlotInfo::contains(std::int32_t x_mm, std::int32_t y_mm)
+bool cPlotConfigPlotInfo::contains_point(std::int32_t x_mm, std::int32_t y_mm)
 {
-	return mBounds.contains(x_mm, y_mm);
+	return mCorrections.contains_point(x_mm, y_mm); // mBounds.contains(x_mm, y_mm);
 }
 
+cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::find(const int month, const int day) const
+{
+	return mCorrections.find(month, day);
+}
+
+cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::find(const int month, const int day)
+{
+	return mCorrections.find(month, day);
+}
+
+cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::find_exact(const int month, const int day) const
+{
+	return mCorrections.find(month, day);
+}
+
+cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::find_exact(const int month, const int day)
+{
+	return mCorrections.find(month, day);
+}
+
+
+bool cPlotConfigPlotInfo::contains(const int date) const
+{
+	return mCorrections.contains(date);
+}
+
+bool cPlotConfigPlotInfo::contains(const int month, const int day) const
+{
+	return contains(month * 100 + day);
+}
+
+const cPlotConfigCorrection& cPlotConfigPlotInfo::front() const
+{
+	if (mCorrections.empty())
+		throw std::logic_error("oops");
+
+	return mCorrections.front();
+}
+
+cPlotConfigCorrection& cPlotConfigPlotInfo::front()
+{
+	if (mCorrections.empty())
+		throw std::logic_error("oops");
+
+	return mCorrections.front();
+}
+
+
+cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::begin()
+{
+	return mCorrections.begin();
+}
+
+cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::end()
+{
+	return mCorrections.end();
+}
+
+cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::begin() const
+{
+	return mCorrections.begin();
+}
+
+cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::end() const
+{
+	return mCorrections.end();
+}
+
+/*
 const cPlotConfigBoundary& cPlotConfigPlotInfo::getBounds() const
 {
 	return mBounds;
@@ -445,7 +517,9 @@ cPlotConfigBoundary& cPlotConfigPlotInfo::getBounds()
 {
 	return mBounds;
 }
+*/
 
+/*
 const cPlotConfigIsolationMethod& cPlotConfigPlotInfo::getIsolationMethod() const
 {
 	return mIsolationMethod;
@@ -455,7 +529,7 @@ cPlotConfigIsolationMethod& cPlotConfigPlotInfo::getIsolationMethod()
 {
 	return mIsolationMethod;
 }
-
+*/
 
 void cPlotConfigPlotInfo::setPlotNumber(uint32_t num)
 {
@@ -613,6 +687,12 @@ void cPlotConfigPlotInfo::addTreatment(const std::string& treatment)
 	mTreatments.push_back(treatment);
 }
 
+cPlotConfigCorrection& cPlotConfigPlotInfo::add(const int month, const int day)
+{
+	return mCorrections.add(month, day);
+}
+
+/*
 void cPlotConfigPlotInfo::setBounds(const cPlotConfigBoundary& bounds)
 {
 	mDirty |= (mBounds != bounds);
@@ -624,12 +704,14 @@ void cPlotConfigPlotInfo::setIsolationMethod(const cPlotConfigIsolationMethod& m
 	mDirty |= (mIsolationMethod != method);
 	mIsolationMethod = method;
 }
+*/
 
 void cPlotConfigPlotInfo::clearDirtyFlag()
 {
 	mDirty = false;
-	mBounds.setDirtyFlag(false);
-	mIsolationMethod.setDirtyFlag(false);
+//	mBounds.setDirtyFlag(false);
+//	mIsolationMethod.setDirtyFlag(false);
+	mCorrections.clearDirtyFlag();
 }
 
 void cPlotConfigPlotInfo::setDirtyFlag(bool dirty)
@@ -697,8 +779,29 @@ void cPlotConfigPlotInfo::load(const nlohmann::json& jdoc)
 			mTreatments.push_back(treatment);
 	}
 
-	mBounds.load(jdoc);
-	mIsolationMethod.load(jdoc);
+	if (jdoc.contains("corrections"))
+	{
+		const auto& corrections = jdoc["corrections"];
+		mCorrections.load(corrections);
+	}
+
+	if (jdoc.contains("sub plots") || jdoc.contains("corners"))
+	{
+		auto& entry = mCorrections.add(0, 0);
+
+		cPlotConfigBoundary bounds;
+
+		bounds.load(jdoc);
+
+		entry.setBounds(bounds);
+
+		if (jdoc.contains("isolation method"))
+		{
+			cPlotConfigIsolationMethod isolationMethod;
+			isolationMethod.load(jdoc);
+			entry.setIsolationMethod(isolationMethod);
+		}
+	}
 }
 
 nlohmann::json cPlotConfigPlotInfo::save()
@@ -756,8 +859,10 @@ nlohmann::json cPlotConfigPlotInfo::save()
 		infoDoc["treatments"] = treatments;
 	}
 
-	mBounds.save(infoDoc);
-	infoDoc["isolation method"] = mIsolationMethod.save();
+//	mBounds.save(infoDoc);
+//	infoDoc["isolation method"] = mIsolationMethod.save();
+
+	infoDoc["corrections"] = mCorrections.save();
 
 	mDirty = false;
 

@@ -63,8 +63,7 @@ private:
 	// Note: 0 degrees is due south
 	double mOrientation_deg = 0;
 
-	friend class cPlotConfigFile;
-	friend class cPlotConfigPlotInfo;
+	friend class cPlotConfigCorrection;
 };
 
 
