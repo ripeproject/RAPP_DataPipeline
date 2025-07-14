@@ -232,6 +232,16 @@ int cRappPointCloud::id() const { return mID; }
 const std::string& cRappPointCloud::name() const { return mName; }
 void cRappPointCloud::setName(const std::string& name) { mName = name; }
 
+int cRappPointCloud::date() const { return mMonth * 100 + mDay; }
+int cRappPointCloud::month() const { return mMonth; }
+int cRappPointCloud::day() const { return mDay; }
+
+void cRappPointCloud::setDate(int month, int day)
+{
+	mMonth = month;
+	mDay = day;
+}
+
 bool cRappPointCloud::vegetationOnly() const
 {
 	return mVegetationOnly;

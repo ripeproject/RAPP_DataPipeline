@@ -60,6 +60,10 @@ public:
 	const std::string& name() const;
 	void setName(const std::string&);
 
+	int date() const;
+	int month() const;
+	int day() const;
+
 	bool vegetationOnly() const;
 	void setVegetationOnly(const bool vegetation_only);
 
@@ -173,11 +177,15 @@ public:
 
     const vCloud_t& data() const { return mCloud; }
 
+	void setDate(int month, int day);
 
 private:
 	int mID;
 
 	std::string mName;
+
+	int mMonth = 0;
+	int mDay = 0;
 
 	int mMinX_mm = 0;
 	int mMaxX_mm = 0;
