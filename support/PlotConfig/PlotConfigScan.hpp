@@ -153,11 +153,11 @@ public:
 	const_iterator	find_exact(const int month, const int day) const;
 	iterator		find_exact(const int month, const int day);
 
-//	const cPlotConfigBoundary& getBounds() const;
-//	cPlotConfigBoundary& getBounds();
+	const cPlotConfigBoundary* const getBounds(const int month, const int day) const;
+	cPlotConfigBoundary* const getBounds(const int month, const int day);
 
-//	const cPlotConfigIsolationMethod& getIsolationMethod() const;
-//	cPlotConfigIsolationMethod& getIsolationMethod();
+	const cPlotConfigIsolationMethod* const getIsolationMethod(const int month, const int day) const;
+	cPlotConfigIsolationMethod* const getIsolationMethod(const int month, const int day);
 
 	void setPlotNumber(uint32_t num);
 //	void setSubPlotNumber(uint8_t num);
@@ -180,10 +180,8 @@ public:
 
 	cPlotConfigCorrection& add(const int month, const int day);
 
-/*
-	void setBounds(const cPlotConfigBoundary& bounds);
-	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
-*/
+	void setBounds(const int month, const int day, const cPlotConfigBoundary& bounds);
+	void setIsolationMethod(const int month, const int day, const cPlotConfigIsolationMethod& method);
 
 	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);
@@ -209,9 +207,6 @@ private:
 	std::vector<std::string> mTreatments;
 
 	cPlotConfigCorrections mCorrections;
-
-//	cPlotConfigBoundary mBounds;
-//	cPlotConfigIsolationMethod mIsolationMethod;
 
 	friend class cPlotConfigScan;
 };

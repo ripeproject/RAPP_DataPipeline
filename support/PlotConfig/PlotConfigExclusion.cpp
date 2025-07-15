@@ -118,6 +118,11 @@ void cPlotConfigExclusion::setOrientation_deg(double angle_deg)
 }
 
 
+void cPlotConfigExclusion::setDirtyFlag(bool dirty)
+{
+	mDirty = dirty;
+}
+
 void cPlotConfigExclusion::load(const nlohmann::json& jdoc)
 {
 	auto center = jdoc["center"];

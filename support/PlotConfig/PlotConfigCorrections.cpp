@@ -80,12 +80,22 @@ void cPlotConfigCorrection::clearDirtyFlag()
 {
 	mBounds.clearDirtyFlag();
 	mIsolationMethod.clearDirtyFlag();
+
+	for (auto& exclusion : mExclusions)
+	{
+		exclusion.setDirtyFlag(false);
+	}
 }
 
 void cPlotConfigCorrection::setDirtyFlag(bool dirty)
 {
 	mBounds.setDirtyFlag(dirty);
 	mIsolationMethod.setDirtyFlag(dirty);
+
+	for (auto& exclusion : mExclusions)
+	{
+		exclusion.setDirtyFlag(dirty);
+	}
 }
 
 void cPlotConfigCorrection::load(const nlohmann::json& jdoc)
@@ -157,6 +167,12 @@ bool cPlotConfigCorrections::empty() const
 
 bool cPlotConfigCorrections::isDirty() const
 {
+	for (const auto& correction : mCorrections)
+	{
+		if (correction.second.isDirty())
+			return true;
+	}
+	
 	return mDirty;
 }
 
@@ -244,11 +260,21 @@ cPlotConfigIsolationMethod& cPlotConfigCorrections::getIsolationMethod(int month
 
 void cPlotConfigCorrections::clearDirtyFlag()
 {
+	for (auto& correction : mCorrections)
+	{
+		correction.second.clearDirtyFlag();
+	}
+
 	mDirty = false;
 }
 
 void cPlotConfigCorrections::setDirtyFlag(bool dirty)
 {
+	for (auto& correction : mCorrections)
+	{
+		correction.second.setDirtyFlag(dirty);
+	}
+
 	mDirty = dirty;
 }
 
@@ -336,6 +362,8 @@ cPlotConfigCorrection& cPlotConfigCorrections::add(const int month, const int da
 
 	cPlotConfigCorrection& result = mCorrections.find(date)->second;
 	result.setDirtyFlag(true);
+
+	mDirty = true;
 
 	return result;
 

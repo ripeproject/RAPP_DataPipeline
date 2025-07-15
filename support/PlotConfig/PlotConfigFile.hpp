@@ -67,6 +67,9 @@ public:
 	cPlotConfigScan& operator[](int index);
 
 private:
+	void clearDirtyFlag();
+
+private:
 	std::string mFileName;
 	std::string mTmpFileName;
 

@@ -128,6 +128,8 @@ void cPlotConfigFile::save()
 			std::filesystem::remove(tmp);
 		}
 	}
+
+	clearDirtyFlag();
 }
 
 void cPlotConfigFile::save_as(const std::string& file_name)
@@ -164,6 +166,8 @@ void cPlotConfigFile::save_as(const std::string& file_name)
 
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
+
+	clearDirtyFlag();
 }
 
 bool cPlotConfigFile::open_temporary_file(const std::string& file_name)
@@ -392,3 +396,12 @@ cPlotConfigScan& cPlotConfigFile::operator[](int index)
 	return mScans[index];
 }
 
+void cPlotConfigFile::clearDirtyFlag()
+{
+	mOptions.setDirty(false);
+
+	for (auto& scan : mScans)
+	{
+		scan.setDirtyFlag(false);
+	}
+}

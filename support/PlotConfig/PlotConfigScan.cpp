@@ -226,6 +226,9 @@ void cPlotConfigScan::clearDirtyFlag()
 
 void cPlotConfigScan::setDirtyFlag(bool dirty)
 {
+	for (auto& plot : mPlots)
+		plot.setDirtyFlag(dirty);
+
 	mDirty = dirty;
 }
 
@@ -329,19 +332,16 @@ void cPlotConfigPlotInfo::clear()
 	mTreatments.clear();
 
 	mCorrections.clear();
-
-//	mBounds.clear();
-//	mIsolationMethod.clear();
 }
 
 bool cPlotConfigPlotInfo::isDirty() const
 {
-	return mDirty || mCorrections.isDirty(); // mBounds.isDirty() || mIsolationMethod.isDirty();
+	return mDirty || mCorrections.isDirty();
 }
 
 bool cPlotConfigPlotInfo::empty() const
 {
-	return mCorrections.empty(); // mBounds.empty();
+	return mCorrections.empty();
 }
 
 uint32_t cPlotConfigPlotInfo::getPlotNumber() const
@@ -507,29 +507,53 @@ cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::end() const
 	return mCorrections.end();
 }
 
-/*
-const cPlotConfigBoundary& cPlotConfigPlotInfo::getBounds() const
+const cPlotConfigBoundary* const cPlotConfigPlotInfo::getBounds(const int month, const int day) const
 {
-	return mBounds;
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(month, day);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getBounds());
+
+	return &(it->second.getBounds());
 }
 
-cPlotConfigBoundary& cPlotConfigPlotInfo::getBounds()
+cPlotConfigBoundary* const cPlotConfigPlotInfo::getBounds(const int month, const int day)
 {
-	return mBounds;
-}
-*/
+	if (mCorrections.empty())
+		return nullptr;
 
-/*
-const cPlotConfigIsolationMethod& cPlotConfigPlotInfo::getIsolationMethod() const
-{
-	return mIsolationMethod;
+	auto it = find(month, day);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getBounds());
+
+	return &(it->second.getBounds());
 }
 
-cPlotConfigIsolationMethod& cPlotConfigPlotInfo::getIsolationMethod()
+const cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const int month, const int day) const
 {
-	return mIsolationMethod;
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(month, day);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getIsolationMethod());
+
+	return &(it->second.getIsolationMethod());
 }
-*/
+
+cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const int month, const int day)
+{
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(month, day);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getIsolationMethod());
+
+	return &(it->second.getIsolationMethod());
+}
 
 void cPlotConfigPlotInfo::setPlotNumber(uint32_t num)
 {
@@ -692,25 +716,33 @@ cPlotConfigCorrection& cPlotConfigPlotInfo::add(const int month, const int day)
 	return mCorrections.add(month, day);
 }
 
-/*
-void cPlotConfigPlotInfo::setBounds(const cPlotConfigBoundary& bounds)
+void cPlotConfigPlotInfo::setBounds(const int month, const int day, const cPlotConfigBoundary& bounds)
 {
-	mDirty |= (mBounds != bounds);
-	mBounds = bounds;
+	auto it = find_exact(month, day);
+
+	if (it == mCorrections.end())
+	{
+		mCorrections.add(month, day).setBounds(bounds);
+	}
+	else
+		it->second.setBounds(bounds);
 }
 
-void cPlotConfigPlotInfo::setIsolationMethod(const cPlotConfigIsolationMethod& method)
+void cPlotConfigPlotInfo::setIsolationMethod(const int month, const int day,const cPlotConfigIsolationMethod& method)
 {
-	mDirty |= (mIsolationMethod != method);
-	mIsolationMethod = method;
+	auto it = find_exact(month, day);
+
+	if (it == mCorrections.end())
+	{
+		mCorrections.add(month, day).setIsolationMethod(method);
+	}
+	else
+		it->second.setIsolationMethod(method);
 }
-*/
 
 void cPlotConfigPlotInfo::clearDirtyFlag()
 {
 	mDirty = false;
-//	mBounds.setDirtyFlag(false);
-//	mIsolationMethod.setDirtyFlag(false);
 	mCorrections.clearDirtyFlag();
 }
 
