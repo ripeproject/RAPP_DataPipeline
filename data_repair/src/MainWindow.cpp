@@ -7,6 +7,7 @@
 
 #include <wx/thread.h>
 #include <wx/config.h>
+#include <wx/msgdlg.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -16,6 +17,9 @@
 #include <map>
 
 using namespace std::filesystem;
+
+extern std::atomic<uint32_t> g_num_failed_files;
+extern std::atomic<uint32_t> g_num_repaired_files;
 
 namespace
 {
@@ -412,6 +416,9 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 	msg += mSourceDataDirectory;
 	wxLogMessage(msg);
 
+	g_num_failed_files = 0;
+	g_num_repaired_files = 0;
+
 	startDataProcessing();
 }
 
@@ -464,6 +471,39 @@ wxThread::ExitCode cMainWindow::Entry()
 	if (std::filesystem::is_empty(mTemporaryDir))
 	{
 		std::filesystem::remove(mTemporaryDir);
+	}
+
+	if (g_num_repaired_files > 0)
+	{
+		wxMessageDialog dlg(this, "Do you wish to move the repaired files back to the base folder?", "Repaired Files", wxYES_NO | wxYES_DEFAULT | wxCENTRE);
+
+		auto result = dlg.ShowModal();
+
+		if (result == wxID_YES)
+		{
+			std::filesystem::path repaired_dir{ mRepairedDataDirectory.ToStdString() };
+			auto base_dir = repaired_dir.parent_path();
+
+			for (auto const& dir_entry : std::filesystem::directory_iterator{ repaired_dir })
+			{
+				if (!dir_entry.is_regular_file())
+					continue;
+
+				if (dir_entry.path().extension() != ".ceres")
+					continue;
+
+				std::filesystem::path old_file = repaired_dir / dir_entry.path().filename();
+				std::filesystem::path new_file = base_dir / dir_entry.path().filename();
+
+				std::filesystem::rename(old_file, new_file);
+			}
+
+//			if (std::filesystem::is_empty(repaired_dir))
+//			{
+//				std::filesystem::remove(repaired_dir);
+//			}
+		}
+
 	}
 
 	return (wxThread::ExitCode) 0;

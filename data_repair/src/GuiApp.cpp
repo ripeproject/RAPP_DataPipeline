@@ -12,6 +12,7 @@
 #include <atomic>
 
 std::atomic<uint32_t> g_num_failed_files = 0;
+std::atomic<uint32_t> g_num_repaired_files = 0;
 
 
 // ----------------------------------------------------------------------------

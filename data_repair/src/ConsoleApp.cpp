@@ -17,6 +17,7 @@
 std::mutex g_console_mutex;
 
 std::atomic<uint32_t> g_num_failed_files = 0;
+std::atomic<uint32_t> g_num_repaired_files = 0;
 
 
 namespace
@@ -143,6 +144,9 @@ int main(int argc, char** argv)
 		else
 			std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 	}
+
+	g_num_failed_files = 0;
+	g_num_repaired_files = 0;
 
 	std::vector<cFileProcessor*> file_processors;
 

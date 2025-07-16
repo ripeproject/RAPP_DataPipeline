@@ -12,6 +12,7 @@
 
 
 extern std::atomic<uint32_t> g_num_failed_files;
+extern std::atomic<uint32_t> g_num_repaired_files;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
