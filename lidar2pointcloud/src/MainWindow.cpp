@@ -421,7 +421,8 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 			if (!isCeresFile(dir_entry.path().string()))
 				continue;
 
-			files_to_process.push_back(dir_entry);
+			if (mConfigData->contains_by_filename(dir_entry.path().filename().string()))
+				files_to_process.push_back(dir_entry);
 		}
 	}
 
