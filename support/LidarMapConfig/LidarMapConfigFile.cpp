@@ -76,6 +76,23 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
+	//if (configDoc.contains("measurement name"))
+	//{
+	//	mMeasurementNames.emplace_back(configDoc["measurement name"]);
+	//}
+	//if (configDoc.contains("measurement names"))
+	//{
+	//	auto names = configDoc["measurement names"];
+
+	//	if (names.is_string())
+	//		mMeasurementNames.emplace_back(names);
+	//	else if (names.is_array())
+	//	{
+	//		for (const auto& name : names)
+	//			mMeasurementNames.emplace_back(name);
+	//	}
+	//}
+
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
 
@@ -105,6 +122,7 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 
 		mCatalog.insert(std::make_pair(0, std::move(catalog)));
 	}
+
 
 	return true;
 }
@@ -319,7 +337,7 @@ std::size_t cLidarMapConfigFile::size() const
 	return mCatalog.size();
 }
 
-bool cLidarMapConfigFile::contains(const std::string& name)
+bool cLidarMapConfigFile::contains(const std::string& name) const
 {
 	for (const auto& entry : mCatalog)
 	{
@@ -333,6 +351,43 @@ bool cLidarMapConfigFile::contains(const std::string& name)
 	}
 
 	return false;
+}
+
+bool cLidarMapConfigFile::contains_by_filename(const std::string& measurement_filename) const
+{
+	using namespace nStringUtils;
+
+	auto scan_file = removeProcessedTimestamp(measurement_filename);
+
+	std::tm time_stamp = extractMeasurementTimestamp(scan_file.filename);
+
+	auto catalog = find(time_stamp.tm_mon + 1, time_stamp.tm_mday);
+
+	if (catalog == mCatalog.end())
+	{
+		return false;
+	}
+
+	auto in = removeMeasurementTimestamp(scan_file.filename);
+	auto filename = safeFilename(in.filename);
+
+	auto it = (*catalog).second.find(filename);
+
+	if (it == (*catalog).second.end())
+	{
+		while (catalog != mCatalog.begin())
+		{
+			--catalog;
+			it = (*catalog).second.find(filename);
+			if (it != (*catalog).second.end())
+				return true;
+		}
+
+		return false;
+	}
+
+	return true;
+
 }
 
 const cLidarMapConfigCatalog& cLidarMapConfigFile::front() const { return mCatalog.begin()->second; }
@@ -363,10 +418,18 @@ std::optional<cLidarMapConfigCatalog::const_iterator>	cLidarMapConfigFile::find_
 	auto in = removeMeasurementTimestamp(scan_file.filename);
 	auto filename = safeFilename(in.filename);
 
-	auto it = (*catalog).second.find_by_filename(measurement_filename);
+	auto it = (*catalog).second.find_by_filename(filename);
 
 	if (it == (*catalog).second.end())
 	{
+		while (catalog != mCatalog.begin())
+		{
+			--catalog;
+			it = (*catalog).second.find(filename);
+			if (it != (*catalog).second.end())
+				return it;
+		}
+
 		return std::optional<cLidarMapConfigCatalog::iterator>();
 	}
 
@@ -391,10 +454,18 @@ std::optional<cLidarMapConfigCatalog::iterator> cLidarMapConfigFile::find_by_fil
 	auto in = removeMeasurementTimestamp(scan_file.filename);
 	auto filename = safeFilename(in.filename);
 
-	auto it = (*catalog).second.find_by_filename(measurement_filename);
+	auto it = (*catalog).second.find(filename);
 
 	if (it == (*catalog).second.end())
 	{
+		while (catalog != mCatalog.begin())
+		{
+			--catalog;
+			it = (*catalog).second.find(filename);
+			if (it != (*catalog).second.end())
+				return it;
+		}
+
 		return std::optional<cLidarMapConfigCatalog::iterator>();
 	}
 

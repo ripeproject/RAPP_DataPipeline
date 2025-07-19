@@ -7,6 +7,7 @@
 #include "LidarMapConfigCatalog.hpp"
 
 #include <vector>
+#include <set>
 #include <map>
 #include <string>
 #include <memory>
@@ -51,7 +52,8 @@ public:
 	bool empty() const;
 	std::size_t size() const;
 
-	bool contains(const std::string& name);
+	bool contains(const std::string& name) const;
+	bool contains_by_filename(const std::string& measurement_filename) const;
 
 	const cLidarMapConfigCatalog& front() const;
 	cLidarMapConfigCatalog& front();
@@ -97,6 +99,8 @@ private:
 
 	cLidarMapConfigOptions  mOptions;
 	cLidarMapConfigDefaults mDefaults;
+
+	std::set<std::string> mMeasurementNames;
 
 	LidarCatalog_t mCatalog;
 };
