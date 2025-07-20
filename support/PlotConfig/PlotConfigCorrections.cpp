@@ -282,6 +282,12 @@ cPlotConfigCorrections::PlotCorrections_t::const_iterator cPlotConfigCorrections
 {
 	int date = month * 100 + day;
 
+	if (mCorrections.empty())
+		return mCorrections.end();
+
+	if (date < mCorrections.begin()->first)
+		return mCorrections.begin();
+
 	PlotCorrections_t::const_iterator result = mCorrections.end();
 
 	for (auto it = mCorrections.begin(); it != mCorrections.end(); ++it)
@@ -318,6 +324,12 @@ cPlotConfigCorrections::const_iterator	cPlotConfigCorrections::end() const
 cPlotConfigCorrections::PlotCorrections_t::iterator cPlotConfigCorrections::find(int month, int day)
 {
 	int date = month * 100 + day;
+
+	if (mCorrections.empty())
+		return mCorrections.end();
+
+	if (date < mCorrections.begin()->first)
+		return mCorrections.begin();
 
 	PlotCorrections_t::iterator result = mCorrections.end();
 
