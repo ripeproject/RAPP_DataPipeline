@@ -474,6 +474,12 @@ std::optional<cLidarMapConfigCatalog::iterator> cLidarMapConfigFile::find_by_fil
 
 cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int date) const
 {
+	if (mCatalog.empty())
+		return end();
+
+	if (mCatalog.begin()->first > date)
+		return begin();
+
 	cLidarMapConfigFile::const_iterator result = end();
 
 	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
@@ -489,6 +495,12 @@ cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int date) co
 
 cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int date)
 {
+	if (mCatalog.empty())
+		return end();
+
+	if (mCatalog.begin()->first > date)
+		return begin();
+
 	cLidarMapConfigFile::iterator result = end();
 
 	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
@@ -504,6 +516,17 @@ cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int date)
 
 cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int date, const std::string& measurement_name) const
 {
+	if (mCatalog.empty())
+		return end();
+
+	if (mCatalog.begin()->first > date)
+	{
+		if (mCatalog.begin()->second.contains(measurement_name))
+			return begin();
+
+		return end();
+	}
+
 	cLidarMapConfigFile::const_iterator result = end();
 
 	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
@@ -520,6 +543,17 @@ cLidarMapConfigFile::const_iterator cLidarMapConfigFile::find(const int date, co
 
 cLidarMapConfigFile::iterator cLidarMapConfigFile::find(const int date, const std::string& measurement_name)
 {
+	if (mCatalog.empty())
+		return end();
+
+	if (mCatalog.begin()->first > date)
+	{
+		if (mCatalog.begin()->second.contains(measurement_name))
+			return begin();
+
+		return end();
+	}
+
 	cLidarMapConfigFile::iterator result = end();
 
 	for (auto it = mCatalog.begin(); it != mCatalog.end(); ++it)
