@@ -7,7 +7,7 @@
 
 namespace plot_config
 {
-	inline int to_date(int month, int day)
+	int to_date(int month, int day)
 	{
 		return month * 100 + day;
 	}
