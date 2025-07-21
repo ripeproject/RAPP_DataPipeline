@@ -270,21 +270,34 @@ void cFileProcessor::doPlotSplit()
 
     for (auto pointCloud : mPointCloudInfo->getPointClouds())
     {
+        int date = pointCloud.date();
+
+        if (!pointCloud.groundLevel_mm().has_value())
+        {
+            if (mPlotInfo.hasGroundLevel())
+                pointCloud.setGroundLevel_mm(mPlotInfo.getGroundLevel_mm());
+        }
+
         for (const auto& plotInfo : mPlotInfo)
         {
             update_progress(mID, static_cast<int>((100.0 * i++) / n));
 
-            const auto& bounds = plotInfo.getBounds();
-            bool hasSubPlot = bounds.hasSubPlots();
+            const auto* bounds = plotInfo.getBounds(date);
+            if (!bounds)
+                continue;
 
-            const auto& method = plotInfo.getIsolationMethod();
+            bool hasSubPlot = bounds->hasSubPlots();
 
-            switch (method.getMethod())
+            const auto* method = plotInfo.getIsolationMethod(date);
+            if (!method)
+                continue;
+
+            switch (method->getMethod())
             {
             case ePlotIsolationMethod::NONE:
             {
                 {
-                    auto plotPointCloud = plot::isolate_basic(pointCloud, bounds.getBoundingBox());
+                    auto plotPointCloud = plot::isolate_basic(pointCloud, bounds->getBoundingBox());
 
                     if (plotPointCloud.empty())
                     {
@@ -292,7 +305,7 @@ void cFileProcessor::doPlotSplit()
 
                         if (pointCloud.name().empty())
                         {
-                            msg += mExpInfo->title();
+                            msg += mExpInfo->measurementTitle();
                         }
                         else
                         {
@@ -314,9 +327,9 @@ void cFileProcessor::doPlotSplit()
 
                 if (hasSubPlot)
                 {
-                    auto plotPointClouds = plot::isolate_basic(pointCloud, bounds.getBoundingBox(),
-                        bounds.getNumOfSubPlots(), bounds.getSubPlotOrientation(), 
-                        method.getPlotWidth_mm(), method.getPlotLength_mm());
+                    auto plotPointClouds = plot::isolate_basic(pointCloud, bounds->getBoundingBox(),
+                        bounds->getNumOfSubPlots(), bounds->getSubPlotOrientation(),
+                        method->getPlotWidth_mm(), method->getPlotLength_mm());
 
                     int subPlotId = 0;
                     for (const auto& plotPointCloud : plotPointClouds)
@@ -345,8 +358,8 @@ void cFileProcessor::doPlotSplit()
             }
             case ePlotIsolationMethod::CENTER_OF_PLOT:
             {
-                auto plotPointCloud = plot::isolate_center_of_plot(pointCloud, bounds.getBoundingBox(),
-                    method.getPlotWidth_mm(), method.getPlotLength_mm());
+                auto plotPointCloud = plot::isolate_center_of_plot(pointCloud, bounds->getBoundingBox(),
+                    method->getPlotWidth_mm(), method->getPlotLength_mm());
 
                 if (plotPointCloud.empty())
                 {
@@ -371,7 +384,7 @@ void cFileProcessor::doPlotSplit()
                 if (hasSubPlot)
                 {
                     {
-                        auto plotPointCloud = plot::isolate_basic(pointCloud, bounds.getBoundingBox());
+                        auto plotPointCloud = plot::isolate_basic(pointCloud, bounds->getBoundingBox());
 
                         if (plotPointCloud.empty())
                         {
@@ -391,9 +404,9 @@ void cFileProcessor::doPlotSplit()
                         mPlots.push_back(plot);
                     }
 
-                    auto plotPointClouds = plot::isolate_center_of_height(pointCloud, bounds.getBoundingBox(),
+                    auto plotPointClouds = plot::isolate_center_of_height(pointCloud, bounds->getBoundingBox(),
 //                        bounds.getNumOfSubPlots(), bounds.getSubPlotOrientation(),
-                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct().value());
+                        method->getPlotWidth_mm(), method->getPlotLength_mm(), method->getHeightThreshold_pct().value());
 
                     int subPlotId = 0;
                     //for (const auto& plotPointCloud : plotPointClouds)
@@ -419,8 +432,8 @@ void cFileProcessor::doPlotSplit()
                 }
                 else
                 {
-                    auto plotPointCloud = plot::isolate_center_of_height(pointCloud, bounds.getBoundingBox(),
-                        method.getPlotWidth_mm(), method.getPlotLength_mm(), method.getHeightThreshold_pct().value());
+                    auto plotPointCloud = plot::isolate_center_of_height(pointCloud, bounds->getBoundingBox(),
+                        method->getPlotWidth_mm(), method->getPlotLength_mm(), method->getHeightThreshold_pct().value());
 
                     if (plotPointCloud.empty())
                     {
@@ -685,8 +698,11 @@ void cFileProcessor::writeExperimentInfo(cExperimentSerializer& serializer)
 {
     serializer.writeBeginHeader();
 
-    if (!mExpInfo->title().empty())
-        serializer.writeTitle(mExpInfo->title());
+    if (!mExpInfo->measurementTitle().empty())
+        serializer.writeMeasurementTitle(mExpInfo->measurementTitle());
+
+    if (!mExpInfo->experimentTitle().empty())
+        serializer.writeExperimentTitle(mExpInfo->experimentTitle());
 
     if (!mExpInfo->experimentDoc().empty())
         serializer.writeExperimentDoc(mExpInfo->experimentDoc());
