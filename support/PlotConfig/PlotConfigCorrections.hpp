@@ -95,8 +95,14 @@ public:
 	const cPlotConfigCorrection& front() const;
 	cPlotConfigCorrection& front();
 
+	const cPlotConfigBoundary& getBounds(int date) const;
+	cPlotConfigBoundary& getBounds(int date);
+
 	const cPlotConfigBoundary& getBounds(int month, int day) const;
 	cPlotConfigBoundary& getBounds(int month, int day);
+
+	const cPlotConfigIsolationMethod& getIsolationMethod(int date) const;
+	cPlotConfigIsolationMethod& getIsolationMethod(int date);
 
 	const cPlotConfigIsolationMethod& getIsolationMethod(int month, int day) const;
 	cPlotConfigIsolationMethod& getIsolationMethod(int month, int day);
@@ -106,6 +112,9 @@ public:
 
 	const_iterator	begin() const;
 	const_iterator	end() const;
+
+	const_iterator	find(const int date) const;
+	iterator		find(const int date);
 
 	const_iterator	find(const int month, const int day) const;
 	iterator		find(const int month, const int day);

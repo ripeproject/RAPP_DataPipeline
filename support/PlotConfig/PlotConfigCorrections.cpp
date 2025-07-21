@@ -5,12 +5,20 @@
 #include <stdexcept>
 
 
+namespace plot_config
+{
+	inline int to_date(int month, int day)
+	{
+		return month * 100 + day;
+	}
+}
+
 cPlotConfigCorrection::cPlotConfigCorrection(int month, int day)
 	: mEffectiveMonth(month), mEffectiveDay(day)
 {
 }
 
-const int cPlotConfigCorrection::date() const { return mEffectiveMonth * 100 + mEffectiveDay; }
+const int cPlotConfigCorrection::date() const { return plot_config::to_date(mEffectiveMonth, mEffectiveDay); }
 const int cPlotConfigCorrection::month() const { return mEffectiveMonth; }
 const int cPlotConfigCorrection::day() const { return mEffectiveDay; }
 
@@ -209,7 +217,7 @@ bool cPlotConfigCorrections::contains(const int date) const
 
 bool cPlotConfigCorrections::contains(const int month, const int day) const
 {
-	return contains(month * 100 + day);
+	return contains(plot_config::to_date(month, day));
 }
 
 const cPlotConfigCorrection& cPlotConfigCorrections::front() const
@@ -222,40 +230,60 @@ cPlotConfigCorrection& cPlotConfigCorrections::front()
 	return mCorrections.begin()->second;
 }
 
-const cPlotConfigBoundary& cPlotConfigCorrections::getBounds(int month, int day) const
+const cPlotConfigBoundary& cPlotConfigCorrections::getBounds(int date) const
 {
-	auto it = find(month, day);
+	auto it = find(date);
 	if (it == mCorrections.end())
 		throw std::logic_error("oops");
 
 	return it->second.getBounds();
+}
+
+cPlotConfigBoundary& cPlotConfigCorrections::getBounds(int date)
+{
+	auto it = find(date);
+	if (it == mCorrections.end())
+		throw std::logic_error("oops");
+
+	return it->second.getBounds();
+}
+
+const cPlotConfigBoundary& cPlotConfigCorrections::getBounds(int month, int day) const
+{
+	return getBounds(plot_config::to_date(month, day));
 }
 
 cPlotConfigBoundary& cPlotConfigCorrections::getBounds(int month, int day)
 {
-	auto it = find(month, day);
+	return getBounds(plot_config::to_date(month, day));
+}
+
+const cPlotConfigIsolationMethod& cPlotConfigCorrections::getIsolationMethod(int date) const
+{
+	auto it = find(date);
 	if (it == mCorrections.end())
 		throw std::logic_error("oops");
 
-	return it->second.getBounds();
+	return it->second.getIsolationMethod();
+}
+
+cPlotConfigIsolationMethod& cPlotConfigCorrections::getIsolationMethod(int date)
+{
+	auto it = find(date);
+	if (it == mCorrections.end())
+		throw std::logic_error("oops");
+
+	return it->second.getIsolationMethod();
 }
 
 const cPlotConfigIsolationMethod& cPlotConfigCorrections::getIsolationMethod(int month, int day) const
 {
-	auto it = find(month, day);
-	if (it == mCorrections.end())
-		throw std::logic_error("oops");
-
-	return it->second.getIsolationMethod();
+	return getIsolationMethod(plot_config::to_date(month, day));
 }
 
 cPlotConfigIsolationMethod& cPlotConfigCorrections::getIsolationMethod(int month, int day)
 {
-	auto it = find(month, day);
-	if (it == mCorrections.end())
-		throw std::logic_error("oops");
-
-	return it->second.getIsolationMethod();
+	return getIsolationMethod(plot_config::to_date(month, day));
 }
 
 void cPlotConfigCorrections::clearDirtyFlag()
@@ -278,29 +306,6 @@ void cPlotConfigCorrections::setDirtyFlag(bool dirty)
 	mDirty = dirty;
 }
 
-cPlotConfigCorrections::PlotCorrections_t::const_iterator cPlotConfigCorrections::find(int month, int day) const
-{
-	int date = month * 100 + day;
-
-	if (mCorrections.empty())
-		return mCorrections.end();
-
-	if (date < mCorrections.begin()->first)
-		return mCorrections.begin();
-
-	PlotCorrections_t::const_iterator result = mCorrections.end();
-
-	for (auto it = mCorrections.begin(); it != mCorrections.end(); ++it)
-	{
-		if (it->first > date)
-			return result;
-
-		result = it;
-	}
-
-	return result;
-}
-
 cPlotConfigCorrections::iterator cPlotConfigCorrections::begin()
 {
 	return mCorrections.begin();
@@ -321,10 +326,29 @@ cPlotConfigCorrections::const_iterator	cPlotConfigCorrections::end() const
 	return mCorrections.end();
 }
 
-cPlotConfigCorrections::PlotCorrections_t::iterator cPlotConfigCorrections::find(int month, int day)
+cPlotConfigCorrections::const_iterator	cPlotConfigCorrections::find(const int date) const
 {
-	int date = month * 100 + day;
+	if (mCorrections.empty())
+		return mCorrections.end();
 
+	if (date < mCorrections.begin()->first)
+		return mCorrections.begin();
+
+	PlotCorrections_t::const_iterator result = mCorrections.end();
+
+	for (auto it = mCorrections.begin(); it != mCorrections.end(); ++it)
+	{
+		if (it->first > date)
+			return result;
+
+		result = it;
+	}
+
+	return result;
+}
+
+cPlotConfigCorrections::iterator cPlotConfigCorrections::find(const int date)
+{
 	if (mCorrections.empty())
 		return mCorrections.end();
 
@@ -344,16 +368,26 @@ cPlotConfigCorrections::PlotCorrections_t::iterator cPlotConfigCorrections::find
 	return result;
 }
 
+cPlotConfigCorrections::PlotCorrections_t::const_iterator cPlotConfigCorrections::find(int month, int day) const
+{
+	return find(plot_config::to_date(month, day));
+}
+
+cPlotConfigCorrections::PlotCorrections_t::iterator cPlotConfigCorrections::find(int month, int day)
+{
+	return find(plot_config::to_date(month, day));
+}
+
 cPlotConfigCorrections::const_iterator	cPlotConfigCorrections::find_exact(const int month, const int day) const
 {
-	int date = month * 100 + day;
+	int date = plot_config::to_date(month, day);
 
 	return mCorrections.find(date);
 }
 
 cPlotConfigCorrections::iterator cPlotConfigCorrections::find_exact(const int month, const int day)
 {
-	int date = month * 100 + day;
+	int date = plot_config::to_date(month, day);
 
 	return mCorrections.find(date);
 }
@@ -361,7 +395,7 @@ cPlotConfigCorrections::iterator cPlotConfigCorrections::find_exact(const int mo
 
 cPlotConfigCorrection& cPlotConfigCorrections::add(const int month, const int day)
 {
-	int date = month * 100 + day;
+	int date = plot_config::to_date(month, day);
 
 	if (mCorrections.contains(date))
 	{

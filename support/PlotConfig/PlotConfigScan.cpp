@@ -3,6 +3,10 @@
 
 #include <stdexcept>
 
+namespace plot_config
+{
+	extern int to_date(int month, int day);
+}
 
 namespace
 {
@@ -439,6 +443,16 @@ bool cPlotConfigPlotInfo::contains_point(std::int32_t x_mm, std::int32_t y_mm)
 	return mCorrections.contains_point(x_mm, y_mm); // mBounds.contains(x_mm, y_mm);
 }
 
+cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::find(const int date) const
+{
+	return mCorrections.find(date);
+}
+
+cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::find(const int date)
+{
+	return mCorrections.find(date);
+}
+
 cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::find(const int month, const int day) const
 {
 	return mCorrections.find(month, day);
@@ -467,7 +481,7 @@ bool cPlotConfigPlotInfo::contains(const int date) const
 
 bool cPlotConfigPlotInfo::contains(const int month, const int day) const
 {
-	return contains(month * 100 + day);
+	return contains(plot_config::to_date(month, day));
 }
 
 const cPlotConfigCorrection& cPlotConfigPlotInfo::front() const
@@ -507,52 +521,73 @@ cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::end() const
 	return mCorrections.end();
 }
 
-const cPlotConfigBoundary* const cPlotConfigPlotInfo::getBounds(const int month, const int day) const
+const cPlotConfigBoundary* const cPlotConfigPlotInfo::getBounds(const int date) const
 {
 	if (mCorrections.empty())
 		return nullptr;
 
-	auto it = find(month, day);
+	auto it = find(date);
 	if (it == mCorrections.end())
 		return &(mCorrections.begin()->second.getBounds());
 
 	return &(it->second.getBounds());
+}
+
+cPlotConfigBoundary* const cPlotConfigPlotInfo::getBounds(const int date)
+{
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getBounds());
+
+	return &(it->second.getBounds());
+}
+
+const cPlotConfigBoundary* const cPlotConfigPlotInfo::getBounds(const int month, const int day) const
+{
+	return getBounds(plot_config::to_date(month, day));
 }
 
 cPlotConfigBoundary* const cPlotConfigPlotInfo::getBounds(const int month, const int day)
 {
-	if (mCorrections.empty())
-		return nullptr;
-
-	auto it = find(month, day);
-	if (it == mCorrections.end())
-		return &(mCorrections.begin()->second.getBounds());
-
-	return &(it->second.getBounds());
+	return getBounds(plot_config::to_date(month, day));
 }
 
-const cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const int month, const int day) const
+const cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const int date) const
 {
 	if (mCorrections.empty())
 		return nullptr;
 
-	auto it = find(month, day);
+	auto it = find(date);
 	if (it == mCorrections.end())
 		return &(mCorrections.begin()->second.getIsolationMethod());
 
 	return &(it->second.getIsolationMethod());
+}
+
+cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const int date)
+{
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getIsolationMethod());
+
+	return &(it->second.getIsolationMethod());
+}
+
+
+const cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const int month, const int day) const
+{
+	return getIsolationMethod(plot_config::to_date(month, day));
 }
 
 cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const int month, const int day)
 {
-	if (mCorrections.empty())
-		return nullptr;
-
-	auto it = find(month, day);
-	if (it == mCorrections.end())
-		return &(mCorrections.begin()->second.getIsolationMethod());
-
-	return &(it->second.getIsolationMethod());
+	return getIsolationMethod(plot_config::to_date(month, day));
 }
 
 void cPlotConfigPlotInfo::setPlotNumber(uint32_t num)
@@ -749,6 +784,7 @@ void cPlotConfigPlotInfo::clearDirtyFlag()
 void cPlotConfigPlotInfo::setDirtyFlag(bool dirty)
 {
 	mDirty = dirty;
+	mCorrections.setDirtyFlag(dirty);
 }
 
 void cPlotConfigPlotInfo::load(const nlohmann::json& jdoc)

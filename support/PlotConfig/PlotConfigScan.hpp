@@ -147,14 +147,23 @@ public:
 	const_iterator	begin() const;
 	const_iterator	end() const;
 
+	const_iterator	find(const int date) const;
+	iterator		find(const int date);
+
 	const_iterator	find(const int month, const int day) const;
 	iterator		find(const int month, const int day);
 
 	const_iterator	find_exact(const int month, const int day) const;
 	iterator		find_exact(const int month, const int day);
 
+	const cPlotConfigBoundary* const getBounds(const int date) const;
+	cPlotConfigBoundary* const getBounds(const int date);
+
 	const cPlotConfigBoundary* const getBounds(const int month, const int day) const;
 	cPlotConfigBoundary* const getBounds(const int month, const int day);
+
+	const cPlotConfigIsolationMethod* const getIsolationMethod(const int date) const;
+	cPlotConfigIsolationMethod* const getIsolationMethod(const int date);
 
 	const cPlotConfigIsolationMethod* const getIsolationMethod(const int month, const int day) const;
 	cPlotConfigIsolationMethod* const getIsolationMethod(const int month, const int day);
