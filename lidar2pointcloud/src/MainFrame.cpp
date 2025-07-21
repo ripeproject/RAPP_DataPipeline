@@ -168,7 +168,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
 	info.SetDescription(_("Convert LiDAR data to point cloud data in a Ceres data formatted file.     \n"));
-	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetCopyright(wxT("Copyright (c) 2023..2025, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(LidarConvert));
