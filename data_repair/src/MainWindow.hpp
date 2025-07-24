@@ -17,7 +17,7 @@
 
 
 // Forward Declarations
-class cFileProcessor;
+class cDataRepairProcessor;
 
 
 // Define a new frame type: this is going to be our main frame
@@ -69,7 +69,7 @@ private:
 	wxLog* mpOriginalLog = nullptr;
 
 	wxEvtHandler* mpHandler = nullptr;
-	std::queue<cFileProcessor*> mFileProcessors;
+	std::queue<cDataRepairProcessor*> mFileProcessors;
 
 	wxString mSourceDataDirectory;
 	wxString mFailedDataDirectory;

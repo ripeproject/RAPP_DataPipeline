@@ -1,6 +1,6 @@
 
 #include "MainWindow.hpp"
-#include "FileProcessor.hpp"
+#include "DataRepairProcessor.hpp"
 #include "StringUtils.hpp"
 
 #include <nlohmann/json.hpp>
@@ -398,7 +398,7 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, mTemporaryDir, failed_dir, repaired_dir, exp_file);
+		cDataRepairProcessor* fp = new cDataRepairProcessor(numFilesToProcess++, mTemporaryDir, failed_dir, repaired_dir, exp_file);
 
 		if (fp->setFileToRepair(file))
 		{

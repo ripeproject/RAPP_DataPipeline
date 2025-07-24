@@ -1,5 +1,5 @@
 
-#include "FileProcessor.hpp"
+#include "DataRepairProcessor.hpp"
 #include "BS_thread_pool.hpp"
 
 #include "TextProgressBar.hpp"
@@ -148,16 +148,16 @@ int main(int argc, char** argv)
 	g_num_failed_files = 0;
 	g_num_repaired_files = 0;
 
-	std::vector<cFileProcessor*> file_processors;
+	std::vector<cDataRepairProcessor*> file_processors;
 
 	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, temporary_dir, failed_dir, repaired_dir, experiment_dir);
+		cDataRepairProcessor* fp = new cDataRepairProcessor(numFilesToProcess++, temporary_dir, failed_dir, repaired_dir, experiment_dir);
 		
 		if (fp->setFileToRepair(file))
 		{
-			pool.push_task(&cFileProcessor::process_file, fp);
+			pool.push_task(&cDataRepairProcessor::process_file, fp);
 		}
 
 		file_processors.push_back(fp);

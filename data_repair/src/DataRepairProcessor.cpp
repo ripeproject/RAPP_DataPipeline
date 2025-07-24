@@ -1,5 +1,5 @@
 
-#include "FileProcessor.hpp"
+#include "DataRepairProcessor.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -36,7 +36,7 @@ namespace
 }
 
 
-cFileProcessor::cFileProcessor(int id, std::filesystem::path temp_dir, 
+cDataRepairProcessor::cDataRepairProcessor(int id, std::filesystem::path temp_dir,
                                         std::filesystem::path failed_dir,
                                         std::filesystem::path repaired_dir,
                                         std::filesystem::path exp_file)
@@ -46,11 +46,11 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::path temp_dir,
 {
 }
 
-cFileProcessor::~cFileProcessor()
+cDataRepairProcessor::~cDataRepairProcessor()
 {
 }
 
-bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_repair)
+bool cDataRepairProcessor::setFileToRepair(std::filesystem::directory_entry file_to_repair)
 {
     if (file_to_repair.exists())
     {
@@ -61,7 +61,7 @@ bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_re
     return false;
 }
 
-void cFileProcessor::process_file()
+void cDataRepairProcessor::process_file()
 {
     mDataRepair = std::make_unique<cDataRepair>(mID, mTemporaryDirectory, mExperimentFile);
 
@@ -75,7 +75,7 @@ void cFileProcessor::process_file()
     }
 }
 
-void cFileProcessor::run()
+void cDataRepairProcessor::run()
 {
     // Read header data to check for missing data...
     auto result = mDataRepair->pass1();

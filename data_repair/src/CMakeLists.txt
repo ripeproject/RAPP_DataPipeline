@@ -23,8 +23,8 @@ set(DATA_REPAIR_COMMON_FILES
 	DataRepair.hpp
 	DataRepair.cpp
 
-	FileProcessor.hpp
-	FileProcessor.cpp
+	DataRepairProcessor.hpp
+	DataRepairProcessor.cpp
 )
 
 
