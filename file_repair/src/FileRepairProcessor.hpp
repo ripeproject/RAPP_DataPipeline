@@ -8,14 +8,14 @@
 #include <memory>
 
 
-class cFileProcessor
+class cFileRepairProcessor
 {
 public:
-	cFileProcessor(int id, std::filesystem::path temp_dir,
+	cFileRepairProcessor(int id, std::filesystem::path temp_dir,
 					std::filesystem::path partial_repaired_dir, 
 					std::filesystem::path fully_repaired_dir);
 
-	~cFileProcessor();
+	~cFileRepairProcessor();
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
 

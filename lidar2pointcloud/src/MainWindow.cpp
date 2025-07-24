@@ -26,6 +26,28 @@ namespace
 	wxEvtHandler* g_pEventHandler = nullptr;
 
 	std::map<int, int> prev_progress;
+
+	bool byMonthAndDay(const std::filesystem::directory_entry& a, const std::filesystem::directory_entry& b)
+	{
+		auto dir1 = a.path().filename().string();
+		auto dir2 = b.path().filename().string();
+
+		auto month1 = nStringUtils::toMonth(dir1);
+		auto month2 = nStringUtils::toMonth(dir2);
+
+		if (month1 < month2)
+			return true;
+
+		if (month1 == month2)
+		{
+			auto day1 = nStringUtils::toDay(dir1);
+			auto day2 = nStringUtils::toDay(dir2);
+
+			return day1 < day2;
+		}
+
+		return false;
+	}
 }
 
 
@@ -372,6 +394,35 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 	const std::filesystem::path input{ input_directory };
 
+	std::vector<directory_entry> days_to_process;
+
+	/*
+	 * Create list of days to process
+	 */
+	{
+		if (input.has_parent_path())
+		{
+			std::string month_dir = input.filename().string();
+			if (!isMonthDirectory(month_dir))
+			{
+				// Scan input directory for all MonthDay directory to operate on
+				for (const auto& dir_entry : std::filesystem::directory_iterator{ input })
+				{
+					if (!dir_entry.is_directory())
+						continue;
+
+					std::string month_dir = dir_entry.path().filename().string();
+					if (isMonthDirectory(month_dir))
+					{
+						days_to_process.push_back(dir_entry);
+					}
+				}
+
+				std::sort(days_to_process.begin(), days_to_process.end(), &byMonthAndDay);
+			}
+		}
+	}
+
 	std::vector<directory_entry> files_to_process;
 
 	std::string month_dir;
@@ -486,14 +537,6 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 			}
 		}
 
-/*
-		auto options = mConfigData->getParameters(in_file.path().filename().string());
-
-		if (!options.has_value())
-			continue;
-
-		nConfigFileData::sParameters_t parameters = options.value();
-*/
 
 		auto result = mConfigData->find_by_filename(in_file.path().filename().string());
 

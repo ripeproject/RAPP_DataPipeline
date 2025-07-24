@@ -1,5 +1,5 @@
 
-#include "FileProcessor.hpp"
+#include "FileRepairProcessor.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -36,7 +36,7 @@ namespace
 }
 
 
-cFileProcessor::cFileProcessor(int id, std::filesystem::path temp_dir,
+cFileRepairProcessor::cFileRepairProcessor(int id, std::filesystem::path temp_dir,
                                 std::filesystem::path partial_repaired_dir, 
                                 std::filesystem::path fully_repaired_dir)
 :
@@ -44,11 +44,11 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::path temp_dir,
 {
 }
 
-cFileProcessor::~cFileProcessor()
+cFileRepairProcessor::~cFileRepairProcessor()
 {
 }
 
-bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_repair)
+bool cFileRepairProcessor::setFileToRepair(std::filesystem::directory_entry file_to_repair)
 {
     if (file_to_repair.exists())
     {
@@ -59,7 +59,7 @@ bool cFileProcessor::setFileToRepair(std::filesystem::directory_entry file_to_re
     return false;
 }
 
-void cFileProcessor::process_file()
+void cFileRepairProcessor::process_file()
 {
     mDataFileRecovery = std::make_unique<cDataFileRecovery>(mID, mTemporaryDirectory);
     
@@ -73,7 +73,7 @@ void cFileProcessor::process_file()
     }
 }
 
-void cFileProcessor::run()
+void cFileRepairProcessor::run()
 {
     // Try to recover the data file
     if (!mDataFileRecovery->run())
@@ -99,7 +99,7 @@ void cFileProcessor::run()
     }
 }
 
-void cFileProcessor::moveToPartialRepaired()
+void cFileRepairProcessor::moveToPartialRepaired()
 {
     ::create_directory(mPartialRepairedDirectory);
 
@@ -108,7 +108,7 @@ void cFileProcessor::moveToPartialRepaired()
     std::filesystem::rename(mTemporaryFile, out_file);
 }
 
-void cFileProcessor::moveToFullyRepaired()
+void cFileRepairProcessor::moveToFullyRepaired()
 {
     ::create_directory(mFullyRepairedDirectory);
 

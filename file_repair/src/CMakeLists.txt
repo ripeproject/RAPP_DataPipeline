@@ -14,8 +14,8 @@ set(FILE_REPAIR_COMMON_FILES
 	DataFileRecovery.hpp
 	DataFileRecovery.cpp
 
-	FileProcessor.hpp
-	FileProcessor.cpp
+	FileRepairProcessor.hpp
+	FileRepairProcessor.cpp
 )
 
 

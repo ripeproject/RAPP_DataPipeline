@@ -1,6 +1,6 @@
 
 #include "MainWindow.hpp"
-#include "FileProcessor.hpp"
+#include "FileRepairProcessor.hpp"
 #include "StringUtils.hpp"
 
 #include <wx/thread.h>
@@ -263,7 +263,7 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 	int numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, mTemporaryDir, partial_repaired_dir, fully_repaired_dir);
+		cFileRepairProcessor* fp = new cFileRepairProcessor(numFilesToProcess++, mTemporaryDir, partial_repaired_dir, fully_repaired_dir);
 
 		if (fp->setFileToRepair(file))
 		{
