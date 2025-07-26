@@ -4,10 +4,38 @@
 configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 
-set(DATA_REPAIR_COMMON_FILES
+set(DATA_REPAIR_PUBLIC_HEADER_FILES
 
 	ParserExceptions.hpp
+	DataRepairProcessor.hpp
+)
 
+
+
+# The static library (.lib/.a) for repairing Ceres based files
+add_library(CeresDataRepair_static STATIC)
+
+if (MSVC)
+  # Add the "lib" prefix for generated .lib outputs.
+	set_target_properties(CeresDataRepair_static PROPERTIES OUTPUT_NAME "libCeresDataRepair")
+else ()
+	set_target_properties(CeresDataRepair_static PROPERTIES OUTPUT_NAME "CeresDataRepair")
+endif (MSVC)
+
+set_target_properties(CeresDataRepair_static PROPERTIES LANGUAGE CXX)
+
+target_compile_features(CeresDataRepair_static PRIVATE cxx_std_20)
+
+#target_include_directories(FileVerificator_static PUBLIC
+#	$<BUILD_INTERFACE:${LIBSPIDERCAM_INCLUDE_DIR}>
+#	$<INSTALL_INTERFACE:include>
+#)
+
+target_sources(CeresDataRepair_static
+PRIVATE
+	${DATA_REPAIR_PUBLIC_HEADER_FILES}
+
+PRIVATE
 	ExperimentInfoFromJson.hpp
 	ExperimentInfoFromJson.cpp
 
@@ -23,9 +51,22 @@ set(DATA_REPAIR_COMMON_FILES
 	DataRepair.hpp
 	DataRepair.cpp
 
-	DataRepairProcessor.hpp
 	DataRepairProcessor.cpp
 )
+
+target_include_directories(CeresDataRepair_static PRIVATE "../support/Utilities")
+
+target_link_libraries(CeresDataRepair_static PRIVATE utilities)
+
+#
+# Setting MSVC_STATIC_RUNTIME determines which MSVC runtime to use...
+if (MSVC_STATIC_RUNTIME)
+	# To use MultiThreaded (-MT) and MultiThreadedDebug (-MTd)
+	set_property(TARGET CeresDataRepair_static PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+else()
+	# To use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
+	set_property(TARGET CeresDataRepair_static PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
 
 
 add_executable(console_app)
@@ -39,8 +80,6 @@ target_sources(console_app
 PRIVATE
 	BS_thread_pool.hpp
 	
-	${DATA_REPAIR_COMMON_FILES}
-
 	ConsoleApp.cpp
 )
 
@@ -49,6 +88,7 @@ target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
+target_link_libraries(console_app PRIVATE CeresDataRepair_static)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
@@ -103,8 +143,6 @@ if(wxWidgets_FOUND)
 		MainFrame.hpp
 		MainFrame.cpp
 
-		${DATA_REPAIR_COMMON_FILES}
-
 		${resource_files}
 		
 #		version.hpp
@@ -122,6 +160,7 @@ if(wxWidgets_FOUND)
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
+	target_link_libraries(gui_app PRIVATE CeresDataRepair_static)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
 	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)
@@ -141,5 +180,21 @@ endif()
 #******************************************************************************
 # Installer
 #******************************************************************************
+
+
+install(TARGETS CeresDataRepair_static
+	EXPORT ${PROJECT_NAME}-config
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(EXPORT ${PROJECT_NAME}-config
+	NAMESPACE ${PROJECT_NAME}::
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
+
+install(FILES ${DATA_REPAIR_PUBLIC_HEADER_FILES}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
 

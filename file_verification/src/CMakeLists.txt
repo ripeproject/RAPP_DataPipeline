@@ -7,18 +7,52 @@ add_subdirectory(bdf_v1)
 configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 
-set(FILE_VERIFICATOR_COMMON_FILES
+set(FILE_VERIFIER_PUBLIC_HEADER_FILES
 
 	ParserExceptions.hpp
-
 	LidarFileVerifier.hpp
-	LidarFileVerifier.cpp
-
 	CeresFileVerifier.hpp
-	CeresFileVerifier.cpp
-
-	AbstractFileVerifier.hpp
 )
+
+
+# The static library (.lib/.a) for verifying the integrity of the Ceres data file
+add_library(CeresFileVerifier_static STATIC)
+
+if (MSVC)
+  # Add the "lib" prefix for generated .lib outputs.
+	set_target_properties(CeresFileVerifier_static PROPERTIES OUTPUT_NAME "libCeresFileVerifier")
+else ()
+	set_target_properties(CeresFileVerifier_static PROPERTIES OUTPUT_NAME "CeresFileVerifier")
+endif (MSVC)
+
+set_target_properties(CeresFileVerifier_static PROPERTIES LANGUAGE CXX)
+
+target_compile_features(CeresFileVerifier_static PRIVATE cxx_std_20)
+
+#target_include_directories(FileVerificator_static PUBLIC
+#	$<BUILD_INTERFACE:${LIBSPIDERCAM_INCLUDE_DIR}>
+#	$<INSTALL_INTERFACE:include>
+#)
+
+target_sources(CeresFileVerifier_static
+PRIVATE
+	${FILE_VERIFIER_PUBLIC_HEADER_FILES}
+
+PRIVATE
+	AbstractFileVerifier.hpp
+	LidarFileVerifier.cpp
+	CeresFileVerifier.cpp
+)
+
+#
+# Setting MSVC_STATIC_RUNTIME determines which MSVC runtime to use...
+if (MSVC_STATIC_RUNTIME)
+	# To use MultiThreaded (-MT) and MultiThreadedDebug (-MTd)
+	set_property(TARGET CeresFileVerifier_static PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+else()
+	# To use MultiThreadedDLL (-MD) and MultiThreadedDebugDLL (-MDd)
+	set_property(TARGET CeresFileVerifier_static PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
 
 
 add_executable(console_app)
@@ -33,8 +67,6 @@ PRIVATE
 
 	BS_thread_pool.hpp
 
-	${FILE_VERIFICATOR_COMMON_FILES}
-
 	ConsoleApp.cpp
 )
 
@@ -44,6 +76,7 @@ target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE BlockDataFile_v1)
+target_link_libraries(console_app PRIVATE CeresFileVerifier_static)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
@@ -88,8 +121,6 @@ if(wxWidgets_FOUND)
 		MainFrame.hpp
 		MainFrame.cpp
 
-		${FILE_VERIFICATOR_COMMON_FILES}
-
 		${resource_files}
 		
 #		version.cpp
@@ -106,6 +137,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE BlockDataFile_v1)
+	target_link_libraries(gui_app PRIVATE CeresFileVerifier_static)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
@@ -138,6 +170,7 @@ if(UNIX AND NOT APPLE)
 	target_include_directories(service PRIVATE "../support/StringUtils")
 
 	target_link_libraries(service PRIVATE BlockDataFile_v1)
+	target_link_libraries(service PRIVATE CeresFileVerifier_static)
 	target_link_libraries(service PRIVATE cbdf::cbdf)
 	target_link_libraries(service PRIVATE string_utils)
 	target_link_libraries(service PRIVATE utilities)
@@ -167,6 +200,7 @@ if(WIN32)
 	target_include_directories(service PRIVATE "../support/StringUtils")
 
 	target_link_libraries(service PRIVATE BlockDataFile_v1)
+	target_link_libraries(service PRIVATE CeresFileVerifier_static)
 	target_link_libraries(service PRIVATE cbdf::cbdf)
 	target_link_libraries(service PRIVATE string_utils)
 	target_link_libraries(service PRIVATE utilities)
@@ -177,4 +211,19 @@ endif()
 # Installer
 #******************************************************************************
 
+
+install(TARGETS CeresFileVerifier_static
+	EXPORT ${PROJECT_NAME}-config
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(EXPORT ${PROJECT_NAME}-config
+	NAMESPACE ${PROJECT_NAME}::
+	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)
+
+install(FILES ${FILE_VERIFIER_PUBLIC_HEADER_FILES}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 
