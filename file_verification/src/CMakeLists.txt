@@ -9,7 +9,7 @@ configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 set(FILE_VERIFIER_PUBLIC_HEADER_FILES
 
-	ParserExceptions.hpp
+	AbstractFileVerifier.hpp
 	LidarFileVerifier.hpp
 	CeresFileVerifier.hpp
 )
@@ -39,7 +39,7 @@ PRIVATE
 	${FILE_VERIFIER_PUBLIC_HEADER_FILES}
 
 PRIVATE
-	AbstractFileVerifier.hpp
+	ParserExceptions.hpp
 	LidarFileVerifier.cpp
 	CeresFileVerifier.cpp
 )
