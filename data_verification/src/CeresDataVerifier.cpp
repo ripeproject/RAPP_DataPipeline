@@ -12,9 +12,9 @@
 #include <atomic>
 
 
-extern std::atomic<uint32_t> g_num_failed_files;
-extern std::atomic<uint32_t> g_num_invalid_files;
-extern std::atomic<uint32_t> g_num_missing_data;
+std::atomic<uint32_t> g_num_failed_data_files = 0;
+std::atomic<uint32_t> g_num_invalid_data_files = 0;
+std::atomic<uint32_t> g_num_missing_data = 0;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -126,7 +126,7 @@ void cCeresDataVerifier::run()
             if (mFileReader.fail())
             {
                 mFileReader.close();
-                ++g_num_failed_files;
+                ++g_num_failed_data_files;
 
                 complete_file_progress(mID, "Failed!");
 
@@ -163,7 +163,7 @@ void cCeresDataVerifier::run()
         console_message(msg);
 
         mFileReader.close();
-        ++g_num_failed_files;
+        ++g_num_failed_data_files;
 
         complete_file_progress(mID, "Failed!");
 
@@ -179,7 +179,7 @@ void cCeresDataVerifier::run()
             console_message(msg);
 
             mFileReader.close();
-            ++g_num_failed_files;
+            ++g_num_failed_data_files;
 
             complete_file_progress(mID, "Failed!");
 
@@ -306,7 +306,7 @@ void cCeresDataVerifier::moveFileToInvalid()
     std::filesystem::path dest = mInvalidDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
 
-    ++g_num_invalid_files;
+    ++g_num_invalid_data_files;
 }
 
 //-----------------------------------------------------------------------------

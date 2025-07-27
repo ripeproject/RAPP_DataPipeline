@@ -17,9 +17,6 @@
 
 using namespace std::filesystem;
 
-std::atomic<uint32_t> g_num_failed_files = 0;
-std::atomic<uint32_t> g_num_invalid_files = 0;
-std::atomic<uint32_t> g_num_missing_data = 0;
 
 namespace
 {
@@ -388,8 +385,8 @@ void cMainWindow::startDataProcessing()
 		return;
 	}
 
-	g_num_failed_files = 0;
-	g_num_invalid_files = 0;
+	g_num_failed_data_files = 0;
+	g_num_invalid_data_files = 0;
 
 	GetThread()->Run();
 }
@@ -427,10 +424,10 @@ wxThread::ExitCode cMainWindow::Entry()
 	msg += mSourceDataDirectory;
 	wxLogMessage(msg);
 
-	if (g_num_failed_files != 0)
+	if (g_num_failed_data_files != 0)
 	{
 		wxString msg = "Detected ";
-		uint32_t l = g_num_failed_files;
+		uint32_t l = g_num_failed_data_files;
 		msg += wxString::Format(wxT("%d"), l);
 		msg += " invalid files.  Please run FileChecker and FileRepair on this directory!";
 		wxLogMessage(msg);

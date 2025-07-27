@@ -10,6 +10,10 @@
 #include <string>
 #include <memory>
 
+extern std::atomic<uint32_t> g_num_failed_data_files;
+extern std::atomic<uint32_t> g_num_invalid_data_files;
+extern std::atomic<uint32_t> g_num_missing_data;
+
 
 class cCeresDataVerifier 
 {

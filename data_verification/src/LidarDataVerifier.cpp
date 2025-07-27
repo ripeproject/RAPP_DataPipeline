@@ -11,8 +11,8 @@
 #include <atomic>
 
 
-extern std::atomic<uint32_t> g_num_failed_files;
-extern std::atomic<uint32_t> g_num_invalid_files;
+extern std::atomic<uint32_t> g_num_failed_data_files;
+extern std::atomic<uint32_t> g_num_invalid_data_files;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -137,7 +137,7 @@ void cLidarDataVerifier::run()
     }
     catch (const std::exception& e)
     {
-        ++g_num_failed_files;
+        ++g_num_failed_data_files;
 
         mFileReader.close();
 
@@ -162,7 +162,7 @@ void cLidarDataVerifier::moveFileToInvalid()
     std::filesystem::path dest = mInvalidDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
 
-    ++g_num_invalid_files;
+    ++g_num_invalid_data_files;
 }
 
 //-----------------------------------------------------------------------------
