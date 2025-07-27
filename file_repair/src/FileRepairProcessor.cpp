@@ -12,7 +12,8 @@
 #include <atomic>
 
 
-extern std::atomic<uint32_t> g_num_failed_files;
+std::atomic<uint32_t> g_num_partial_files = 0;
+std::atomic<uint32_t> g_num_repaired_files = 0;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -89,13 +90,15 @@ void cFileRepairProcessor::run()
 
         moveToPartialRepaired();
 
-        ++g_num_failed_files;
+        ++g_num_partial_files;
     }
     else
     {
         complete_file_progress(mID, "Complete", "Fully Repaired");
 
         moveToFullyRepaired();
+
+        ++g_num_repaired_files;
     }
 }
 

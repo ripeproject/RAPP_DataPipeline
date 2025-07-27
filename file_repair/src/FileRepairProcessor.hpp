@@ -8,6 +8,10 @@
 #include <memory>
 
 
+extern std::atomic<uint32_t> g_num_partial_files;
+extern std::atomic<uint32_t> g_num_repaired_files;
+
+
 class cFileRepairProcessor
 {
 public:

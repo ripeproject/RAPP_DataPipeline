@@ -9,7 +9,6 @@
 
 using namespace std::filesystem;
 
-extern std::atomic<uint32_t> g_num_failed_files;
 
 namespace
 {
