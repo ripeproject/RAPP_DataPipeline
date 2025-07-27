@@ -12,8 +12,8 @@
 #include <atomic>
 
 
-extern std::atomic<uint32_t> g_num_failed_files;
-extern std::atomic<uint32_t> g_num_repaired_files;
+std::atomic<uint32_t> g_num_partial_data_files;
+std::atomic<uint32_t> g_num_repaired_data_files;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -89,7 +89,7 @@ void cDataRepairProcessor::run()
         std::filesystem::path dest = mFailedDirectory / mFileToRepair.filename();
         std::filesystem::rename(mFileToRepair, dest);
 
-        ++g_num_failed_files;
+        ++g_num_partial_data_files;
 
         complete_file_progress(mID, "Complete", "Failed");
 
@@ -120,7 +120,7 @@ void cDataRepairProcessor::run()
         std::filesystem::path dest = mFailedDirectory / mFileToRepair.filename();
         std::filesystem::rename(mFileToRepair, dest);
 
-        ++g_num_failed_files;
+        ++g_num_partial_data_files;
 
         complete_file_progress(mID, "Complete", "Failed");
 
@@ -148,7 +148,7 @@ void cDataRepairProcessor::run()
         std::filesystem::path dest = mFailedDirectory / mFileToRepair.filename();
         std::filesystem::rename(mFileToRepair, dest);
 
-        ++g_num_failed_files;
+        ++g_num_partial_data_files;
 
         complete_file_progress(mID, "Complete", "Failed");
 
@@ -168,7 +168,7 @@ void cDataRepairProcessor::run()
     std::filesystem::path dest = mRepairedDirectory / mTemporaryFile.filename();
     std::filesystem::rename(mTemporaryFile, dest);
 
-    ++g_num_repaired_files;
+    ++g_num_repaired_data_files;
 
     complete_file_progress(mID, "Complete", "Fixed");
 }

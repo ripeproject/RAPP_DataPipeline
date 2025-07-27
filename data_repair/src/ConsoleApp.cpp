@@ -16,9 +16,6 @@
 
 std::mutex g_console_mutex;
 
-std::atomic<uint32_t> g_num_failed_files = 0;
-std::atomic<uint32_t> g_num_repaired_files = 0;
-
 
 namespace
 {
@@ -145,8 +142,8 @@ int main(int argc, char** argv)
 			std::cout << "Using " << n << " threads of a possible " << max_threads << std::endl;
 	}
 
-	g_num_failed_files = 0;
-	g_num_repaired_files = 0;
+	g_num_partial_data_files = 0;
+	g_num_repaired_data_files = 0;
 
 	std::vector<cDataRepairProcessor*> file_processors;
 
@@ -181,13 +178,13 @@ int main(int argc, char** argv)
 
 	if (!quietMode)
 	{
-		if (g_num_failed_files == 0)
+		if (g_num_partial_data_files == 0)
 		{
 			std::cout << "All " << numFilesToProcess << " files repaired!" << std::endl;
 		}
 		else
 		{
-			std::cout << (numFilesToProcess - g_num_failed_files) << " files repaired , " << g_num_failed_files << " could not be repaired!" << std::endl;
+			std::cout << (numFilesToProcess - g_num_partial_data_files) << " files repaired , " << g_num_partial_data_files << " could not be repaired!" << std::endl;
 		}
 	}
 

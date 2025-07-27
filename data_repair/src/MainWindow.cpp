@@ -18,8 +18,6 @@
 
 using namespace std::filesystem;
 
-extern std::atomic<uint32_t> g_num_failed_files;
-extern std::atomic<uint32_t> g_num_repaired_files;
 
 namespace
 {
@@ -416,8 +414,8 @@ void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 	msg += mSourceDataDirectory;
 	wxLogMessage(msg);
 
-	g_num_failed_files = 0;
-	g_num_repaired_files = 0;
+	g_num_partial_data_files = 0;
+	g_num_repaired_data_files = 0;
 
 	startDataProcessing();
 }
@@ -473,7 +471,7 @@ wxThread::ExitCode cMainWindow::Entry()
 		std::filesystem::remove(mTemporaryDir);
 	}
 
-	if (g_num_repaired_files > 0)
+	if (g_num_repaired_data_files > 0)
 	{
 		wxMessageDialog dlg(this, "Do you wish to move the repaired files back to the base folder?", "Repaired Files", wxYES_NO | wxYES_DEFAULT | wxCENTRE);
 

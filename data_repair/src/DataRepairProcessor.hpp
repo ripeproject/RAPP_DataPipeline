@@ -6,6 +6,10 @@
 #include <filesystem>
 #include <string>
 #include <memory>
+#include <atomic>
+
+extern std::atomic<uint32_t> g_num_partial_data_files;
+extern std::atomic<uint32_t> g_num_repaired_data_files;
 
 
 class cDataRepairProcessor
