@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <string>
 
+extern std::atomic<uint32_t> g_num_failed_files;
 
 class cCeresFileVerifier : public cAbstractFileVerifier
 {

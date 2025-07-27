@@ -9,7 +9,7 @@
 #include <atomic>
 
 
-extern std::atomic<uint32_t> g_num_failed_files;
+std::atomic<uint32_t> g_num_failed_files = 0;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);

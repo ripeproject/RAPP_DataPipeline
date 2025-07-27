@@ -17,8 +17,6 @@
 
 std::mutex g_console_mutex;
 
-std::atomic<uint32_t> g_num_failed_files = 0;
-
 namespace
 {
 	int numFilesToProcess = 0;

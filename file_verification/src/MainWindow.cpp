@@ -20,7 +20,6 @@ namespace
 	wxEvtHandler* g_pEventHandler = nullptr;
 }
 
-std::atomic<uint32_t> g_num_failed_files = 0;
 
 void console_message(const std::string& msg)
 {
