@@ -1,5 +1,6 @@
 
 #include "LidarDataVerifier.hpp"
+#include "bdf_v1/BlockDataFile.hpp"
 #include "bdf_v1/ParserExceptions.hpp"
 #include "bdf_v1/OusterParser.hpp"
 #include "bdf_v1/PvtParser.hpp"
@@ -39,6 +40,7 @@ cLidarDataVerifier::cLidarDataVerifier(int id, std::filesystem::path invalid_dir
     :
     mID(id)
 {
+    mpFileReader = std::make_unique<v1::cBlockDataFileReader>();
     mInvalidDirectory = invalid_dir;
 }
 
@@ -49,9 +51,9 @@ cLidarDataVerifier::cLidarDataVerifier(int id, std::filesystem::directory_entry 
 {
     mInvalidDirectory = invalid_dir;
     mFileToCheck = file_to_check;
-    mFileReader.open(file_to_check.path().string());
+    mpFileReader->open(file_to_check.path().string());
 
-    if (!mFileReader.isOpen())
+    if (!mpFileReader->isOpen())
     {
         throw std::logic_error(mFileToCheck.string());
     }
@@ -59,7 +61,7 @@ cLidarDataVerifier::cLidarDataVerifier(int id, std::filesystem::directory_entry 
 
 cLidarDataVerifier::~cLidarDataVerifier()
 {
-    mFileReader.close();
+    mpFileReader->close();
 }
 
 //-----------------------------------------------------------------------------
@@ -72,12 +74,12 @@ bool cLidarDataVerifier::setFileToCheck(std::filesystem::directory_entry file_to
 //-----------------------------------------------------------------------------
 bool cLidarDataVerifier::open(std::filesystem::path file_to_check)
 {
-    if (mFileReader.isOpen())
-        mFileReader.close();
+    if (mpFileReader->isOpen())
+        mpFileReader->close();
         
-    mFileReader.open(file_to_check.string());
+    mpFileReader->open(file_to_check.string());
 
-    return mFileReader.isOpen();
+    return mpFileReader->isOpen();
 }
 
 //-----------------------------------------------------------------------------
@@ -85,7 +87,7 @@ void cLidarDataVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
-        mFileSize = mFileReader.size();
+        mFileSize = mpFileReader->size();
 
         new_file_progress(mID, mFileToCheck.string());
 
@@ -96,7 +98,7 @@ void cLidarDataVerifier::process_file()
 //-----------------------------------------------------------------------------
 void cLidarDataVerifier::run()
 {
-    if (!mFileReader.isOpen())
+    if (!mpFileReader->isOpen())
     {
         throw std::logic_error("No file is open for verification.");
     }
@@ -104,29 +106,29 @@ void cLidarDataVerifier::run()
     auto ouster = std::make_unique<v1::cOusterParser>();
     auto pvt = std::make_unique<v1::cPvtParser>();
 
-    mFileReader.attach(ouster.get());
-    mFileReader.attach(pvt.get());
+    mpFileReader->attach(ouster.get());
+    mpFileReader->attach(pvt.get());
 
     try
     {
-        while (!mFileReader.eof())
+        while (!mpFileReader->eof())
         {
-            if (mFileReader.fail())
+            if (mpFileReader->fail())
             {
-                mFileReader.close();
+                mpFileReader->close();
                 return;
             }
 
-            mFileReader.processBlock();
+            mpFileReader->processBlock();
 
-            auto file_pos = static_cast<double>(mFileReader.filePosition());
+            auto file_pos = static_cast<double>(mpFileReader->filePosition());
             file_pos = 100.0 * (file_pos / mFileSize);
             update_progress(mID, static_cast<int>(file_pos));
         }
     }
     catch (const v1::bdf::invalid_data& e)
     {
-        mFileReader.close();
+        mpFileReader->close();
         std::string msg = e.what();
 
         moveFileToInvalid();
@@ -139,14 +141,14 @@ void cLidarDataVerifier::run()
     {
         ++g_num_failed_data_files;
 
-        mFileReader.close();
+        mpFileReader->close();
 
         complete_file_progress(mID, "Failed!");
 
         return;
     }
 
-    mFileReader.close();
+    mpFileReader->close();
 
     complete_file_progress(mID, "Passed");
 }
@@ -154,8 +156,8 @@ void cLidarDataVerifier::run()
 //-----------------------------------------------------------------------------
 void cLidarDataVerifier::moveFileToInvalid()
 {
-    if (mFileReader.isOpen())
-        mFileReader.close();
+    if (mpFileReader->isOpen())
+        mpFileReader->close();
 
     ::create_directory(mInvalidDirectory);
 

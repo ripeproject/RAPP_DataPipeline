@@ -1,8 +1,8 @@
 
-#include "CeresDataVerifier.hpp"
-#include "LidarDataVerifier.hpp"
 #include "BS_thread_pool.hpp"
 #include "StringUtils.hpp"
+
+#include "CeresDailyChecker.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -20,9 +20,6 @@
 
 std::mutex g_console_mutex;
 
-std::atomic<uint32_t> g_num_failed_files = 0;
-std::atomic<uint32_t> g_num_invalid_files = 0;
-std::atomic<uint32_t> g_num_missing_data = 0;
 
 namespace
 {
@@ -277,6 +274,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	return g_num_invalid_files;
+	return g_num_failed_files;
 }
 

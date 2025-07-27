@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "DataFileRecovery.hpp"
-
 #include <filesystem>
 #include <string>
 #include <memory>
@@ -11,6 +9,8 @@
 extern std::atomic<uint32_t> g_num_partial_files;
 extern std::atomic<uint32_t> g_num_repaired_files;
 
+// Forward Declarations
+class cDataFileRecovery;
 
 class cFileRepairProcessor
 {

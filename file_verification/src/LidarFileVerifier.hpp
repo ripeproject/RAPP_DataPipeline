@@ -5,11 +5,14 @@
 
 #include "AbstractFileVerifier.hpp"
 
-#include "bdf_v1/BlockDataFile.hpp"
-
 #include <filesystem>
 #include <string>
+#include <memory>
 
+namespace v1
+{
+	class cBlockDataFileReader;
+};
 
 class cLidarFileVerifier : public cAbstractFileVerifier
 {
@@ -32,8 +35,8 @@ protected:
 private:
 	const int mID;
 
-	std::uintmax_t mFileSize;
-	v1::cBlockDataFileReader mFileReader;
+	std::uintmax_t mFileSize = 0;
+	std::unique_ptr<v1::cBlockDataFileReader> mpFileReader;
 
 	std::filesystem::path mFailedDirectory;
 	std::filesystem::path mFileToCheck;

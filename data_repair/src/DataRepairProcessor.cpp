@@ -1,6 +1,8 @@
 
 #include "DataRepairProcessor.hpp"
 
+#include "DataRepair.hpp"
+
 #include <cbdf/BlockDataFileExceptions.hpp>
 
 #include <filesystem>

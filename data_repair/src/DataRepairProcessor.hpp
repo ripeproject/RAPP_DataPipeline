@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "DataRepair.hpp"
-
 #include <filesystem>
 #include <string>
 #include <memory>
@@ -10,6 +8,9 @@
 
 extern std::atomic<uint32_t> g_num_partial_data_files;
 extern std::atomic<uint32_t> g_num_repaired_data_files;
+
+//Forward Declarations
+class cDataRepair;
 
 
 class cDataRepairProcessor

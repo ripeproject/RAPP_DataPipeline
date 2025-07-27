@@ -1,9 +1,5 @@
 
-#include "CeresDataVerifier.hpp"
-#include "ParserExceptions.hpp"
-#include "OusterVerificationParser.hpp"
-#include "AxisCommunicationsVerificationParser.hpp"
-#include "ExperimentInfoFromJson.hpp"
+#include "CeresDailyChecker.hpp"
 
 #include <cbdf/ExperimentInfoLoader.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
@@ -38,71 +34,54 @@ namespace
 }
 
 //-----------------------------------------------------------------------------
-cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file)
+cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file)
 :
     mID(id)
 {
-    mInvalidDirectory = invalid_dir;
-    mExperimentFile = exp_file;
-
-    mExperimentInfo = std::make_shared<cExperimentInfo>();
 }
 
-cCeresDataVerifier::cCeresDataVerifier(int id, std::filesystem::directory_entry file_to_check,
+cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::directory_entry file_to_check,
     std::filesystem::path invalid_dir, std::filesystem::path exp_file)
 :
     mID(id)
 {
-    mFileToCheck = file_to_check;
-    mInvalidDirectory = invalid_dir;
-    mExperimentFile = exp_file;
-
     mFileReader.open(file_to_check.path().string());
 
     if (!mFileReader.isOpen())
     {
-        throw std::logic_error(mFileToCheck.string());
     }
 
-    mExperimentInfo = std::make_shared<cExperimentInfo>();
 }
 
-cCeresDataVerifier::~cCeresDataVerifier()
+cCeresDailyChecker::~cCeresDailyChecker()
 {
     mFileReader.close();
 }
 
-bool cCeresDataVerifier::setFileToCheck(std::filesystem::directory_entry file_to_check)
+bool cCeresDailyChecker::setFileToCheck(std::filesystem::directory_entry file_to_check)
 {
-    mFileToCheck = file_to_check;
+//    mFileToCheck = file_to_check;
     return true;
 }
 
 //-----------------------------------------------------------------------------
-bool cCeresDataVerifier::open(std::filesystem::path file_to_check)
+
+//-----------------------------------------------------------------------------
+void cCeresDailyChecker::process_file()
 {
-    if (mFileReader.isOpen())
-        mFileReader.close();
-        
-    mFileReader.open(file_to_check.string());
-    return mFileReader.isOpen();
+//    if (open(mFileToCheck))
+//    {
+//        mFileSize = mFileReader.file_size();
+//
+//        new_file_progress(mID, mFileToCheck.string());
+//
+ //       run();
+//    }
 }
 
 //-----------------------------------------------------------------------------
-void cCeresDataVerifier::process_file()
-{
-    if (open(mFileToCheck))
-    {
-        mFileSize = mFileReader.file_size();
-
-        new_file_progress(mID, mFileToCheck.string());
-
-        run();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void cCeresDataVerifier::run()
+#if 0
+void cCeresDailyChecker::run()
 {
     if (!mFileReader.isOpen())
     {
@@ -294,9 +273,11 @@ void cCeresDataVerifier::run()
 
     complete_file_progress(mID, "Passed");
 }
+#endif
 
 //-----------------------------------------------------------------------------
-void cCeresDataVerifier::moveFileToInvalid()
+#if 0
+void cCeresDailyChecker::moveFileToInvalid()
 {
     if (mFileReader.isOpen())
         mFileReader.close();
@@ -308,7 +289,7 @@ void cCeresDataVerifier::moveFileToInvalid()
 
     ++g_num_invalid_files;
 }
-
+#endif
 //-----------------------------------------------------------------------------
 
 

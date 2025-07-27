@@ -163,7 +163,10 @@ find_package(wxWidgets QUIET COMPONENTS core base aui)
 
 # Find and include my libraries for data collection
 find_package(CBDF REQUIRED cbdf sensors)
-find_package(CeresFileVerifier_static REQUIRED)
+find_package(file_verificator REQUIRED)
+find_package(file_repair REQUIRED)
+find_package(data_verificator REQUIRED)
+find_package(data_repair REQUIRED)
 find_package(ouster REQUIRED)
 find_package(ssnx REQUIRED)
 #FIND_PACKAGE(ssnx2net REQUIRED)

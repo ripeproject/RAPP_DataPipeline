@@ -12,6 +12,7 @@
 
 extern std::atomic<uint32_t> g_num_failed_files;
 
+
 class cCeresFileVerifier : public cAbstractFileVerifier
 {
 public:
@@ -39,7 +40,7 @@ protected:
 private:
 	const int mID;
 
-	std::uintmax_t mFileSize;
+	std::uintmax_t mFileSize = 0;
     cBlockDataFileReader mFileReader;
 
 	std::filesystem::path mFailedDirectory;

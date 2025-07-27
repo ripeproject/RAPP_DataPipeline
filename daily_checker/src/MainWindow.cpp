@@ -1,6 +1,6 @@
 
 #include "MainWindow.hpp"
-#include "CeresDataVerifier.hpp"
+#include "CeresDailyChecker.hpp"
 #include "StringUtils.hpp"
 
 #include <nlohmann/json.hpp>
@@ -16,10 +16,6 @@
 #include <map>
 
 using namespace std::filesystem;
-
-std::atomic<uint32_t> g_num_failed_files = 0;
-std::atomic<uint32_t> g_num_invalid_files = 0;
-std::atomic<uint32_t> g_num_missing_data = 0;
 
 namespace
 {
@@ -389,7 +385,16 @@ void cMainWindow::startDataProcessing()
 	}
 
 	g_num_failed_files = 0;
-	g_num_invalid_files = 0;
+
+	g_num_partial_files = 0;
+	g_num_repaired_files = 0;
+
+	g_num_failed_data_files = 0;
+	g_num_invalid_data_files = 0;
+	g_num_missing_data = 0;
+
+	g_num_partial_data_files = 0;
+	g_num_repaired_data_files = 0;
 
 	GetThread()->Run();
 }

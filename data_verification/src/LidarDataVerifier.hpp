@@ -3,11 +3,14 @@
  */
 #pragma once
 
-#include "bdf_v1/BlockDataFile.hpp"
-
 #include <filesystem>
 #include <string>
+#include <memory>
 
+namespace v1
+{
+	class cBlockDataFileReader;
+}
 
 class cLidarDataVerifier 
 {
@@ -32,7 +35,7 @@ private:
 	const int mID;
 
 	std::uintmax_t mFileSize = 0;
-	v1::cBlockDataFileReader mFileReader;
+	std::unique_ptr<v1::cBlockDataFileReader> mpFileReader;
 
 	std::filesystem::path mInvalidDirectory;
 	std::filesystem::path mFileToCheck;

@@ -6,7 +6,6 @@ configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 set(DATA_REPAIR_PUBLIC_HEADER_FILES
 
-	ParserExceptions.hpp
 	DataRepairProcessor.hpp
 )
 
@@ -36,6 +35,8 @@ PRIVATE
 	${DATA_REPAIR_PUBLIC_HEADER_FILES}
 
 PRIVATE
+	ParserExceptions.hpp
+
 	ExperimentInfoFromJson.hpp
 	ExperimentInfoFromJson.cpp
 
@@ -56,7 +57,7 @@ PRIVATE
 
 target_include_directories(CeresDataRepair_static PRIVATE "../support/Utilities")
 
-target_link_libraries(CeresDataRepair_static PRIVATE utilities)
+#target_link_libraries(CeresDataRepair_static PRIVATE utilities)
 
 #
 # Setting MSVC_STATIC_RUNTIME determines which MSVC runtime to use...

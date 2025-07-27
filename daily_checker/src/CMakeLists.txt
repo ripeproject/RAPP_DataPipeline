@@ -16,6 +16,9 @@ PRIVATE
 
 	BS_thread_pool.hpp
 
+	CeresDailyChecker.hpp
+	CeresDailyChecker.cpp
+
 	ConsoleApp.cpp
 )
 
@@ -24,7 +27,10 @@ target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 target_include_directories(console_app PRIVATE "../support/Utilities")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
-target_link_libraries(console_app PRIVATE CeresDataVerifier_static)
+target_link_libraries(console_app PRIVATE file_verificator::CeresFileVerifier_static)
+target_link_libraries(console_app PRIVATE file_repair::CeresFileRepair_static)
+target_link_libraries(console_app PRIVATE data_verificator::CeresDataVerifier_static)
+target_link_libraries(console_app PRIVATE data_repair::CeresDataRepair_static)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
 target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
@@ -40,7 +46,7 @@ if(wxWidgets_FOUND)
 		# Include a RC file for windows
 		set(resource_files
 			./Resources/ripe.ico
-			./Resources/CeresDataVerification.rc
+			./Resources/CeresDailyChecker.rc
 		)
 
 		source_group("Resources" FILES
@@ -71,6 +77,9 @@ if(wxWidgets_FOUND)
 		MainFrame.hpp
 		MainFrame.cpp
 
+		CeresDailyChecker.hpp
+		CeresDailyChecker.cpp
+
 
 		${resource_files}
 		
@@ -88,7 +97,10 @@ if(wxWidgets_FOUND)
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
-	target_link_libraries(gui_app PRIVATE CeresDataVerifier_static)
+	target_link_libraries(gui_app PRIVATE file_verificator::CeresFileVerifier_static)
+	target_link_libraries(gui_app PRIVATE file_repair::CeresFileRepair_static)
+	target_link_libraries(gui_app PRIVATE data_verificator::CeresDataVerifier_static)
+	target_link_libraries(gui_app PRIVATE data_repair::CeresDataRepair_static)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
 	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)

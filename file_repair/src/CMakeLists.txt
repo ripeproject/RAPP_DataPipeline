@@ -6,8 +6,7 @@ configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 set(FILE_REPAIR_PUBLIC_HEADER_FILES
 
-	ParserExceptions.hpp
-	DataFileRecovery.hpp
+	FileRepairProcessor.hpp
 )
 
 
@@ -36,11 +35,14 @@ PRIVATE
 	${FILE_REPAIR_PUBLIC_HEADER_FILES}
 
 PRIVATE
-	BlockDataFileRecovery.hpp
-	FileRepairProcessor.hpp
+	ParserExceptions.hpp
 
+	BlockDataFileRecovery.hpp
 	BlockDataFileRecovery.cpp
+
+	DataFileRecovery.hpp
 	DataFileRecovery.cpp
+
 	FileRepairProcessor.cpp
 )
 

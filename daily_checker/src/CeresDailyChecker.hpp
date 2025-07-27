@@ -3,6 +3,17 @@
  */
 #pragma once
 
+#include <file_verificator/CeresFileVerifier.hpp>
+#include <file_verificator/LidarFileVerifier.hpp>
+
+#include <file_repair/FileRepairProcessor.hpp>
+
+#include <data_verificator/CeresDataVerifier.hpp>
+#include <data_verificator/LidarDataVerifier.hpp>
+
+#include <data_repair/DataRepairProcessor.hpp>
+
+
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/ExperimentInfo.hpp>
 
@@ -11,27 +22,21 @@
 #include <memory>
 
 
-class cCeresDataVerifier 
+class cCeresDailyChecker
 {
 public:
-	cCeresDataVerifier(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file);
+	cCeresDailyChecker(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file);
 
-	cCeresDataVerifier(int id, std::filesystem::directory_entry file_to_check,
+	cCeresDailyChecker(int id, std::filesystem::directory_entry file_to_check,
 		std::filesystem::path invalid_dir, std::filesystem::path exp_file);
 
-    ~cCeresDataVerifier();
+    ~cCeresDailyChecker();
 
 	bool setFileToCheck(std::filesystem::directory_entry file_to_check);
 
 	void process_file();
 
 protected:
-	enum class eResult {VALID, INVALID_DATA, INVALID_FILE};
-
-	bool open(std::filesystem::path file_to_check);
-	void run();
-
-	void moveFileToInvalid();
 
 private:
 	const int mID;
@@ -39,10 +44,5 @@ private:
 	std::uintmax_t mFileSize = 0;
     cBlockDataFileReader mFileReader;
 
-	std::shared_ptr<cExperimentInfo> mExperimentInfo;
-
-	std::filesystem::path mInvalidDirectory;
-	std::filesystem::path mFileToCheck;
-	std::filesystem::path mExperimentFile;
 };
 

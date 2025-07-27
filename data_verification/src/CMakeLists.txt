@@ -9,7 +9,6 @@ configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 set(DATA_VERIFIER_PUBLIC_HEADER_FILES
 
-	ParserExceptions.hpp
 	LidarDataVerifier.hpp
 	CeresDataVerifier.hpp
 )
@@ -39,6 +38,8 @@ PRIVATE
 	${DATA_VERIFIER_PUBLIC_HEADER_FILES}
 
 PRIVATE
+	ParserExceptions.hpp
+
 	ExperimentInfoFromJson.hpp
 	ExperimentInfoFromJson.cpp
 
@@ -54,7 +55,7 @@ PRIVATE
 
 target_include_directories(CeresDataVerifier_static PRIVATE "../support/Utilities")
 
-target_link_libraries(CeresDataVerifier_static PRIVATE utilities)
+#target_link_libraries(CeresDataVerifier_static PRIVATE utilities)
 
 #
 # Setting MSVC_STATIC_RUNTIME determines which MSVC runtime to use...
