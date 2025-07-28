@@ -26,6 +26,7 @@ namespace
 	}
 }
 
+using namespace cdr;
 
 void cExperimentInfoFromJson::clear()
 {

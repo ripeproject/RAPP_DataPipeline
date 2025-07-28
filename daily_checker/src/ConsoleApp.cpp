@@ -88,6 +88,10 @@ void new_file_progress(const int id, std::string filename)
 	progress_bar.addProgressEntry(id, filename);
 }
 
+void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
+{
+}
+
 void update_progress(const int id, const int progress_pct)
 {
 	progress_bar.updateProgressEntry(id, progress_pct);
@@ -98,6 +102,9 @@ void complete_file_progress(const int id, std::string suffix)
 	progress_bar.finishProgressEntry(id, suffix);
 }
 
+void complete_file_progress(const int id, std::string prefix, std::string suffix)
+{
+}
 
 int main(int argc, char** argv)
 {
@@ -234,18 +241,6 @@ int main(int argc, char** argv)
 		ceres_data_verifiers.push_back(dv);
 	}
 
-	std::vector<cLidarDataVerifier*> lidar_data_verifiers;
-
-	for (auto& file : lidar_files_to_check)
-	{
-		cLidarDataVerifier* dv = new cLidarDataVerifier(numFilesToProcess++, invalid_dir);
-		dv->setFileToCheck(file);
-
-		pool.push_task(&cLidarDataVerifier::process_file, dv);
-
-		lidar_data_verifiers.push_back(dv);
-	}
-
 	progress_bar.setQuietMode(quietMode);
 	progress_bar.setVerboseMode(verboseMode);
 	progress_bar.setMaxID(numFilesToProcess);
@@ -257,23 +252,18 @@ int main(int argc, char** argv)
 		delete data_verifier;
 	}
 
-	for (auto data_verifier : lidar_data_verifiers)
-	{
-		delete data_verifier;
-	}
-
 	if (!quietMode)
 	{
-		if (g_num_failed_files == 0)
+		if (ceres_file_verifier::g_num_failed_files == 0)
 			std::cout << "All " << numFilesToProcess << " files passed!" << std::endl;
 		else
 		{
-			std::cout << "Detected " << g_num_failed_files << " invalid files." << std::endl;
+			std::cout << "Detected " << ceres_file_verifier::g_num_failed_files << " invalid files." << std::endl;
 			std::cout << "First, run FileChecker and FileRepair on this directory." << std::endl;
 			std::cout << "Next, run DataRepair on this directory." << std::endl;
 		}
 	}
 
-	return g_num_failed_files;
+	return ceres_file_verifier::g_num_failed_files;
 }
 

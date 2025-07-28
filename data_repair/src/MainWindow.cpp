@@ -339,6 +339,8 @@ void cMainWindow::OnExperimentDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnRepair(wxCommandEvent& WXUNUSED(event))
 {
+	using namespace ceres_data_repair;
+
 	const std::filesystem::path source_dir = mSourceDataDirectory.ToStdString();
 
 	std::vector<directory_entry> files_to_repair;
@@ -451,6 +453,8 @@ void cMainWindow::stopDataProcessing()
 
 wxThread::ExitCode cMainWindow::Entry()
 {
+	using namespace ceres_data_repair;
+
 	while (mFileProcessors.size() > 0)
 	{
 		if (GetThread()->TestDestroy())

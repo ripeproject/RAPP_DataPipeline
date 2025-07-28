@@ -6,8 +6,11 @@
 #include <memory>
 #include <atomic>
 
-extern std::atomic<uint32_t> g_num_partial_data_files;
-extern std::atomic<uint32_t> g_num_repaired_data_files;
+namespace ceres_data_repair
+{
+	extern std::atomic<uint32_t> g_num_partial_data_files;
+	extern std::atomic<uint32_t> g_num_repaired_data_files;
+}
 
 //Forward Declarations
 class cDataRepair;
@@ -15,6 +18,9 @@ class cDataRepair;
 
 class cDataRepairProcessor
 {
+public:
+	enum class eRETURN_TYPE { PASSED, COULD_NOT_OPEN_FILE, FAILED };
+
 public:
 	cDataRepairProcessor(int id, std::filesystem::path temp_dir,
 		std::filesystem::path failed_dir,
@@ -25,10 +31,11 @@ public:
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
 
-	void process_file();
+	eRETURN_TYPE process_file();
 
 protected:
-	void run();
+	enum class eResult { VALID, INVALID_DATA, INVALID_FILE };
+	eResult run();
 
 private:
 	const int mID;

@@ -4,13 +4,8 @@
 #pragma once
 
 #include <file_verificator/CeresFileVerifier.hpp>
-#include <file_verificator/LidarFileVerifier.hpp>
-
 #include <file_repair/FileRepairProcessor.hpp>
-
 #include <data_verificator/CeresDataVerifier.hpp>
-#include <data_verificator/LidarDataVerifier.hpp>
-
 #include <data_repair/DataRepairProcessor.hpp>
 
 
@@ -25,10 +20,10 @@
 class cCeresDailyChecker
 {
 public:
-	cCeresDailyChecker(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file);
+	cCeresDailyChecker(int id, std::filesystem::path source_directory, std::filesystem::path exp_file);
 
 	cCeresDailyChecker(int id, std::filesystem::directory_entry file_to_check,
-		std::filesystem::path invalid_dir, std::filesystem::path exp_file);
+		std::filesystem::path source_directory, std::filesystem::path exp_file);
 
     ~cCeresDailyChecker();
 
@@ -44,5 +39,14 @@ private:
 	std::uintmax_t mFileSize = 0;
     cBlockDataFileReader mFileReader;
 
+	std::filesystem::directory_entry mFileToCheck;
+
+	std::filesystem::path mSourceDir;
+	std::filesystem::path mFailedFilesDir;
+	std::filesystem::path mPartialRepairedFilesDir;
+	std::filesystem::path mRepairedFilesDir;
+	std::filesystem::path mInvalidDataDir;
+	std::filesystem::path mRepairedDataFilesDir;
+	std::filesystem::path mFailedDataFilesDir;
 };
 

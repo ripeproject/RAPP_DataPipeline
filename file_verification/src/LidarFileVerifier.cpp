@@ -13,7 +13,13 @@
 #include <atomic>
 
 
-extern std::atomic<uint32_t> g_num_failed_files;
+namespace ceres_file_verifier
+{
+    extern std::atomic<uint32_t> g_num_failed_files;
+
+    extern std::mutex g_failed_dir_mutex;
+}
+
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -21,12 +27,13 @@ extern void update_prefix_progress(const int id, std::string prefix, const int p
 extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
-extern std::mutex g_failed_dir_mutex;
 
 namespace
 {
     void create_directory(std::filesystem::path failed_dir)
     {
+        using namespace ceres_file_verifier;
+
         std::lock_guard<std::mutex> guard(g_failed_dir_mutex);
 
         if (!std::filesystem::exists(failed_dir))
@@ -84,7 +91,7 @@ bool cLidarFileVerifier::open(std::filesystem::path file_to_check)
 }
 
 //-----------------------------------------------------------------------------
-void cLidarFileVerifier::process_file()
+cLidarFileVerifier::eRETURN_TYPE cLidarFileVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
@@ -92,12 +99,23 @@ void cLidarFileVerifier::process_file()
 
         new_file_progress(mID, mFileToCheck.string());
 
-        run();
+        auto result = run();
+
+        switch (result)
+        {
+        case eResult::VALID: return eRETURN_TYPE::PASSED;
+        case eResult::INVALID_DATA:
+        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
+        }
+
+        return eRETURN_TYPE::FAILED;
     }
+
+    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
 //-----------------------------------------------------------------------------
-void cLidarFileVerifier::run()
+cLidarFileVerifier::eResult cLidarFileVerifier::run()
 {
     if (!mpFileReader->isOpen())
     {
@@ -119,7 +137,7 @@ void cLidarFileVerifier::run()
             if (mpFileReader->fail())
             {
                 mpFileReader->close();
-                return;
+                return eResult::INVALID_FILE;
             }
 
             mpFileReader->processBlock();
@@ -135,7 +153,7 @@ void cLidarFileVerifier::run()
         std::string msg = e.what();
 
         moveFileToFailed();
-        return;
+        return eResult::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
@@ -143,17 +161,21 @@ void cLidarFileVerifier::run()
         {
             moveFileToFailed();
         }
-        return;
+        return eResult::INVALID_FILE;
     }
 
     mpFileReader->close();
 
     complete_file_progress(mID, "Complete", "passed");
+
+    return eResult::VALID;
 }
 
 //-----------------------------------------------------------------------------
 void cLidarFileVerifier::moveFileToFailed()
 {
+    using namespace ceres_file_verifier;
+
     if (mpFileReader->isOpen())
         mpFileReader->close();
 

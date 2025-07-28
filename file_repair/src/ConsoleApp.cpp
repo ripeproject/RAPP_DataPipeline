@@ -53,6 +53,7 @@ void complete_file_progress(const int id, std::string prefix, std::string suffix
 int main(int argc, char** argv)
 {
 	using namespace std::filesystem;
+	using namespace ceres_file_repair;
 
 	// The default is one thread because this application in I/O bound.
 	int num_of_threads = 1;

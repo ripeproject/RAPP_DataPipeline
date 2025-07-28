@@ -87,7 +87,7 @@ cBlockDataFileWriter* cExperimentInfoRepairParser::detach()
 	return mSerializer.detach();
 }
 
-void cExperimentInfoRepairParser::setReferenceInfo(const cExperimentInfoFromJson& info)
+void cExperimentInfoRepairParser::setReferenceInfo(const cdr::cExperimentInfoFromJson& info)
 {
 	bool valid_json = false;
 

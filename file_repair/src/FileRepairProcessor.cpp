@@ -14,8 +14,13 @@
 #include <atomic>
 
 
-std::atomic<uint32_t> g_num_partial_files = 0;
-std::atomic<uint32_t> g_num_repaired_files = 0;
+namespace ceres_file_repair
+{
+    std::atomic<uint32_t> g_num_partial_files = 0;
+    std::atomic<uint32_t> g_num_repaired_files = 0;
+
+    std::mutex g_failed_dir_mutex;
+}
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -23,12 +28,12 @@ extern void update_prefix_progress(const int id, std::string prefix, const int p
 extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
-std::mutex g_failed_dir_mutex;
-
 namespace
 {
     void create_directory(std::filesystem::path failed_dir)
     {
+        using namespace ceres_file_repair;
+
         std::lock_guard<std::mutex> guard(g_failed_dir_mutex);
 
         if (!std::filesystem::exists(failed_dir))
@@ -62,7 +67,7 @@ bool cFileRepairProcessor::setFileToRepair(std::filesystem::directory_entry file
     return false;
 }
 
-void cFileRepairProcessor::process_file()
+cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::process_file()
 {
     mDataFileRecovery = std::make_unique<cDataFileRecovery>(mID, mTemporaryDirectory);
     
@@ -72,11 +77,18 @@ void cFileRepairProcessor::process_file()
 
         mTemporaryFile = mDataFileRecovery->tempFileName();
 
-        run();
+        auto result = run();
+
+        if (result == eResult::PARTIAL_REPAIR)
+            return eRETURN_TYPE::FAILED;
+
+        return eRETURN_TYPE::REPAIRED;
     }
+
+    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
-void cFileRepairProcessor::run()
+cFileRepairProcessor::eResult cFileRepairProcessor::run()
 {
     // Try to recover the data file
     if (!mDataFileRecovery->run())
@@ -92,33 +104,39 @@ void cFileRepairProcessor::run()
 
         moveToPartialRepaired();
 
-        ++g_num_partial_files;
+        return eResult::PARTIAL_REPAIR;
     }
-    else
-    {
-        complete_file_progress(mID, "Complete", "Fully Repaired");
 
-        moveToFullyRepaired();
+    complete_file_progress(mID, "Complete", "Fully Repaired");
 
-        ++g_num_repaired_files;
-    }
+    moveToFullyRepaired();
+
+    return eResult::REPAIRED;
 }
 
 void cFileRepairProcessor::moveToPartialRepaired()
 {
+    using namespace ceres_file_repair;
+
     ::create_directory(mPartialRepairedDirectory);
 
     std::filesystem::path out_file = mPartialRepairedDirectory / mInputFile.filename();
 
     std::filesystem::rename(mTemporaryFile, out_file);
+
+    ++g_num_partial_files;
 }
 
 void cFileRepairProcessor::moveToFullyRepaired()
 {
+    using namespace ceres_file_repair;
+
     ::create_directory(mFullyRepairedDirectory);
 
     std::filesystem::path out_file = mFullyRepairedDirectory / mInputFile.filename();
 
     std::filesystem::rename(mTemporaryFile, out_file);
+
+    ++g_num_repaired_files;
 }
 

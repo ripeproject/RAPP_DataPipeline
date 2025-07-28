@@ -12,20 +12,28 @@
 #include <atomic>
 
 
-extern std::atomic<uint32_t> g_num_failed_data_files;
-extern std::atomic<uint32_t> g_num_invalid_data_files;
+namespace ceres_data_verifier
+{
+    extern std::atomic<uint32_t> g_num_failed_files;
+    extern std::atomic<uint32_t> g_num_invalid_files;
+    extern std::atomic<uint32_t> g_num_missing_data;
+
+    extern std::mutex g_invalid_dir_mutex;
+}
+
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id, std::string suffix);
 
-extern std::mutex g_invalid_dir_mutex;
 
 namespace
 {
     void create_directory(std::filesystem::path invalid_dir)
     {
+        using namespace ceres_data_verifier;
+        
         std::lock_guard<std::mutex> guard(g_invalid_dir_mutex);
 
         if (!std::filesystem::exists(invalid_dir))
@@ -98,6 +106,8 @@ void cLidarDataVerifier::process_file()
 //-----------------------------------------------------------------------------
 void cLidarDataVerifier::run()
 {
+    using namespace ceres_data_verifier;
+
     if (!mpFileReader->isOpen())
     {
         throw std::logic_error("No file is open for verification.");
@@ -139,7 +149,7 @@ void cLidarDataVerifier::run()
     }
     catch (const std::exception& e)
     {
-        ++g_num_failed_data_files;
+        ++g_num_failed_files;
 
         mpFileReader->close();
 
@@ -156,6 +166,8 @@ void cLidarDataVerifier::run()
 //-----------------------------------------------------------------------------
 void cLidarDataVerifier::moveFileToInvalid()
 {
+    using namespace ceres_data_verifier;
+
     if (mpFileReader->isOpen())
         mpFileReader->close();
 
@@ -164,7 +176,7 @@ void cLidarDataVerifier::moveFileToInvalid()
     std::filesystem::path dest = mInvalidDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
 
-    ++g_num_invalid_data_files;
+    ++g_num_invalid_files;
 }
 
 //-----------------------------------------------------------------------------

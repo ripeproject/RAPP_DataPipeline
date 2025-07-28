@@ -9,7 +9,6 @@ configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 set(DATA_VERIFIER_PUBLIC_HEADER_FILES
 
-	LidarDataVerifier.hpp
 	CeresDataVerifier.hpp
 )
 
@@ -49,7 +48,6 @@ PRIVATE
 	AxisCommunicationsVerificationParser.hpp
 	AxisCommunicationsVerificationParser.cpp
 
-	LidarDataVerifier.cpp
 	CeresDataVerifier.cpp
 )
 
@@ -79,6 +77,9 @@ target_sources(console_app
 PRIVATE
 
 	BS_thread_pool.hpp
+
+	LidarDataVerifier.hpp
+	LidarDataVerifier.cpp
 
 	ConsoleApp.cpp
 )
@@ -131,12 +132,13 @@ if(wxWidgets_FOUND)
 	target_sources(gui_app
 	PRIVATE
 
+		LidarDataVerifier.hpp
+		LidarDataVerifier.cpp
+
 		MainWindow.hpp
 		MainWindow.cpp
 		MainFrame.hpp
 		MainFrame.cpp
-
-		${DATA_VERIFICATOR_COMMON_FILES}
 
 		${resource_files}
 		

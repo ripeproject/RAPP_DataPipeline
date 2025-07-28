@@ -102,6 +102,7 @@ void complete_file_progress(const int id, std::string suffix)
 int main(int argc, char** argv)
 {
 	using namespace std::filesystem;
+	using namespace ceres_data_verifier;
 
 	// The default is to use only one thread as this application is I/O limited.
 	int num_of_threads = 1;
@@ -264,16 +265,16 @@ int main(int argc, char** argv)
 
 	if (!quietMode)
 	{
-		if (g_num_failed_data_files == 0)
+		if (g_num_failed_files == 0)
 			std::cout << "All " << numFilesToProcess << " files passed!" << std::endl;
 		else
 		{
-			std::cout << "Detected " << g_num_failed_data_files << " invalid files." << std::endl;
+			std::cout << "Detected " << g_num_failed_files << " invalid files." << std::endl;
 			std::cout << "First, run FileChecker and FileRepair on this directory." << std::endl;
 			std::cout << "Next, run DataRepair on this directory." << std::endl;
 		}
 	}
 
-	return g_num_invalid_data_files;
+	return g_num_invalid_files;
 }
 

@@ -4,16 +4,22 @@
 #include <filesystem>
 #include <string>
 #include <memory>
+#include <atomic>
 
-
-extern std::atomic<uint32_t> g_num_partial_files;
-extern std::atomic<uint32_t> g_num_repaired_files;
+namespace ceres_file_repair
+{
+	extern std::atomic<uint32_t> g_num_partial_files;
+	extern std::atomic<uint32_t> g_num_repaired_files;
+}
 
 // Forward Declarations
 class cDataFileRecovery;
 
 class cFileRepairProcessor
 {
+public:
+	enum class eRETURN_TYPE { REPAIRED, COULD_NOT_OPEN_FILE, FAILED };
+
 public:
 	cFileRepairProcessor(int id, std::filesystem::path temp_dir,
 					std::filesystem::path partial_repaired_dir, 
@@ -23,10 +29,12 @@ public:
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
 
-	void process_file();
+	eRETURN_TYPE process_file();
 
 protected:
-	void run();
+	enum class eResult { REPAIRED, PARTIAL_REPAIR };
+
+	eResult run();
 
 private:
 	void moveToPartialRepaired();

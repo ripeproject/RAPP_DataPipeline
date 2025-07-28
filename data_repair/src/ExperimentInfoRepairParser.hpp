@@ -17,7 +17,10 @@
 #include <memory>
 
 // Forward Declarations
-class cExperimentInfoFromJson;
+namespace cdr
+{
+	class cExperimentInfoFromJson;
+}
 
 
 class cExperimentInfoRepairParser : public cExperimentParser
@@ -31,7 +34,7 @@ public:
 	void attach(cBlockDataFileWriter* pDataFile);
 	cBlockDataFileWriter* detach();
 
-	void setReferenceInfo(const cExperimentInfoFromJson& info);
+	void setReferenceInfo(const cdr::cExperimentInfoFromJson& info);
 
 protected:
 	void onBeginHeader() override;

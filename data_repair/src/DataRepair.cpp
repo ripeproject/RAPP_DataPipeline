@@ -194,7 +194,7 @@ cDataRepair::eResult cDataRepair::pass1()
         {
             try
             {
-                cExperimentInfoFromJson info;
+                cdr::cExperimentInfoFromJson info;
 
                 nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
                 info.parse(jsonDoc);

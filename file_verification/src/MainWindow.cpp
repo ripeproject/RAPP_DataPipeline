@@ -335,6 +335,8 @@ void cMainWindow::stopDataProcessing()
 
 wxThread::ExitCode cMainWindow::Entry()
 {
+	using namespace ceres_file_verifier;
+
 	g_num_failed_files = 0;
 
 	while (mFileProcessors.size() > 0)

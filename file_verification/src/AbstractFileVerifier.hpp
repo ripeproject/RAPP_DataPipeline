@@ -7,8 +7,12 @@
 class cAbstractFileVerifier 
 {
 public:
+    enum class eRETURN_TYPE { PASSED, COULD_NOT_OPEN_FILE, FAILED };
+
+
+public:
     virtual ~cAbstractFileVerifier() {};
 
-	virtual void process_file() = 0;
+	virtual eRETURN_TYPE process_file() = 0;
 };
 

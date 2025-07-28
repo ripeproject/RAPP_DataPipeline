@@ -15,7 +15,7 @@
 #include <queue>
 
 // Forward Declarations
-class cCeresDataVerifier;
+class cCeresDailyChecker;
 
 
 // Define a new frame type: this is going to be our main frame
@@ -33,7 +33,6 @@ public:
 
 protected:
 	void OnSourceDirectory(wxCommandEvent& event);
-	void OnInvalidDirectory(wxCommandEvent& event);
 	void OnExperimentDirectory(wxCommandEvent& event);
 	void OnVerify(wxCommandEvent& event);
 
@@ -49,13 +48,10 @@ private:
 	wxTextCtrl* mpSourceCtrl  = nullptr;
 	wxButton* mpSourceDirButton  = nullptr;
 
-	wxTextCtrl* mpInvalidDataCtrl = nullptr;
-	wxButton* mpInvalidDataDirButton = nullptr;
-
 	wxTextCtrl* mpExperimentCtrl = nullptr;
 	wxButton* mpExperimentDirButton = nullptr;
 
-	wxButton* mpVerifyButton = nullptr;
+	wxButton* mpCheckButton = nullptr;
 
 	cFileProgressCtrl* mpProgressCtrl = nullptr;
 
@@ -63,10 +59,9 @@ private:
 	wxLog* mpOriginalLog = nullptr;
 
 	wxEvtHandler* mpHandler = nullptr;
-	std::queue<cCeresDataVerifier*> mFileProcessors;
+	std::queue<cCeresDailyChecker*> mFileProcessors;
 
 	wxString mSourceDataDirectory;
-	wxString mInvalidDataDirectory;
 	wxString mExperimentDirectory;
 
 	// any class wishing to process wxWidgets events must use this macro

@@ -26,6 +26,7 @@ namespace
 	}
 }
 
+using namespace cdv;
 
 void cExperimentInfoFromJson::clear()
 {

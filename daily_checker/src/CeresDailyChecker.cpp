@@ -34,16 +34,23 @@ namespace
 }
 
 //-----------------------------------------------------------------------------
-cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::path invalid_dir, std::filesystem::path exp_file)
+cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::path source_directory, std::filesystem::path exp_file)
 :
     mID(id)
 {
+    mSourceDir = source_directory;
+    mFailedFilesDir = source_directory / "failed_files";
+    mPartialRepairedFilesDir = source_directory / "partial_repaired_files";
+    mRepairedFilesDir = source_directory / "fully_repaired_files";
+    mInvalidDataDir = source_directory / "invalid_data";
+    mRepairedDataFilesDir = source_directory / "repaired_data_files";
+    mFailedDataFilesDir = source_directory / "failed_data_files";
 }
 
 cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::directory_entry file_to_check,
-    std::filesystem::path invalid_dir, std::filesystem::path exp_file)
+    std::filesystem::path source_directory, std::filesystem::path exp_file)
 :
-    mID(id)
+    cCeresDailyChecker(id, source_directory, exp_file)
 {
     mFileReader.open(file_to_check.path().string());
 
@@ -60,8 +67,8 @@ cCeresDailyChecker::~cCeresDailyChecker()
 
 bool cCeresDailyChecker::setFileToCheck(std::filesystem::directory_entry file_to_check)
 {
-//    mFileToCheck = file_to_check;
-    return true;
+    mFileToCheck = file_to_check;
+    return mFileToCheck.exists();
 }
 
 //-----------------------------------------------------------------------------

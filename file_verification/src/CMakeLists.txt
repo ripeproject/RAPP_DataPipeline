@@ -10,7 +10,6 @@ configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 set(FILE_VERIFIER_PUBLIC_HEADER_FILES
 
 	AbstractFileVerifier.hpp
-	LidarFileVerifier.hpp
 	CeresFileVerifier.hpp
 )
 
@@ -40,7 +39,6 @@ PRIVATE
 
 PRIVATE
 	ParserExceptions.hpp
-	LidarFileVerifier.cpp
 	CeresFileVerifier.cpp
 )
 
@@ -66,6 +64,11 @@ target_sources(console_app
 PRIVATE
 
 	BS_thread_pool.hpp
+
+	ParserExceptions.hpp
+
+	LidarFileVerifier.hpp
+	LidarFileVerifier.cpp
 
 	ConsoleApp.cpp
 )
@@ -115,6 +118,10 @@ if(wxWidgets_FOUND)
 
 	target_sources(gui_app
 	PRIVATE
+		ParserExceptions.hpp
+	
+		LidarFileVerifier.hpp
+		LidarFileVerifier.cpp
 
 		MainWindow.hpp
 		MainWindow.cpp

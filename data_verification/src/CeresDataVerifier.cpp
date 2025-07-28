@@ -12,22 +12,27 @@
 #include <atomic>
 
 
-std::atomic<uint32_t> g_num_failed_data_files = 0;
-std::atomic<uint32_t> g_num_invalid_data_files = 0;
-std::atomic<uint32_t> g_num_missing_data = 0;
+namespace ceres_data_verifier
+{
+    std::atomic<uint32_t> g_num_failed_files = 0;
+    std::atomic<uint32_t> g_num_invalid_files = 0;
+    std::atomic<uint32_t> g_num_missing_data = 0;
+
+    std::mutex g_invalid_dir_mutex;
+}
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id, std::string suffix);
 
-std::mutex g_invalid_dir_mutex;
-
 
 namespace
 {
     void create_directory(std::filesystem::path invalid_dir)
     {
+        using namespace ceres_data_verifier;
+            
         std::lock_guard<std::mutex> guard(g_invalid_dir_mutex);
 
         if (!std::filesystem::exists(invalid_dir))
@@ -89,7 +94,7 @@ bool cCeresDataVerifier::open(std::filesystem::path file_to_check)
 }
 
 //-----------------------------------------------------------------------------
-void cCeresDataVerifier::process_file()
+cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
@@ -97,13 +102,25 @@ void cCeresDataVerifier::process_file()
 
         new_file_progress(mID, mFileToCheck.string());
 
-        run();
+        auto result = run();
+
+        switch (result)
+        {
+        case eResult::VALID: return eRETURN_TYPE::PASSED;
+        case eResult::INVALID_DATA:
+        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
+        }
     }
+
+    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
 //-----------------------------------------------------------------------------
-void cCeresDataVerifier::run()
+cCeresDataVerifier::eResult cCeresDataVerifier::run()
 {
+    using namespace ceres_data_verifier;
+    using namespace cdv;
+
     if (!mFileReader.isOpen())
     {
         throw std::logic_error("No file is open for verification.");
@@ -126,11 +143,11 @@ void cCeresDataVerifier::run()
             if (mFileReader.fail())
             {
                 mFileReader.close();
-                ++g_num_failed_data_files;
+                ++g_num_failed_files;
 
                 complete_file_progress(mID, "Failed!");
 
-                return;
+                return eResult::INVALID_FILE;
             }
 
             mFileReader.processBlock();
@@ -153,7 +170,7 @@ void cCeresDataVerifier::run()
 
         complete_file_progress(mID, "Data Invalid");
 
-        return;
+        return eResult::INVALID_DATA;
     }
     catch (const bdf::stream_error& e)
     {
@@ -163,11 +180,11 @@ void cCeresDataVerifier::run()
         console_message(msg);
 
         mFileReader.close();
-        ++g_num_failed_data_files;
+        ++g_num_failed_files;
 
         complete_file_progress(mID, "Failed!");
 
-        return;
+        return eResult::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
@@ -179,11 +196,11 @@ void cCeresDataVerifier::run()
             console_message(msg);
 
             mFileReader.close();
-            ++g_num_failed_data_files;
+            ++g_num_failed_files;
 
             complete_file_progress(mID, "Failed!");
 
-            return;
+            return eResult::INVALID_FILE;
         }
     }
 
@@ -203,11 +220,11 @@ void cCeresDataVerifier::run()
 
             complete_file_progress(mID, "Data Invalid");
 
-            return;
+            return eResult::INVALID_DATA;
         }
 
         complete_file_progress(mID, "Passed");
-        return;
+        return eResult::VALID;
     }
     else
     {
@@ -223,7 +240,7 @@ void cCeresDataVerifier::run()
 
                 complete_file_progress(mID, "Data Invalid");
 
-                return;
+                return eResult::INVALID_DATA;
             }
         }
         else
@@ -246,7 +263,7 @@ void cCeresDataVerifier::run()
 
                     complete_file_progress(mID, "Data Invalid");
 
-                    return;
+                    return eResult::INVALID_DATA;
                 }
             }
             else
@@ -270,7 +287,7 @@ void cCeresDataVerifier::run()
 
                         complete_file_progress(mID, "Data Invalid");
 
-                        return;
+                        return eResult::INVALID_DATA;
                     }
                 }
                 catch (const std::exception& e)
@@ -285,7 +302,7 @@ void cCeresDataVerifier::run()
 
                         complete_file_progress(mID, "Data Invalid");
 
-                        return;
+                        return eResult::INVALID_DATA;
                     }
                 }
             }
@@ -293,11 +310,15 @@ void cCeresDataVerifier::run()
     }
 
     complete_file_progress(mID, "Passed");
+
+    return eResult::VALID;
 }
 
 //-----------------------------------------------------------------------------
 void cCeresDataVerifier::moveFileToInvalid()
 {
+    using namespace ceres_data_verifier;
+
     if (mFileReader.isOpen())
         mFileReader.close();
 
@@ -306,7 +327,7 @@ void cCeresDataVerifier::moveFileToInvalid()
     std::filesystem::path dest = mInvalidDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
 
-    ++g_num_invalid_data_files;
+    ++g_num_invalid_files;
 }
 
 //-----------------------------------------------------------------------------

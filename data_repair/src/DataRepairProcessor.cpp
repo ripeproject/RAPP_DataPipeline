@@ -13,21 +13,25 @@
 #include <numbers>
 #include <atomic>
 
+namespace ceres_data_repair
+{
+    std::atomic<uint32_t> g_num_partial_data_files;
+    std::atomic<uint32_t> g_num_repaired_data_files;
 
-std::atomic<uint32_t> g_num_partial_data_files;
-std::atomic<uint32_t> g_num_repaired_data_files;
+    std::mutex g_dir_mutex;
+}
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
 
-std::mutex g_dir_mutex;
-
 namespace
 {
     void create_directory(std::filesystem::path failed_dir)
     {
+        using namespace ceres_data_repair;
+
         std::lock_guard<std::mutex> guard(g_dir_mutex);
 
         if (!std::filesystem::exists(failed_dir))
@@ -63,7 +67,7 @@ bool cDataRepairProcessor::setFileToRepair(std::filesystem::directory_entry file
     return false;
 }
 
-void cDataRepairProcessor::process_file()
+cDataRepairProcessor::eRETURN_TYPE cDataRepairProcessor::process_file()
 {
     mDataRepair = std::make_unique<cDataRepair>(mID, mTemporaryDirectory, mExperimentFile);
 
@@ -73,12 +77,23 @@ void cDataRepairProcessor::process_file()
 
         new_file_progress(mID, mFileToRepair.string());
 
-        run();
+        auto result = run();
+
+        switch (result)
+        {
+        case eResult::VALID: return eRETURN_TYPE::PASSED;
+        case eResult::INVALID_DATA:
+        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
+        }
     }
+
+    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
-void cDataRepairProcessor::run()
+cDataRepairProcessor::eResult cDataRepairProcessor::run()
 {
+    using namespace ceres_data_repair;
+
     // Read header data to check for missing data...
     auto result = mDataRepair->pass1();
 
@@ -95,7 +110,7 @@ void cDataRepairProcessor::run()
 
         complete_file_progress(mID, "Complete", "Failed");
 
-        return;
+        return eResult::INVALID_FILE;
     }
     else if (result == cDataRepair::eResult::INVALID_DATA)
     {
@@ -103,7 +118,7 @@ void cDataRepairProcessor::run()
 
         complete_file_progress(mID, "Complete", "Invalid Data");
 
-        return;
+        return eResult::INVALID_DATA;
     }
     else if (result == cDataRepair::eResult::MISSING_DATA)
     {
@@ -126,7 +141,7 @@ void cDataRepairProcessor::run()
 
         complete_file_progress(mID, "Complete", "Failed");
 
-        return;
+        return eResult::INVALID_FILE;
     }
     else if (result == cDataRepair::eResult::INVALID_DATA)
     {
@@ -134,7 +149,7 @@ void cDataRepairProcessor::run()
 
         complete_file_progress(mID, "Complete", "Invalid Data");
 
-        return;
+        return eResult::INVALID_DATA;
     }
 
     // Validate the repaired file...
@@ -154,7 +169,7 @@ void cDataRepairProcessor::run()
 
         complete_file_progress(mID, "Complete", "Failed");
 
-        return;
+        return eResult::INVALID_FILE;
     }
     else if (result == cDataRepair::eResult::INVALID_DATA)
     {
@@ -162,7 +177,7 @@ void cDataRepairProcessor::run()
 
         complete_file_progress(mID, "Complete", "Invalid Data");
 
-        return;
+        return eResult::INVALID_DATA;
     }
 
     ::create_directory(mRepairedDirectory);
@@ -173,5 +188,7 @@ void cDataRepairProcessor::run()
     ++g_num_repaired_data_files;
 
     complete_file_progress(mID, "Complete", "Fixed");
+
+    return eResult::VALID;
 }
 

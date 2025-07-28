@@ -9,7 +9,12 @@
 #include <atomic>
 
 
-std::atomic<uint32_t> g_num_failed_files = 0;
+namespace ceres_file_verifier
+{
+    std::atomic<uint32_t> g_num_failed_files = 0;
+
+    std::mutex g_failed_dir_mutex;
+}
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
@@ -17,13 +22,13 @@ extern void update_prefix_progress(const int id, std::string prefix, const int p
 extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
-std::mutex g_failed_dir_mutex;
-
 
 namespace
 {
     void create_directory(std::filesystem::path failed_dir)
     {
+        using namespace ceres_file_verifier;
+
         std::lock_guard<std::mutex> guard(g_failed_dir_mutex);
 
         if (!std::filesystem::exists(failed_dir))
@@ -79,26 +84,36 @@ bool cCeresFileVerifier::open(std::filesystem::path file_to_check)
 }
 
 //-----------------------------------------------------------------------------
-void cCeresFileVerifier::process_file()
+cCeresFileVerifier::eRETURN_TYPE cCeresFileVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
-        mFileSize = mFileReader.file_size();
+        auto result = run();
 
-        new_file_progress(mID, mFileToCheck.string());
+        switch (result)
+        {
+        case eResult::VALID: return eRETURN_TYPE::PASSED;
+        case eResult::INVALID_DATA:
+        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
+        }
 
-        run();
+        return eRETURN_TYPE::FAILED;
     }
+
+    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
 //-----------------------------------------------------------------------------
-void cCeresFileVerifier::run()
+cCeresFileVerifier::eResult cCeresFileVerifier::run()
 {
+    mFileSize = mFileReader.file_size();
+    new_file_progress(mID, mFileToCheck.string());
+
     if (!pass1())
     {
         mFileReader.close();
         moveFileToFailed();
-        return;
+        return eResult::INVALID_FILE;
     }
 
     mFileReader.open(mFileToCheck.string());
@@ -109,12 +124,14 @@ void cCeresFileVerifier::run()
     {
         mFileReader.close();
         moveFileToFailed();
-        return;
+        return eResult::INVALID_FILE;
     }
 
     mFileReader.close();
 
     complete_file_progress(mID, "Complete", "passed");
+
+    return eResult::VALID;
 }
 
 //-----------------------------------------------------------------------------
@@ -298,6 +315,8 @@ bool cCeresFileVerifier::pass2()
 //-----------------------------------------------------------------------------
 void cCeresFileVerifier::moveFileToFailed()
 {
+    using namespace ceres_file_verifier;
+
     if (mFileReader.isOpen())
         mFileReader.close();
 
