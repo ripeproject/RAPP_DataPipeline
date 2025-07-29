@@ -67,7 +67,7 @@ bool cFileRepairProcessor::setFileToRepair(std::filesystem::directory_entry file
     return false;
 }
 
-cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::process_file()
+void cFileRepairProcessor::process_file()
 {
     mDataFileRecovery = std::make_unique<cDataFileRecovery>(mID, mTemporaryDirectory);
     
@@ -75,43 +75,34 @@ cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::process_file()
     {
         new_file_progress(mID, mInputFile.string());
 
-        mTemporaryFile = mDataFileRecovery->tempFileName();
-
         auto result = run();
 
-        if (result == eResult::PARTIAL_REPAIR)
-            return eRETURN_TYPE::FAILED;
-
-        return eRETURN_TYPE::REPAIRED;
+        if (result == eRETURN_TYPE::REPAIRED)
+            complete_file_progress(mID, "Complete", "Fully Repaired");
+        else
+            complete_file_progress(mID, "Complete", "Partially Recovered");
     }
-
-    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
-cFileRepairProcessor::eResult cFileRepairProcessor::run()
+cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::run()
 {
+    if (mDataFileRecovery->is_open())
+        return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
+
+    mTemporaryFile = mDataFileRecovery->tempFileName();
+
     // Try to recover the data file
     if (!mDataFileRecovery->run())
     {
-        complete_file_progress(mID, "Complete", "Partially Recovered");
-
-/*
-        std::string msg = "Warning: the file ";
-        msg += mInputFile.filename().string();
-        msg += " could not be completely recovered!";
-        console_message(msg);
-*/
-
         moveToPartialRepaired();
 
-        return eResult::PARTIAL_REPAIR;
+        return eRETURN_TYPE::FAILED;
     }
 
-    complete_file_progress(mID, "Complete", "Fully Repaired");
 
     moveToFullyRepaired();
 
-    return eResult::REPAIRED;
+    return eRETURN_TYPE::REPAIRED;
 }
 
 void cFileRepairProcessor::moveToPartialRepaired()

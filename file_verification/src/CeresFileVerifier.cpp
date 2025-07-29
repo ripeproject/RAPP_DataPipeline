@@ -54,6 +54,7 @@ cCeresFileVerifier::cCeresFileVerifier(int id, std::filesystem::directory_entry 
     mFailedDirectory = failed_dir;
     mFileToCheck = file_to_check;
     mFileReader.open(file_to_check.path().string());
+    mFileSize = mFileReader.file_size();
 
     if (!mFileReader.isOpen())
     {
@@ -80,40 +81,40 @@ bool cCeresFileVerifier::open(std::filesystem::path file_to_check)
         mFileReader.close();
         
     mFileReader.open(file_to_check.string());
+    mFileSize = mFileReader.file_size();
+
     return mFileReader.isOpen();
 }
 
 //-----------------------------------------------------------------------------
-cCeresFileVerifier::eRETURN_TYPE cCeresFileVerifier::process_file()
+void cCeresFileVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
+        new_file_progress(mID, mFileToCheck.string());
+
         auto result = run();
 
-        switch (result)
-        {
-        case eResult::VALID: return eRETURN_TYPE::PASSED;
-        case eResult::INVALID_DATA:
-        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
-        }
-
-        return eRETURN_TYPE::FAILED;
+        if (result == eRETURN_TYPE::PASSED)
+            complete_file_progress(mID, "Complete", "Passed");
+        else
+            complete_file_progress(mID, "Complete", "Failed");
     }
-
-    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
 //-----------------------------------------------------------------------------
-cCeresFileVerifier::eResult cCeresFileVerifier::run()
+cCeresFileVerifier::eRETURN_TYPE cCeresFileVerifier::run()
 {
-    mFileSize = mFileReader.file_size();
-    new_file_progress(mID, mFileToCheck.string());
+    if (!mFileReader.isOpen())
+    {
+        return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
+    }
 
     if (!pass1())
     {
         mFileReader.close();
         moveFileToFailed();
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
 
     mFileReader.open(mFileToCheck.string());
@@ -124,14 +125,12 @@ cCeresFileVerifier::eResult cCeresFileVerifier::run()
     {
         mFileReader.close();
         moveFileToFailed();
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
 
     mFileReader.close();
 
-    complete_file_progress(mID, "Complete", "passed");
-
-    return eResult::VALID;
+    return eRETURN_TYPE::PASSED;
 }
 
 //-----------------------------------------------------------------------------
@@ -323,8 +322,6 @@ void cCeresFileVerifier::moveFileToFailed()
     ::create_directory(mFailedDirectory);
 
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
-
-    complete_file_progress(mID, "Complete", "failed");
 
     std::string msg = "Moving ";
     msg += mFileToCheck.string();

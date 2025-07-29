@@ -14,8 +14,10 @@ extern std::atomic<uint32_t> g_num_missing_data;
 
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
+extern void update_prefix_progress(const int id, std::string prefix, const int progress_pct);
 extern void update_progress(const int id, const int progress_pct);
 extern void complete_file_progress(const int id, std::string suffix);
+extern void complete_file_progress(const int id, std::string prefix, std::string suffix);
 
 std::mutex g_invalid_dir_mutex;
 
@@ -39,12 +41,7 @@ cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::path source_dire
     mID(id)
 {
     mSourceDir = source_directory;
-    mFailedFilesDir = source_directory / "failed_files";
-    mPartialRepairedFilesDir = source_directory / "partial_repaired_files";
-    mRepairedFilesDir = source_directory / "fully_repaired_files";
-    mInvalidDataDir = source_directory / "invalid_data";
-    mRepairedDataFilesDir = source_directory / "repaired_data_files";
-    mFailedDataFilesDir = source_directory / "failed_data_files";
+    mExperimentFile = exp_file;
 }
 
 cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::directory_entry file_to_check,
@@ -52,6 +49,8 @@ cCeresDailyChecker::cCeresDailyChecker(int id, std::filesystem::directory_entry 
 :
     cCeresDailyChecker(id, source_directory, exp_file)
 {
+    mFileToCheck = file_to_check;
+
     mFileReader.open(file_to_check.path().string());
 
     if (!mFileReader.isOpen())
@@ -76,227 +75,142 @@ bool cCeresDailyChecker::setFileToCheck(std::filesystem::directory_entry file_to
 //-----------------------------------------------------------------------------
 void cCeresDailyChecker::process_file()
 {
-//    if (open(mFileToCheck))
-//    {
-//        mFileSize = mFileReader.file_size();
-//
-//        new_file_progress(mID, mFileToCheck.string());
-//
- //       run();
-//    }
-}
+    auto filename = mFileToCheck.path().filename();
 
-//-----------------------------------------------------------------------------
-#if 0
-void cCeresDailyChecker::run()
-{
-    if (!mFileReader.isOpen())
+    bool needs_repair = false;
+
+    new_file_progress(mID, mFileToCheck.path().string());
+
+    update_prefix_progress(mID, "Verifying File", 0);
+
     {
-        throw std::logic_error("No file is open for verification.");
+        std::filesystem::path failed_files = mSourceDir / "failed_files";
+        std::unique_ptr<cCeresFileVerifier> pFileVerifier = std::make_unique<cCeresFileVerifier>(mID, mFileToCheck, failed_files);
+
+        auto result = pFileVerifier->run();
+
+        switch (result)
+        {
+        case cCeresFileVerifier::eRETURN_TYPE::COULD_NOT_OPEN_FILE:
+            return;
+        case cCeresFileVerifier::eRETURN_TYPE::PASSED:
+            needs_repair = false;
+            break;
+        case cCeresFileVerifier::eRETURN_TYPE::INVALID_DATA:
+        case cCeresFileVerifier::eRETURN_TYPE::INVALID_FILE:
+            needs_repair = true;
+            break;
+        }
+
     }
 
-    auto info = std::make_unique<cExperimentInfoLoader>(mExperimentInfo);
-    auto ouster = std::make_unique<cOusterVerificationParser>();
-    auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
-
-    mFileReader.attach(info.get());
-    mFileReader.attach(ouster.get());
-    mFileReader.attach(axis.get());
-
-    mFileSize = mFileReader.file_size();
-
-    try
+    if (needs_repair)
     {
-        while (!mFileReader.eof())
+        update_prefix_progress(mID, "Repairing File", 0);
+
+        std::filesystem::path failed_file = mSourceDir / "failed_files" / filename;
+
+        std::filesystem::path tmp_dir = mSourceDir / "file_repair_tmp";
+        std::filesystem::path partial_repaired_dir = mSourceDir / "partial_repaired_files";
+        std::filesystem::path repaired_files = mSourceDir / "fully_repaired_files";
+
+        std::unique_ptr<cFileRepairProcessor> pFileRepair = std::make_unique<cFileRepairProcessor>(mID, tmp_dir, partial_repaired_dir, repaired_files);
+
+        if (pFileRepair->setFileToRepair(std::filesystem::directory_entry(failed_file)))
         {
-            if (mFileReader.fail())
+            auto result = pFileRepair->run();
+
+            std::filesystem::path repaired_file = repaired_files / filename;
+            std::filesystem::path out_file = mSourceDir / filename;
+
+            if (std::filesystem::exists(repaired_file) && !std::filesystem::exists(out_file))
             {
-                mFileReader.close();
-                ++g_num_failed_files;
-
-                complete_file_progress(mID, "Failed!");
-
-                return;
+                std::filesystem::rename(repaired_file, out_file);
             }
-
-            mFileReader.processBlock();
-
-            auto file_pos = static_cast<double>(mFileReader.filePosition());
-            file_pos = 100.0 * (file_pos / mFileSize);
-            update_progress(mID, static_cast<int>(file_pos));
-        }
-    }
-    catch (const bdf::invalid_data& e)
-    {
-        std::string msg = mFileToCheck.string();
-        msg += ": Invalid Data, ";
-        msg += e.what();
-        console_message(msg);
-
-        mFileReader.close();
-
-        moveFileToInvalid();
-
-        complete_file_progress(mID, "Data Invalid");
-
-        return;
-    }
-    catch (const bdf::stream_error& e)
-    {
-        std::string msg = mFileToCheck.string();
-        msg += ": Stream Error, ";
-        msg += e.what();
-        console_message(msg);
-
-        mFileReader.close();
-        ++g_num_failed_files;
-
-        complete_file_progress(mID, "Failed!");
-
-        return;
-    }
-    catch (const std::exception& e)
-    {
-        if (!mFileReader.eof())
-        {
-            std::string msg = mFileToCheck.string();
-            msg += ":  std::exception, ";
-            msg += e.what();
-            console_message(msg);
-
-            mFileReader.close();
-            ++g_num_failed_files;
-
-            complete_file_progress(mID, "Failed!");
-
-            return;
-        }
-    }
-
-    // Check the experiment information to see is the most basic information is there...
-    if (!mExperimentInfo->experimentDoc().empty())
-    {
-        cExperimentInfoFromJson info;
-        info.parse(mExperimentInfo->experimentDoc());
-
-        if (info != *mExperimentInfo)
-        {
-            std::string msg = mFileToCheck.string();
-            msg += ": Missing experiment information!";
-            console_message(msg);
-
-            moveFileToInvalid();
-
-            complete_file_progress(mID, "Data Invalid");
-
-            return;
-        }
-
-        complete_file_progress(mID, "Passed");
-        return;
-    }
-    else
-    {
-        if (mExperimentFile.empty())
-        {
-            if (mExperimentInfo->experimentTitle().empty())
+            else
             {
-                std::string msg = mFileToCheck.string();
-                msg += ": Missing experiment title!";
-                console_message(msg);
-
-                moveFileToInvalid();
-
-                complete_file_progress(mID, "Data Invalid");
-
+                complete_file_progress(mID, "Error", "Error in copying repaired file!");
                 return;
             }
         }
         else
         {
-            std::ifstream in;
-            in.open(mExperimentFile.string());
-
-            if (!in.is_open())
-            {
-                in.close();
-
-                // We could not open the experiment file so we can only check the title
-                if (mExperimentInfo->experimentTitle().empty())
-                {
-                    std::string msg = mFileToCheck.string();
-                    msg += ": Missing experiment title!";
-                    console_message(msg);
-
-                    moveFileToInvalid();
-
-                    complete_file_progress(mID, "Data Invalid");
-
-                    return;
-                }
-            }
-            else
-            {
-                try
-                {
-                    cExperimentInfoFromJson info;
-
-                    nlohmann::json jsonDoc = nlohmann::json::parse(in, nullptr, false, true);
-                    info.parse(jsonDoc);
-
-                    in.close();
-
-                    if (info != *mExperimentInfo)
-                    {
-                        std::string msg = mFileToCheck.string();
-                        msg += ": Missing experiment information!";
-                        console_message(msg);
-
-                        moveFileToInvalid();
-
-                        complete_file_progress(mID, "Data Invalid");
-
-                        return;
-                    }
-                }
-                catch (const std::exception& e)
-                {
-                    if (mExperimentInfo->experimentTitle().empty())
-                    {
-                        std::string msg = mFileToCheck.string();
-                        msg += ": Missing experiment title!";
-                        console_message(msg);
-
-                        moveFileToInvalid();
-
-                        complete_file_progress(mID, "Data Invalid");
-
-                        return;
-                    }
-                }
-            }
+            complete_file_progress(mID, "Error", "Could not open failed file");
+            return;
         }
     }
 
-    complete_file_progress(mID, "Passed");
+    needs_repair = false;
+
+    update_prefix_progress(mID, "Verifying Data", 0);
+
+    {
+        std::filesystem::path invalid_data_files = mSourceDir / "invalid_data";
+        std::unique_ptr<cCeresDataVerifier> pDataVerifier = std::make_unique<cCeresDataVerifier>(mID, mFileToCheck, invalid_data_files, mExperimentFile);
+
+        auto result = pDataVerifier->run();
+
+        switch (result)
+        {
+        case cCeresDataVerifier::eRETURN_TYPE::COULD_NOT_OPEN_FILE:
+            complete_file_progress(mID, "Error", "Could not open failed file");
+            return;
+        case cCeresDataVerifier::eRETURN_TYPE::PASSED:
+            needs_repair = false;
+            break;
+        case cCeresDataVerifier::eRETURN_TYPE::INVALID_DATA:
+            needs_repair = true;
+            break;
+        case cCeresDataVerifier::eRETURN_TYPE::INVALID_FILE:
+        {
+            complete_file_progress(mID, "Error", "File is invalid.");
+            return;
+
+        }
+        }
+    }
+
+    if (needs_repair)
+    {
+        update_prefix_progress(mID, "Repairing Data", 0);
+
+        std::filesystem::path invalid_data_file = mSourceDir / "invalid_data" / filename;
+
+        std::filesystem::path tmp_dir = mSourceDir / "data_repair_tmp";
+        std::filesystem::path failed_data_files = mSourceDir / "failed_data_files";
+        std::filesystem::path repaired_data_files = mSourceDir / "repaired_data_files";
+
+        std::unique_ptr<cDataRepairProcessor> pDataRepair = std::make_unique<cDataRepairProcessor>(mID, tmp_dir, failed_data_files, repaired_data_files, mExperimentFile);
+
+        if (pDataRepair->setFileToRepair(std::filesystem::directory_entry(invalid_data_file)))
+        {
+            auto result = pDataRepair->run();
+
+            std::filesystem::path repaired_file = repaired_data_files / filename;
+            std::filesystem::path out_file = mSourceDir / filename;
+
+            if (std::filesystem::exists(repaired_file) && !std::filesystem::exists(out_file))
+            {
+                std::filesystem::rename(repaired_file, out_file);
+            }
+            else
+            {
+                complete_file_progress(mID, "Error", "Error in copying repaired file!");
+                return;
+            }
+        }
+        else
+        {
+            complete_file_progress(mID, "Error", "Could not open invalid data file");
+            return;
+        }
+
+        complete_file_progress(mID, "Complete", "Fixed");
+        return;
+    }
+    else
+    {
+        complete_file_progress(mID, "Complete", "Passed");
+    }
 }
-#endif
-
-//-----------------------------------------------------------------------------
-#if 0
-void cCeresDailyChecker::moveFileToInvalid()
-{
-    if (mFileReader.isOpen())
-        mFileReader.close();
-
-    ::create_directory(mInvalidDirectory);
-
-    std::filesystem::path dest = mInvalidDirectory / mFileToCheck.filename();
-    std::filesystem::rename(mFileToCheck, dest);
-
-    ++g_num_invalid_files;
-}
-#endif
-//-----------------------------------------------------------------------------
-
 

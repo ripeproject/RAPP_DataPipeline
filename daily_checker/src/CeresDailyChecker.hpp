@@ -42,11 +42,6 @@ private:
 	std::filesystem::directory_entry mFileToCheck;
 
 	std::filesystem::path mSourceDir;
-	std::filesystem::path mFailedFilesDir;
-	std::filesystem::path mPartialRepairedFilesDir;
-	std::filesystem::path mRepairedFilesDir;
-	std::filesystem::path mInvalidDataDir;
-	std::filesystem::path mRepairedDataFilesDir;
-	std::filesystem::path mFailedDataFilesDir;
+	std::filesystem::path mExperimentFile;
 };
 

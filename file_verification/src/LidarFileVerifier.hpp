@@ -24,14 +24,12 @@ public:
 
 	bool setFileToCheck(std::filesystem::directory_entry file_to_check);
 
-	cLidarFileVerifier::eRETURN_TYPE  process_file() override;
-
-protected:
-	enum class eResult { VALID, INVALID_DATA, INVALID_FILE };
+	void process_file() override;
 
 	bool open(std::filesystem::path file_to_check);
-	eResult run();
+	cLidarFileVerifier::eRETURN_TYPE run();
 
+protected:
 	void moveFileToFailed();
 
 private:

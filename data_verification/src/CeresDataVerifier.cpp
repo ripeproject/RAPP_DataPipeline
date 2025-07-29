@@ -94,7 +94,7 @@ bool cCeresDataVerifier::open(std::filesystem::path file_to_check)
 }
 
 //-----------------------------------------------------------------------------
-cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::process_file()
+void cCeresDataVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
@@ -106,24 +106,36 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::process_file()
 
         switch (result)
         {
-        case eResult::VALID: return eRETURN_TYPE::PASSED;
-        case eResult::INVALID_DATA:
-        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
+        case eRETURN_TYPE::PASSED:
+        {
+            complete_file_progress(mID, "Passed");
+            break;
+        }
+        case eRETURN_TYPE::INVALID_DATA:
+        {
+            complete_file_progress(mID, "Data Invalid");
+            break;
+        }
+        case eRETURN_TYPE::INVALID_FILE:
+        {
+            complete_file_progress(mID, "Failed!");
+            break;
+        }
+        case eRETURN_TYPE::COULD_NOT_OPEN_FILE:
+            break;
         }
     }
-
-    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
 //-----------------------------------------------------------------------------
-cCeresDataVerifier::eResult cCeresDataVerifier::run()
+cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
 {
     using namespace ceres_data_verifier;
     using namespace cdv;
 
     if (!mFileReader.isOpen())
     {
-        throw std::logic_error("No file is open for verification.");
+        return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
     }
 
     auto info = std::make_unique<cExperimentInfoLoader>(mExperimentInfo);
@@ -145,9 +157,7 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
                 mFileReader.close();
                 ++g_num_failed_files;
 
-                complete_file_progress(mID, "Failed!");
-
-                return eResult::INVALID_FILE;
+                return eRETURN_TYPE::INVALID_FILE;
             }
 
             mFileReader.processBlock();
@@ -168,9 +178,7 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
 
         moveFileToInvalid();
 
-        complete_file_progress(mID, "Data Invalid");
-
-        return eResult::INVALID_DATA;
+        return eRETURN_TYPE::INVALID_DATA;
     }
     catch (const bdf::stream_error& e)
     {
@@ -182,9 +190,7 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
         mFileReader.close();
         ++g_num_failed_files;
 
-        complete_file_progress(mID, "Failed!");
-
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
@@ -198,9 +204,7 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
             mFileReader.close();
             ++g_num_failed_files;
 
-            complete_file_progress(mID, "Failed!");
-
-            return eResult::INVALID_FILE;
+            return eRETURN_TYPE::INVALID_FILE;
         }
     }
 
@@ -218,13 +222,10 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
 
             moveFileToInvalid();
 
-            complete_file_progress(mID, "Data Invalid");
-
-            return eResult::INVALID_DATA;
+            return eRETURN_TYPE::INVALID_DATA;
         }
 
-        complete_file_progress(mID, "Passed");
-        return eResult::VALID;
+        return eRETURN_TYPE::PASSED;
     }
     else
     {
@@ -238,9 +239,7 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
 
                 moveFileToInvalid();
 
-                complete_file_progress(mID, "Data Invalid");
-
-                return eResult::INVALID_DATA;
+                return eRETURN_TYPE::INVALID_DATA;
             }
         }
         else
@@ -261,9 +260,7 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
 
                     moveFileToInvalid();
 
-                    complete_file_progress(mID, "Data Invalid");
-
-                    return eResult::INVALID_DATA;
+                    return eRETURN_TYPE::INVALID_DATA;
                 }
             }
             else
@@ -285,9 +282,7 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
 
                         moveFileToInvalid();
 
-                        complete_file_progress(mID, "Data Invalid");
-
-                        return eResult::INVALID_DATA;
+                        return eRETURN_TYPE::INVALID_DATA;
                     }
                 }
                 catch (const std::exception& e)
@@ -300,18 +295,14 @@ cCeresDataVerifier::eResult cCeresDataVerifier::run()
 
                         moveFileToInvalid();
 
-                        complete_file_progress(mID, "Data Invalid");
-
-                        return eResult::INVALID_DATA;
+                        return eRETURN_TYPE::INVALID_DATA;
                     }
                 }
             }
         }
     }
 
-    complete_file_progress(mID, "Passed");
-
-    return eResult::VALID;
+    return eRETURN_TYPE::PASSED;
 }
 
 //-----------------------------------------------------------------------------

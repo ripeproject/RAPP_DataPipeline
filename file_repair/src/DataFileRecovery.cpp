@@ -78,6 +78,12 @@ bool cDataFileRecovery::open(std::filesystem::path file_to_recover)
 }
 
 //-----------------------------------------------------------------------------
+bool cDataFileRecovery::is_open() const
+{
+    return mFileWriter.isOpen() && cBlockDataFileRecovery::isOpen();
+}
+
+//-----------------------------------------------------------------------------
 bool cDataFileRecovery::run()
 {
     update_prefix_progress(mID, "Recovering", 0);

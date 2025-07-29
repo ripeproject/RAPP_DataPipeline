@@ -29,12 +29,9 @@ public:
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
 
-	eRETURN_TYPE process_file();
+	void process_file();
 
-protected:
-	enum class eResult { REPAIRED, PARTIAL_REPAIR };
-
-	eResult run();
+	eRETURN_TYPE run();
 
 private:
 	void moveToPartialRepaired();

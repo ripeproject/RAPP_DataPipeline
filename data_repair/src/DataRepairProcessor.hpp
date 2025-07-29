@@ -19,7 +19,7 @@ class cDataRepair;
 class cDataRepairProcessor
 {
 public:
-	enum class eRETURN_TYPE { PASSED, COULD_NOT_OPEN_FILE, FAILED };
+	enum class eRETURN_TYPE { PASSED, COULD_NOT_OPEN_FILE, INVALID_FILE, INVALID_DATA };
 
 public:
 	cDataRepairProcessor(int id, std::filesystem::path temp_dir,
@@ -31,11 +31,9 @@ public:
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
 
-	eRETURN_TYPE process_file();
+	void process_file();
+	eRETURN_TYPE run();
 
-protected:
-	enum class eResult { VALID, INVALID_DATA, INVALID_FILE };
-	eResult run();
 
 private:
 	const int mID;

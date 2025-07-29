@@ -218,7 +218,7 @@ void cMainWindow::CreateControls()
 	if (mSourceDataDirectory.empty())
 		mpCheckButton->Disable();
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "", 0, "Result", 75);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 50, "Result", 75);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control

@@ -22,7 +22,7 @@ namespace ceres_data_verifier
 class cCeresDataVerifier 
 {
 public:
-	enum class eRETURN_TYPE {PASSED, COULD_NOT_OPEN_FILE, FAILED};
+	enum class eRETURN_TYPE {PASSED, COULD_NOT_OPEN_FILE, INVALID_DATA, INVALID_FILE };
 
 
 public:
@@ -34,15 +34,12 @@ public:
     ~cCeresDataVerifier();
 
 	bool setFileToCheck(std::filesystem::directory_entry file_to_check);
-
-	eRETURN_TYPE process_file();
-
-protected:
-	enum class eResult {VALID, INVALID_DATA, INVALID_FILE};
+	void process_file();
 
 	bool open(std::filesystem::path file_to_check);
-	eResult run();
+	eRETURN_TYPE run();
 
+protected:
 	void moveFileToInvalid();
 
 private:

@@ -50,6 +50,7 @@ cDataRepairProcessor::cDataRepairProcessor(int id, std::filesystem::path temp_di
     mID(id), mTemporaryDirectory(temp_dir), mFailedDirectory(failed_dir), 
     mRepairedDirectory(repaired_dir), mExperimentFile(exp_file)
 {
+    mDataRepair = std::make_unique<cDataRepair>(mID, mTemporaryDirectory, mExperimentFile);
 }
 
 cDataRepairProcessor::~cDataRepairProcessor()
@@ -67,10 +68,8 @@ bool cDataRepairProcessor::setFileToRepair(std::filesystem::directory_entry file
     return false;
 }
 
-cDataRepairProcessor::eRETURN_TYPE cDataRepairProcessor::process_file()
+void cDataRepairProcessor::process_file()
 {
-    mDataRepair = std::make_unique<cDataRepair>(mID, mTemporaryDirectory, mExperimentFile);
-
     if (mDataRepair->open(mFileToRepair))
     {
         mTemporaryFile = mDataRepair->tempFileName();
@@ -81,16 +80,28 @@ cDataRepairProcessor::eRETURN_TYPE cDataRepairProcessor::process_file()
 
         switch (result)
         {
-        case eResult::VALID: return eRETURN_TYPE::PASSED;
-        case eResult::INVALID_DATA:
-        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
+        case eRETURN_TYPE::PASSED:
+        {
+            complete_file_progress(mID, "Complete", "Fixed");
+
+            return;
+        }
+        case eRETURN_TYPE::INVALID_DATA:
+        {
+            complete_file_progress(mID, "Complete", "Invalid Data");
+            break;
+        }
+
+        case eRETURN_TYPE::INVALID_FILE:
+        {
+            complete_file_progress(mID, "Complete", "Failed");
+            break;
+        }
         }
     }
-
-    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
-cDataRepairProcessor::eResult cDataRepairProcessor::run()
+cDataRepairProcessor::eRETURN_TYPE cDataRepairProcessor::run()
 {
     using namespace ceres_data_repair;
 
@@ -108,17 +119,13 @@ cDataRepairProcessor::eResult cDataRepairProcessor::run()
 
         ++g_num_partial_data_files;
 
-        complete_file_progress(mID, "Complete", "Failed");
-
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
     else if (result == cDataRepair::eResult::INVALID_DATA)
     {
         mDataRepair->deleteTemporaryFile();
 
-        complete_file_progress(mID, "Complete", "Invalid Data");
-
-        return eResult::INVALID_DATA;
+        return eRETURN_TYPE::INVALID_DATA;
     }
     else if (result == cDataRepair::eResult::MISSING_DATA)
     {
@@ -139,17 +146,13 @@ cDataRepairProcessor::eResult cDataRepairProcessor::run()
 
         ++g_num_partial_data_files;
 
-        complete_file_progress(mID, "Complete", "Failed");
-
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
     else if (result == cDataRepair::eResult::INVALID_DATA)
     {
         mDataRepair->deleteTemporaryFile();
 
-        complete_file_progress(mID, "Complete", "Invalid Data");
-
-        return eResult::INVALID_DATA;
+        return eRETURN_TYPE::INVALID_DATA;
     }
 
     // Validate the repaired file...
@@ -167,17 +170,13 @@ cDataRepairProcessor::eResult cDataRepairProcessor::run()
 
         ++g_num_partial_data_files;
 
-        complete_file_progress(mID, "Complete", "Failed");
-
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
     else if (result == cDataRepair::eResult::INVALID_DATA)
     {
         mDataRepair->deleteTemporaryFile();
 
-        complete_file_progress(mID, "Complete", "Invalid Data");
-
-        return eResult::INVALID_DATA;
+        return eRETURN_TYPE::INVALID_DATA;
     }
 
     ::create_directory(mRepairedDirectory);
@@ -187,8 +186,6 @@ cDataRepairProcessor::eResult cDataRepairProcessor::run()
 
     ++g_num_repaired_data_files;
 
-    complete_file_progress(mID, "Complete", "Fixed");
-
-    return eResult::VALID;
+    return eRETURN_TYPE::PASSED;
 }
 

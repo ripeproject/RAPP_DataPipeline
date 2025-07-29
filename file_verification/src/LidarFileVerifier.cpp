@@ -91,36 +91,30 @@ bool cLidarFileVerifier::open(std::filesystem::path file_to_check)
 }
 
 //-----------------------------------------------------------------------------
-cLidarFileVerifier::eRETURN_TYPE cLidarFileVerifier::process_file()
+void cLidarFileVerifier::process_file()
 {
     if (open(mFileToCheck))
     {
-        mFileSize = mpFileReader->size();
-
         new_file_progress(mID, mFileToCheck.string());
 
         auto result = run();
 
-        switch (result)
-        {
-        case eResult::VALID: return eRETURN_TYPE::PASSED;
-        case eResult::INVALID_DATA:
-        case eResult::INVALID_FILE: return eRETURN_TYPE::FAILED;
-        }
-
-        return eRETURN_TYPE::FAILED;
+        if (result == eRETURN_TYPE::PASSED)
+            complete_file_progress(mID, "Complete", "Passed");
+        else
+            complete_file_progress(mID, "Complete", "Failed");
     }
-
-    return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 }
 
 //-----------------------------------------------------------------------------
-cLidarFileVerifier::eResult cLidarFileVerifier::run()
+cLidarFileVerifier::eRETURN_TYPE cLidarFileVerifier::run()
 {
     if (!mpFileReader->isOpen())
     {
-        throw std::logic_error("No file is open for verification.");
+        return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
     }
+
+    mFileSize = mpFileReader->size();
 
     update_prefix_progress(mID, "Checking", 0);
 
@@ -137,7 +131,7 @@ cLidarFileVerifier::eResult cLidarFileVerifier::run()
             if (mpFileReader->fail())
             {
                 mpFileReader->close();
-                return eResult::INVALID_FILE;
+                return eRETURN_TYPE::INVALID_FILE;
             }
 
             mpFileReader->processBlock();
@@ -153,7 +147,7 @@ cLidarFileVerifier::eResult cLidarFileVerifier::run()
         std::string msg = e.what();
 
         moveFileToFailed();
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
@@ -161,14 +155,12 @@ cLidarFileVerifier::eResult cLidarFileVerifier::run()
         {
             moveFileToFailed();
         }
-        return eResult::INVALID_FILE;
+        return eRETURN_TYPE::INVALID_FILE;
     }
 
     mpFileReader->close();
 
-    complete_file_progress(mID, "Complete", "passed");
-
-    return eResult::VALID;
+    return eRETURN_TYPE::PASSED;
 }
 
 //-----------------------------------------------------------------------------
@@ -183,8 +175,6 @@ void cLidarFileVerifier::moveFileToFailed()
 
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
     std::filesystem::rename(mFileToCheck, dest);
-
-    complete_file_progress(mID, "Complete", "failed");
 
     ++g_num_failed_files;
 }

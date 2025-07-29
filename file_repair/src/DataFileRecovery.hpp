@@ -19,6 +19,7 @@ public:
 	std::filesystem::path tempFileName();
 
 	bool open(std::filesystem::path file_to_recover);
+	bool is_open() const;
 
 	bool run();
 
