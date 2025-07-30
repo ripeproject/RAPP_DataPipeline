@@ -87,21 +87,31 @@ void cCeresDailyChecker::process_file()
         std::filesystem::path failed_files = mSourceDir / "failed_files";
         std::unique_ptr<cCeresFileVerifier> pFileVerifier = std::make_unique<cCeresFileVerifier>(mID, mFileToCheck, failed_files);
 
-        auto result = pFileVerifier->run();
-
-        switch (result)
+        try
         {
-        case cCeresFileVerifier::eRETURN_TYPE::COULD_NOT_OPEN_FILE:
-            return;
-        case cCeresFileVerifier::eRETURN_TYPE::PASSED:
-            needs_repair = false;
-            break;
-        case cCeresFileVerifier::eRETURN_TYPE::INVALID_DATA:
-        case cCeresFileVerifier::eRETURN_TYPE::INVALID_FILE:
-            needs_repair = true;
-            break;
-        }
+            auto result = pFileVerifier->run();
 
+            switch (result)
+            {
+            case cCeresFileVerifier::eRETURN_TYPE::COULD_NOT_OPEN_FILE:
+                return;
+            case cCeresFileVerifier::eRETURN_TYPE::PASSED:
+                needs_repair = false;
+                break;
+            case cCeresFileVerifier::eRETURN_TYPE::INVALID_DATA:
+            case cCeresFileVerifier::eRETURN_TYPE::INVALID_FILE:
+                needs_repair = true;
+                break;
+            }
+        }
+        catch (const std::exception& e)
+        {
+            std::string msg = "Exception throw in FileVerifier: ";
+            msg += e.what();
+            console_message(msg);
+            complete_file_progress(mID, "Error", "File verifier exception");
+            return;
+        }
     }
 
     if (needs_repair)
@@ -116,22 +126,34 @@ void cCeresDailyChecker::process_file()
 
         std::unique_ptr<cFileRepairProcessor> pFileRepair = std::make_unique<cFileRepairProcessor>(mID, tmp_dir, partial_repaired_dir, repaired_files);
 
-        if (pFileRepair->setFileToRepair(std::filesystem::directory_entry(failed_file)))
+        if (pFileRepair->open(failed_file))
         {
-            auto result = pFileRepair->run();
-
-            std::filesystem::path repaired_file = repaired_files / filename;
-            std::filesystem::path out_file = mSourceDir / filename;
-
-            if (std::filesystem::exists(repaired_file) && !std::filesystem::exists(out_file))
+            try
             {
-                std::filesystem::rename(repaired_file, out_file);
+                auto result = pFileRepair->run();
+
+                std::filesystem::path repaired_file = repaired_files / filename;
+                std::filesystem::path out_file = mSourceDir / filename;
+
+                if (std::filesystem::exists(repaired_file) && !std::filesystem::exists(out_file))
+                {
+                    std::filesystem::rename(repaired_file, out_file);
+                }
+                else
+                {
+                    complete_file_progress(mID, "Error", "Error in copying repaired file!");
+                    return;
+                }
             }
-            else
+            catch (const std::exception& e)
             {
-                complete_file_progress(mID, "Error", "Error in copying repaired file!");
+                std::string msg = "Exception throw in FileRepair: ";
+                msg += e.what();
+                console_message(msg);
+                complete_file_progress(mID, "Error", "File repair exception");
                 return;
             }
+
         }
         else
         {
@@ -148,25 +170,36 @@ void cCeresDailyChecker::process_file()
         std::filesystem::path invalid_data_files = mSourceDir / "invalid_data";
         std::unique_ptr<cCeresDataVerifier> pDataVerifier = std::make_unique<cCeresDataVerifier>(mID, mFileToCheck, invalid_data_files, mExperimentFile);
 
-        auto result = pDataVerifier->run();
-
-        switch (result)
+        try
         {
-        case cCeresDataVerifier::eRETURN_TYPE::COULD_NOT_OPEN_FILE:
-            complete_file_progress(mID, "Error", "Could not open failed file");
-            return;
-        case cCeresDataVerifier::eRETURN_TYPE::PASSED:
-            needs_repair = false;
-            break;
-        case cCeresDataVerifier::eRETURN_TYPE::INVALID_DATA:
-            needs_repair = true;
-            break;
-        case cCeresDataVerifier::eRETURN_TYPE::INVALID_FILE:
-        {
-            complete_file_progress(mID, "Error", "File is invalid.");
-            return;
+            auto result = pDataVerifier->run();
 
+            switch (result)
+            {
+            case cCeresDataVerifier::eRETURN_TYPE::COULD_NOT_OPEN_FILE:
+                complete_file_progress(mID, "Error", "Could not open failed file");
+                return;
+            case cCeresDataVerifier::eRETURN_TYPE::PASSED:
+                needs_repair = false;
+                break;
+            case cCeresDataVerifier::eRETURN_TYPE::INVALID_DATA:
+                needs_repair = true;
+                break;
+            case cCeresDataVerifier::eRETURN_TYPE::INVALID_FILE:
+            {
+                complete_file_progress(mID, "Error", "File is invalid.");
+                return;
+
+            }
+            }
         }
+        catch (const std::exception& e)
+        {
+            std::string msg = "Exception throw in DataVerifier: ";
+            msg += e.what();
+            console_message(msg);
+            complete_file_progress(mID, "Error", "Data verifier exception");
+            return;
         }
     }
 
@@ -182,20 +215,31 @@ void cCeresDailyChecker::process_file()
 
         std::unique_ptr<cDataRepairProcessor> pDataRepair = std::make_unique<cDataRepairProcessor>(mID, tmp_dir, failed_data_files, repaired_data_files, mExperimentFile);
 
-        if (pDataRepair->setFileToRepair(std::filesystem::directory_entry(invalid_data_file)))
+        if (pDataRepair->open(invalid_data_file))
         {
-            auto result = pDataRepair->run();
-
-            std::filesystem::path repaired_file = repaired_data_files / filename;
-            std::filesystem::path out_file = mSourceDir / filename;
-
-            if (std::filesystem::exists(repaired_file) && !std::filesystem::exists(out_file))
+            try
             {
-                std::filesystem::rename(repaired_file, out_file);
+                auto result = pDataRepair->run();
+
+                std::filesystem::path repaired_file = repaired_data_files / filename;
+                std::filesystem::path out_file = mSourceDir / filename;
+
+                if (std::filesystem::exists(repaired_file) && !std::filesystem::exists(out_file))
+                {
+                    std::filesystem::rename(repaired_file, out_file);
+                }
+                else
+                {
+                    complete_file_progress(mID, "Error", "Error in copying repaired file!");
+                    return;
+                }
             }
-            else
+            catch (const std::exception& e)
             {
-                complete_file_progress(mID, "Error", "Error in copying repaired file!");
+                std::string msg = "Exception throw in DataRepair: ";
+                msg += e.what();
+                console_message(msg);
+                complete_file_progress(mID, "Error", "Data repair exception");
                 return;
             }
         }

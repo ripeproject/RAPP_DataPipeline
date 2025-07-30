@@ -30,8 +30,9 @@ public:
 	~cDataRepairProcessor();
 
 	bool setFileToRepair(std::filesystem::directory_entry file_to_repair);
-
 	void process_file();
+
+	bool open(std::filesystem::path file_to_repair);
 	eRETURN_TYPE run();
 
 

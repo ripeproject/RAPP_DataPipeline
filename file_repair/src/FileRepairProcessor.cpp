@@ -84,6 +84,20 @@ void cFileRepairProcessor::process_file()
     }
 }
 
+bool cFileRepairProcessor::open(std::filesystem::path file_to_repair)
+{
+    if (std::filesystem::exists(file_to_repair))
+    {
+        mInputFile = file_to_repair;
+        auto result = mDataFileRecovery->open(mInputFile);
+        mTemporaryFile = mDataFileRecovery->tempFileName();
+
+        return true;
+    }
+
+    return false;
+}
+
 cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::run()
 {
     if (mDataFileRecovery->is_open())

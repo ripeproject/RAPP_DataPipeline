@@ -101,6 +101,20 @@ void cDataRepairProcessor::process_file()
     }
 }
 
+bool cDataRepairProcessor::open(std::filesystem::path file_to_repair)
+{
+    if (std::filesystem::exists(file_to_repair))
+    {
+        mFileToRepair = file_to_repair;
+        auto result = mDataRepair->open(mFileToRepair);
+        mTemporaryFile = mDataRepair->tempFileName();
+
+        return result;
+    }
+
+    return false;
+}
+
 cDataRepairProcessor::eRETURN_TYPE cDataRepairProcessor::run()
 {
     using namespace ceres_data_repair;

@@ -31,6 +31,7 @@ public:
 
 	void process_file();
 
+	bool open(std::filesystem::path file_to_repair);
 	eRETURN_TYPE run();
 
 private:

@@ -377,6 +377,23 @@ void cMainWindow::startDataProcessing()
 		return;
 	}
 
+
+	std::filesystem::path source_dir = mSourceDataDirectory.ToStdString();
+	
+	std::filesystem::path file_tmp_dir = source_dir / "file_repair_tmp";
+
+	if (!std::filesystem::exists(file_tmp_dir))
+	{
+		std::filesystem::create_directory(file_tmp_dir);
+	}
+
+	std::filesystem::path data_tmp_dir = source_dir / "data_repair_tmp";
+
+	if (!std::filesystem::exists(data_tmp_dir))
+	{
+		std::filesystem::create_directory(data_tmp_dir);
+	}
+
 	ceres_file_verifier::g_num_failed_files = 0;
 
 	ceres_file_repair::g_num_partial_files = 0;
@@ -419,6 +436,40 @@ wxThread::ExitCode cMainWindow::Entry()
 		fp->process_file();
 		mFileProcessors.pop();
 		delete fp;
+	}
+
+	std::filesystem::path source_dir = mSourceDataDirectory.ToStdString();
+
+	std::filesystem::path file_tmp_dir = source_dir / "file_repair_tmp";
+
+	if (std::filesystem::exists(file_tmp_dir))
+	{
+		if (std::filesystem::is_empty(file_tmp_dir))
+			std::filesystem::remove(file_tmp_dir);
+	}
+
+	std::filesystem::path repaired_files = source_dir / "fully_repaired_files";
+
+	if (std::filesystem::exists(repaired_files))
+	{
+		if (std::filesystem::is_empty(repaired_files))
+			std::filesystem::remove(repaired_files);
+	}
+
+	std::filesystem::path data_tmp_dir = source_dir / "data_repair_tmp";
+
+	if (std::filesystem::exists(data_tmp_dir))
+	{
+		if (std::filesystem::is_empty(data_tmp_dir))
+			std::filesystem::remove(data_tmp_dir);
+	}
+
+	std::filesystem::path repaired_data_files = source_dir / "repaired_data_files";
+
+	if (std::filesystem::exists(repaired_data_files))
+	{
+		if (std::filesystem::is_empty(repaired_data_files))
+			std::filesystem::remove(repaired_data_files);
 	}
 
 	wxString msg = "Finished processing ";
