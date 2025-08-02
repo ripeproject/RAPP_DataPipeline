@@ -35,6 +35,7 @@ public:
 
 	const std::vector<rfm::rappPoint_t>& getAerialPoints() const;
 	double getMeshHeight_mm(std::int32_t x_mm, std::int32_t y_mm);
+	double getDollyOffset_mm(std::int32_t x_mm, std::int32_t y_mm, std::int32_t ref_height_mm);
 
 private:
 	std::vector<rfm::rappPoint_t> mAerialPoints;

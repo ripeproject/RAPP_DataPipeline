@@ -121,3 +121,9 @@ double cAerialDataModel::getMeshHeight_mm(std::int32_t x_mm, std::int32_t y_mm)
     return rfm::INVALID_HEIGHT;
 }
 
+double cAerialDataModel::getDollyOffset_mm(std::int32_t x_mm, std::int32_t y_mm, std::int32_t ref_height_mm)
+{
+    auto height_mm = getMeshHeight_mm(x_mm, y_mm);
+
+    return height_mm - ref_height_mm;
+}
