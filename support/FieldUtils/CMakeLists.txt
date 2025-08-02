@@ -105,6 +105,7 @@ PUBLIC
 	GroundModelUtils.hpp
 
 	GroundDataModel.hpp
+	AerialDataModel.hpp
 
 	QuadTree.hpp
 	QuadNode.hpp
@@ -120,6 +121,8 @@ PRIVATE
 
 	GroundModelUtils.cpp
 	GroundDataModel.cpp
+
+	AerialDataModel.cpp
 
 	QuadTree.cpp
 	QuadNode.cpp
