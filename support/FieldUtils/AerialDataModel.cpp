@@ -125,5 +125,8 @@ double cAerialDataModel::getDollyOffset_mm(std::int32_t x_mm, std::int32_t y_mm,
 {
     auto height_mm = getMeshHeight_mm(x_mm, y_mm);
 
+    if (height_mm == rfm::INVALID_HEIGHT)
+        return rfm::INVALID_HEIGHT;
+
     return height_mm - ref_height_mm;
 }
