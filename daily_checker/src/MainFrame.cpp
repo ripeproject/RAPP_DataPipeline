@@ -3,7 +3,7 @@
 #include "MainWindow.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
-    #include "Resources/CeresDataVerification.xpm"
+    #include "Resources/CeresDailyChecker.xpm"
 #endif
 
 #include <wx/aui/framemanager.h>
@@ -43,7 +43,7 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Ceres Data Verificator")
+	: wxFrame(NULL, wxID_ANY, "Ceres Daily Checker")
 {
 	mpMainWindow = new cMainWindow(this);
 
@@ -131,7 +131,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
 	info.SetDescription(_("Verifies the data integrity of Ceres data files.\n"));
-	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetCopyright(wxT("Copyright (c) 2025, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(CeresDataVerification));
@@ -142,7 +142,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 		"distribution.This includes data_verificator’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
-		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
+		"Copyright(c) 2025, Carl R.Woese Institute for Genomic Biology\n"
 		"All rights reserved.\n"
 		"\n"
 		"Redistribution and use in source and binary forms, with or without\n"
