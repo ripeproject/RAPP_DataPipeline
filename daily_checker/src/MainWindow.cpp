@@ -267,15 +267,6 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
-
-	cResultsDlg testDlg;
-	testDlg.setFileVerificationResults(10);
-	testDlg.setFileRepairResults(3, 7);
-	testDlg.setDataVerificationResults(0, 5, 1);
-	testDlg.setDataRepairResults(2, 3);
-
-	testDlg.ShowModal();
-
 	wxDirDialog dlg(NULL, "Choose directory", mSourceDataDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 

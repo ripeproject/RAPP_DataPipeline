@@ -51,57 +51,220 @@ void cResultsDlg::setDataRepairResults(int num_partial_repair, int num_fully_rep
 
 int cResultsDlg::ShowModal()
 {
-//	wxPanel* panel = new wxPanel(this, -1);
+	wxString label;
+	wxStaticText* text = nullptr;
 
-	wxGridSizer* gbox = new wxGridSizer(4);
+	wxPanel* panel = new wxPanel(this, wxID_ANY);
 
-	gbox->AddSpacer(5);
+	wxBoxSizer* panel_box = new wxBoxSizer(wxVERTICAL);
 
-	wxString label = "Number of files failing verification:";
-	wxStaticText* text = new wxStaticText(this, wxID_ANY, label);
-	gbox->Add(text, 1);
+	panel_box->AddSpacer(20);
 
-	gbox->AddStretchSpacer();
+	if (mNumFailedFiles == 0)
+	{
+		wxBoxSizer* passed_box = new wxBoxSizer(wxHORIZONTAL);
+		passed_box->AddSpacer(20);
+		label = "All files passed file verification.";
+		text = new wxStaticText(this, wxID_ANY, label);
+		passed_box->Add(text, 1, wxALIGN_CENTER);
+		passed_box->AddSpacer(20);
+		panel_box->Add(passed_box, 1, wxALIGN_CENTER);
+	}
+	else
+	{
+		wxBoxSizer* failed_box = new wxBoxSizer(wxHORIZONTAL);
 
-	label = wxString::Format("%d", mNumFailedFiles);
-	text = new wxStaticText(this, wxID_ANY, label);
-	gbox->Add(text, 1);
+		failed_box->AddSpacer(20);
 
-	gbox->AddSpacer(5);
+		label = "Number of files failing verification:";
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 1);
 
-	label = "Number of files partially repaired:";
-	text = new wxStaticText(this, wxID_ANY, label);
-	gbox->Add(text, 1);
+		label = wxString::Format("%d", mNumFailedFiles);
+		failed_box->AddSpacer(100 - label.length());
 
-	gbox->AddStretchSpacer();
+		label = wxString::Format("%d", mNumFailedFiles);
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 0, wxALIGN_RIGHT);
+		failed_box->AddSpacer(20);
 
-	label = wxString::Format("%d", mNumPartialRepairFiles);
-	text = new wxStaticText(this, wxID_ANY, label);
-	gbox->Add(text, 1);
+		panel_box->Add(failed_box, 1);
+		panel_box->AddSpacer(20);
 
-	gbox->AddSpacer(0);
+		if ((mNumPartialRepairFiles == 0) && (mNumRepairedFiles == mNumFailedFiles))
+		{
+			label = "All files were able to be repaired.";
+			text = new wxStaticText(this, wxID_ANY, label);
+			panel_box->Add(text, 1, wxALIGN_CENTER);
+		}
+		else
+		{
+			wxBoxSizer* repaired_box = new wxBoxSizer(wxHORIZONTAL);
 
-	label = "Number of files fully repaired:";
-	text = new wxStaticText(this, wxID_ANY, label);
-	gbox->Add(text, 1);
+			repaired_box->AddSpacer(20);
 
-	gbox->AddStretchSpacer();
+			label = "Number of files partially repaired:";
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 1);
 
-	label = wxString::Format("%d", mNumRepairedFiles);
-	text = new wxStaticText(this, wxID_ANY, label);
-	gbox->Add(text, 1);
+			label = wxString::Format("%d", mNumPartialRepairFiles);
+			repaired_box->AddSpacer(112 - label.length());
 
-	gbox->AddSpacer(5);
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 0);
+			repaired_box->AddSpacer(20);
+
+			panel_box->Add(repaired_box, 1);
+			panel_box->AddSpacer(1);
+
+			repaired_box = new wxBoxSizer(wxHORIZONTAL);
+
+			repaired_box->AddSpacer(20);
+
+			label = "Number of files fully repaired:";
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 1);
+
+			label = wxString::Format("%d", mNumRepairedFiles);
+			repaired_box->AddSpacer(130 - label.length());
+
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 0);
+			repaired_box->AddSpacer(20);
+
+			panel_box->Add(repaired_box, 1);
+		}
+	}
+
+	panel_box->AddSpacer(20);
+
+	auto num_bad_data_files = mNumFailedDataFiles + mNumInvalidDataFiles + mNumDataFilesMissingData;
+
+	if (num_bad_data_files == 0)
+	{
+		wxBoxSizer* passed_box = new wxBoxSizer(wxHORIZONTAL);
+		passed_box->AddSpacer(20);
+		label = "All files passed data verification.";
+		text = new wxStaticText(this, wxID_ANY, label);
+		passed_box->Add(text, 1, wxALIGN_CENTER);
+		passed_box->AddSpacer(20);
+		panel_box->Add(passed_box, 1, wxALIGN_CENTER);
+	}
+	else
+	{
+		wxBoxSizer* failed_box = new wxBoxSizer(wxHORIZONTAL);
+
+		failed_box->AddSpacer(20);
+
+		label = "Number of files failing due to bad files:";
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 1);
+
+		label = wxString::Format("%d", mNumFailedDataFiles);
+		failed_box->AddSpacer(82 - label.length());
+
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 0, wxALIGN_RIGHT);
+		failed_box->AddSpacer(20);
+
+		panel_box->Add(failed_box, 1);
+		panel_box->AddSpacer(1);
+
+		failed_box = new wxBoxSizer(wxHORIZONTAL);
+
+		failed_box->AddSpacer(20);
+
+		label = "Number of files failing due to invalid data:";
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 1);
+
+		label = wxString::Format("%d", mNumInvalidDataFiles);
+		failed_box->AddSpacer(65 - label.length());
+
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 0, wxALIGN_RIGHT);
+		failed_box->AddSpacer(20);
+
+		panel_box->Add(failed_box, 1);
+		panel_box->AddSpacer(1);
+
+		failed_box = new wxBoxSizer(wxHORIZONTAL);
+
+		failed_box->AddSpacer(20);
+
+		label = "Number of files failing due to missing data:";
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 1);
+
+		label = wxString::Format("%d", mNumDataFilesMissingData);
+		failed_box->AddSpacer(59 - label.length());
+
+		text = new wxStaticText(this, wxID_ANY, label);
+		failed_box->Add(text, 0, wxALIGN_RIGHT);
+		failed_box->AddSpacer(20);
+
+		panel_box->Add(failed_box, 1);
+		panel_box->AddSpacer(20);
+
+		if ((mNumPartialRepairDataFiles == 0) && (mNumRepairedDataFiles == num_bad_data_files))
+		{
+			label = "All files were able to be repaired.";
+			text = new wxStaticText(this, wxID_ANY, label);
+			panel_box->Add(text, 1, wxALIGN_CENTER);
+		}
+		else
+		{
+			wxBoxSizer* repaired_box = new wxBoxSizer(wxHORIZONTAL);
+
+			repaired_box->AddSpacer(20);
+
+			label = "Number of files partially repaired:";
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 1);
+
+			label = wxString::Format("%d", mNumPartialRepairDataFiles);
+			repaired_box->AddSpacer(112 - label.length());
+
+			label = wxString::Format("%d", mNumPartialRepairDataFiles);
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 0);
+			repaired_box->AddSpacer(20);
+
+			panel_box->Add(repaired_box, 1);
+			panel_box->AddSpacer(1);
+
+			repaired_box = new wxBoxSizer(wxHORIZONTAL);
+
+			repaired_box->AddSpacer(20);
+
+			label = "Number of files fully repaired:";
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 1);
+
+			label = wxString::Format("%d", mNumRepairedDataFiles);
+			repaired_box->AddSpacer(130 - label.length());
+
+			text = new wxStaticText(this, wxID_ANY, label);
+			repaired_box->Add(text, 0, wxALIGN_RIGHT);
+			repaired_box->AddSpacer(20);
+
+			panel_box->Add(repaired_box, 1);
+		}
+	}
+
+	panel_box->AddSpacer(20);
+
+	panel->SetSizer(panel_box);
 
 	wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
 	wxButton* okButton = new wxButton(this, wxID_OK, wxT("Ok"), wxDefaultPosition, wxSize(70, 30));
 	hbox->Add(okButton, 1);
 
 	wxBoxSizer* vbox = new wxBoxSizer(wxVERTICAL);
-	vbox->Add(gbox, 1);
+	vbox->Add(panel, 1);
 	vbox->Add(hbox, 0, wxALIGN_CENTER | wxTOP | wxBOTTOM, 10);
 
-	SetSizer(vbox);
+	SetSizerAndFit(vbox);
 
 	Centre();	
 	
