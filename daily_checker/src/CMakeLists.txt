@@ -71,6 +71,8 @@ if(wxWidgets_FOUND)
 
 	target_sources(gui_app
 	PRIVATE
+		ResultsDlg.hpp
+		ResultsDlg.cpp
 
 		MainWindow.hpp
 		MainWindow.cpp
