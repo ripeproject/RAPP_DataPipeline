@@ -3,6 +3,8 @@
 #include "CeresDailyChecker.hpp"
 #include "StringUtils.hpp"
 
+#include "ResultsDlg.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <wx/thread.h>
@@ -265,6 +267,15 @@ void cMainWindow::CreateLayout()
 // event handlers
 void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 {
+
+	cResultsDlg testDlg;
+	testDlg.setFileVerificationResults(10);
+	testDlg.setFileRepairResults(3, 7);
+	testDlg.setDataVerificationResults(0, 5, 1);
+	testDlg.setDataRepairResults(2, 3);
+
+	testDlg.ShowModal();
+
 	wxDirDialog dlg(NULL, "Choose directory", mSourceDataDirectory,
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
@@ -476,6 +487,15 @@ wxThread::ExitCode cMainWindow::Entry()
 	msg += mSourceDataDirectory;
 	wxLogMessage(msg);
 
+	cResultsDlg dlg;
+	dlg.setFileVerificationResults(ceres_file_verifier::g_num_failed_files);
+	dlg.setFileRepairResults(ceres_file_repair::g_num_partial_files, ceres_file_repair::g_num_repaired_files);
+	dlg.setDataVerificationResults(ceres_data_verifier::g_num_failed_files, ceres_data_verifier::g_num_invalid_files,ceres_data_verifier::g_num_missing_data );
+	dlg.setDataRepairResults(ceres_data_repair::g_num_partial_data_files,ceres_data_repair::g_num_repaired_data_files );
+
+	dlg.ShowModal();
+
+/*
 	if (ceres_file_verifier::g_num_failed_files != 0)
 	{
 		wxString msg = "Detected ";
@@ -484,6 +504,7 @@ wxThread::ExitCode cMainWindow::Entry()
 		msg += " invalid files.  Please run FileChecker and FileRepair on this directory!";
 		wxLogMessage(msg);
 	}
+*/
 
 	return (wxThread::ExitCode) 0;
 }
