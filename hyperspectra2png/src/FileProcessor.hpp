@@ -46,7 +46,9 @@ private:
 
 	void onSpecies(const std::string& species) override;
 	void onCultivar(const std::string& cultivar) override;
+	void onTrialInfo(const std::string& trial) override;
 	void onPermitInfo(const std::string& permit) override;
+	void onPermitInfo(const std::string& authorization, const std::string& permit) override;
 	void onExperimentDoc(const std::string& doc) override;
 
 	void onBeginTreatmentList() override;
@@ -75,6 +77,8 @@ private:
 	void onBeginSensorList() override;
 	void onEndOfSensorList() override;
 	void onSensorBlockInfo(uint16_t class_id, const std::string& name) override;
+	void onSensorBlockInfo(uint16_t class_id, const std::string& name, const std::string& instance,
+		const std::string& manufacturer, const std::string& model, const std::string& serial_number, uint8_t device_id);
 
 	void onStartTime(sExperimentTime_t time) override;
 	void onEndTime(sExperimentTime_t time) override;
@@ -85,6 +89,8 @@ private:
 
 
 	void onPosition(spidercam::sPosition_1_t pos) override;
+	void onStartPosition(spidercam::sPosition_1_t position) override;
+	void onEndPosition(spidercam::sPosition_1_t position) override;
 
 
 private:

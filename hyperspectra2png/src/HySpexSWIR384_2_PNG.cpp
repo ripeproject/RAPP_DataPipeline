@@ -1,6 +1,7 @@
 
 #include "HySpexSWIR384_2_PNG.hpp"
 
+#include "Constants.hpp"
 #include "MathUtils.hpp"
 
 #include <opencv2/opencv.hpp>
@@ -30,11 +31,19 @@ cHySpexSWIR384_2_Png::~cHySpexSWIR384_2_Png()
     writeRgbImage(filename);
 
     mImage.release();
+
+    mMetaData.close();
 }
 
 void cHySpexSWIR384_2_Png::setOutputPath(std::filesystem::path out)
 {
     mOutputPath = out;
+
+    std::filesystem::path metafile = out;
+
+    metafile.replace_extension("swir384.metaData.txt");
+
+    mMetaData.open(metafile, std::ios::out | std::ios::trunc);
 }
 
 void cHySpexSWIR384_2_Png::setRgbWavelengths_nm(float red_nm, float green_nm, float blue_nm)
@@ -44,9 +53,37 @@ void cHySpexSWIR384_2_Png::setRgbWavelengths_nm(float red_nm, float green_nm, fl
     mBlue_nm = blue_nm;
 }
 
-void cHySpexSWIR384_2_Png::onID(uint8_t device_id, std::string id) {}
-void cHySpexSWIR384_2_Png::onSerialNumber(uint8_t device_id, std::string serialNumber) {}
-void cHySpexSWIR384_2_Png::onWavelengthRange_nm(uint8_t device_id, uint16_t minWavelength_nm, uint16_t maxWavelength_nm) {}
+void cHySpexSWIR384_2_Png::onID(uint8_t device_id, std::string id) 
+{
+    mId = id;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "ID: " << mId << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onSerialNumber(uint8_t device_id, std::string serialNumber) 
+{
+    mSerialNumber = serialNumber;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Serial Number: " << mSerialNumber << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onWavelengthRange_nm(uint8_t device_id, uint16_t minWavelength_nm, uint16_t maxWavelength_nm)
+{
+    mMinWavelength_nm = minWavelength_nm;
+    mMaxWavelength_nm = maxWavelength_nm;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Wavelength Range (nm): " << mMinWavelength_nm << ", " << mMaxWavelength_nm << "\n";
+    }
+}
+
 void cHySpexSWIR384_2_Png::onSpatialSize(uint8_t device_id, uint64_t spatialSize)
 {
     mSpatialSize = spatialSize;
@@ -69,20 +106,90 @@ void cHySpexSWIR384_2_Png::onMaxPixelValue(uint8_t device_id, uint16_t maxPixelV
 
 void cHySpexSWIR384_2_Png::onResponsivityMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<float> re) {}
 void cHySpexSWIR384_2_Png::onQuantumEfficiencyData(uint8_t device_id, HySpexConnect::cSpectralData<float> qe) {}
-void cHySpexSWIR384_2_Png::onLensName(uint8_t device_id, std::string name) {}
-void cHySpexSWIR384_2_Png::onLensWorkingDistance_cm(uint8_t device_id, double workingDistance_cm) {}
-void cHySpexSWIR384_2_Png::onLensFieldOfView_rad(uint8_t device_id, double fieldOfView_rad) {}
-void cHySpexSWIR384_2_Png::onLensFieldOfView_deg(uint8_t device_id, double fieldOfView_deg) {}
 
-void cHySpexSWIR384_2_Png::onAverageFrames(uint8_t device_id, uint16_t averageFrames) {}
-void cHySpexSWIR384_2_Png::onFramePeriod_us(uint8_t device_id, uint32_t framePeriod_us) {}
-void cHySpexSWIR384_2_Png::onIntegrationTime_us(uint8_t device_id, uint32_t integrationTime_us) {}
+void cHySpexSWIR384_2_Png::onLensName(uint8_t device_id, std::string name) 
+{
+    mLensName = name;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Lens Name: " << mLensName << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onLensWorkingDistance_cm(uint8_t device_id, double workingDistance_cm) 
+{
+    mWorkingDistance_cm = workingDistance_cm;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Working Distance (cm): " << mWorkingDistance_cm << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onLensFieldOfView_rad(uint8_t device_id, double fieldOfView_rad) 
+{
+    mFieldOfView_deg = fieldOfView_rad * nConstants::RAD_TO_DEG;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Field-Of-View (rad): " << fieldOfView_rad << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onLensFieldOfView_deg(uint8_t device_id, double fieldOfView_deg) 
+{
+    mFieldOfView_deg = fieldOfView_deg;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Field-Of-View (deg): " << mFieldOfView_deg << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onAverageFrames(uint8_t device_id, uint16_t averageFrames)
+{
+    mAverageFrames = 0;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Average Frames: " << mAverageFrames << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onFramePeriod_us(uint8_t device_id, uint32_t framePeriod_us)
+{
+    mFramePeriod_us = framePeriod_us;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Frame Period (us): " << mFramePeriod_us << "\n";
+    }
+}
+
+void cHySpexSWIR384_2_Png::onIntegrationTime_us(uint8_t device_id, uint32_t integrationTime_us)
+{
+    mIntegrationTime_us = integrationTime_us;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Integration Time (us): " << mIntegrationTime_us << "\n";
+    }
+}
 
 void cHySpexSWIR384_2_Png::onBadPixels(uint8_t device_id, HySpexConnect::cBadPixelData bad_pixels) {}
 void cHySpexSWIR384_2_Png::onBadPixelCorrection(uint8_t device_id, HySpexConnect::cBadPixelCorrectionData corrections) {}
 void cHySpexSWIR384_2_Png::onBadPixelMatrix(uint8_t device_id, HySpexConnect::cSpatialMajorData<uint8_t> matrix) {}
 
-void cHySpexSWIR384_2_Png::onAmbientTemperature_C(uint8_t device_id, float temp_C) {}
+void cHySpexSWIR384_2_Png::onAmbientTemperature_C(uint8_t device_id, float temp_C) 
+{
+    mAmbientTemp_C = temp_C;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Ambient Temp (C): " << mAmbientTemp_C << "\n";
+    }
+}
 
 void cHySpexSWIR384_2_Png::onSpectralCalibration(uint8_t device_id, HySpexConnect::cSpectralData<float> wavelengths_nm)
 {
@@ -156,7 +263,15 @@ void cHySpexSWIR384_2_Png::onImage(uint8_t device_id, HySpexConnect::cImageData<
     }
 }
 
-void cHySpexSWIR384_2_Png::onSensorTemperature_K(uint8_t device_id, float temp_K) {}
+void cHySpexSWIR384_2_Png::onSensorTemperature_K(uint8_t device_id, float temp_K) 
+{
+    mSensorTemp_K = temp_K;
+
+    if (mMetaData.is_open())
+    {
+        mMetaData << "Sensor Temp (K): " << mSensorTemp_K << "\n";
+    }
+}
 
 void cHySpexSWIR384_2_Png::onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps)
 {

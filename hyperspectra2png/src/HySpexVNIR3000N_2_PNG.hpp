@@ -75,6 +75,24 @@ private:
 
 private:
     std::filesystem::path mOutputPath;
+	std::fstream mMetaData;
+
+	std::string mId;
+	std::string mSerialNumber;
+	uint16_t mMinWavelength_nm = 0;
+	uint16_t mMaxWavelength_nm = 0;
+
+	std::string mLensName;
+	double mWorkingDistance_cm = 0;
+	double mFieldOfView_deg = 0;
+
+	uint16_t mAverageFrames = 0;
+	uint32_t mFramePeriod_us = 0;
+	uint32_t mIntegrationTime_us = 0;
+
+	float mAmbientTemp_C = 0;
+	float mSensorTemp_C = 0;
+
 
 	std::size_t mSpatialSize = 0;
 	std::size_t mSpectralSize = 0;

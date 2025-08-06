@@ -34,6 +34,7 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE "../support/common")
 target_include_directories(console_app PRIVATE "../support/MathUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
@@ -99,6 +100,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE "../support/common")
 	target_include_directories(gui_app PRIVATE "../support/MathUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
