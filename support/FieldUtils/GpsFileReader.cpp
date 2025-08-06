@@ -44,6 +44,7 @@ void cGpsFileReader::loadFromFile(const std::string& filename)
 
 		std::string type;
 		(*it).read_value<std::string>(type);
+		++it;
 
 		if (type == "ILUC")
 		{
