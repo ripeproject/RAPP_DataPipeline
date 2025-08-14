@@ -33,12 +33,14 @@ bool cLidarMapConfigFile::isDirty() const
 			return true;
 	}
 
-	return mOptions.isDirty() || mDefaults.isDirty();
+	return mIsDirty || mOptions.isDirty() || mDefaults.isDirty();
 }
 
 void cLidarMapConfigFile::clear()
 {
+	mIsDirty = false;
 	mFileName.clear();
+	mAllowedExperimentNames.clear();
 	mOptions.clear();
 	mCatalog.clear();
 	mTmpFileName = "~newfile.lidar2pointcloud";
@@ -76,10 +78,21 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
-	//if (configDoc.contains("measurement name"))
-	//{
-	//	mMeasurementNames.emplace_back(configDoc["measurement name"]);
-	//}
+	if (configDoc.contains("allowed_experiment_names"))
+	{
+		auto allowed = configDoc["allowed_experiment_names"];
+
+		if (allowed.is_array())
+		{
+			for (const auto& name : allowed)
+				mAllowedExperimentNames.insert(name);
+		}
+		else if (allowed.is_string())
+		{
+			auto experiment_name = allowed.get<std::string>();
+			mAllowedExperimentNames.insert(experiment_name);
+		}
+	}
 	//if (configDoc.contains("measurement names"))
 	//{
 	//	auto names = configDoc["measurement names"];
@@ -123,6 +136,7 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 		mCatalog.insert(std::make_pair(0, std::move(catalog)));
 	}
 
+	mIsDirty = false;
 
 	return true;
 }
@@ -132,6 +146,18 @@ void cLidarMapConfigFile::save()
 	if (mFileName.empty()) return;
 
 	nlohmann::json configDoc;
+
+	if (mAllowedExperimentNames.size() == 1)
+	{
+		configDoc["allowed_experiment_names"] = *(mAllowedExperimentNames.begin());
+	}
+	else if (mAllowedExperimentNames.size() > 1)
+	{
+		for (const auto& name : mAllowedExperimentNames)
+		{
+			configDoc["allowed_experiment_names"].push_back(name);
+		}
+	}
 
 	configDoc["options"]  = mOptions.save();
 	configDoc["defaults"] = mDefaults.save();
@@ -163,11 +189,25 @@ void cLidarMapConfigFile::save()
 			std::filesystem::remove(tmp);
 		}
 	}
+
+	mIsDirty = false;
 }
 
 void cLidarMapConfigFile::save_as(const std::string& file_name)
 {
 	nlohmann::json configDoc;
+
+	if (mAllowedExperimentNames.size() == 1)
+	{
+		configDoc["allowed_experiment_names"] = *(mAllowedExperimentNames.begin());
+	}
+	else if (mAllowedExperimentNames.size() > 1)
+	{
+		for (const auto& name : mAllowedExperimentNames)
+		{
+			configDoc["allowed_experiment_names"].push_back(name);
+		}
+	}
 
 	configDoc["options"]  = mOptions.save();
 	configDoc["defaults"] = mDefaults.save();
@@ -202,6 +242,8 @@ void cLidarMapConfigFile::save_as(const std::string& file_name)
 
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
+
+	mIsDirty = false;
 }
 
 bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
@@ -238,6 +280,22 @@ bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
 		mFileName.clear();
 	}
 
+	if (configDoc.contains("allowed_experiment_names"))
+	{
+		auto allowed = configDoc["allowed_experiment_names"];
+
+		if (allowed.is_array())
+		{
+			for (const auto& name : allowed)
+				mAllowedExperimentNames.insert(name);
+		}
+		else if (allowed.is_string())
+		{
+			auto experiment_name = allowed.get<std::string>();
+			mAllowedExperimentNames.insert(experiment_name);
+		}
+	}
+
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
 
@@ -268,8 +326,7 @@ bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
 		mCatalog.insert( std::make_pair(0, std::move(catalog)));
 	}
 
-
-	mOptions.setDirty(true);
+	mIsDirty = true;
 
 	return true;
 }
@@ -305,6 +362,25 @@ void cLidarMapConfigFile::save_temporary_file()
 		return;
 
 	out << std::setw(4) << configDoc << std::endl;
+}
+
+void cLidarMapConfigFile::clearAllowedExperimentNames()
+{
+	if (!mAllowedExperimentNames.empty())
+		mIsDirty = true;
+
+	mAllowedExperimentNames.clear();
+}
+
+std::set<std::string> cLidarMapConfigFile::getAllowedExperimentNames() const
+{
+	return mAllowedExperimentNames;
+}
+
+void cLidarMapConfigFile::setAllowedExperimentNames(std::set<std::string> names)
+{
+	mIsDirty |= (mAllowedExperimentNames != names);
+	mAllowedExperimentNames = names;
 }
 
 const cLidarMapConfigOptions& cLidarMapConfigFile::getOptions() const

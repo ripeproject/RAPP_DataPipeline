@@ -43,6 +43,10 @@ public:
 	bool open_temporary_file(const std::string& file_name);
 	void save_temporary_file();
 
+	void clearAllowedExperimentNames();
+	std::set<std::string> getAllowedExperimentNames() const;
+	void setAllowedExperimentNames(std::set<std::string> names);
+
 	const cLidarMapConfigOptions& getOptions() const;
 	cLidarMapConfigOptions& getOptions();
 
@@ -96,6 +100,10 @@ public:
 private:
 	std::string mFileName;
 	std::string mTmpFileName;
+
+	bool mIsDirty = false;
+
+	std::set<std::string> mAllowedExperimentNames;
 
 	cLidarMapConfigOptions  mOptions;
 	cLidarMapConfigDefaults mDefaults;
