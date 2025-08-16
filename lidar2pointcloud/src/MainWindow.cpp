@@ -557,6 +557,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 		fp->plyUseBinaryFormat(plyUseBinaryFormat);
 //		fp->setDefaults(parameters);
 
+		fp->setAllowedExperimentNames(mConfigData->getAllowedExperimentNames());
 		fp->setDefaults(mConfigData->getDefaults());
 		fp->setParameters(*it);
 

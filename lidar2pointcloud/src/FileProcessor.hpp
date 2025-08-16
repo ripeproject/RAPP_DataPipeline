@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <string>
 #include <memory>
+#include <set>
 
 
 // Forward Declarations
@@ -35,6 +36,8 @@ public:
 
 	void savePlyFiles(bool savePlys);
 	void plyUseBinaryFormat(bool binaryFormat);
+
+	void setAllowedExperimentNames(const std::set<std::string>& experiment_names);
 
 	/**
 	 * Set the default parameters to use in computing the point cloud.
@@ -70,6 +73,8 @@ private:
 	bool mFlattenPointCloud = true;
 	double mMaxAngle_deg = 10.0;
 	double mThreshold_pct = 0.1;
+
+	std::set<std::string> mAllowedExperimentNames;
 
 	cLidarMapConfigDefaults mDefaults;
 	cLidarMapConfigScan mParameters;

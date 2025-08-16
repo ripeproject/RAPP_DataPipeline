@@ -79,6 +79,11 @@ void cFileProcessor::plyUseBinaryFormat(bool binaryFormat)
     mPlyUseBinaryFormat = binaryFormat;
 }
 
+void cFileProcessor::setAllowedExperimentNames(const std::set<std::string>& experiment_names)
+{
+    mAllowedExperimentNames = experiment_names;
+}
+
 void cFileProcessor::setDefaults(const cLidarMapConfigDefaults& defaults)
 {
     mDefaults = defaults;
@@ -277,6 +282,16 @@ void cFileProcessor::process_file()
 
     converter->loadFieldScanData(mInputFile.string());
 
+    if (!mAllowedExperimentNames.empty())
+    {
+        if (!mAllowedExperimentNames.contains(converter->getExperimentTitle()))
+        {
+            std::string msg = "Incompatible Measurement File: ";
+            msg += mInputFile.string();
+            console_message(msg);
+            return;
+        }
+    }
     // Compute the Dolly Movement
     if (!converter->computeDollyMovement())
     {
