@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <set>
 
 
 class cPlotConfigFile
@@ -36,6 +37,10 @@ public:
 
 	bool open_temporary_file(const std::string& file_name);
 	void save_temporary_file();
+
+	void clearAllowedExperimentNames();
+	std::set<std::string> getAllowedExperimentNames() const;
+	void setAllowedExperimentNames(std::set<std::string> names);
 
 	const cPlotConfigOptions& getOptions() const;
 	cPlotConfigOptions& getOptions();
@@ -72,6 +77,10 @@ private:
 private:
 	std::string mFileName;
 	std::string mTmpFileName;
+
+	bool mIsDirty = false;
+
+	std::set<std::string> mAllowedExperimentNames;
 
 	cPlotConfigOptions mOptions;
 

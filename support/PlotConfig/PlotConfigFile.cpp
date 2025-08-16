@@ -32,12 +32,14 @@ bool cPlotConfigFile::isDirty() const
 			return true;
 	}
 
-	return mOptions.isDirty();
+	return mIsDirty || mOptions.isDirty();
 }
 
 void cPlotConfigFile::clear()
 {
+	mIsDirty = false;
 	mFileName.clear();
+	mAllowedExperimentNames.clear();
 	mOptions.clear();
 	mScans.clear();
 	mTmpFileName = "~newfile.plotsplit";
@@ -75,6 +77,22 @@ bool cPlotConfigFile::open(const std::string& file_name)
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
+	if (configDoc.contains("allowed_experiment_names"))
+	{
+		auto allowed = configDoc["allowed_experiment_names"];
+
+		if (allowed.is_array())
+		{
+			for (const auto& name : allowed)
+				mAllowedExperimentNames.insert(name);
+		}
+		else if (allowed.is_string())
+		{
+			auto experiment_name = allowed.get<std::string>();
+			mAllowedExperimentNames.insert(experiment_name);
+		}
+	}
+
 	mOptions.load(configDoc);
 
 	if (configDoc.contains("scans"))
@@ -91,6 +109,8 @@ bool cPlotConfigFile::open(const std::string& file_name)
 		}
 	}
 
+	mIsDirty = false;
+
 	return true;
 }
 
@@ -99,6 +119,18 @@ void cPlotConfigFile::save()
 	if (mFileName.empty()) return;
 
 	nlohmann::json configDoc;
+
+	if (mAllowedExperimentNames.size() == 1)
+	{
+		configDoc["allowed_experiment_names"] = *(mAllowedExperimentNames.begin());
+	}
+	else if (mAllowedExperimentNames.size() > 1)
+	{
+		for (const auto& name : mAllowedExperimentNames)
+		{
+			configDoc["allowed_experiment_names"].push_back(name);
+		}
+	}
 
 	configDoc["options"] = mOptions.save();
 
@@ -135,6 +167,18 @@ void cPlotConfigFile::save()
 void cPlotConfigFile::save_as(const std::string& file_name)
 {
 	nlohmann::json configDoc;
+
+	if (mAllowedExperimentNames.size() == 1)
+	{
+		configDoc["allowed_experiment_names"] = *(mAllowedExperimentNames.begin());
+	}
+	else if (mAllowedExperimentNames.size() > 1)
+	{
+		for (const auto& name : mAllowedExperimentNames)
+		{
+			configDoc["allowed_experiment_names"].push_back(name);
+		}
+	}
 
 	configDoc["options"] = mOptions.save();
 
@@ -204,6 +248,22 @@ bool cPlotConfigFile::open_temporary_file(const std::string& file_name)
 		mFileName.clear();
 	}
 
+	if (configDoc.contains("allowed_experiment_names"))
+	{
+		auto allowed = configDoc["allowed_experiment_names"];
+
+		if (allowed.is_array())
+		{
+			for (const auto& name : allowed)
+				mAllowedExperimentNames.insert(name);
+		}
+		else if (allowed.is_string())
+		{
+			auto experiment_name = allowed.get<std::string>();
+			mAllowedExperimentNames.insert(experiment_name);
+		}
+	}
+
 	mOptions.load(configDoc);
 
 	if (configDoc.contains("scans"))
@@ -220,7 +280,7 @@ bool cPlotConfigFile::open_temporary_file(const std::string& file_name)
 		}
 	}
 
-	mOptions.setDirty(true);
+	mIsDirty = true;
 
 	return true;
 }
@@ -252,6 +312,26 @@ void cPlotConfigFile::save_temporary_file()
 
 	out << std::setw(4) << configDoc << std::endl;
 }
+
+void cPlotConfigFile::clearAllowedExperimentNames()
+{
+	if (!mAllowedExperimentNames.empty())
+		mIsDirty = true;
+
+	mAllowedExperimentNames.clear();
+}
+
+std::set<std::string> cPlotConfigFile::getAllowedExperimentNames() const
+{
+	return mAllowedExperimentNames;
+}
+
+void cPlotConfigFile::setAllowedExperimentNames(std::set<std::string> names)
+{
+	mIsDirty |= (mAllowedExperimentNames != names);
+	mAllowedExperimentNames = names;
+}
+
 
 const cPlotConfigOptions& cPlotConfigFile::getOptions() const
 {
@@ -398,6 +478,8 @@ cPlotConfigScan& cPlotConfigFile::operator[](int index)
 
 void cPlotConfigFile::clearDirtyFlag()
 {
+	mIsDirty = false;
+
 	mOptions.setDirty(false);
 
 	for (auto& scan : mScans)
