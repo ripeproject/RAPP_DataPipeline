@@ -93,18 +93,6 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 			mAllowedExperimentNames.insert(experiment_name);
 		}
 	}
-	//if (configDoc.contains("measurement names"))
-	//{
-	//	auto names = configDoc["measurement names"];
-
-	//	if (names.is_string())
-	//		mMeasurementNames.emplace_back(names);
-	//	else if (names.is_array())
-	//	{
-	//		for (const auto& name : names)
-	//			mMeasurementNames.emplace_back(name);
-	//	}
-	//}
 
 	mOptions.load(configDoc);
 	mDefaults.load(configDoc);
