@@ -100,6 +100,7 @@ PUBLIC
 	PlotConfigBoundary.hpp
 	PlotConfigIsolationMethod.hpp
 	PlotConfigExclusion.hpp
+	PlotConfigInclusion.hpp
 
 PRIVATE
 
@@ -110,6 +111,7 @@ PRIVATE
 	PlotConfigBoundary.cpp
 	PlotConfigIsolationMethod.cpp
 	PlotConfigExclusion.cpp
+	PlotConfigInclusion.cpp
 )
 
 target_include_directories(plot_config PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
