@@ -14,6 +14,7 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <set>
 
 // Forward Declarations
 class cPlotBoundaries;
@@ -36,6 +37,8 @@ public:
 
 	void enableSavingFrameIDs(bool enableFrameIDs);
 	void enableSavingPixelInfo(bool enablePixelInfo);
+
+	void setAllowedExperimentNames(const std::set<std::string>& experiment_names);
 
 //	void setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info);
 
@@ -60,8 +63,12 @@ private:
 	void fillPlotInformation(cRappPlot* plot, const cPlotConfigPlotInfo& info);
 
 private:
+	std::string getExperimentName() const;
 
+private:
 	const cPlotConfigScan& mPlotInfo;
+
+	std::set<std::string> mAllowedExperimentNames;
 
 	const int mID;
 

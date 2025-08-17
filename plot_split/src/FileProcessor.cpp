@@ -140,6 +140,11 @@ void cFileProcessor::enableSavingPixelInfo(bool enablePixelInfo)
     mEnablePixelInfo = enablePixelInfo;
 }
 
+void cFileProcessor::setAllowedExperimentNames(const std::set<std::string>& experiment_names)
+{
+    mAllowedExperimentNames = experiment_names;
+}
+
 /*
 void cFileProcessor::setPlotInfo(std::shared_ptr<cPlotBoundaries> plot_info)
 {
@@ -164,6 +169,17 @@ void cFileProcessor::run()
 	{
         return;
 	}
+
+    if (!mAllowedExperimentNames.empty())
+    {
+        if (!mAllowedExperimentNames.contains(getExperimentName()))
+        {
+            std::string msg = "Incompatible Measurement File: ";
+            msg += mInputFile.string();
+            console_message(msg);
+            return;
+        }
+    }
 
     update_prefix_progress(mID, "Splitting in Plots...    ", 0);
     doPlotSplit();
@@ -765,5 +781,30 @@ void cFileProcessor::writeExperimentInfo(cExperimentSerializer& serializer)
         serializer.writeDayOfYear(mExpInfo->dayOfYear().value());
 
     serializer.writeEndOfHeader();
+}
+
+
+//-----------------------------------------------------------------------------
+std::string cFileProcessor::getExperimentName() const
+{
+    std::string name = mExpInfo->experimentTitle();
+
+    if (name.empty())
+    {
+        name = mExpInfo->measurementTitle();
+
+        if (name.empty())
+        {
+            name = mInputFile.filename().string();
+        }
+    }
+
+    auto pos = name.find("_Pass");
+    if (pos != std::string::npos)
+    {
+        name.erase(pos);
+    }
+
+    return name;
 }
 
