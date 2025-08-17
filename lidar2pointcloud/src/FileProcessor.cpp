@@ -100,7 +100,6 @@ void cFileProcessor::process_file()
 
     std::unique_ptr<cLidar2PointCloud> converter = std::make_unique<cLidar2PointCloud>(mID);
 
-
     const auto& limits = mDefaults.getSensorLimits();
 
     converter->setValidRange_m(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()),
@@ -284,7 +283,7 @@ void cFileProcessor::process_file()
 
     if (!mAllowedExperimentNames.empty())
     {
-        if (!mAllowedExperimentNames.contains(converter->getExperimentTitle()))
+        if (!mAllowedExperimentNames.contains(getExperimentName(converter.get())))
         {
             std::string msg = "Incompatible Measurement File: ";
             msg += mInputFile.string();
@@ -292,6 +291,7 @@ void cFileProcessor::process_file()
             return;
         }
     }
+
     // Compute the Dolly Movement
     if (!converter->computeDollyMovement())
     {
@@ -646,3 +646,27 @@ void cFileProcessor::writeExperimentInfo(const cExperimentInfo& info, cExperimen
     serializer.writeEndOfHeader();
 }
 
+
+//-----------------------------------------------------------------------------
+std::string cFileProcessor::getExperimentName(const cFieldScanDataModel* data) const
+{
+    std::string name = data->getExperimentTitle();
+
+    if (name.empty())
+    {
+        name = data->getMeasurementTitle();
+
+        if (name.empty())
+        {
+            name = mInputFile.filename().string();
+        }
+    }
+
+    auto pos = name.find("_Pass");
+    if (pos != std::string::npos)
+    {
+        name.erase(pos);
+    }
+
+    return name;
+}

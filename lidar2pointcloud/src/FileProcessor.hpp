@@ -59,6 +59,9 @@ private:
 	void writeExperimentInfo(const cExperimentInfo& info, cExperimentSerializer& serializer);
 
 private:
+	std::string getExperimentName(const cFieldScanDataModel* data) const;
+
+private:
 	const int mID;
 
 	bool mSaveCompactPointCloud = true;
