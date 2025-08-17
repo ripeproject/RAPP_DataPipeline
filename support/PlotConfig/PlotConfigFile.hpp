@@ -53,6 +53,9 @@ public:
 	const cPlotConfigScan& front() const;
 	cPlotConfigScan& front();
 
+	const cPlotConfigScan& back() const;
+	cPlotConfigScan& back();
+
 	iterator		begin();
 	iterator		end();
 

@@ -59,6 +59,9 @@ public:
 	const cPlotConfigPlotInfo& front() const;
 	cPlotConfigPlotInfo& front();
 
+	const cPlotConfigPlotInfo& back() const;
+	cPlotConfigPlotInfo& back();
+
 	iterator		begin();
 	iterator		end();
 

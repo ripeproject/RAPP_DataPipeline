@@ -152,6 +152,9 @@ cPlotConfigScan::iterator cPlotConfigScan::find(const std::string& name)
 const cPlotConfigPlotInfo& cPlotConfigScan::front() const { return mPlots.front(); }
 cPlotConfigPlotInfo& cPlotConfigScan::front() { return mPlots.front(); }
 
+const cPlotConfigPlotInfo& cPlotConfigScan::back() const { return mPlots.back(); }
+cPlotConfigPlotInfo& cPlotConfigScan::back() { return mPlots.back(); }
+
 cPlotConfigScan::iterator cPlotConfigScan::begin() { return mPlots.begin(); }
 cPlotConfigScan::iterator cPlotConfigScan::end()   { return mPlots.end(); }
 

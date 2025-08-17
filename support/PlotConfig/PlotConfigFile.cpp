@@ -367,6 +367,8 @@ bool cPlotConfigFile::contains(const std::string& name)
 const cPlotConfigScan& cPlotConfigFile::front() const { return mScans.front(); }
 cPlotConfigScan&	   cPlotConfigFile::front() { return mScans.front(); }
 
+const cPlotConfigScan&	cPlotConfigFile::back() const { return mScans.back(); }
+cPlotConfigScan&		cPlotConfigFile::back() { return mScans.back(); }
 
 cPlotConfigFile::iterator cPlotConfigFile::begin() { return mScans.begin(); }
 cPlotConfigFile::iterator cPlotConfigFile::end() { return mScans.end(); }
