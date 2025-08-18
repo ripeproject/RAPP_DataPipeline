@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <limits>
+#include <optional>
 
 
 // Forward Declaration
@@ -39,9 +39,10 @@ public:
 
 	void setMeasurementName(const std::string& name);
 
+	void clearGroundLevel();
 	bool hasGroundLevel() const;
 
-	std::int32_t getGroundLevel_mm() const;
+	std::optional<std::int32_t> getGroundLevel_mm() const;
 	void setGroundLevel_mm(std::int32_t ground_level_mm);
 
 	bool empty() const;
@@ -90,7 +91,7 @@ private:
 	bool mDirty = false;
 
 	std::string mMeasurementName;
-	std::int32_t mGroundLevel_mm = std::numeric_limits<std::int32_t>::lowest();
+	std::optional<std::int32_t> mGroundLevel_mm;
 
 	std::vector<cPlotConfigPlotInfo> mPlots;
 

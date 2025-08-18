@@ -49,12 +49,7 @@ void cPlotConfigScan::setMeasurementName(const std::string& name)
 }
 
 
-bool cPlotConfigScan::hasGroundLevel() const
-{
-	return (mGroundLevel_mm != std::numeric_limits<std::int32_t>::lowest());
-}
-
-std::int32_t cPlotConfigScan::getGroundLevel_mm() const
+std::optional<std::int32_t> cPlotConfigScan::getGroundLevel_mm() const
 {
 	return mGroundLevel_mm;
 }
@@ -64,6 +59,18 @@ void cPlotConfigScan::setGroundLevel_mm(std::int32_t ground_level_mm)
 	mDirty |= (mGroundLevel_mm != ground_level_mm);
 	mGroundLevel_mm = ground_level_mm;
 }
+
+void cPlotConfigScan::clearGroundLevel()
+{
+	mDirty |= mGroundLevel_mm.has_value();
+	mGroundLevel_mm.reset();
+}
+
+bool cPlotConfigScan::hasGroundLevel() const
+{
+	return mGroundLevel_mm.has_value();
+}
+
 
 bool cPlotConfigScan::empty() const
 {
@@ -277,9 +284,9 @@ nlohmann::json cPlotConfigScan::save()
 
 	scanDoc["measurement name"] = mMeasurementName;
 
-	if (mGroundLevel_mm != std::numeric_limits<std::int32_t>::lowest())
+	if (mGroundLevel_mm.has_value())
 	{
-		scanDoc["ground_level_mm"] = mGroundLevel_mm;
+		scanDoc["ground_level_mm"] = mGroundLevel_mm.value();
 	}
 
 	nlohmann::json plots;
