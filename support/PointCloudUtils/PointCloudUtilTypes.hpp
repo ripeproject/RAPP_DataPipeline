@@ -13,12 +13,12 @@ namespace pointcloud
 		double displacement_m = 0.0;
 		double height_m = 0.0;
 
-		bool operator==(const sPointCloudTranslationInterpPoint_t& rhs)
+		bool operator==(const sPointCloudTranslationInterpPoint_t& rhs) const
 		{
 			return (displacement_m == rhs.displacement_m) && (height_m == rhs.height_m);
 		}
 
-		bool operator!=(const sPointCloudTranslationInterpPoint_t& rhs)
+		bool operator!=(const sPointCloudTranslationInterpPoint_t& rhs) const
 		{
 			return !operator==(rhs);
 		}
@@ -30,13 +30,13 @@ namespace pointcloud
 		double pitch_deg = 0.0;
 		double roll_deg = 0.0;
 
-		bool operator==(const sPointCloudRotationInterpPoint_t& rhs)
+		bool operator==(const sPointCloudRotationInterpPoint_t& rhs) const
 		{
 			return (displacement_m == rhs.displacement_m) && (pitch_deg == rhs.pitch_deg)
 				&& (roll_deg == rhs.roll_deg);
 		}
 
-		bool operator!=(const sPointCloudRotationInterpPoint_t& rhs)
+		bool operator!=(const sPointCloudRotationInterpPoint_t& rhs) const
 		{
 			return !operator==(rhs);
 		}
