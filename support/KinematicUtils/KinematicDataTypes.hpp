@@ -39,13 +39,13 @@ namespace kdt
 		double roll_deg = 0.0;
 		double yaw_deg = 0.0;
 
-		bool operator==(const sDollyOrientationInterpPoint_t& rhs)
+		bool operator==(const sDollyOrientationInterpPoint_t& rhs) const
 		{
 			return (distance_pct == rhs.distance_pct) && (pitch_deg == rhs.pitch_deg)
 				&& (roll_deg == rhs.roll_deg) && (yaw_deg == rhs.yaw_deg);
 		}
 
-		bool operator!=(const sDollyOrientationInterpPoint_t& rhs)
+		bool operator!=(const sDollyOrientationInterpPoint_t& rhs) const
 		{
 			return !operator==(rhs);
 		}
