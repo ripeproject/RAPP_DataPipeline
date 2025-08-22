@@ -4,6 +4,7 @@
 #include "PlotConfigBoundary.hpp"
 #include "PlotConfigIsolationMethod.hpp"
 #include "PlotConfigExclusion.hpp"
+#include "PlotConfigInclusion.hpp"
 
 
 //#include "PlotConfigScan.hpp"
@@ -61,6 +62,7 @@ private:
 	cPlotConfigBoundary mBounds;
 	cPlotConfigIsolationMethod mIsolationMethod;
 	std::vector<cPlotConfigExclusion> mExclusions;
+	std::vector<cPlotConfigInclusion> mInclusions;
 
 	friend class cPlotConfigCorrections;
 };
