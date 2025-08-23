@@ -2,6 +2,7 @@
 #pragma once
 
 #include "LidarMapConfigFile.hpp"
+#include "LidarMapConfigKinematics.hpp"
 
 #include "lidar2pointcloud.hpp"
 
@@ -46,8 +47,20 @@ public:
 	 * Ceres file.
 	 */
 	void setDefaults(const cLidarMapConfigDefaults& defaults);
-	void setParameters(const cLidarMapConfigScan& parameters);
+	void setParameters(const cLidarMapConfigKinematicParameters& parameters);
 
+	void setSensorMountPitch_deg(double pitch_deg);
+	void setSensorMountRoll_deg(double roll_deg);
+	void setSensorMountYaw_deg(double yaw_deg);
+
+	void setReferencePoint(const std::optional<rfm::rappPoint_t>& ref_point);
+
+	void setMinDistance_m(double dist_m);
+	void setMaxDistance_m(double dist_m);
+	void setMinAzimuth_deg(double az_deg);
+	void setMaxAzimuth_deg(double az_deg);
+	void setMinAltitude_deg(double alt_deg);
+	void setMaxAltitude_deg(double alt_deg);
 
 	void process_file();
 
@@ -79,8 +92,26 @@ private:
 
 	std::set<std::string> mAllowedExperimentNames;
 
+
+	// Dolly - Sensor Mounting Parameters
+	double mSensorMountPitch_deg;
+	double mSensorMountRoll_deg;
+	double mSensorMountYaw_deg;
+
+	// Reference point to normalize scans
+	std::optional<rfm::rappPoint_t> mReferencePoint;
+
+	// LiDAR Sensor Limits
+	double mMinDistance_m;
+	double mMaxDistance_m;
+	double mMinAzimuth_deg;
+	double mMaxAzimuth_deg;
+	double mMinAltitude_deg;
+	double mMaxAltitude_deg;
+
+
 	cLidarMapConfigDefaults mDefaults;
-	cLidarMapConfigScan mParameters;
+	cLidarMapConfigKinematicParameters mParameters;
 
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;

@@ -33,6 +33,15 @@ namespace
 	std::map<int, int> prev_progress;
 
 	const double INVALID_VALUE = -10000.0;
+
+	template<typename T>
+	T to_value(std::optional<T> value, T default_value)
+	{
+		if (value.has_value())
+			return value.value();
+
+		return default_value;
+	}
 }
 
 
@@ -270,6 +279,10 @@ int main(int argc, char** argv)
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
+		auto tm = extractMeasurementTimestamp(fe.filename);
+		int month = tm.tm_mon + 1;
+		int day = tm.tm_mday;
+
 		if (out_file.empty())
 		{
 			std::string out_filename = fe.filename;
@@ -283,12 +296,10 @@ int main(int argc, char** argv)
 			}
 		}
 
-		auto result = configData.find_by_filename(in_file.path().filename().string());
+		auto scanIt = configData.find_by_filename(in_file.path().filename().string());
 
-		if (!result.has_value())
+		if (scanIt == configData.end())
 			continue;
-
-		auto it = result.value();
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess, in_file, out_file);
 
@@ -302,8 +313,30 @@ int main(int argc, char** argv)
 		fp->savePlyFiles(options.getSavePlyFiles());
 		fp->plyUseBinaryFormat(options.getPlysUseBinaryFormat());
 
-		fp->setDefaults(defaults);
-		fp->setParameters(*it);
+		fp->setDefaults(configData.getDefaults());
+
+		const auto& mount = configData.getDefaults().getSensorOrientation();
+		fp->setSensorMountPitch_deg(to_value(scanIt->getSensorMountPitch_deg(), mount.getPitch_deg()));
+		fp->setSensorMountRoll_deg(to_value(scanIt->getSensorMountRoll_deg(), mount.getRoll_deg()));
+		fp->setSensorMountYaw_deg(to_value(scanIt->getSensorMountYaw_deg(), mount.getYaw_deg()));
+
+		fp->setReferencePoint(scanIt->getReferencePoint());
+
+		const auto& limits = configData.getDefaults().getSensorLimits();
+		fp->setMinDistance_m(to_value(scanIt->getMinDistance_m(), limits.getMinDistance_m()));
+		fp->setMaxDistance_m(to_value(scanIt->getMaxDistance_m(), limits.getMaxDistance_m()));
+
+		fp->setMinAzimuth_deg(to_value(scanIt->getMinAzimuth_deg(), limits.getMinAzimuth_deg()));
+		fp->setMaxAzimuth_deg(to_value(scanIt->getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
+
+		fp->setMinAltitude_deg(to_value(scanIt->getMinAltitude_deg(), limits.getMinAltitude_deg()));
+		fp->setMaxAltitude_deg(to_value(scanIt->getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
+
+		auto it = scanIt->find(month, day);
+		if (it == scanIt->end())
+			continue;
+
+		fp->setParameters(it->second);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 

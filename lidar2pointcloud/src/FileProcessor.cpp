@@ -89,10 +89,24 @@ void cFileProcessor::setDefaults(const cLidarMapConfigDefaults& defaults)
     mDefaults = defaults;
 }
 
-void cFileProcessor::setParameters(const cLidarMapConfigScan& parameters)
+void cFileProcessor::setParameters(const cLidarMapConfigKinematicParameters& parameters)
 {
     mParameters = parameters;
 }
+
+
+void cFileProcessor::setSensorMountPitch_deg(double pitch_deg) { mSensorMountPitch_deg = pitch_deg; }
+void cFileProcessor::setSensorMountRoll_deg(double roll_deg) { mSensorMountRoll_deg = roll_deg; }
+void cFileProcessor::setSensorMountYaw_deg(double yaw_deg) { mSensorMountYaw_deg = yaw_deg; }
+
+void cFileProcessor::setReferencePoint(const std::optional<rfm::rappPoint_t>& ref_point) { mReferencePoint = ref_point; }
+
+void cFileProcessor::setMinDistance_m(double dist_m) { mMinDistance_m = dist_m; }
+void cFileProcessor::setMaxDistance_m(double dist_m) { mMaxDistance_m = dist_m; }
+void cFileProcessor::setMinAzimuth_deg(double az_deg) { mMinAzimuth_deg = az_deg; }
+void cFileProcessor::setMaxAzimuth_deg(double az_deg) { mMaxAzimuth_deg = az_deg; }
+void cFileProcessor::setMinAltitude_deg(double alt_deg) { mMinAltitude_deg = alt_deg; }
+void cFileProcessor::setMaxAltitude_deg(double alt_deg) { mMaxAltitude_deg = alt_deg; }
 
 void cFileProcessor::process_file()
 {
@@ -100,16 +114,9 @@ void cFileProcessor::process_file()
 
     std::unique_ptr<cLidar2PointCloud> converter = std::make_unique<cLidar2PointCloud>(mID);
 
-    const auto& limits = mDefaults.getSensorLimits();
-
-    converter->setValidRange_m(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()),
-        to_value(mParameters.getMaxDistance_m(), limits.getMaxDistance_m()));
-
-    converter->setAzimuthWindow_deg(to_value(mParameters.getMinAzimuth_deg(), limits.getMinAzimuth_deg()),
-        to_value(mParameters.getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
-
-    converter->setAltitudeWindow_deg(to_value(mParameters.getMinAltitude_deg(), limits.getMinAltitude_deg()),
-        to_value(mParameters.getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
+    converter->setValidRange_m(mMinDistance_m, mMaxDistance_m);
+    converter->setAzimuthWindow_deg(mMinAzimuth_deg, mMaxAzimuth_deg);
+    converter->setAltitudeWindow_deg(mMinAltitude_deg, mMaxAltitude_deg);
 
     double startX_m = mParameters.getStart_X_m().has_value() ? mParameters.getStart_X_m().value() : -10.0;
     double startY_m = mParameters.getStart_Y_m().has_value() ? mParameters.getStart_Y_m().value() : -10.0;
@@ -206,9 +213,7 @@ void cFileProcessor::process_file()
 
     const auto& orientation = mDefaults.getSensorOrientation();
 
-    converter->setSensorMountOrientation(to_value(mParameters.getSensorMountYaw_deg(), orientation.getYaw_deg()),
-        to_value(mParameters.getSensorMountPitch_deg(), orientation.getPitch_deg()),
-        to_value(mParameters.getSensorMountRoll_deg(), orientation.getRoll_deg()));
+    converter->setSensorMountOrientation(mSensorMountYaw_deg, mSensorMountPitch_deg, mSensorMountRoll_deg);
 
     const auto& options = mDefaults.getOptions();
 
@@ -351,10 +356,9 @@ void cFileProcessor::process_file()
     }
 
     // Shift the point cloud to match the reference point
-    auto ref_point = mParameters.getReferencePoint();
-    if (ref_point.has_value())
+    if (mReferencePoint.has_value())
     {
-        auto rp1 = ref_point.value();
+        auto rp1 = mReferencePoint.value();
         
         if (pointCloud.referenceValid())
         {
@@ -389,16 +393,9 @@ void cFileProcessor::process_file()
         auto dolly_path = converter->getComputedDollyPath();
         saver->setKinematicModel(converter->getKinematicModel(), dolly_path);
 
-        const auto& limits = mDefaults.getSensorLimits();
-
-        saver->setRangeWindow_m(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()),
-            to_value(mParameters.getMaxDistance_m(), limits.getMaxDistance_m()));
-
-        saver->setAzimuthWindow_deg(to_value(mParameters.getMinAzimuth_deg(), limits.getMinAzimuth_deg()),
-            to_value(mParameters.getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
-
-        saver->setAltitudeWindow_deg(to_value(mParameters.getMinAltitude_deg(), limits.getMinAltitude_deg()),
-            to_value(mParameters.getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
+        saver->setRangeWindow_m(mMinDistance_m, mMaxDistance_m);
+        saver->setAzimuthWindow_deg(mMinAzimuth_deg, mMaxAzimuth_deg);
+        saver->setAltitudeWindow_deg(mMinAltitude_deg, mMaxAltitude_deg);
 
         saver->save(mFlattenPointCloud);
     }
@@ -478,17 +475,9 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
 
     pointCloudSerializer.write(data.getKinematicModel());
 
-
-    const auto& limits = mDefaults.getSensorLimits();
-
-    pointCloudSerializer.writeDistanceWindow(to_value(mParameters.getMinDistance_m(), limits.getMinDistance_m()), 
-        to_value(mParameters.getMaxDistance_m(), limits.getMaxDistance_m()));
-
-    pointCloudSerializer.writeAzimuthWindow(to_value(mParameters.getMinAzimuth_deg(), limits.getMinAzimuth_deg()),
-        to_value(mParameters.getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
-
-    pointCloudSerializer.writeAltitudeWindow(to_value(mParameters.getMinAltitude_deg(), limits.getMinAltitude_deg()),
-        to_value(mParameters.getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
+    pointCloudSerializer.writeDistanceWindow(mMinDistance_m, mMaxDistance_m);
+    pointCloudSerializer.writeAzimuthWindow(mMinAzimuth_deg, mMaxAzimuth_deg);
+    pointCloudSerializer.writeAltitudeWindow(mMinAltitude_deg, mMaxAltitude_deg);
 
     const auto& path = data.getComputedDollyPath();
     if (!path.empty())
