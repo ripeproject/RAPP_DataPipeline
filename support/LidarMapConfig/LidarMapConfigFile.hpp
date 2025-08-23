@@ -4,7 +4,6 @@
 #include "LidarMapConfigOptions.hpp"
 #include "LidarMapConfigDefaults.hpp"
 #include "LidarMapConfigScan.hpp"
-#include "LidarMapConfigCatalog.hpp"
 
 #include <vector>
 #include <set>
@@ -18,10 +17,17 @@
 class cLidarMapConfigFile
 {
 public:
+	typedef std::vector<cLidarMapConfigScan> LidarScan_t;
+
+	typedef LidarScan_t::iterator				iterator;
+	typedef LidarScan_t::const_iterator			const_iterator;
+
+/*
 	typedef std::map<int, cLidarMapConfigCatalog> LidarCatalog_t;
 
 	typedef LidarCatalog_t::iterator				iterator;
 	typedef LidarCatalog_t::const_iterator			const_iterator;
+*/
 
 public:
 	cLidarMapConfigFile();
@@ -59,43 +65,29 @@ public:
 	bool contains(const std::string& name) const;
 	bool contains_by_filename(const std::string& measurement_filename) const;
 
-	const cLidarMapConfigCatalog& front() const;
-	cLidarMapConfigCatalog& front();
-
 	iterator		begin();
 	iterator		end();
 
 	const_iterator	begin() const;
 	const_iterator	end() const;
 
-	std::optional<cLidarMapConfigCatalog::const_iterator>	find_by_filename(const std::string& measurement_filename) const;
-	std::optional<cLidarMapConfigCatalog::iterator>			find_by_filename(const std::string& measurement_filename);
+	const cLidarMapConfigScan& front() const;
+	cLidarMapConfigScan& front();
 
-	const_iterator	find(const int date) const;
-	iterator		find(const int date);
+	const cLidarMapConfigScan& back() const;
+	cLidarMapConfigScan& back();
 
-	const_iterator	find(const int date, const std::string& measurement_name) const;
-	iterator		find(const int date, const std::string& measurement_name);
+	const_iterator	find_by_filename(const std::string& experiment_filename) const;
+	iterator		find_by_filename(const std::string& experiment_filename);
 
-	const_iterator	find(const int month, const int day) const;
-	iterator		find(const int month, const int day);
+	const_iterator	find_by_measurement_name(const std::string& name) const;
+	iterator		find_by_measurement_name(const std::string& name);
 
-	const_iterator	find(const int month, const int day, const std::string& measurement_name) const;
-	iterator		find(const int month, const int day, const std::string& measurement_name);
+	cLidarMapConfigScan& add(const std::string& name);
+	void remove(const std::string& name);
 
-	const_iterator	find_exact(const int date) const;
-	iterator		find_exact(const int date);
-
-	const_iterator	find_exact(const int month, const int day) const;
-	iterator		find_exact(const int month, const int day);
-
-
-	cLidarMapConfigCatalog& add(const int month, const int day);
-	cLidarMapConfigScan& add(const int month, const int day, const std::string& name);
-//	void remove(const std::string& name);
-
-//	const cLidarMapConfigScan& operator[](int index) const;
-//	cLidarMapConfigScan& operator[](int index);
+	const cLidarMapConfigScan& operator[](int index) const;
+	cLidarMapConfigScan& operator[](int index);
 
 private:
 	std::string mFileName;
@@ -110,6 +102,10 @@ private:
 
 	std::set<std::string> mMeasurementNames;
 
+	LidarScan_t mScans;
+
+/*
 	LidarCatalog_t mCatalog;
+*/
 };
 

@@ -9,6 +9,15 @@
 #include <algorithm>
 #include <stdexcept>
 
+
+namespace lidar_config
+{
+	inline int to_date(int month, int day)
+	{
+		return month * 100 + day;
+	}
+}
+
 namespace
 {
 	bool operator!=(const std::optional<rfm::rappPoint_t>& lhs, const std::optional<rfm::rappPoint_t>& rhs)
@@ -26,37 +35,49 @@ namespace
 cLidarMapConfigScan::cLidarMapConfigScan()
 {}
 
-const int cLidarMapConfigScan::date() const
-{
-	return (mEffectiveMonth * 100) + mEffectiveDay;
-}
-
-const int cLidarMapConfigScan::month() const
-{
-	return mEffectiveMonth;
-}
-
-const int cLidarMapConfigScan::day() const
-{
-	return mEffectiveDay;
-}
-
+cLidarMapConfigScan::cLidarMapConfigScan(const std::string& name)
+: mMeasurementName(name)
+{}
 
 void cLidarMapConfigScan::clear()
 {
 	mDirty = false;
 
 	mMeasurementName.clear();
+	mSensorMountPitch_deg.reset();
+	mSensorMountRoll_deg.reset();
+	mSensorMountYaw_deg.reset();
+	mReferencePoint.reset();
+
+	mMinDistance_m.reset();
+	mMaxDistance_m.reset();
+	mMinAzimuth_deg.reset();
+	mMaxAzimuth_deg.reset();
+	mMinAltitude_deg.reset();
+	mMaxAltitude_deg.reset();
+
+	mKinematics.clear();
 }
 
 bool cLidarMapConfigScan::empty() const
 {
+	bool has_value = false;
+
+	has_value |= mMinDistance_m.has_value();
+	has_value |= mMaxDistance_m.has_value();
+	has_value |= mMinAzimuth_deg.has_value();
+	has_value |= mMaxAzimuth_deg.has_value();
+	has_value |= mMinAltitude_deg.has_value();
+	has_value |= mMaxAltitude_deg.has_value();
+
 	return mMeasurementName.empty();
 }
 
 bool cLidarMapConfigScan::isDirty() const
 {
 	bool dirty = mDirty;
+
+	dirty |= mKinematics.isDirty();
 
 	return dirty;
 }
@@ -66,10 +87,14 @@ const std::string& cLidarMapConfigScan::getMeasurementName() const
 	return mMeasurementName;
 }
 
-const std::optional<eKinematicModel>& cLidarMapConfigScan::getKinematicModel() const { return mKinematicModel; }
-const std::optional<eOrientationModel>& cLidarMapConfigScan::getOrientationModel() const { return mOrientationModel; }
-const std::optional<eTranslateToGroundModel>& cLidarMapConfigScan::getTranslateToGroundModel() const { return mTranslateToGroundModel; }
-const std::optional<eRotateToGroundModel>& cLidarMapConfigScan::getRotateToGroundModel() const { return mRotateToGroundModel; }
+const std::optional<double>& cLidarMapConfigScan::getSensorMountPitch_deg() const { return mSensorMountPitch_deg; }
+const std::optional<double>& cLidarMapConfigScan::getSensorMountRoll_deg() const { return mSensorMountRoll_deg; }
+const std::optional<double>& cLidarMapConfigScan::getSensorMountYaw_deg() const { return mSensorMountYaw_deg; }
+
+const std::optional<rfm::rappPoint_t>& cLidarMapConfigScan::getReferencePoint() const
+{
+	return mReferencePoint; 
+}
 
 const std::optional<double>& cLidarMapConfigScan::getMinDistance_m() const { return mMinDistance_m; }
 const std::optional<double>& cLidarMapConfigScan::getMaxDistance_m() const { return mMaxDistance_m; }
@@ -78,50 +103,515 @@ const std::optional<double>& cLidarMapConfigScan::getMaxAzimuth_deg() const { re
 const std::optional<double>& cLidarMapConfigScan::getMinAltitude_deg() const { return mMinAltitude_deg; }
 const std::optional<double>& cLidarMapConfigScan::getMaxAltitude_deg() const { return mMaxAltitude_deg; }
 
-const std::optional<double>& cLidarMapConfigScan::getVx_mmps() const { return mVx_mmps; }
-const std::optional<double>& cLidarMapConfigScan::getVy_mmps() const { return mVy_mmps; }
-const std::optional<double>& cLidarMapConfigScan::getVz_mmps() const { return mVz_mmps; }
+const std::optional<eKinematicModel>* cLidarMapConfigScan::getKinematicModel(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
 
-const std::optional<double>& cLidarMapConfigScan::getSensorMountPitch_deg() const { return mSensorMountPitch_deg; }
-const std::optional<double>& cLidarMapConfigScan::getSensorMountRoll_deg() const { return mSensorMountRoll_deg; }
-const std::optional<double>& cLidarMapConfigScan::getSensorMountYaw_deg() const { return mSensorMountYaw_deg; }
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getKinematicModel());
 
-const std::optional<double>& cLidarMapConfigScan::getSensorPitchOffset_deg() const { return mSensorPitchOffset_deg; }
-const std::optional<double>& cLidarMapConfigScan::getSensorRollOffset_deg() const { return mSensorRollOffset_deg; }
-const std::optional<double>& cLidarMapConfigScan::getSensorYawOffset_deg() const { return mSensorYawOffset_deg; }
+	return &(it->second.getKinematicModel());
+}
 
-const std::optional<double>& cLidarMapConfigScan::getStartPitchOffset_deg() const { return mStartPitchOffset_deg; }
-const std::optional<double>& cLidarMapConfigScan::getStartRollOffset_deg() const { return mStartRollOffset_deg; }
-const std::optional<double>& cLidarMapConfigScan::getStartYawOffset_deg() const { return mStartYawOffset_deg; }
+const std::optional<eKinematicModel>* cLidarMapConfigScan::getKinematicModel(int month, int day) const
+{
+	return getKinematicModel(lidar_config::to_date(month, day));
+}
 
-const std::optional<double>& cLidarMapConfigScan::getEndPitchOffset_deg() const { return mEndPitchOffset_deg; }
-const std::optional<double>& cLidarMapConfigScan::getEndRollOffset_deg() const { return mEndRollOffset_deg; }
-const std::optional<double>& cLidarMapConfigScan::getEndYawOffset_deg() const { return mEndYawOffset_deg; }
+const std::optional<eOrientationModel>* cLidarMapConfigScan::getOrientationModel(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
 
-const std::vector<kdt::sDollyOrientationInterpPoint_t>& cLidarMapConfigScan::getOrientationTable() const { return mOrientationTable; }
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getOrientationModel());
 
-const std::optional<bool>&   cLidarMapConfigScan::getTranslateToGround() const { return mTranslateToGround; }
-const std::optional<double>& cLidarMapConfigScan::getTranslateDistance_m() const { return mTranslateDistance_m; }
-const std::optional<double>& cLidarMapConfigScan::getTranslateThreshold_pct() const { return mTranslateThreshold_pct; }
+	return &(it->second.getOrientationModel());
+}
 
-const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& cLidarMapConfigScan::getTranslateTable() const { return mTranslateTable; }
+const std::optional<eOrientationModel>* cLidarMapConfigScan::getOrientationModel(int month, int day) const
+{
+	return getOrientationModel(lidar_config::to_date(month, day));
+}
 
-const std::optional<bool>&   cLidarMapConfigScan::getRotateToGround() const { return mRotateToGround; }
-const std::optional<double>& cLidarMapConfigScan::getRotatePitch_deg() const { return mRotatePitch_deg; }
-const std::optional<double>& cLidarMapConfigScan::getRotateRoll_deg() const { return mRotateRoll_deg; }
-const std::optional<double>& cLidarMapConfigScan::getRotateThreshold_pct() const { return mRotateThreshold_pct; }
+const std::optional<eTranslateToGroundModel>* cLidarMapConfigScan::getTranslateToGroundModel(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
 
-const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& cLidarMapConfigScan::getRotateTable() const { return mRotateTable; }
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getTranslateToGroundModel());
 
-const std::optional<double>& cLidarMapConfigScan::getStart_X_m() const { return mStart_X_m; }
-const std::optional<double>& cLidarMapConfigScan::getStart_Y_m() const { return mStart_Y_m; }
-const std::optional<double>& cLidarMapConfigScan::getStart_Z_m() const { return mStart_Z_m; }
+	return &(it->second.getTranslateToGroundModel());
+}
 
-const std::optional<double>& cLidarMapConfigScan::getEnd_X_m() const { return mEnd_X_m; }
-const std::optional<double>& cLidarMapConfigScan::getEnd_Y_m() const { return mEnd_Y_m; }
-const std::optional<double>& cLidarMapConfigScan::getEnd_Z_m() const { return mEnd_Z_m; }
+const std::optional<eTranslateToGroundModel>* cLidarMapConfigScan::getTranslateToGroundModel(int month, int day) const
+{
+	return getTranslateToGroundModel(lidar_config::to_date(month, day));
+}
 
-const std::optional<rfm::rappPoint_t>& cLidarMapConfigScan::getReferencePoint() const { return mReferencePoint; }
+const std::optional<eRotateToGroundModel>* cLidarMapConfigScan::getRotateToGroundModel(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getRotateToGroundModel());
+
+	return &(it->second.getRotateToGroundModel());
+}
+
+const std::optional<eRotateToGroundModel>* cLidarMapConfigScan::getRotateToGroundModel(int month, int day) const
+{
+	return getRotateToGroundModel(lidar_config::to_date(month, day));
+}
+
+
+/*** Sensor Orientation Parameters - Constant: Angles ***/
+const std::optional<double>* cLidarMapConfigScan::getSensorPitchOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getSensorPitchOffset_deg());
+
+	return &(it->second.getSensorPitchOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getSensorRollOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getSensorRollOffset_deg());
+
+	return &(it->second.getSensorRollOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getSensorYawOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getSensorYawOffset_deg());
+
+	return &(it->second.getSensorYawOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getSensorPitchOffset_deg(int month, int day) const { return getSensorPitchOffset_deg(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getSensorRollOffset_deg(int month, int day) const { return getSensorRollOffset_deg(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getSensorYawOffset_deg(int month, int day) const { return getSensorYawOffset_deg(lidar_config::to_date(month, day)); }
+
+/*** Sensor Orientation Parameters - Linear: Start and Stop Angles ***/
+const std::optional<double>* cLidarMapConfigScan::getStartPitchOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getStartPitchOffset_deg());
+
+	return &(it->second.getStartPitchOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getStartRollOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getStartRollOffset_deg());
+
+	return &(it->second.getStartRollOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getStartYawOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getStartYawOffset_deg());
+
+	return &(it->second.getStartYawOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getEndPitchOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getEndPitchOffset_deg());
+
+	return &(it->second.getEndPitchOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getEndRollOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getEndRollOffset_deg());
+
+	return &(it->second.getEndRollOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getEndYawOffset_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getEndYawOffset_deg());
+
+	return &(it->second.getEndYawOffset_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getStartPitchOffset_deg(int month, int day) const { return getStartPitchOffset_deg(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getStartRollOffset_deg(int month, int day) const { return getStartRollOffset_deg(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getStartYawOffset_deg(int month, int day) const { return getStartYawOffset_deg(lidar_config::to_date(month, day)); }
+
+const std::optional<double>* cLidarMapConfigScan::getEndPitchOffset_deg(int month, int day) const { return getEndPitchOffset_deg(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getEndRollOffset_deg(int month, int day) const { return getEndRollOffset_deg(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getEndYawOffset_deg(int month, int day) const { return getEndYawOffset_deg(lidar_config::to_date(month, day)); }
+
+/*** Sensor Orientation Parameters - Intrep Table: Data Points ***/
+const std::vector<kdt::sDollyOrientationInterpPoint_t>* cLidarMapConfigScan::getOrientationTable(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getOrientationTable());
+
+	return &(it->second.getOrientationTable());
+}
+
+const std::vector<kdt::sDollyOrientationInterpPoint_t>* cLidarMapConfigScan::getOrientationTable(int month, int day) const
+{
+	return getOrientationTable(lidar_config::to_date(month, day));
+}
+
+/*** Sensor Translation Parameters - Start/End Positions ***/
+const std::optional<double>* cLidarMapConfigScan::getStart_X_m(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getStart_X_m());
+
+	return &(it->second.getStart_X_m());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getStart_Y_m(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getStart_Y_m());
+
+	return &(it->second.getStart_Y_m());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getStart_Z_m(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getStart_Z_m());
+
+	return &(it->second.getStart_Z_m());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getEnd_X_m(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getEnd_X_m());
+
+	return &(it->second.getEnd_X_m());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getEnd_Y_m(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getEnd_Y_m());
+
+	return &(it->second.getEnd_Y_m());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getEnd_Z_m(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getEnd_Z_m());
+
+	return &(it->second.getEnd_Z_m());
+}
+
+/*** Sensor Translation Parameters - Constant: Speeds ***/
+const std::optional<double>* cLidarMapConfigScan::getVx_mmps(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getVx_mmps());
+
+	return &(it->second.getVx_mmps());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getVy_mmps(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getVy_mmps());
+
+	return &(it->second.getVy_mmps());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getVz_mmps(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getVz_mmps());
+
+	return &(it->second.getVz_mmps());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getVx_mmps(int month, int day) const { return getVx_mmps(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getVy_mmps(int month, int day) const { return getVy_mmps(lidar_config::to_date(month, day)); }
+const std::optional<double>* cLidarMapConfigScan::getVz_mmps(int month, int day) const { return getVz_mmps(lidar_config::to_date(month, day)); }
+
+/*** Translate Point Cloud Parameters ***/
+const std::optional<bool>* cLidarMapConfigScan::getTranslateToGround(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getTranslateToGround());
+
+	return &(it->second.getTranslateToGround());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getTranslateDistance_m(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getTranslateDistance_m());
+
+	return &(it->second.getTranslateDistance_m());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getTranslateThreshold_pct(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getTranslateThreshold_pct());
+
+	return &(it->second.getTranslateThreshold_pct());
+}
+
+const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>* cLidarMapConfigScan::getTranslateTable(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getTranslateTable());
+
+	return &(it->second.getTranslateTable());
+}
+
+/*** Rotate Point Cloud Parameters ***/
+const std::optional<bool>* cLidarMapConfigScan::getRotateToGround(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getRotateToGround());
+
+	return &(it->second.getRotateToGround());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getRotatePitch_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getRotatePitch_deg());
+
+	return &(it->second.getRotatePitch_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getRotateRoll_deg(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getRotateRoll_deg());
+
+	return &(it->second.getRotateRoll_deg());
+}
+
+const std::optional<double>* cLidarMapConfigScan::getRotateThreshold_pct(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getRotateThreshold_pct());
+
+	return &(it->second.getRotateThreshold_pct());
+}
+
+const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>* cLidarMapConfigScan::getRotateTable(int date) const
+{
+	if (mKinematics.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mKinematics.end())
+		return &(mKinematics.begin()->second.getRotateTable());
+
+	return &(it->second.getRotateTable());
+}
+
+
+bool cLidarMapConfigScan::contains(const int date) const
+{
+	return mKinematics.contains(date);
+}
+
+bool cLidarMapConfigScan::contains(const int month, const int day) const
+{
+	return contains(lidar_config::to_date(month, day));
+}
+
+const cLidarMapConfigKinematicParameters& cLidarMapConfigScan::front() const
+{
+	if (mKinematics.empty())
+		throw std::logic_error("oops");
+
+	return mKinematics.front();
+}
+
+cLidarMapConfigKinematicParameters& cLidarMapConfigScan::front()
+{
+	if (mKinematics.empty())
+		throw std::logic_error("oops");
+
+	return mKinematics.front();
+}
+
+cLidarMapConfigScan::iterator cLidarMapConfigScan::begin()
+{
+	return mKinematics.begin();
+}
+
+cLidarMapConfigScan::iterator cLidarMapConfigScan::end()
+{
+	return mKinematics.end();
+}
+
+cLidarMapConfigScan::const_iterator	cLidarMapConfigScan::begin() const
+{
+	return mKinematics.begin();
+}
+
+cLidarMapConfigScan::const_iterator	cLidarMapConfigScan::end() const
+{
+	return mKinematics.end();
+}
+
+cLidarMapConfigScan::const_iterator	cLidarMapConfigScan::find(const int date) const
+{
+	return mKinematics.find(date);
+}
+
+cLidarMapConfigScan::iterator cLidarMapConfigScan::find(const int date)
+{
+	return mKinematics.find(date);
+}
+
+cLidarMapConfigScan::const_iterator	cLidarMapConfigScan::find(const int month, const int day) const
+{
+	return mKinematics.find(month, day);
+}
+
+cLidarMapConfigScan::iterator cLidarMapConfigScan::find(const int month, const int day)
+{
+	return mKinematics.find(month, day);
+}
+
+cLidarMapConfigScan::const_iterator	cLidarMapConfigScan::find_exact(const int month, const int day) const
+{
+	return mKinematics.find_exact(month, day);
+}
+
+cLidarMapConfigScan::iterator cLidarMapConfigScan::find_exact(const int month, const int day)
+{
+	return mKinematics.find_exact(month, day);
+}
 
 
 void cLidarMapConfigScan::setMeasurementName(const std::string& name)
@@ -130,48 +620,48 @@ void cLidarMapConfigScan::setMeasurementName(const std::string& name)
 	mMeasurementName = name;
 }
 
-void cLidarMapConfigScan::resetKinematicModel()
+void cLidarMapConfigScan::resetSensorMountPitch_deg()
 {
-	reset(mKinematicModel);
+	reset(mSensorMountPitch_deg);
 }
 
-void cLidarMapConfigScan::setKinematicModel(const std::optional<eKinematicModel>& model)
+void cLidarMapConfigScan::resetSensorMountRoll_deg()
 {
-	mDirty |= (mKinematicModel != model);
-	mKinematicModel = model;
+	reset(mSensorMountRoll_deg);
 }
 
-void cLidarMapConfigScan::resetOrientationModel()
+void cLidarMapConfigScan::resetSensorMountYaw_deg()
 {
-	reset(mOrientationModel);
+	reset(mSensorMountYaw_deg);
 }
 
-void cLidarMapConfigScan::setOrientationModel(const std::optional<eOrientationModel>& model)
+void cLidarMapConfigScan::setSensorMountPitch_deg(const std::optional<double>& pitch_deg)
 {
-	mDirty |= (mOrientationModel != model);
-	mOrientationModel = model;
+	mDirty |= (mSensorMountPitch_deg != pitch_deg);
+	mSensorMountPitch_deg = pitch_deg;
 }
 
-void cLidarMapConfigScan::resetTranslateToGroundModel()
+void cLidarMapConfigScan::setSensorMountRoll_deg(const std::optional<double>& roll_deg)
 {
-	reset(mTranslateToGroundModel);
+	mDirty |= (mSensorMountRoll_deg != roll_deg);
+	mSensorMountRoll_deg = roll_deg;
 }
 
-void cLidarMapConfigScan::setTranslateToGroundModel(const std::optional<eTranslateToGroundModel>& model)
+void cLidarMapConfigScan::setSensorMountYaw_deg(const std::optional<double>& yaw_deg)
 {
-	mDirty |= (mTranslateToGroundModel != model);
-	mTranslateToGroundModel = model;
+	mDirty |= (mSensorMountYaw_deg != yaw_deg);
+	mSensorMountYaw_deg = yaw_deg;
 }
 
-void cLidarMapConfigScan::resetRotateToGroundModel()
+void cLidarMapConfigScan::resetReferencePoint()
 {
-	reset(mRotateToGroundModel);
+	reset(mReferencePoint);
 }
 
-void cLidarMapConfigScan::setRotateToGroundModel(const std::optional<eRotateToGroundModel>& model)
+void cLidarMapConfigScan::setReferencePoint(const std::optional<rfm::rappPoint_t>& rp)
 {
-	mDirty |= (mRotateToGroundModel != model);
-	mRotateToGroundModel = model;
+	mDirty |= (mReferencePoint != rp);
+	mReferencePoint = rp;
 }
 
 void cLidarMapConfigScan::resetMinDistance_m()
@@ -240,352 +730,16 @@ void cLidarMapConfigScan::setMaxAltitude_deg(const std::optional<double>& altitu
 	mMaxAltitude_deg = altitude_deg;
 }
 
-void cLidarMapConfigScan::setVx_mmps(const std::optional<double>& vx_mmps)
+cLidarMapConfigKinematicParameters& cLidarMapConfigScan::add(const int date)
 {
-	mDirty |= (mVx_mmps != vx_mmps);
-	mVx_mmps = vx_mmps;
+	mDirty = true;
+	return mKinematics.add(date);
 }
 
-void cLidarMapConfigScan::setVy_mmps(const std::optional<double>& vy_mmps)
+cLidarMapConfigKinematicParameters& cLidarMapConfigScan::add(const int month, const int day)
 {
-	mDirty |= (mVy_mmps != vy_mmps);
-	mVy_mmps = vy_mmps;
-}
-
-void cLidarMapConfigScan::setVz_mmps(const std::optional<double>& vz_mmps)
-{
-	mDirty |= (mVz_mmps != vz_mmps);
-	mVz_mmps = vz_mmps;
-}
-
-void cLidarMapConfigScan::resetSensorMountPitch_deg()
-{
-	reset(mSensorMountPitch_deg);
-}
-
-void cLidarMapConfigScan::resetSensorMountRoll_deg()
-{
-	reset(mSensorMountRoll_deg);
-}
-
-void cLidarMapConfigScan::resetSensorMountYaw_deg()
-{
-	reset(mSensorMountYaw_deg);
-}
-
-void cLidarMapConfigScan::setSensorMountPitch_deg(const std::optional<double>& pitch_deg)
-{
-	mDirty |= (mSensorMountPitch_deg != pitch_deg);
-	mSensorMountPitch_deg = pitch_deg;
-}
-
-void cLidarMapConfigScan::setSensorMountRoll_deg(const std::optional<double>& roll_deg)
-{
-	mDirty |= (mSensorMountRoll_deg != roll_deg);
-	mSensorMountRoll_deg = roll_deg;
-}
-
-void cLidarMapConfigScan::setSensorMountYaw_deg(const std::optional<double>& yaw_deg)
-{
-	mDirty |= (mSensorMountYaw_deg != yaw_deg);
-	mSensorMountYaw_deg = yaw_deg;
-}
-
-void cLidarMapConfigScan::setSensorPitchOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mSensorPitchOffset_deg != offset_deg);
-	mSensorPitchOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setSensorRollOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mSensorRollOffset_deg != offset_deg);
-	mSensorRollOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setSensorYawOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mSensorYawOffset_deg != offset_deg);
-	mSensorYawOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setStartPitchOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mStartPitchOffset_deg != offset_deg);
-	mStartPitchOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setStartRollOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mStartRollOffset_deg != offset_deg);
-	mStartRollOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setStartYawOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mStartYawOffset_deg != offset_deg);
-	mStartYawOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setEndPitchOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mEndPitchOffset_deg != offset_deg);
-	mEndPitchOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setEndRollOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mEndRollOffset_deg != offset_deg);
-	mEndRollOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::setEndYawOffset_deg(const std::optional<double>& offset_deg)
-{
-	mDirty |= (mEndYawOffset_deg != offset_deg);
-	mEndYawOffset_deg = offset_deg;
-}
-
-void cLidarMapConfigScan::clearOrientationTable()
-{
-	mDirty |= !mOrientationTable.empty();
-	mOrientationTable.clear();
-}
-
-void cLidarMapConfigScan::setOrientationTable(const std::vector<kdt::sDollyOrientationInterpPoint_t>& table)
-{
-	if (!mDirty)
-	{
-		if (mOrientationTable.size() != table.size())
-		{
-			mDirty = true;
-		}
-		else
-		{
-			auto n = mOrientationTable.size();
-			for (size_t i = 0; i < n; ++i)
-			{
-				if (mOrientationTable[i] != table[i])
-				{
-					mDirty = true;
-					break;
-				}
-			}
-		}
-	}
-
-	mOrientationTable = table;
-}
-
-void cLidarMapConfigScan::setTranslateToGround(const std::optional<bool>& enable)
-{
-	mDirty |= (mTranslateToGround != enable);
-	mTranslateToGround = enable;
-}
-
-void cLidarMapConfigScan::setTranslateDistance_m(const std::optional<double>& dist_m)
-{
-	mDirty |= (mTranslateDistance_m != dist_m);
-	mTranslateDistance_m = dist_m;
-}
-
-void cLidarMapConfigScan::setTranslateThreshold_pct(const std::optional<double>& threshold_pct)
-{
-	mDirty |= (mTranslateThreshold_pct != threshold_pct);
-	mTranslateThreshold_pct = threshold_pct;
-}
-
-void cLidarMapConfigScan::clearTranslateTable()
-{
-	mDirty |= !mTranslateTable.empty();
-	mTranslateTable.clear();
-}
-
-void cLidarMapConfigScan::setTranslateTable(const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& table)
-{
-	if (!mDirty)
-	{
-		if (mTranslateTable.size() != table.size())
-		{
-			mDirty = true;
-		}
-		else
-		{
-			auto n = mTranslateTable.size();
-			for (size_t i = 0; i < n; ++i)
-			{
-				if (mTranslateTable[i] != table[i])
-				{
-					mDirty = true;
-					break;
-				}
-			}
-		}
-	}
-
-	mTranslateTable = table;
-}
-
-void cLidarMapConfigScan::setRotateToGround(const std::optional<bool>& enable)
-{
-	mDirty |= (mRotateToGround != enable);
-	mRotateToGround = enable;
-}
-
-void cLidarMapConfigScan::setRotateAngles_deg(const std::optional<double>& pitch_deg, const std::optional<double>& roll_deg)
-{
-	mDirty |= (mRotatePitch_deg != pitch_deg) || (mRotateRoll_deg != roll_deg);
-	mRotatePitch_deg = pitch_deg;
-	mRotateRoll_deg = roll_deg;
-}
-
-void cLidarMapConfigScan::setRotateThreshold_pct(const std::optional<double>& threshold_pct)
-{
-	mDirty |= (mRotateThreshold_pct != threshold_pct);
-	mRotateThreshold_pct = threshold_pct;
-}
-
-void cLidarMapConfigScan::clearRotateTable()
-{
-	mDirty |= !mRotateTable.empty();
-	mRotateTable.clear();
-}
-
-void cLidarMapConfigScan::setRotateTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table)
-{
-	if (!mDirty)
-	{
-		if (mRotateTable.size() != table.size())
-		{
-			mDirty = true;
-		}
-		else
-		{
-			auto n = mRotateTable.size();
-			for (size_t i = 0; i < n; ++i)
-			{
-				if (mRotateTable[i] != table[i])
-				{
-					mDirty = true;
-					break;
-				}
-			}
-		}
-	}
-
-	mRotateTable = table;
-}
-
-void cLidarMapConfigScan::setStart_X_m(const std::optional<double>& x_m)
-{
-	mDirty |= (mStart_X_m != x_m);
-	mStart_X_m = x_m;
-}
-
-void cLidarMapConfigScan::setStart_Y_m(const std::optional<double>& y_m)
-{
-	mDirty |= (mStart_Y_m != y_m);
-	mStart_Y_m = y_m;
-}
-
-void cLidarMapConfigScan::setStart_Z_m(const std::optional<double>& z_m)
-{
-	mDirty |= (mStart_Z_m != z_m);
-	mStart_Z_m = z_m;
-}
-
-void cLidarMapConfigScan::setStart_X_mm(const std::optional<double>& x_mm)
-{
-	std::optional<double> x_m = x_mm;
-
-	if (x_m.has_value())
-		x_m = x_mm.value() * nConstants::MM_TO_M;
-
-	setStart_X_m(x_m);
-}
-
-void cLidarMapConfigScan::setStart_Y_mm(const std::optional<double>& y_mm)
-{
-	std::optional<double> y_m = y_mm;
-
-	if (y_m.has_value())
-		y_m = y_mm.value() * nConstants::MM_TO_M;
-
-	setStart_Y_m(y_m);
-}
-
-void cLidarMapConfigScan::setStart_Z_mm(const std::optional<double>& z_mm)
-{
-	std::optional<double> z_m = z_mm;
-
-	if (z_m.has_value())
-		z_m = z_mm.value() * nConstants::MM_TO_M;
-
-	setStart_Z_m(z_m);
-}
-
-void cLidarMapConfigScan::setEnd_X_m(const std::optional<double>& x_m)
-{
-	mDirty |= (mEnd_X_m != x_m);
-	mEnd_X_m = x_m;
-}
-
-void cLidarMapConfigScan::setEnd_Y_m(const std::optional<double>& y_m)
-{
-	mDirty |= (mEnd_Y_m != y_m);
-	mEnd_Y_m = y_m;
-}
-
-void cLidarMapConfigScan::setEnd_Z_m(const std::optional<double>& z_m)
-{
-	mDirty |= (mEnd_Z_m != z_m);
-	mEnd_Z_m = z_m;
-}
-
-void cLidarMapConfigScan::setEnd_X_mm(const std::optional<double>& x_mm)
-{
-	std::optional<double> x_m = x_mm;
-
-	if (x_m.has_value())
-		x_m = x_mm.value() * nConstants::MM_TO_M;
-
-	setEnd_X_m(x_m);
-}
-
-void cLidarMapConfigScan::setEnd_Y_mm(const std::optional<double>& y_mm)
-{
-	std::optional<double> y_m = y_mm;
-
-	if (y_m.has_value())
-		y_m = y_mm.value() * nConstants::MM_TO_M;
-
-	setEnd_Y_m(y_m);
-}
-
-void cLidarMapConfigScan::setEnd_Z_mm(const std::optional<double>& z_mm)
-{
-	std::optional<double> z_m = z_mm;
-
-	if (z_m.has_value())
-		z_m = z_mm.value() * nConstants::MM_TO_M;
-
-	setEnd_Z_m(z_m);
-}
-
-void cLidarMapConfigScan::resetReferencePoint()
-{
-	reset(mReferencePoint);
-}
-
-void cLidarMapConfigScan::setReferencePoint(const std::optional<rfm::rappPoint_t>& rp)
-{
-	mDirty |= (mReferencePoint != rp);
-	mReferencePoint = rp;
-}
-
-void cLidarMapConfigScan::setEffectiveDate(int month, int day)
-{
-	mEffectiveMonth = month;
-	mEffectiveDay = day;
+	mDirty = true;
+	return mKinematics.add(month, day);
 }
 
 void cLidarMapConfigScan::clearDirtyFlag()
@@ -601,6 +755,7 @@ void cLidarMapConfigScan::setDirtyFlag()
 void cLidarMapConfigScan::setDirty(bool dirty)
 {
 	mDirty = dirty;
+	mKinematics.setDirtyFlag(dirty);
 }
 
 
@@ -633,166 +788,6 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 			mSensorMountYaw_deg = orientation["yaw (deg)"];
 	}
 
-
-	if (jdoc.contains("start position"))
-	{
-		auto pos = jdoc["start position"];
-
-		if (pos.contains("x (m)"))
-			mStart_X_m = pos["x (m)"];
-
-		if (pos.contains("y (m)"))
-			mStart_Y_m = pos["y (m)"];
-
-		if (pos.contains("z (m)"))
-			mStart_Z_m = pos["z (m)"];
-	}
-
-	if (jdoc.contains("end position"))
-	{
-		auto pos = jdoc["end position"];
-
-		if (pos.contains("x (m)"))
-			mEnd_X_m = pos["x (m)"];
-
-		if (pos.contains("y (m)"))
-			mEnd_Y_m = pos["y (m)"];
-
-		if (pos.contains("z (m)"))
-			mEnd_Z_m = pos["z (m)"];
-	}
-
-	if (jdoc.contains("Vx (mm/s)"))
-	{
-		mVx_mmps = jdoc["Vx (mm/s)"];
-		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
-	}
-
-	if (jdoc.contains("Vy (mm/s)"))
-	{
-		mVy_mmps = jdoc["Vy (mm/s)"];
-		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
-	}
-
-	if (jdoc.contains("Vz (mm/s)"))
-	{
-		mVz_mmps = jdoc["Vz (mm/s)"];
-		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
-	}
-
-	if (jdoc.contains("sensor orientation table"))
-	{
-		mOrientationModel = eOrientationModel::INTREP_CURVE;
-
-		auto points = jdoc["sensor orientation table"];
-
-		if (points.empty())
-		{
-			kdt::sDollyOrientationInterpPoint_t point;
-
-			mOrientationTable.push_back(point);
-			point.distance_pct = 100.0;
-			mOrientationTable.push_back(point);
-		}
-		else
-		{
-			for (const auto& point : points)
-			{
-				kdt::sDollyOrientationInterpPoint_t p;
-
-				if (!point.contains("distance (%)"))
-					continue;
-
-				p.distance_pct = point["distance (%)"];
-
-				if (point.contains("pitch (deg)"))
-					p.pitch_deg = point["pitch (deg)"];
-
-				if (point.contains("roll (deg)"))
-					p.roll_deg = point["roll (deg)"];
-
-				if (point.contains("yaw (deg)"))
-					p.yaw_deg = point["yaw (deg)"];
-
-				mOrientationTable.push_back(p);
-			}
-
-			std::sort(mOrientationTable.begin(), mOrientationTable.end(), [](const auto& a, const auto& b)
-				{
-					return a.distance_pct < b.distance_pct;
-				});
-
-			if (mOrientationTable.empty())
-			{
-				kdt::sDollyOrientationInterpPoint_t point;
-
-				mOrientationTable.push_back(point);
-				point.distance_pct = 100.0;
-				mOrientationTable.push_back(point);
-			}
-			else
-			{
-				auto point = mOrientationTable.front();
-				if (point.distance_pct > 0.0)
-				{
-					point.distance_pct = 0.0;
-					mOrientationTable.insert(mOrientationTable.begin(), point);
-				}
-
-				point = mOrientationTable.back();
-				if (point.distance_pct < 100.0)
-				{
-					point.distance_pct = 100.0;
-					mOrientationTable.push_back(point);
-				}
-			}
-		}
-	}
-	else if (jdoc.contains("sensor start orientation offset"))
-	{
-		mOrientationModel = eOrientationModel::LINEAR;
-
-		auto orientation = jdoc["sensor start orientation offset"];
-
-		if (orientation.contains("pitch (deg)"))
-			mStartPitchOffset_deg = orientation["pitch (deg)"];
-
-		if (orientation.contains("roll (deg)"))
-			mStartRollOffset_deg = orientation["roll (deg)"];
-
-		if (orientation.contains("yaw (deg)"))
-			mStartYawOffset_deg = orientation["yaw (deg)"];
-
-		if (jdoc.contains("sensor final orientation offset"))
-		{
-			auto orientation = jdoc["sensor final orientation offset"];
-
-			if (orientation.contains("pitch (deg)"))
-				mEndPitchOffset_deg = orientation["pitch (deg)"];
-
-			if (orientation.contains("roll (deg)"))
-				mEndRollOffset_deg = orientation["roll (deg)"];
-
-			if (orientation.contains("yaw (deg)"))
-				mEndYawOffset_deg = orientation["yaw (deg)"];
-		}
-	}
-	else if (jdoc.contains("sensor orientation offset"))
-	{
-		mOrientationModel = eOrientationModel::CONSTANT;
-
-		auto orientation = jdoc["sensor orientation offset"];
-
-		if (orientation.contains("pitch (deg)"))
-			mSensorPitchOffset_deg = orientation["pitch (deg)"];
-
-		if (orientation.contains("roll (deg)"))
-			mSensorRollOffset_deg = orientation["roll (deg)"];
-
-		if (orientation.contains("yaw (deg)"))
-			mSensorYawOffset_deg = orientation["yaw (deg)"];
-	}
-
 	if (jdoc.contains("sensor limits"))
 	{
 		auto sensor_limits = jdoc["sensor limits"];
@@ -816,155 +811,6 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 			mMaxAltitude_deg = sensor_limits["max altitude (deg)"].get<double>();
 	}
 
-	if (jdoc.contains("options"))
-	{
-		auto options = jdoc["options"];
-
-		if (options.contains("translation distance (m)"))
-		{
-			mTranslateToGroundModel = eTranslateToGroundModel::CONSTANT;
-			mTranslateDistance_m = options["translation distance (m)"].get<double>();
-		}
-
-		if (options.contains("translation threshold (%)"))
-		{
-			mTranslateToGroundModel = eTranslateToGroundModel::FIT;
-			mTranslateThreshold_pct = options["translation threshold (%)"].get<double>();
-		}
-
-		if (options.contains("translation table"))
-		{
-			mTranslateToGroundModel = eTranslateToGroundModel::INTREP_CURVE;
-
-			auto points = options["translation table"];
-
-			if (points.empty())
-			{
-				pointcloud::sPointCloudTranslationInterpPoint_t point;
-
-				mTranslateTable.push_back(point);
-				point.displacement_m = 0.0;
-				mTranslateTable.push_back(point);
-			}
-			else
-			{
-				for (const auto& point : points)
-				{
-					pointcloud::sPointCloudTranslationInterpPoint_t p;
-
-					if (!point.contains("displacement (m)"))
-						continue;
-
-					p.displacement_m = point["displacement (m)"];
-
-					if (point.contains("height (m)"))
-						p.height_m = point["height (m)"];
-
-					mTranslateTable.push_back(p);
-				}
-
-				std::sort(mTranslateTable.begin(), mTranslateTable.end(), [](const auto& a, const auto& b)
-					{
-						return a.displacement_m < b.displacement_m;
-					});
-
-				if (mTranslateTable.empty())
-				{
-					pointcloud::sPointCloudTranslationInterpPoint_t point;
-
-					mTranslateTable.push_back(point);
-					point.displacement_m = 0.0;
-					mTranslateTable.push_back(point);
-				}
-				else
-				{
-					auto point = mTranslateTable.front();
-					if (point.displacement_m > 0.0)
-					{
-						point.displacement_m = 0.0;
-						mTranslateTable.insert(mTranslateTable.begin(), point);
-					}
-				}
-			}
-		}
-
-		if (options.contains("rotation pitch (deg)") || options.contains("rotation roll (deg)"))
-		{
-			mRotateToGroundModel = eRotateToGroundModel::CONSTANT;
-
-			if (options.contains("rotation pitch (deg)"))
-				mRotatePitch_deg = options["rotation pitch (deg)"];
-
-			if (options.contains("rotation roll (deg)"))
-				mRotateRoll_deg = options["rotation roll (deg)"];
-		}
-
-		if (options.contains("rotation threshold (%)"))
-		{
-			mRotateToGroundModel = eRotateToGroundModel::FIT;
-			mRotateThreshold_pct = options["rotation threshold (%)"].get<double>();
-		}
-
-		if (options.contains("rotation table"))
-		{
-			mRotateToGroundModel = eRotateToGroundModel::INTREP_CURVE;
-
-			auto points = options["rotation table"];
-
-			if (points.empty())
-			{
-				pointcloud::sPointCloudRotationInterpPoint_t point;
-
-				mRotateTable.push_back(point);
-				point.displacement_m = 0.0;
-				mRotateTable.push_back(point);
-			}
-			else
-			{
-				for (const auto& point : points)
-				{
-					pointcloud::sPointCloudRotationInterpPoint_t p;
-
-					if (!point.contains("displacement (m)"))
-						continue;
-
-					p.displacement_m = point["displacement (m)"];
-
-					if (point.contains("pitch (deg)"))
-						p.pitch_deg = point["pitch (deg)"];
-
-					if (point.contains("roll (deg)"))
-						p.roll_deg = point["roll (deg)"];
-
-					mRotateTable.push_back(p);
-				}
-
-				std::sort(mRotateTable.begin(), mRotateTable.end(), [](const auto& a, const auto& b)
-					{
-						return a.displacement_m < b.displacement_m;
-					});
-
-				if (mRotateTable.empty())
-				{
-					pointcloud::sPointCloudRotationInterpPoint_t point;
-
-					mRotateTable.push_back(point);
-					point.displacement_m = 0.0;
-					mRotateTable.push_back(point);
-				}
-				else
-				{
-					auto point = mRotateTable.front();
-					if (point.displacement_m > 0.0)
-					{
-						point.displacement_m = 0.0;
-						mRotateTable.insert(mRotateTable.begin(), point);
-					}
-				}
-			}
-		}
-	}
-
 	if (jdoc.contains("reference_point"))
 	{
 		auto reference_point = jdoc["reference_point"];
@@ -976,6 +822,12 @@ void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 
 		mReferencePoint = p;
 	}
+
+	if (jdoc.contains("kinematics"))
+	{
+		const auto& kinematics = jdoc["kinematics"];
+		mKinematics.load(kinematics);
+	}
 }
 
 nlohmann::json cLidarMapConfigScan::save()
@@ -983,39 +835,6 @@ nlohmann::json cLidarMapConfigScan::save()
 	nlohmann::json scanDoc;
 
 	scanDoc["measurement name"] = mMeasurementName;
-
-	if (mStart_X_m.has_value() || mStart_Y_m.has_value() || mStart_Z_m.has_value())
-	{
-		nlohmann::json pos;
-
-		if (mStart_X_m.has_value())
-			pos["x (m)"] = mStart_X_m.value();
-			
-		if (mStart_Y_m.has_value())
-			pos["y (m)"] = mStart_Y_m.value();
-
-		if (mStart_Z_m.has_value())
-			pos["z (m)"] = mStart_Z_m.value();
-
-		scanDoc["start position"] = pos;
-	}
-
-
-	if (mEnd_X_m.has_value() || mEnd_Y_m.has_value() || mEnd_Z_m.has_value())
-	{
-		nlohmann::json pos;
-
-		if (mEnd_X_m.has_value())
-			pos["x (m)"] = mEnd_X_m.value();
-
-		if (mEnd_Y_m.has_value())
-			pos["y (m)"] = mEnd_Y_m.value();
-
-		if (mEnd_Z_m.has_value())
-			pos["z (m)"] = mEnd_Z_m.value();
-
-		scanDoc["end position"] = pos;
-	}
 
 	if (mSensorMountPitch_deg.has_value() || mSensorMountRoll_deg.has_value() || mSensorMountYaw_deg.has_value())
 	{
@@ -1033,90 +852,17 @@ nlohmann::json cLidarMapConfigScan::save()
 		scanDoc["sensor mount orientation"] = orientation;
 	}
 
-	if (mKinematicModel.has_value() && (mKinematicModel.value() == eKinematicModel::CONSTANT_SPEED))
+	if (mReferencePoint.has_value())
 	{
-		if (mVx_mmps.has_value())
-			scanDoc["Vx (mm/s)"] = mVx_mmps.value();
+		nlohmann::json reference_point;
 
-		if (mVy_mmps.has_value())
-			scanDoc["Vy (mm/s)"] = mVy_mmps.value();
+		rfm::rappPoint_t p = mReferencePoint.value();
 
-		if (mVz_mmps.has_value())
-			scanDoc["Vz (mm/s)"] = mVz_mmps.value();
-	}
+		reference_point["x (mm)"] = p.x_mm;
+		reference_point["y (mm)"] = p.y_mm;
+		reference_point["z (mm)"] = p.z_mm;
 
-	if (mOrientationModel.has_value())
-	{
-		if (mOrientationModel == eOrientationModel::CONSTANT)
-		{
-			if (mSensorPitchOffset_deg.has_value() || mSensorRollOffset_deg.has_value() || mSensorYawOffset_deg.has_value())
-			{
-				nlohmann::json orientation;
-
-				if (mSensorPitchOffset_deg.has_value())
-					orientation["pitch (deg)"] = mSensorPitchOffset_deg.value();
-
-				if (mSensorRollOffset_deg.has_value())
-					orientation["roll (deg)"] = mSensorRollOffset_deg.value();
-
-				if (mSensorYawOffset_deg.has_value())
-					orientation["yaw (deg)"] = mSensorYawOffset_deg.value();
-
-				scanDoc["sensor orientation offset"] = orientation;
-			}
-		}
-		else if (mOrientationModel == eOrientationModel::LINEAR)
-		{
-			if (mStartPitchOffset_deg.has_value() || mStartRollOffset_deg.has_value() || mStartYawOffset_deg.has_value())
-			{
-				nlohmann::json orientation;
-
-				if (mStartPitchOffset_deg.has_value())
-					orientation["pitch (deg)"] = mStartPitchOffset_deg.value();
-
-				if (mStartRollOffset_deg.has_value())
-					orientation["roll (deg)"] = mStartRollOffset_deg.value();
-
-				if (mStartYawOffset_deg.has_value())
-					orientation["yaw (deg)"] = mStartYawOffset_deg.value();
-
-				scanDoc["sensor start orientation offset"] = orientation;
-			}
-
-			if (mEndPitchOffset_deg.has_value() || mEndRollOffset_deg.has_value() || mEndYawOffset_deg.has_value())
-			{
-				nlohmann::json orientation;
-
-				if (mEndPitchOffset_deg.has_value())
-					orientation["pitch (deg)"] = mEndPitchOffset_deg.value();
-
-				if (mEndRollOffset_deg.has_value())
-					orientation["roll (deg)"] = mEndRollOffset_deg.value();
-
-				if (mEndYawOffset_deg.has_value())
-					orientation["yaw (deg)"] = mEndYawOffset_deg.value();
-
-				scanDoc["sensor final orientation offset"] = orientation;
-			}
-		}
-		else if (mOrientationModel == eOrientationModel::INTREP_CURVE)
-		{
-			nlohmann::json points;
-
-			for (const auto& point : mOrientationTable)
-			{
-				nlohmann::json orientation;
-
-				orientation["distance (%)"] = point.distance_pct;
-				orientation["pitch (deg)"] = point.pitch_deg;
-				orientation["roll (deg)"] = point.roll_deg;
-				orientation["yaw (deg)"] = point.yaw_deg;
-
-				points.push_back(orientation);
-			}
-
-			scanDoc["sensor orientation table"] = points;
-		}
+		scanDoc["reference_point"] = reference_point;
 	}
 
 	if (mMinDistance_m.has_value() || mMaxDistance_m.has_value() || mMinAzimuth_deg.has_value()
@@ -1145,99 +891,10 @@ nlohmann::json cLidarMapConfigScan::save()
 		scanDoc["sensor limits"] = sensor_limits;
 	}
 
-	if (mTranslateToGroundModel.has_value() || mRotateToGroundModel.has_value())
-	{
-		nlohmann::json options;
+	auto kinematicDoc = mKinematics.save();
 
-		if (mTranslateToGroundModel.has_value())
-		{
-			auto model = mTranslateToGroundModel.value();
-
-			switch (model)
-			{
-			case eTranslateToGroundModel::NONE:
-				break;
-			case eTranslateToGroundModel::CONSTANT:
-				if (mTranslateDistance_m.has_value())
-					options["translation distance (m)"] = mTranslateDistance_m.value();
-				break;
-			case eTranslateToGroundModel::FIT:
-				if (mTranslateThreshold_pct.has_value())
-					options["translation threshold (%)"] = mTranslateThreshold_pct.value();
-				break;
-			case eTranslateToGroundModel::INTREP_CURVE:
-
-				nlohmann::json points;
-
-				for (const auto& point : mTranslateTable)
-				{
-					nlohmann::json table;
-
-					table["displacement (m)"] = point.displacement_m;
-					table["height (m)"]		  = point.height_m;
-
-					points.push_back(table);
-				}
-
-				options["translation table"] = points;
-				break;
-			}
-		}
-
-		if (mRotateToGroundModel.has_value())
-		{
-			auto model = mRotateToGroundModel.value();
-
-			switch (model)
-			{
-			case eRotateToGroundModel::NONE:
-				break;
-			case eRotateToGroundModel::CONSTANT:
-				if (mRotatePitch_deg.has_value())
-					options["rotation pitch (deg)"] = mRotatePitch_deg.value();
-				if (mRotateRoll_deg.has_value())
-					options["rotation roll (deg)"] = mRotateRoll_deg.value();
-				break;
-			case eRotateToGroundModel::FIT:
-				if (mRotateThreshold_pct.has_value())
-					options["rotation threshold (%)"] = mRotateThreshold_pct.value();
-				break;
-			case eRotateToGroundModel::INTREP_CURVE:
-
-				nlohmann::json points;
-
-				for (const auto& point : mRotateTable)
-				{
-					nlohmann::json table;
-
-					table["displacement (m)"] = point.displacement_m;
-					table["pitch (deg)"] = point.pitch_deg;
-					table["roll (deg)"] = point.roll_deg;
-
-					points.push_back(table);
-				}
-
-				options["rotation table"] = points;
-				break;
-			}
-		}
-
-		scanDoc["options"] = options;
-	}
-
-
-	if (mReferencePoint.has_value())
-	{
-		nlohmann::json reference_point;
-
-		rfm::rappPoint_t p = mReferencePoint.value();
-
-		reference_point["x (mm)"] = p.x_mm;
-		reference_point["y (mm)"] = p.y_mm;
-		reference_point["z (mm)"] = p.z_mm;
-
-		scanDoc["reference_point"] = reference_point;
-	}
+	if (!kinematicDoc.is_null())
+		scanDoc["kinematics"] = kinematicDoc;
 
 	mDirty = false;
 

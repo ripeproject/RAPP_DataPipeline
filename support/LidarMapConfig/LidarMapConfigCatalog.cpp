@@ -2,12 +2,37 @@
 #include "LidarMapConfigCatalog.hpp"
 
 #include "StringUtils.hpp"
+#include "Constants.hpp"
 
 #include <nlohmann/json.hpp>
 
 #include <array>
 #include <algorithm>
 #include <stdexcept>
+
+
+namespace lidar_config
+{
+	inline int to_date(int month, int day)
+	{
+		return month * 100 + day;
+	}
+}
+
+namespace
+{
+	bool operator!=(const std::optional<rfm::rappPoint_t>& lhs, const std::optional<rfm::rappPoint_t>& rhs)
+	{
+		if (!lhs.has_value() && !rhs.has_value())
+			return false;
+
+		if (lhs.has_value() != rhs.has_value())
+			return true;
+
+		return static_cast<rfm::rappPoint_t>(lhs.value()) != static_cast<rfm::rappPoint_t>(rhs.value());
+	}
+}
+
 
 cLidarMapConfigCatalog::cLidarMapConfigCatalog(int month, int day)
 	: mEffectiveMonth(month), mEffectiveDay(day)
@@ -72,8 +97,8 @@ bool cLidarMapConfigCatalog::contains(const std::string& name) const
 	return false;
 }
 
-const cLidarMapConfigScan& cLidarMapConfigCatalog::front() const { return mScans.front(); }
-cLidarMapConfigScan& cLidarMapConfigCatalog::front() { return mScans.front(); }
+const cLidarMapCatalogScan& cLidarMapConfigCatalog::front() const { return mScans.front(); }
+cLidarMapCatalogScan& cLidarMapConfigCatalog::front() { return mScans.front(); }
 
 
 cLidarMapConfigCatalog::iterator cLidarMapConfigCatalog::begin() { return mScans.begin(); }
@@ -140,7 +165,7 @@ cLidarMapConfigCatalog::iterator cLidarMapConfigCatalog::find(const std::string&
 	return mScans.end();
 }
 
-cLidarMapConfigScan& cLidarMapConfigCatalog::add(const std::string& name)
+cLidarMapCatalogScan& cLidarMapConfigCatalog::add(const std::string& name)
 {
 	for (auto& scan : mScans)
 	{
@@ -148,7 +173,7 @@ cLidarMapConfigScan& cLidarMapConfigCatalog::add(const std::string& name)
 			return scan;
 	}
 
-	cLidarMapConfigScan scan;
+	cLidarMapCatalogScan scan;
 
 	scan.setMeasurementName(name);
 
@@ -162,7 +187,7 @@ void cLidarMapConfigCatalog::remove(const std::string& name)
 
 }
 
-const cLidarMapConfigScan& cLidarMapConfigCatalog::operator[](int index) const
+const cLidarMapCatalogScan& cLidarMapConfigCatalog::operator[](int index) const
 {
 	if (index < 0)
 		return mScans.front();
@@ -173,7 +198,7 @@ const cLidarMapConfigScan& cLidarMapConfigCatalog::operator[](int index) const
 	return mScans[index];
 }
 
-cLidarMapConfigScan& cLidarMapConfigCatalog::operator[](int index)
+cLidarMapCatalogScan& cLidarMapConfigCatalog::operator[](int index)
 {
 	if (index < 0)
 		return mScans.front();
@@ -195,7 +220,7 @@ void cLidarMapConfigCatalog::load(const nlohmann::json& jdoc)
 		for (const auto& entry : scans)
 		{
 
-			cLidarMapConfigScan scan;
+			cLidarMapCatalogScan scan;
 
 			scan.setEffectiveDate(mEffectiveMonth, mEffectiveDay);
 
@@ -206,6 +231,7 @@ void cLidarMapConfigCatalog::load(const nlohmann::json& jdoc)
 	}
 }
 
+/*
 nlohmann::json cLidarMapConfigCatalog::save()
 {
 	nlohmann::json catalogDoc;
@@ -230,5 +256,1068 @@ nlohmann::json cLidarMapConfigCatalog::save()
 
 	return catalogDoc;
 }
+*/
+
+
+
+
+
+
+cLidarMapCatalogScan::cLidarMapCatalogScan()
+{
+}
+
+cLidarMapCatalogScan::cLidarMapCatalogScan(const std::string& name)
+	: mMeasurementName(name)
+{
+}
+
+const int cLidarMapCatalogScan::date() const
+{
+	return mEffectiveMonth * 100 + mEffectiveDay;
+}
+
+const int cLidarMapCatalogScan::month() const { return mEffectiveMonth; }
+const int cLidarMapCatalogScan::day() const { return mEffectiveDay; }
+
+void cLidarMapCatalogScan::clear()
+{
+	mDirty = false;
+
+	mMeasurementName.clear();
+	mSensorMountPitch_deg.reset();
+	mSensorMountRoll_deg.reset();
+	mSensorMountYaw_deg.reset();
+	mReferencePoint.reset();
+
+	mMinDistance_m.reset();
+	mMaxDistance_m.reset();
+	mMinAzimuth_deg.reset();
+	mMaxAzimuth_deg.reset();
+	mMinAltitude_deg.reset();
+	mMaxAltitude_deg.reset();
+}
+
+bool cLidarMapCatalogScan::empty() const
+{
+	bool has_value = false;
+
+	has_value |= mMinDistance_m.has_value();
+	has_value |= mMaxDistance_m.has_value();
+	has_value |= mMinAzimuth_deg.has_value();
+	has_value |= mMaxAzimuth_deg.has_value();
+	has_value |= mMinAltitude_deg.has_value();
+	has_value |= mMaxAltitude_deg.has_value();
+
+	return mMeasurementName.empty();
+}
+
+bool cLidarMapCatalogScan::isDirty() const
+{
+	bool dirty = mDirty;
+
+	return dirty;
+}
+
+const std::string& cLidarMapCatalogScan::getMeasurementName() const
+{
+	return mMeasurementName;
+}
+
+const std::optional<double>& cLidarMapCatalogScan::getSensorMountPitch_deg() const { return mSensorMountPitch_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getSensorMountRoll_deg() const { return mSensorMountRoll_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getSensorMountYaw_deg() const { return mSensorMountYaw_deg; }
+
+const std::optional<rfm::rappPoint_t>& cLidarMapCatalogScan::getReferencePoint() const
+{
+	return mReferencePoint;
+}
+
+const std::optional<double>& cLidarMapCatalogScan::getMinDistance_m() const { return mMinDistance_m; }
+const std::optional<double>& cLidarMapCatalogScan::getMaxDistance_m() const { return mMaxDistance_m; }
+const std::optional<double>& cLidarMapCatalogScan::getMinAzimuth_deg() const { return mMinAzimuth_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getMaxAzimuth_deg() const { return mMaxAzimuth_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getMinAltitude_deg() const { return mMinAltitude_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getMaxAltitude_deg() const { return mMaxAltitude_deg; }
+
+void cLidarMapCatalogScan::setMeasurementName(const std::string& name)
+{
+	mDirty |= (mMeasurementName != name);
+	mMeasurementName = name;
+}
+
+void cLidarMapCatalogScan::resetSensorMountPitch_deg()
+{
+	reset(mSensorMountPitch_deg);
+}
+
+void cLidarMapCatalogScan::resetSensorMountRoll_deg()
+{
+	reset(mSensorMountRoll_deg);
+}
+
+void cLidarMapCatalogScan::resetSensorMountYaw_deg()
+{
+	reset(mSensorMountYaw_deg);
+}
+
+void cLidarMapCatalogScan::setSensorMountPitch_deg(const std::optional<double>& pitch_deg)
+{
+	mDirty |= (mSensorMountPitch_deg != pitch_deg);
+	mSensorMountPitch_deg = pitch_deg;
+}
+
+void cLidarMapCatalogScan::setSensorMountRoll_deg(const std::optional<double>& roll_deg)
+{
+	mDirty |= (mSensorMountRoll_deg != roll_deg);
+	mSensorMountRoll_deg = roll_deg;
+}
+
+void cLidarMapCatalogScan::setSensorMountYaw_deg(const std::optional<double>& yaw_deg)
+{
+	mDirty |= (mSensorMountYaw_deg != yaw_deg);
+	mSensorMountYaw_deg = yaw_deg;
+}
+
+void cLidarMapCatalogScan::resetReferencePoint()
+{
+	reset(mReferencePoint);
+}
+
+void cLidarMapCatalogScan::setReferencePoint(const std::optional<rfm::rappPoint_t>& rp)
+{
+	mDirty |= (mReferencePoint != rp);
+	mReferencePoint = rp;
+}
+
+void cLidarMapCatalogScan::resetMinDistance_m()
+{
+	reset(mMinDistance_m);
+}
+
+void cLidarMapCatalogScan::resetMaxDistance_m()
+{
+	reset(mMaxDistance_m);
+}
+
+void cLidarMapCatalogScan::resetMinAzimuth_deg()
+{
+	reset(mMinAzimuth_deg);
+}
+
+void cLidarMapCatalogScan::resetMaxAzimuth_deg()
+{
+	reset(mMaxAzimuth_deg);
+}
+
+void cLidarMapCatalogScan::resetMinAltitude_deg()
+{
+	reset(mMinAltitude_deg);
+}
+
+void cLidarMapCatalogScan::resetMaxAltitude_deg()
+{
+	reset(mMaxAltitude_deg);
+}
+
+void cLidarMapCatalogScan::setMinDistance_m(const std::optional<double>& dist_m)
+{
+	mDirty |= (mMinDistance_m != dist_m);
+	mMinDistance_m = dist_m;
+}
+
+void cLidarMapCatalogScan::setMaxDistance_m(const std::optional<double>& dist_m)
+{
+	mDirty |= (mMaxDistance_m != dist_m);
+	mMaxDistance_m = dist_m;
+}
+
+void cLidarMapCatalogScan::setMinAzimuth_deg(const std::optional<double>& azimuth_deg)
+{
+	mDirty |= (mMinAzimuth_deg != azimuth_deg);
+	mMinAzimuth_deg = azimuth_deg;
+}
+
+void cLidarMapCatalogScan::setMaxAzimuth_deg(const std::optional<double>& azimuth_deg)
+{
+	mDirty |= (mMaxAzimuth_deg != azimuth_deg);
+	mMaxAzimuth_deg = azimuth_deg;
+}
+
+void cLidarMapCatalogScan::setMinAltitude_deg(const std::optional<double>& altitude_deg)
+{
+	mDirty |= (mMinAltitude_deg != altitude_deg);
+	mMinAltitude_deg = altitude_deg;
+}
+
+void cLidarMapCatalogScan::setMaxAltitude_deg(const std::optional<double>& altitude_deg)
+{
+	mDirty |= (mMaxAltitude_deg != altitude_deg);
+	mMaxAltitude_deg = altitude_deg;
+}
+
+const std::optional<eKinematicModel>& cLidarMapCatalogScan::getKinematicModel() const { return mKinematicModel; }
+const std::optional<eOrientationModel>& cLidarMapCatalogScan::getOrientationModel() const { return mOrientationModel; }
+const std::optional<eTranslateToGroundModel>& cLidarMapCatalogScan::getTranslateToGroundModel() const { return mTranslateToGroundModel; }
+const std::optional<eRotateToGroundModel>& cLidarMapCatalogScan::getRotateToGroundModel() const { return mRotateToGroundModel; }
+
+const std::optional<double>& cLidarMapCatalogScan::getVx_mmps() const { return mVx_mmps; }
+const std::optional<double>& cLidarMapCatalogScan::getVy_mmps() const { return mVy_mmps; }
+const std::optional<double>& cLidarMapCatalogScan::getVz_mmps() const { return mVz_mmps; }
+
+const std::optional<double>& cLidarMapCatalogScan::getSensorPitchOffset_deg() const { return mSensorPitchOffset_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getSensorRollOffset_deg() const { return mSensorRollOffset_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getSensorYawOffset_deg() const { return mSensorYawOffset_deg; }
+
+const std::optional<double>& cLidarMapCatalogScan::getStartPitchOffset_deg() const { return mStartPitchOffset_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getStartRollOffset_deg() const { return mStartRollOffset_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getStartYawOffset_deg() const { return mStartYawOffset_deg; }
+
+const std::optional<double>& cLidarMapCatalogScan::getEndPitchOffset_deg() const { return mEndPitchOffset_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getEndRollOffset_deg() const { return mEndRollOffset_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getEndYawOffset_deg() const { return mEndYawOffset_deg; }
+
+const std::vector<kdt::sDollyOrientationInterpPoint_t>& cLidarMapCatalogScan::getOrientationTable() const { return mOrientationTable; }
+
+const std::optional<bool>& cLidarMapCatalogScan::getTranslateToGround() const { return mTranslateToGround; }
+const std::optional<double>& cLidarMapCatalogScan::getTranslateDistance_m() const { return mTranslateDistance_m; }
+const std::optional<double>& cLidarMapCatalogScan::getTranslateThreshold_pct() const { return mTranslateThreshold_pct; }
+
+const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& cLidarMapCatalogScan::getTranslateTable() const { return mTranslateTable; }
+
+const std::optional<bool>& cLidarMapCatalogScan::getRotateToGround() const { return mRotateToGround; }
+const std::optional<double>& cLidarMapCatalogScan::getRotatePitch_deg() const { return mRotatePitch_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getRotateRoll_deg() const { return mRotateRoll_deg; }
+const std::optional<double>& cLidarMapCatalogScan::getRotateThreshold_pct() const { return mRotateThreshold_pct; }
+
+const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& cLidarMapCatalogScan::getRotateTable() const { return mRotateTable; }
+
+const std::optional<double>& cLidarMapCatalogScan::getStart_X_m() const { return mStart_X_m; }
+const std::optional<double>& cLidarMapCatalogScan::getStart_Y_m() const { return mStart_Y_m; }
+const std::optional<double>& cLidarMapCatalogScan::getStart_Z_m() const { return mStart_Z_m; }
+
+const std::optional<double>& cLidarMapCatalogScan::getEnd_X_m() const { return mEnd_X_m; }
+const std::optional<double>& cLidarMapCatalogScan::getEnd_Y_m() const { return mEnd_Y_m; }
+const std::optional<double>& cLidarMapCatalogScan::getEnd_Z_m() const { return mEnd_Z_m; }
+
+void cLidarMapCatalogScan::resetKinematicModel()
+{
+	reset(mKinematicModel);
+}
+
+void cLidarMapCatalogScan::setKinematicModel(const std::optional<eKinematicModel>& model)
+{
+	mDirty |= (mKinematicModel != model);
+	mKinematicModel = model;
+}
+
+void cLidarMapCatalogScan::resetOrientationModel()
+{
+	reset(mOrientationModel);
+}
+
+void cLidarMapCatalogScan::setOrientationModel(const std::optional<eOrientationModel>& model)
+{
+	mDirty |= (mOrientationModel != model);
+	mOrientationModel = model;
+}
+
+void cLidarMapCatalogScan::resetTranslateToGroundModel()
+{
+	reset(mTranslateToGroundModel);
+}
+
+void cLidarMapCatalogScan::setTranslateToGroundModel(const std::optional<eTranslateToGroundModel>& model)
+{
+	mDirty |= (mTranslateToGroundModel != model);
+	mTranslateToGroundModel = model;
+}
+
+void cLidarMapCatalogScan::resetRotateToGroundModel()
+{
+	reset(mRotateToGroundModel);
+}
+
+void cLidarMapCatalogScan::setRotateToGroundModel(const std::optional<eRotateToGroundModel>& model)
+{
+	mDirty |= (mRotateToGroundModel != model);
+	mRotateToGroundModel = model;
+}
+
+void cLidarMapCatalogScan::setVx_mmps(const std::optional<double>& vx_mmps)
+{
+	mDirty |= (mVx_mmps != vx_mmps);
+	mVx_mmps = vx_mmps;
+}
+
+void cLidarMapCatalogScan::setVy_mmps(const std::optional<double>& vy_mmps)
+{
+	mDirty |= (mVy_mmps != vy_mmps);
+	mVy_mmps = vy_mmps;
+}
+
+void cLidarMapCatalogScan::setVz_mmps(const std::optional<double>& vz_mmps)
+{
+	mDirty |= (mVz_mmps != vz_mmps);
+	mVz_mmps = vz_mmps;
+}
+
+void cLidarMapCatalogScan::setSensorPitchOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mSensorPitchOffset_deg != offset_deg);
+	mSensorPitchOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setSensorRollOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mSensorRollOffset_deg != offset_deg);
+	mSensorRollOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setSensorYawOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mSensorYawOffset_deg != offset_deg);
+	mSensorYawOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setStartPitchOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mStartPitchOffset_deg != offset_deg);
+	mStartPitchOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setStartRollOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mStartRollOffset_deg != offset_deg);
+	mStartRollOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setStartYawOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mStartYawOffset_deg != offset_deg);
+	mStartYawOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setEndPitchOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mEndPitchOffset_deg != offset_deg);
+	mEndPitchOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setEndRollOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mEndRollOffset_deg != offset_deg);
+	mEndRollOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::setEndYawOffset_deg(const std::optional<double>& offset_deg)
+{
+	mDirty |= (mEndYawOffset_deg != offset_deg);
+	mEndYawOffset_deg = offset_deg;
+}
+
+void cLidarMapCatalogScan::clearOrientationTable()
+{
+	mDirty |= !mOrientationTable.empty();
+	mOrientationTable.clear();
+}
+
+void cLidarMapCatalogScan::setOrientationTable(const std::vector<kdt::sDollyOrientationInterpPoint_t>& table)
+{
+	if (!mDirty)
+	{
+		if (mOrientationTable.size() != table.size())
+		{
+			mDirty = true;
+		}
+		else
+		{
+			auto n = mOrientationTable.size();
+			for (size_t i = 0; i < n; ++i)
+			{
+				if (mOrientationTable[i] != table[i])
+				{
+					mDirty = true;
+					break;
+				}
+			}
+		}
+	}
+
+	mOrientationTable = table;
+}
+
+void cLidarMapCatalogScan::setTranslateToGround(const std::optional<bool>& enable)
+{
+	mDirty |= (mTranslateToGround != enable);
+	mTranslateToGround = enable;
+}
+
+void cLidarMapCatalogScan::setTranslateDistance_m(const std::optional<double>& dist_m)
+{
+	mDirty |= (mTranslateDistance_m != dist_m);
+	mTranslateDistance_m = dist_m;
+}
+
+void cLidarMapCatalogScan::setTranslateThreshold_pct(const std::optional<double>& threshold_pct)
+{
+	mDirty |= (mTranslateThreshold_pct != threshold_pct);
+	mTranslateThreshold_pct = threshold_pct;
+}
+
+void cLidarMapCatalogScan::clearTranslateTable()
+{
+	mDirty |= !mTranslateTable.empty();
+	mTranslateTable.clear();
+}
+
+void cLidarMapCatalogScan::setTranslateTable(const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& table)
+{
+	if (!mDirty)
+	{
+		if (mTranslateTable.size() != table.size())
+		{
+			mDirty = true;
+		}
+		else
+		{
+			auto n = mTranslateTable.size();
+			for (size_t i = 0; i < n; ++i)
+			{
+				if (mTranslateTable[i] != table[i])
+				{
+					mDirty = true;
+					break;
+				}
+			}
+		}
+	}
+
+	mTranslateTable = table;
+}
+
+void cLidarMapCatalogScan::setRotateToGround(const std::optional<bool>& enable)
+{
+	mDirty |= (mRotateToGround != enable);
+	mRotateToGround = enable;
+}
+
+void cLidarMapCatalogScan::setRotateAngles_deg(const std::optional<double>& pitch_deg, const std::optional<double>& roll_deg)
+{
+	mDirty |= (mRotatePitch_deg != pitch_deg) || (mRotateRoll_deg != roll_deg);
+	mRotatePitch_deg = pitch_deg;
+	mRotateRoll_deg = roll_deg;
+}
+
+void cLidarMapCatalogScan::setRotateThreshold_pct(const std::optional<double>& threshold_pct)
+{
+	mDirty |= (mRotateThreshold_pct != threshold_pct);
+	mRotateThreshold_pct = threshold_pct;
+}
+
+void cLidarMapCatalogScan::clearRotateTable()
+{
+	mDirty |= !mRotateTable.empty();
+	mRotateTable.clear();
+}
+
+void cLidarMapCatalogScan::setRotateTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table)
+{
+	if (!mDirty)
+	{
+		if (mRotateTable.size() != table.size())
+		{
+			mDirty = true;
+		}
+		else
+		{
+			auto n = mRotateTable.size();
+			for (size_t i = 0; i < n; ++i)
+			{
+				if (mRotateTable[i] != table[i])
+				{
+					mDirty = true;
+					break;
+				}
+			}
+		}
+	}
+
+	mRotateTable = table;
+}
+
+void cLidarMapCatalogScan::setStart_X_m(const std::optional<double>& x_m)
+{
+	mDirty |= (mStart_X_m != x_m);
+	mStart_X_m = x_m;
+}
+
+void cLidarMapCatalogScan::setStart_Y_m(const std::optional<double>& y_m)
+{
+	mDirty |= (mStart_Y_m != y_m);
+	mStart_Y_m = y_m;
+}
+
+void cLidarMapCatalogScan::setStart_Z_m(const std::optional<double>& z_m)
+{
+	mDirty |= (mStart_Z_m != z_m);
+	mStart_Z_m = z_m;
+}
+
+void cLidarMapCatalogScan::setStart_X_mm(const std::optional<double>& x_mm)
+{
+	std::optional<double> x_m = x_mm;
+
+	if (x_m.has_value())
+		x_m = x_mm.value() * nConstants::MM_TO_M;
+
+	setStart_X_m(x_m);
+}
+
+void cLidarMapCatalogScan::setStart_Y_mm(const std::optional<double>& y_mm)
+{
+	std::optional<double> y_m = y_mm;
+
+	if (y_m.has_value())
+		y_m = y_mm.value() * nConstants::MM_TO_M;
+
+	setStart_Y_m(y_m);
+}
+
+void cLidarMapCatalogScan::setStart_Z_mm(const std::optional<double>& z_mm)
+{
+	std::optional<double> z_m = z_mm;
+
+	if (z_m.has_value())
+		z_m = z_mm.value() * nConstants::MM_TO_M;
+
+	setStart_Z_m(z_m);
+}
+
+void cLidarMapCatalogScan::setEnd_X_m(const std::optional<double>& x_m)
+{
+	mDirty |= (mEnd_X_m != x_m);
+	mEnd_X_m = x_m;
+}
+
+void cLidarMapCatalogScan::setEnd_Y_m(const std::optional<double>& y_m)
+{
+	mDirty |= (mEnd_Y_m != y_m);
+	mEnd_Y_m = y_m;
+}
+
+void cLidarMapCatalogScan::setEnd_Z_m(const std::optional<double>& z_m)
+{
+	mDirty |= (mEnd_Z_m != z_m);
+	mEnd_Z_m = z_m;
+}
+
+void cLidarMapCatalogScan::setEnd_X_mm(const std::optional<double>& x_mm)
+{
+	std::optional<double> x_m = x_mm;
+
+	if (x_m.has_value())
+		x_m = x_mm.value() * nConstants::MM_TO_M;
+
+	setEnd_X_m(x_m);
+}
+
+void cLidarMapCatalogScan::setEnd_Y_mm(const std::optional<double>& y_mm)
+{
+	std::optional<double> y_m = y_mm;
+
+	if (y_m.has_value())
+		y_m = y_mm.value() * nConstants::MM_TO_M;
+
+	setEnd_Y_m(y_m);
+}
+
+void cLidarMapCatalogScan::setEnd_Z_mm(const std::optional<double>& z_mm)
+{
+	std::optional<double> z_m = z_mm;
+
+	if (z_m.has_value())
+		z_m = z_mm.value() * nConstants::MM_TO_M;
+
+	setEnd_Z_m(z_m);
+}
+
+void cLidarMapCatalogScan::setEffectiveDate(int month, int day)
+{
+	mDirty |= (mEffectiveMonth != month);
+	mEffectiveMonth = month;
+
+	mDirty |= (mEffectiveDay != day);
+	mEffectiveDay = day;
+}
+
+
+
+
+
+
+
+
+void cLidarMapCatalogScan::clearDirtyFlag()
+{
+	setDirty(false);
+}
+
+void cLidarMapCatalogScan::setDirtyFlag()
+{
+	setDirty(true);
+}
+
+void cLidarMapCatalogScan::setDirty(bool dirty)
+{
+	mDirty = dirty;
+}
+
+
+void cLidarMapCatalogScan::load(const nlohmann::json& jdoc)
+{
+	if (jdoc.contains("experiment_name"))
+		mMeasurementName = jdoc["experiment_name"];
+
+	if (jdoc.contains("experiment name"))
+		mMeasurementName = jdoc["experiment name"];
+
+	if (jdoc.contains("measurement_name"))
+		mMeasurementName = jdoc["measurement_name"];
+
+	if (jdoc.contains("measurement name"))
+		mMeasurementName = jdoc["measurement name"];
+
+
+	if (jdoc.contains("sensor mount orientation"))
+	{
+		auto orientation = jdoc["sensor mount orientation"];
+
+		if (orientation.contains("pitch (deg)"))
+			mSensorMountPitch_deg = orientation["pitch (deg)"];
+
+		if (orientation.contains("roll (deg)"))
+			mSensorMountRoll_deg = orientation["roll (deg)"];
+
+		if (orientation.contains("yaw (deg)"))
+			mSensorMountYaw_deg = orientation["yaw (deg)"];
+	}
+
+	if (jdoc.contains("sensor limits"))
+	{
+		auto sensor_limits = jdoc["sensor limits"];
+
+		if (sensor_limits.contains("min distance (m)"))
+			mMinDistance_m = sensor_limits["min distance (m)"].get<double>();
+
+		if (sensor_limits.contains("max distance (m)"))
+			mMaxDistance_m = sensor_limits["max distance (m)"].get<double>();
+
+		if (sensor_limits.contains("min azimuth (deg)"))
+			mMinAzimuth_deg = sensor_limits["min azimuth (deg)"].get<double>();
+
+		if (sensor_limits.contains("max azimuth (deg)"))
+			mMaxAzimuth_deg = sensor_limits["max azimuth (deg)"].get<double>();
+
+		if (sensor_limits.contains("min altitude (deg)"))
+			mMinAltitude_deg = sensor_limits["min altitude (deg)"].get<double>();
+
+		if (sensor_limits.contains("max altitude (deg)"))
+			mMaxAltitude_deg = sensor_limits["max altitude (deg)"].get<double>();
+	}
+
+	if (jdoc.contains("reference_point"))
+	{
+		auto reference_point = jdoc["reference_point"];
+
+		rfm::rappPoint_t p;
+		p.x_mm = reference_point["x (mm)"];
+		p.y_mm = reference_point["y (mm)"];
+		p.z_mm = reference_point["z (mm)"];
+
+		mReferencePoint = p;
+	}
+
+	if (jdoc.contains("start position"))
+	{
+		auto pos = jdoc["start position"];
+
+		if (pos.contains("x (m)"))
+			mStart_X_m = pos["x (m)"];
+
+		if (pos.contains("y (m)"))
+			mStart_Y_m = pos["y (m)"];
+
+		if (pos.contains("z (m)"))
+			mStart_Z_m = pos["z (m)"];
+	}
+
+	if (jdoc.contains("end position"))
+	{
+		auto pos = jdoc["end position"];
+
+		if (pos.contains("x (m)"))
+			mEnd_X_m = pos["x (m)"];
+
+		if (pos.contains("y (m)"))
+			mEnd_Y_m = pos["y (m)"];
+
+		if (pos.contains("z (m)"))
+			mEnd_Z_m = pos["z (m)"];
+	}
+
+	if (jdoc.contains("Vx (mm/s)"))
+	{
+		mVx_mmps = jdoc["Vx (mm/s)"];
+		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
+	}
+
+	if (jdoc.contains("Vy (mm/s)"))
+	{
+		mVy_mmps = jdoc["Vy (mm/s)"];
+		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
+	}
+
+	if (jdoc.contains("Vz (mm/s)"))
+	{
+		mVz_mmps = jdoc["Vz (mm/s)"];
+		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
+	}
+
+	if (jdoc.contains("sensor orientation table"))
+	{
+		mOrientationModel = eOrientationModel::INTREP_CURVE;
+
+		auto points = jdoc["sensor orientation table"];
+
+		if (points.empty())
+		{
+			kdt::sDollyOrientationInterpPoint_t point;
+
+			mOrientationTable.push_back(point);
+			point.distance_pct = 100.0;
+			mOrientationTable.push_back(point);
+		}
+		else
+		{
+			for (const auto& point : points)
+			{
+				kdt::sDollyOrientationInterpPoint_t p;
+
+				if (!point.contains("distance (%)"))
+					continue;
+
+				p.distance_pct = point["distance (%)"];
+
+				if (point.contains("pitch (deg)"))
+					p.pitch_deg = point["pitch (deg)"];
+
+				if (point.contains("roll (deg)"))
+					p.roll_deg = point["roll (deg)"];
+
+				if (point.contains("yaw (deg)"))
+					p.yaw_deg = point["yaw (deg)"];
+
+				mOrientationTable.push_back(p);
+			}
+
+			std::sort(mOrientationTable.begin(), mOrientationTable.end(), [](const auto& a, const auto& b)
+				{
+					return a.distance_pct < b.distance_pct;
+				});
+
+			if (mOrientationTable.empty())
+			{
+				kdt::sDollyOrientationInterpPoint_t point;
+
+				mOrientationTable.push_back(point);
+				point.distance_pct = 100.0;
+				mOrientationTable.push_back(point);
+			}
+			else
+			{
+				auto point = mOrientationTable.front();
+				if (point.distance_pct > 0.0)
+				{
+					point.distance_pct = 0.0;
+					mOrientationTable.insert(mOrientationTable.begin(), point);
+				}
+
+				point = mOrientationTable.back();
+				if (point.distance_pct < 100.0)
+				{
+					point.distance_pct = 100.0;
+					mOrientationTable.push_back(point);
+				}
+			}
+		}
+	}
+	else if (jdoc.contains("sensor start orientation offset"))
+	{
+		mOrientationModel = eOrientationModel::LINEAR;
+
+		auto orientation = jdoc["sensor start orientation offset"];
+
+		if (orientation.contains("pitch (deg)"))
+			mStartPitchOffset_deg = orientation["pitch (deg)"];
+
+		if (orientation.contains("roll (deg)"))
+			mStartRollOffset_deg = orientation["roll (deg)"];
+
+		if (orientation.contains("yaw (deg)"))
+			mStartYawOffset_deg = orientation["yaw (deg)"];
+
+		if (jdoc.contains("sensor final orientation offset"))
+		{
+			auto orientation = jdoc["sensor final orientation offset"];
+
+			if (orientation.contains("pitch (deg)"))
+				mEndPitchOffset_deg = orientation["pitch (deg)"];
+
+			if (orientation.contains("roll (deg)"))
+				mEndRollOffset_deg = orientation["roll (deg)"];
+
+			if (orientation.contains("yaw (deg)"))
+				mEndYawOffset_deg = orientation["yaw (deg)"];
+		}
+	}
+	else if (jdoc.contains("sensor orientation offset"))
+	{
+		mOrientationModel = eOrientationModel::CONSTANT;
+
+		auto orientation = jdoc["sensor orientation offset"];
+
+		if (orientation.contains("pitch (deg)"))
+			mSensorPitchOffset_deg = orientation["pitch (deg)"];
+
+		if (orientation.contains("roll (deg)"))
+			mSensorRollOffset_deg = orientation["roll (deg)"];
+
+		if (orientation.contains("yaw (deg)"))
+			mSensorYawOffset_deg = orientation["yaw (deg)"];
+	}
+
+	if (jdoc.contains("options"))
+	{
+		auto options = jdoc["options"];
+
+		if (options.contains("translation distance (m)"))
+		{
+			mTranslateToGroundModel = eTranslateToGroundModel::CONSTANT;
+			mTranslateDistance_m = options["translation distance (m)"].get<double>();
+		}
+
+		if (options.contains("translation threshold (%)"))
+		{
+			mTranslateToGroundModel = eTranslateToGroundModel::FIT;
+			mTranslateThreshold_pct = options["translation threshold (%)"].get<double>();
+		}
+
+		if (options.contains("translation table"))
+		{
+			mTranslateToGroundModel = eTranslateToGroundModel::INTREP_CURVE;
+
+			auto points = options["translation table"];
+
+			if (points.empty())
+			{
+				pointcloud::sPointCloudTranslationInterpPoint_t point;
+
+				mTranslateTable.push_back(point);
+				point.displacement_m = 0.0;
+				mTranslateTable.push_back(point);
+			}
+			else
+			{
+				for (const auto& point : points)
+				{
+					pointcloud::sPointCloudTranslationInterpPoint_t p;
+
+					if (!point.contains("displacement (m)"))
+						continue;
+
+					p.displacement_m = point["displacement (m)"];
+
+					if (point.contains("height (m)"))
+						p.height_m = point["height (m)"];
+
+					mTranslateTable.push_back(p);
+				}
+
+				std::sort(mTranslateTable.begin(), mTranslateTable.end(), [](const auto& a, const auto& b)
+					{
+						return a.displacement_m < b.displacement_m;
+					});
+
+				if (mTranslateTable.empty())
+				{
+					pointcloud::sPointCloudTranslationInterpPoint_t point;
+
+					mTranslateTable.push_back(point);
+					point.displacement_m = 0.0;
+					mTranslateTable.push_back(point);
+				}
+				else
+				{
+					auto point = mTranslateTable.front();
+					if (point.displacement_m > 0.0)
+					{
+						point.displacement_m = 0.0;
+						mTranslateTable.insert(mTranslateTable.begin(), point);
+					}
+				}
+			}
+		}
+
+		if (options.contains("rotation pitch (deg)") || options.contains("rotation roll (deg)"))
+		{
+			mRotateToGroundModel = eRotateToGroundModel::CONSTANT;
+
+			if (options.contains("rotation pitch (deg)"))
+				mRotatePitch_deg = options["rotation pitch (deg)"];
+
+			if (options.contains("rotation roll (deg)"))
+				mRotateRoll_deg = options["rotation roll (deg)"];
+		}
+
+		if (options.contains("rotation threshold (%)"))
+		{
+			mRotateToGroundModel = eRotateToGroundModel::FIT;
+			mRotateThreshold_pct = options["rotation threshold (%)"].get<double>();
+		}
+
+		if (options.contains("rotation table"))
+		{
+			mRotateToGroundModel = eRotateToGroundModel::INTREP_CURVE;
+
+			auto points = options["rotation table"];
+
+			if (points.empty())
+			{
+				pointcloud::sPointCloudRotationInterpPoint_t point;
+
+				mRotateTable.push_back(point);
+				point.displacement_m = 0.0;
+				mRotateTable.push_back(point);
+			}
+			else
+			{
+				for (const auto& point : points)
+				{
+					pointcloud::sPointCloudRotationInterpPoint_t p;
+
+					if (!point.contains("displacement (m)"))
+						continue;
+
+					p.displacement_m = point["displacement (m)"];
+
+					if (point.contains("pitch (deg)"))
+						p.pitch_deg = point["pitch (deg)"];
+
+					if (point.contains("roll (deg)"))
+						p.roll_deg = point["roll (deg)"];
+
+					mRotateTable.push_back(p);
+				}
+
+				std::sort(mRotateTable.begin(), mRotateTable.end(), [](const auto& a, const auto& b)
+					{
+						return a.displacement_m < b.displacement_m;
+					});
+
+				if (mRotateTable.empty())
+				{
+					pointcloud::sPointCloudRotationInterpPoint_t point;
+
+					mRotateTable.push_back(point);
+					point.displacement_m = 0.0;
+					mRotateTable.push_back(point);
+				}
+				else
+				{
+					auto point = mRotateTable.front();
+					if (point.displacement_m > 0.0)
+					{
+						point.displacement_m = 0.0;
+						mRotateTable.insert(mRotateTable.begin(), point);
+					}
+				}
+			}
+		}
+	}
+}
+
+/*
+nlohmann::json cLidarMapCatalogScan::save()
+{
+	nlohmann::json scanDoc;
+
+	scanDoc["measurement name"] = mMeasurementName;
+
+	if (mSensorMountPitch_deg.has_value() || mSensorMountRoll_deg.has_value() || mSensorMountYaw_deg.has_value())
+	{
+		nlohmann::json orientation;
+
+		if (mSensorMountPitch_deg.has_value())
+			orientation["pitch (deg)"] = mSensorMountPitch_deg.value();
+
+		if (mSensorMountRoll_deg.has_value())
+			orientation["roll (deg)"] = mSensorMountRoll_deg.value();
+
+		if (mSensorMountYaw_deg.has_value())
+			orientation["yaw (deg)"] = mSensorMountYaw_deg.value();
+
+		scanDoc["sensor mount orientation"] = orientation;
+	}
+
+	if (mReferencePoint.has_value())
+	{
+		nlohmann::json reference_point;
+
+		rfm::rappPoint_t p = mReferencePoint.value();
+
+		reference_point["x (mm)"] = p.x_mm;
+		reference_point["y (mm)"] = p.y_mm;
+		reference_point["z (mm)"] = p.z_mm;
+
+		scanDoc["reference_point"] = reference_point;
+	}
+
+	if (mMinDistance_m.has_value() || mMaxDistance_m.has_value() || mMinAzimuth_deg.has_value()
+		|| mMaxAzimuth_deg.has_value() || mMinAltitude_deg.has_value() || mMaxAltitude_deg.has_value())
+	{
+		nlohmann::json sensor_limits;
+
+		if (mMinDistance_m.has_value())
+			sensor_limits["min distance (m)"] = mMinDistance_m.value();
+
+		if (mMaxDistance_m.has_value())
+			sensor_limits["max distance (m)"] = mMaxDistance_m.value();
+
+		if (mMinAzimuth_deg.has_value())
+			sensor_limits["min azimuth (deg)"] = mMinAzimuth_deg.value();
+
+		if (mMaxAzimuth_deg.has_value())
+			sensor_limits["max azimuth (deg)"] = mMaxAzimuth_deg.value();
+
+		if (mMinAltitude_deg.has_value())
+			sensor_limits["min altitude (deg)"] = mMinAltitude_deg.value();
+
+		if (mMaxAltitude_deg.has_value())
+			sensor_limits["max altitude (deg)"] = mMaxAltitude_deg.value();
+
+		scanDoc["sensor limits"] = sensor_limits;
+	}
+
+	auto kinematicDoc = mKinematics.save();
+
+	if (!kinematicDoc.is_null())
+		scanDoc["kinematics"] = kinematicDoc;
+
+	mDirty = false;
+
+	return scanDoc;
+}
+*/
 
 

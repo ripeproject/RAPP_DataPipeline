@@ -13,127 +13,29 @@
 #include <memory>
 #include <optional>
 
-// Forward Declaration
-class cLidarMapCatalogScan;
 
-class cLidarMapConfigCatalog
+class cLidarMapConfigKinematicParameters
 {
 public:
-	typedef std::vector<cLidarMapCatalogScan> LidarScan_t;
+	cLidarMapConfigKinematicParameters();
+	cLidarMapConfigKinematicParameters(int month, int day);
+	~cLidarMapConfigKinematicParameters() = default;
 
-	typedef LidarScan_t::iterator				iterator;
-	typedef LidarScan_t::const_iterator			const_iterator;
+	cLidarMapConfigKinematicParameters& operator=(const cLidarMapConfigKinematicParameters& other);
 
-public:
-	cLidarMapConfigCatalog(int month, int day);
-	~cLidarMapConfigCatalog() = default;
-
-	const int date() const;
-	
-	const int month() const;
-	const int day() const;
-
-	void clear();
-
-	bool isDirty() const;
-
-	bool empty() const;
-	std::size_t size() const;
-
-	bool contains(const std::string& name) const;
-
-	const cLidarMapCatalogScan& front() const;
-	cLidarMapCatalogScan& front();
-
-	iterator		begin();
-	iterator		end();
-
-	const_iterator	begin() const;
-	const_iterator	end() const;
-
-	const_iterator	find_by_filename(const std::string& measurement_filename) const;
-	iterator		find_by_filename(const std::string& measurement_filename);
-
-	const_iterator	find(const std::string& name) const;
-	iterator		find(const std::string& name);
-
-	cLidarMapCatalogScan& add(const std::string& name);
-	void remove(const std::string& name);
-
-	const cLidarMapCatalogScan& operator[](int index) const;
-	cLidarMapCatalogScan& operator[](int index);
-
-protected:
-	void setDirty(bool dirty);
-
-	void load(const nlohmann::json& jdoc);
-//	nlohmann::json save();
-
-private:
-	template<typename T>
-	void reset(std::optional<T>& var);
-
-private:
-	bool mDirty = false;
-
-	const int mEffectiveMonth;
-	const int mEffectiveDay;
-
-	LidarScan_t mScans;
-
-	friend class cLidarMapConfigFile;
-};
-
-/***
- * Implementation Details
- ***/
-template<typename T>
-inline void cLidarMapConfigCatalog::reset(std::optional<T>& var)
-{
-	if (var.has_value())
-	{
-		var.reset();
-		mDirty = true;
-	}
-}
-
-
-
-class cLidarMapCatalogScan
-{
-public:
-	cLidarMapCatalogScan();
-	explicit cLidarMapCatalogScan(const std::string& name);
-	~cLidarMapCatalogScan() = default;
-
+	bool operator==(const cLidarMapConfigKinematicParameters& other) const;
+	bool operator!=(const cLidarMapConfigKinematicParameters& other) const;
 
 	const int date() const;
 
 	const int month() const;
 	const int day() const;
 
-
 	void clear();
+
 	bool empty() const;
 
 	bool isDirty() const;
-
-	const std::string& getMeasurementName() const;
-
-	/*** Sensor Mounting Parameters ***/
-	const std::optional<double>& getSensorMountPitch_deg() const;
-	const std::optional<double>& getSensorMountRoll_deg() const;
-	const std::optional<double>& getSensorMountYaw_deg() const;
-
-	const std::optional<rfm::rappPoint_t>& getReferencePoint() const;
-
-	/*** LiDAR Parameters ***/
-	const std::optional<double>& getMinDistance_m() const;
-	const std::optional<double>& getMaxDistance_m() const;
-	const std::optional<double>& getMinAzimuth_deg() const;
-	const std::optional<double>& getMaxAzimuth_deg() const;
-	const std::optional<double>& getMinAltitude_deg() const;
-	const std::optional<double>& getMaxAltitude_deg() const;
 
 	const std::optional<eKinematicModel>& getKinematicModel() const;
 	const std::optional<eOrientationModel>& getOrientationModel() const;
@@ -192,6 +94,7 @@ public:
 	void resetRotateToGroundModel();
 	void setRotateToGroundModel(const std::optional<eRotateToGroundModel>& model);
 
+	void resetSpeeds();
 	void setVx_mmps(const std::optional<double>&);
 	void setVy_mmps(const std::optional<double>&);
 	void setVz_mmps(const std::optional<double>&);
@@ -225,6 +128,7 @@ public:
 	void clearRotateTable();
 	void setRotateTable(const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& table);
 
+	void resetStartPosition();
 	void setStart_X_m(const std::optional<double>&);
 	void setStart_Y_m(const std::optional<double>&);
 	void setStart_Z_m(const std::optional<double>&);
@@ -233,6 +137,7 @@ public:
 	void setStart_Y_mm(const std::optional<double>& y_mm);
 	void setStart_Z_mm(const std::optional<double>& z_mm);
 
+	void resetEndPosition();
 	void setEnd_X_m(const std::optional<double>&);
 	void setEnd_Y_m(const std::optional<double>&);
 	void setEnd_Z_m(const std::optional<double>&);
@@ -241,34 +146,7 @@ public:
 	void setEnd_Y_mm(const std::optional<double>& y_mm);
 	void setEnd_Z_mm(const std::optional<double>& z_mm);
 
-	void setEffectiveDate(int month, int day);
-
-	void setMeasurementName(const std::string& name);
-
-	void resetSensorMountPitch_deg();
-	void resetSensorMountRoll_deg();
-	void resetSensorMountYaw_deg();
-
-	void setSensorMountPitch_deg(const std::optional<double>&);
-	void setSensorMountRoll_deg(const std::optional<double>&);
-	void setSensorMountYaw_deg(const std::optional<double>&);
-
-	void resetReferencePoint();
-	void setReferencePoint(const std::optional<rfm::rappPoint_t>& p);
-
-	void resetMinDistance_m();
-	void resetMaxDistance_m();
-	void resetMinAzimuth_deg();
-	void resetMaxAzimuth_deg();
-	void resetMinAltitude_deg();
-	void resetMaxAltitude_deg();
-
-	void setMinDistance_m(const std::optional<double>& dist_m);
-	void setMaxDistance_m(const std::optional<double>& dist_m);
-	void setMinAzimuth_deg(const std::optional<double>& az_deg);
-	void setMaxAzimuth_deg(const std::optional<double>& az_deg);
-	void setMinAltitude_deg(const std::optional<double>& alt_deg);
-	void setMaxAltitude_deg(const std::optional<double>& alt_deg);
+	void setDate(int month, int day);
 
 	void clearDirtyFlag();
 	void setDirtyFlag();
@@ -277,7 +155,7 @@ protected:
 	void setDirty(bool dirty);
 
 	void load(const nlohmann::json& jdoc);
-//	nlohmann::json save();
+	nlohmann::json save();
 
 private:
 	template<typename T>
@@ -286,26 +164,8 @@ private:
 private:
 	bool mDirty = false;
 
-	std::string mMeasurementName;
-
-	int mEffectiveMonth = 0;
-	int mEffectiveDay = 0;
-
-	// Dolly - Sensor Mounting Parameters
-	std::optional<double> mSensorMountPitch_deg;
-	std::optional<double> mSensorMountRoll_deg;
-	std::optional<double> mSensorMountYaw_deg;
-
-	// Reference point to normalize scans
-	std::optional<rfm::rappPoint_t> mReferencePoint;
-
-	// LiDAR Sensor Limits
-	std::optional<double> mMinDistance_m;
-	std::optional<double> mMaxDistance_m;
-	std::optional<double> mMinAzimuth_deg;
-	std::optional<double> mMaxAzimuth_deg;
-	std::optional<double> mMinAltitude_deg;
-	std::optional<double> mMaxAltitude_deg;
+	int mEffectiveMonth;
+	int mEffectiveDay;
 
 
 	std::optional<eKinematicModel>			mKinematicModel;
@@ -370,15 +230,14 @@ private:
 	std::optional<double> mEnd_Y_m;
 	std::optional<double> mEnd_Z_m;
 
-	friend class cLidarMapConfigFile;
-	friend class cLidarMapConfigCatalog;
+	friend class cLidarMapConfigKinematics;
 };
 
 /***
  * Implementation Details
  ***/
 template<typename T>
-inline void cLidarMapCatalogScan::reset(std::optional<T>& var)
+inline void cLidarMapConfigKinematicParameters::reset(std::optional<T>& var)
 {
 	if (var.has_value())
 	{
@@ -386,4 +245,143 @@ inline void cLidarMapCatalogScan::reset(std::optional<T>& var)
 		mDirty = true;
 	}
 }
+
+
+
+class cLidarMapConfigKinematics
+{
+public:
+public:
+	typedef std::map<int, cLidarMapConfigKinematicParameters> KinematicParameters_t;
+
+	typedef KinematicParameters_t::iterator			iterator;
+	typedef KinematicParameters_t::const_iterator	const_iterator;
+
+public:
+	cLidarMapConfigKinematics();
+	~cLidarMapConfigKinematics();
+
+	void clear();
+
+	bool empty() const;
+	std::size_t size() const;
+
+	bool isDirty() const;
+
+	bool contains(const int date) const;
+	bool contains(const int month, const int day) const;
+
+	const cLidarMapConfigKinematicParameters& front() const;
+	cLidarMapConfigKinematicParameters& front();
+
+	iterator		begin();
+	iterator		end();
+
+	const_iterator	begin() const;
+	const_iterator	end() const;
+
+	const_iterator	find(const int date) const;
+	iterator		find(const int date);
+
+	const_iterator	find(const int month, const int day) const;
+	iterator		find(const int month, const int day);
+
+	const_iterator	find_exact(const int month, const int day) const;
+	iterator		find_exact(const int month, const int day);
+
+
+	const std::optional<eKinematicModel>& getKinematicModel(int date) const;
+	const std::optional<eKinematicModel>& getKinematicModel(int month, int day) const;
+
+	const std::optional<eOrientationModel>& getOrientationModel(int date) const;
+	const std::optional<eOrientationModel>& getOrientationModel(int month, int day) const;
+
+	const std::optional<eTranslateToGroundModel>& getTranslateToGroundModel(int date) const;
+	const std::optional<eTranslateToGroundModel>& getTranslateToGroundModel(int month, int day) const;
+
+	const std::optional<eRotateToGroundModel>& getRotateToGroundModel(int date) const;
+	const std::optional<eRotateToGroundModel>& getRotateToGroundModel(int month, int day) const;
+
+
+	/*** Sensor Orientation Parameters - Constant: Angles ***/
+	const std::optional<double>& getSensorPitchOffset_deg(int date) const;
+	const std::optional<double>& getSensorRollOffset_deg(int date) const;
+	const std::optional<double>& getSensorYawOffset_deg(int date) const;
+
+	const std::optional<double>& getSensorPitchOffset_deg(int month, int day) const;
+	const std::optional<double>& getSensorRollOffset_deg(int month, int day) const;
+	const std::optional<double>& getSensorYawOffset_deg(int month, int day) const;
+
+	/*** Sensor Orientation Parameters - Linear: Start and Stop Angles ***/
+	const std::optional<double>& getStartPitchOffset_deg(int date) const;
+	const std::optional<double>& getStartRollOffset_deg(int date) const;
+	const std::optional<double>& getStartYawOffset_deg(int date) const;
+
+	const std::optional<double>& getEndPitchOffset_deg(int date) const;
+	const std::optional<double>& getEndRollOffset_deg(int date) const;
+	const std::optional<double>& getEndYawOffset_deg(int date) const;
+
+	const std::optional<double>& getStartPitchOffset_deg(int month, int day) const;
+	const std::optional<double>& getStartRollOffset_deg(int month, int day) const;
+	const std::optional<double>& getStartYawOffset_deg(int month, int day) const;
+
+	const std::optional<double>& getEndPitchOffset_deg(int month, int day) const;
+	const std::optional<double>& getEndRollOffset_deg(int month, int day) const;
+	const std::optional<double>& getEndYawOffset_deg(int month, int day) const;
+
+	/*** Sensor Orientation Parameters - Intrep Table: Data Points ***/
+	const std::vector<kdt::sDollyOrientationInterpPoint_t>& getOrientationTable(int date) const;
+	const std::vector<kdt::sDollyOrientationInterpPoint_t>& getOrientationTable(int month, int day) const;
+
+	/*** Sensor Translation Parameters - Start/End Positions ***/
+	const std::optional<double>& getStart_X_m(int date) const;
+	const std::optional<double>& getStart_Y_m(int date) const;
+	const std::optional<double>& getStart_Z_m(int date) const;
+
+	const std::optional<double>& getEnd_X_m(int date) const;
+	const std::optional<double>& getEnd_Y_m(int date) const;
+	const std::optional<double>& getEnd_Z_m(int date) const;
+
+	/*** Sensor Translation Parameters - Constant: Speeds ***/
+	const std::optional<double>& getVx_mmps(int date) const;
+	const std::optional<double>& getVy_mmps(int date) const;
+	const std::optional<double>& getVz_mmps(int date) const;
+
+	const std::optional<double>& getVx_mmps(int month, int day) const;
+	const std::optional<double>& getVy_mmps(int month, int day) const;
+	const std::optional<double>& getVz_mmps(int month, int day) const;
+
+	/*** Translate Point Cloud Parameters ***/
+	const std::optional<bool>& getTranslateToGround(int date) const;
+	const std::optional<double>& getTranslateDistance_m(int date) const;
+	const std::optional<double>& getTranslateThreshold_pct(int date) const;
+
+	const std::vector<pointcloud::sPointCloudTranslationInterpPoint_t>& getTranslateTable(int date) const;
+
+	/*** Rotate Point Cloud Parameters ***/
+	const std::optional<bool>& getRotateToGround(int date) const;
+	const std::optional<double>& getRotatePitch_deg(int date) const;
+	const std::optional<double>& getRotateRoll_deg(int date) const;
+	const std::optional<double>& getRotateThreshold_pct(int date) const;
+
+	const std::vector<pointcloud::sPointCloudRotationInterpPoint_t>& getRotateTable(int date) const;
+
+	void clearDirtyFlag();
+	void setDirtyFlag(bool dirty);
+
+	cLidarMapConfigKinematicParameters& add(const int date);
+	cLidarMapConfigKinematicParameters& add(const int month, const int day);
+
+protected:
+	void load(const nlohmann::json& jdoc);
+	nlohmann::json save();
+
+private:
+	bool mDirty = false;
+
+	KinematicParameters_t mKinematics;
+
+	friend class cLidarMapConfigScan;
+};
+
 
