@@ -377,7 +377,6 @@ protected:
 	nlohmann::json save();
 
 private:
-	bool mDirty = false;
 
 	KinematicParameters_t mKinematics;
 

@@ -1248,7 +1248,7 @@ bool cLidarMapConfigKinematics::isDirty() const
 			return true;
 	}
 
-	return mDirty;
+	return false;
 }
 
 
@@ -1663,8 +1663,6 @@ void cLidarMapConfigKinematics::clearDirtyFlag()
 	{
 		parameters.second.clearDirtyFlag();
 	}
-
-	mDirty = false;
 }
 
 void cLidarMapConfigKinematics::setDirtyFlag(bool dirty)
@@ -1673,8 +1671,6 @@ void cLidarMapConfigKinematics::setDirtyFlag(bool dirty)
 	{
 		parameters.second.setDirty(dirty);
 	}
-
-	mDirty = dirty;
 }
 
 cLidarMapConfigKinematicParameters& cLidarMapConfigKinematics::add(const int date)
@@ -1693,8 +1689,6 @@ cLidarMapConfigKinematicParameters& cLidarMapConfigKinematics::add(const int dat
 
 	cLidarMapConfigKinematicParameters& result = mKinematics.find(date)->second;
 	result.setDirtyFlag();
-
-	mDirty = true;
 
 	return result;
 }
