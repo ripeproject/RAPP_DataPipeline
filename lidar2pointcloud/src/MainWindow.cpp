@@ -565,26 +565,11 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 
 		fp->savePlyFiles(savePlyFiles);
 		fp->plyUseBinaryFormat(plyUseBinaryFormat);
-		fp->setDefaults(mConfigData->getDefaults());
 
 		fp->setAllowedExperimentNames(mConfigData->getAllowedExperimentNames());
 
-		const auto& mount = mConfigData->getDefaults().getSensorOrientation();
-		fp->setSensorMountPitch_deg(to_value(scanIt->getSensorMountPitch_deg(), mount.getPitch_deg()));
-		fp->setSensorMountRoll_deg(to_value(scanIt->getSensorMountRoll_deg(), mount.getRoll_deg()));
-		fp->setSensorMountYaw_deg(to_value(scanIt->getSensorMountYaw_deg(), mount.getYaw_deg()));
-
-		fp->setReferencePoint(scanIt->getReferencePoint());
-
-		const auto& limits = mConfigData->getDefaults().getSensorLimits();
-		fp->setMinDistance_m(to_value(scanIt->getMinDistance_m(), limits.getMinDistance_m()));
-		fp->setMaxDistance_m(to_value(scanIt->getMaxDistance_m(), limits.getMaxDistance_m()));
-
-		fp->setMinAzimuth_deg(to_value(scanIt->getMinAzimuth_deg(), limits.getMinAzimuth_deg()));
-		fp->setMaxAzimuth_deg(to_value(scanIt->getMaxAzimuth_deg(), limits.getMaxAzimuth_deg()));
-
-		fp->setMinAltitude_deg(to_value(scanIt->getMinAltitude_deg(), limits.getMinAltitude_deg()));
-		fp->setMaxAltitude_deg(to_value(scanIt->getMaxAltitude_deg(), limits.getMaxAltitude_deg()));
+		fp->setDefaults(mConfigData->getDefaults());
+		fp->setScanInfo(*scanIt);
 
 		auto it = scanIt->find(month, day);
 		if (it == scanIt->end())
