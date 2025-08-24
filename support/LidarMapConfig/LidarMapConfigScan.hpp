@@ -15,16 +15,12 @@
 #include <optional>
 
 
-class cLidarMapConfigScan
+class cLidarMapConfigScanInfo
 {
 public:
-	typedef cLidarMapConfigKinematics::iterator			iterator;
-	typedef cLidarMapConfigKinematics::const_iterator	const_iterator;
-
-public:
-	cLidarMapConfigScan();
-	explicit cLidarMapConfigScan(const std::string& name);
-	~cLidarMapConfigScan() = default;
+	cLidarMapConfigScanInfo();
+	explicit cLidarMapConfigScanInfo(const std::string& name);
+	~cLidarMapConfigScanInfo() = default;
 
 	void clear();
 	bool empty() const;
@@ -48,6 +44,86 @@ public:
 	const std::optional<double>& getMinAltitude_deg() const;
 	const std::optional<double>& getMaxAltitude_deg() const;
 
+
+	void setMeasurementName(const std::string& name);
+
+	void resetSensorMountPitch_deg();
+	void resetSensorMountRoll_deg();
+	void resetSensorMountYaw_deg();
+
+	void setSensorMountPitch_deg(const std::optional<double>&);
+	void setSensorMountRoll_deg(const std::optional<double>&);
+	void setSensorMountYaw_deg(const std::optional<double>&);
+
+	void resetReferencePoint();
+	void setReferencePoint(const std::optional<rfm::rappPoint_t>& p);
+
+	void resetMinDistance_m();
+	void resetMaxDistance_m();
+	void resetMinAzimuth_deg();
+	void resetMaxAzimuth_deg();
+	void resetMinAltitude_deg();
+	void resetMaxAltitude_deg();
+
+	void setMinDistance_m(const std::optional<double>& dist_m);
+	void setMaxDistance_m(const std::optional<double>& dist_m);
+	void setMinAzimuth_deg(const std::optional<double>& az_deg);
+	void setMaxAzimuth_deg(const std::optional<double>& az_deg);
+	void setMinAltitude_deg(const std::optional<double>& alt_deg);
+	void setMaxAltitude_deg(const std::optional<double>& alt_deg);
+
+	void clearDirtyFlag();
+	void setDirtyFlag();
+
+protected:
+	void setDirty(bool dirty);
+
+	void load(const nlohmann::json& jdoc);
+	void save(nlohmann::json& infoDoc);
+
+private:
+	template<typename T>
+	void reset(std::optional<T>& var);
+
+protected:
+	std::string mMeasurementName;
+
+	// Dolly - Sensor Mounting Parameters
+	std::optional<double> mSensorMountPitch_deg;
+	std::optional<double> mSensorMountRoll_deg;
+	std::optional<double> mSensorMountYaw_deg;
+
+	// Reference point to normalize scans
+	std::optional<rfm::rappPoint_t> mReferencePoint;
+
+	// LiDAR Sensor Limits
+	std::optional<double> mMinDistance_m;
+	std::optional<double> mMaxDistance_m;
+	std::optional<double> mMinAzimuth_deg;
+	std::optional<double> mMaxAzimuth_deg;
+	std::optional<double> mMinAltitude_deg;
+	std::optional<double> mMaxAltitude_deg;
+
+private:
+	bool mDirty = false;
+};
+
+
+class cLidarMapConfigScan : public cLidarMapConfigScanInfo
+{
+public:
+	typedef cLidarMapConfigKinematics::iterator			iterator;
+	typedef cLidarMapConfigKinematics::const_iterator	const_iterator;
+
+public:
+	cLidarMapConfigScan();
+	explicit cLidarMapConfigScan(const std::string& name);
+	~cLidarMapConfigScan() = default;
+
+	void clear();
+	bool empty() const;
+
+	bool isDirty() const;
 
 	/*** Dolly Kinematic Parameters ***/
 	const std::optional<eKinematicModel>* getKinematicModel(int date) const;
@@ -148,34 +224,6 @@ public:
 	const_iterator	find_exact(const int month, const int day) const;
 	iterator		find_exact(const int month, const int day);
 
-
-	void setMeasurementName(const std::string& name);
-
-	void resetSensorMountPitch_deg();
-	void resetSensorMountRoll_deg();
-	void resetSensorMountYaw_deg();
-
-	void setSensorMountPitch_deg(const std::optional<double>&);
-	void setSensorMountRoll_deg(const std::optional<double>&);
-	void setSensorMountYaw_deg(const std::optional<double>&);
-
-	void resetReferencePoint();
-	void setReferencePoint(const std::optional<rfm::rappPoint_t>& p);
-
-	void resetMinDistance_m();
-	void resetMaxDistance_m();
-	void resetMinAzimuth_deg();
-	void resetMaxAzimuth_deg();
-	void resetMinAltitude_deg();
-	void resetMaxAltitude_deg();
-
-	void setMinDistance_m(const std::optional<double>& dist_m);
-	void setMaxDistance_m(const std::optional<double>& dist_m);
-	void setMinAzimuth_deg(const std::optional<double>& az_deg);
-	void setMaxAzimuth_deg(const std::optional<double>& az_deg);
-	void setMinAltitude_deg(const std::optional<double>& alt_deg);
-	void setMaxAltitude_deg(const std::optional<double>& alt_deg);
-
 	cLidarMapConfigKinematicParameters& add(const int date);
 	cLidarMapConfigKinematicParameters& add(const int month, const int day);
 
@@ -193,25 +241,6 @@ private:
 	void reset(std::optional<T>& var);
 
 private:
-	bool mDirty = false;
-
-	std::string mMeasurementName;
-
-	// Dolly - Sensor Mounting Parameters
-	std::optional<double> mSensorMountPitch_deg;
-	std::optional<double> mSensorMountRoll_deg;
-	std::optional<double> mSensorMountYaw_deg;
-
-	// Reference point to normalize scans
-	std::optional<rfm::rappPoint_t> mReferencePoint;
-
-	// LiDAR Sensor Limits
-	std::optional<double> mMinDistance_m;
-	std::optional<double> mMaxDistance_m;
-	std::optional<double> mMinAzimuth_deg;
-	std::optional<double> mMaxAzimuth_deg;
-	std::optional<double> mMinAltitude_deg;
-	std::optional<double> mMaxAltitude_deg;
 
 	cLidarMapConfigKinematics mKinematics;
 
@@ -222,6 +251,16 @@ private:
 /***
  * Implementation Details
  ***/
+template<typename T>
+inline void cLidarMapConfigScanInfo::reset(std::optional<T>& var)
+{
+	if (var.has_value())
+	{
+		var.reset();
+		mDirty = true;
+	}
+}
+
 template<typename T>
 inline void cLidarMapConfigScan::reset(std::optional<T>& var)
 {

@@ -32,14 +32,15 @@ namespace
 	}
 }
 
-cLidarMapConfigScan::cLidarMapConfigScan()
+cLidarMapConfigScanInfo::cLidarMapConfigScanInfo()
 {}
 
-cLidarMapConfigScan::cLidarMapConfigScan(const std::string& name)
-: mMeasurementName(name)
-{}
+cLidarMapConfigScanInfo::cLidarMapConfigScanInfo(const std::string& name)
+	: mMeasurementName(name)
+{
+}
 
-void cLidarMapConfigScan::clear()
+void cLidarMapConfigScanInfo::clear()
 {
 	mDirty = false;
 
@@ -55,11 +56,9 @@ void cLidarMapConfigScan::clear()
 	mMaxAzimuth_deg.reset();
 	mMinAltitude_deg.reset();
 	mMaxAltitude_deg.reset();
-
-	mKinematics.clear();
 }
 
-bool cLidarMapConfigScan::empty() const
+bool cLidarMapConfigScanInfo::empty() const
 {
 	bool has_value = false;
 
@@ -73,35 +72,321 @@ bool cLidarMapConfigScan::empty() const
 	return mMeasurementName.empty();
 }
 
-bool cLidarMapConfigScan::isDirty() const
+bool cLidarMapConfigScanInfo::isDirty() const
 {
 	bool dirty = mDirty;
+
+	return dirty;
+}
+
+const std::string& cLidarMapConfigScanInfo::getMeasurementName() const
+{
+	return mMeasurementName;
+}
+
+const std::optional<double>& cLidarMapConfigScanInfo::getSensorMountPitch_deg() const { return mSensorMountPitch_deg; }
+const std::optional<double>& cLidarMapConfigScanInfo::getSensorMountRoll_deg() const { return mSensorMountRoll_deg; }
+const std::optional<double>& cLidarMapConfigScanInfo::getSensorMountYaw_deg() const { return mSensorMountYaw_deg; }
+
+const std::optional<rfm::rappPoint_t>& cLidarMapConfigScanInfo::getReferencePoint() const
+{
+	return mReferencePoint;
+}
+
+const std::optional<double>& cLidarMapConfigScanInfo::getMinDistance_m() const { return mMinDistance_m; }
+const std::optional<double>& cLidarMapConfigScanInfo::getMaxDistance_m() const { return mMaxDistance_m; }
+const std::optional<double>& cLidarMapConfigScanInfo::getMinAzimuth_deg() const { return mMinAzimuth_deg; }
+const std::optional<double>& cLidarMapConfigScanInfo::getMaxAzimuth_deg() const { return mMaxAzimuth_deg; }
+const std::optional<double>& cLidarMapConfigScanInfo::getMinAltitude_deg() const { return mMinAltitude_deg; }
+const std::optional<double>& cLidarMapConfigScanInfo::getMaxAltitude_deg() const { return mMaxAltitude_deg; }
+
+void cLidarMapConfigScanInfo::setMeasurementName(const std::string& name)
+{
+	mDirty |= (mMeasurementName != name);
+	mMeasurementName = name;
+}
+
+void cLidarMapConfigScanInfo::resetSensorMountPitch_deg()
+{
+	reset(mSensorMountPitch_deg);
+}
+
+void cLidarMapConfigScanInfo::resetSensorMountRoll_deg()
+{
+	reset(mSensorMountRoll_deg);
+}
+
+void cLidarMapConfigScanInfo::resetSensorMountYaw_deg()
+{
+	reset(mSensorMountYaw_deg);
+}
+
+void cLidarMapConfigScanInfo::setSensorMountPitch_deg(const std::optional<double>& pitch_deg)
+{
+	mDirty |= (mSensorMountPitch_deg != pitch_deg);
+	mSensorMountPitch_deg = pitch_deg;
+}
+
+void cLidarMapConfigScanInfo::setSensorMountRoll_deg(const std::optional<double>& roll_deg)
+{
+	mDirty |= (mSensorMountRoll_deg != roll_deg);
+	mSensorMountRoll_deg = roll_deg;
+}
+
+void cLidarMapConfigScanInfo::setSensorMountYaw_deg(const std::optional<double>& yaw_deg)
+{
+	mDirty |= (mSensorMountYaw_deg != yaw_deg);
+	mSensorMountYaw_deg = yaw_deg;
+}
+
+void cLidarMapConfigScanInfo::resetReferencePoint()
+{
+	reset(mReferencePoint);
+}
+
+void cLidarMapConfigScanInfo::setReferencePoint(const std::optional<rfm::rappPoint_t>& rp)
+{
+	mDirty |= (mReferencePoint != rp);
+	mReferencePoint = rp;
+}
+
+void cLidarMapConfigScanInfo::resetMinDistance_m()
+{
+	reset(mMinDistance_m);
+}
+
+void cLidarMapConfigScanInfo::resetMaxDistance_m()
+{
+	reset(mMaxDistance_m);
+}
+
+void cLidarMapConfigScanInfo::resetMinAzimuth_deg()
+{
+	reset(mMinAzimuth_deg);
+}
+
+void cLidarMapConfigScanInfo::resetMaxAzimuth_deg()
+{
+	reset(mMaxAzimuth_deg);
+}
+
+void cLidarMapConfigScanInfo::resetMinAltitude_deg()
+{
+	reset(mMinAltitude_deg);
+}
+
+void cLidarMapConfigScanInfo::resetMaxAltitude_deg()
+{
+	reset(mMaxAltitude_deg);
+}
+
+void cLidarMapConfigScanInfo::setMinDistance_m(const std::optional<double>& dist_m)
+{
+	mDirty |= (mMinDistance_m != dist_m);
+	mMinDistance_m = dist_m;
+}
+
+void cLidarMapConfigScanInfo::setMaxDistance_m(const std::optional<double>& dist_m)
+{
+	mDirty |= (mMaxDistance_m != dist_m);
+	mMaxDistance_m = dist_m;
+}
+
+void cLidarMapConfigScanInfo::setMinAzimuth_deg(const std::optional<double>& azimuth_deg)
+{
+	mDirty |= (mMinAzimuth_deg != azimuth_deg);
+	mMinAzimuth_deg = azimuth_deg;
+}
+
+void cLidarMapConfigScanInfo::setMaxAzimuth_deg(const std::optional<double>& azimuth_deg)
+{
+	mDirty |= (mMaxAzimuth_deg != azimuth_deg);
+	mMaxAzimuth_deg = azimuth_deg;
+}
+
+void cLidarMapConfigScanInfo::setMinAltitude_deg(const std::optional<double>& altitude_deg)
+{
+	mDirty |= (mMinAltitude_deg != altitude_deg);
+	mMinAltitude_deg = altitude_deg;
+}
+
+void cLidarMapConfigScanInfo::setMaxAltitude_deg(const std::optional<double>& altitude_deg)
+{
+	mDirty |= (mMaxAltitude_deg != altitude_deg);
+	mMaxAltitude_deg = altitude_deg;
+}
+
+void cLidarMapConfigScanInfo::clearDirtyFlag()
+{
+	mDirty = false;
+}
+
+void cLidarMapConfigScanInfo::setDirtyFlag()
+{
+	mDirty = true;
+}
+
+void cLidarMapConfigScanInfo::setDirty(bool dirty)
+{
+	mDirty = dirty;
+}
+
+void cLidarMapConfigScanInfo::load(const nlohmann::json& jdoc)
+{
+	if (jdoc.contains("experiment_name"))
+		mMeasurementName = jdoc["experiment_name"];
+
+	if (jdoc.contains("experiment name"))
+		mMeasurementName = jdoc["experiment name"];
+
+	if (jdoc.contains("measurement_name"))
+		mMeasurementName = jdoc["measurement_name"];
+
+	if (jdoc.contains("measurement name"))
+		mMeasurementName = jdoc["measurement name"];
+
+
+	if (jdoc.contains("sensor mount orientation"))
+	{
+		auto orientation = jdoc["sensor mount orientation"];
+
+		if (orientation.contains("pitch (deg)"))
+			mSensorMountPitch_deg = orientation["pitch (deg)"];
+
+		if (orientation.contains("roll (deg)"))
+			mSensorMountRoll_deg = orientation["roll (deg)"];
+
+		if (orientation.contains("yaw (deg)"))
+			mSensorMountYaw_deg = orientation["yaw (deg)"];
+	}
+
+	if (jdoc.contains("sensor limits"))
+	{
+		auto sensor_limits = jdoc["sensor limits"];
+
+		if (sensor_limits.contains("min distance (m)"))
+			mMinDistance_m = sensor_limits["min distance (m)"].get<double>();
+
+		if (sensor_limits.contains("max distance (m)"))
+			mMaxDistance_m = sensor_limits["max distance (m)"].get<double>();
+
+		if (sensor_limits.contains("min azimuth (deg)"))
+			mMinAzimuth_deg = sensor_limits["min azimuth (deg)"].get<double>();
+
+		if (sensor_limits.contains("max azimuth (deg)"))
+			mMaxAzimuth_deg = sensor_limits["max azimuth (deg)"].get<double>();
+
+		if (sensor_limits.contains("min altitude (deg)"))
+			mMinAltitude_deg = sensor_limits["min altitude (deg)"].get<double>();
+
+		if (sensor_limits.contains("max altitude (deg)"))
+			mMaxAltitude_deg = sensor_limits["max altitude (deg)"].get<double>();
+	}
+
+	if (jdoc.contains("reference_point"))
+	{
+		auto reference_point = jdoc["reference_point"];
+
+		rfm::rappPoint_t p;
+		p.x_mm = reference_point["x (mm)"];
+		p.y_mm = reference_point["y (mm)"];
+		p.z_mm = reference_point["z (mm)"];
+
+		mReferencePoint = p;
+	}
+}
+
+void cLidarMapConfigScanInfo::save(nlohmann::json& infoDoc)
+{
+	infoDoc["measurement name"] = mMeasurementName;
+
+	if (mSensorMountPitch_deg.has_value() || mSensorMountRoll_deg.has_value() || mSensorMountYaw_deg.has_value())
+	{
+		nlohmann::json orientation;
+
+		if (mSensorMountPitch_deg.has_value())
+			orientation["pitch (deg)"] = mSensorMountPitch_deg.value();
+
+		if (mSensorMountRoll_deg.has_value())
+			orientation["roll (deg)"] = mSensorMountRoll_deg.value();
+
+		if (mSensorMountYaw_deg.has_value())
+			orientation["yaw (deg)"] = mSensorMountYaw_deg.value();
+
+		infoDoc["sensor mount orientation"] = orientation;
+	}
+
+	if (mReferencePoint.has_value())
+	{
+		nlohmann::json reference_point;
+
+		rfm::rappPoint_t p = mReferencePoint.value();
+
+		reference_point["x (mm)"] = p.x_mm;
+		reference_point["y (mm)"] = p.y_mm;
+		reference_point["z (mm)"] = p.z_mm;
+
+		infoDoc["reference_point"] = reference_point;
+	}
+
+	if (mMinDistance_m.has_value() || mMaxDistance_m.has_value() || mMinAzimuth_deg.has_value()
+		|| mMaxAzimuth_deg.has_value() || mMinAltitude_deg.has_value() || mMaxAltitude_deg.has_value())
+	{
+		nlohmann::json sensor_limits;
+
+		if (mMinDistance_m.has_value())
+			sensor_limits["min distance (m)"] = mMinDistance_m.value();
+
+		if (mMaxDistance_m.has_value())
+			sensor_limits["max distance (m)"] = mMaxDistance_m.value();
+
+		if (mMinAzimuth_deg.has_value())
+			sensor_limits["min azimuth (deg)"] = mMinAzimuth_deg.value();
+
+		if (mMaxAzimuth_deg.has_value())
+			sensor_limits["max azimuth (deg)"] = mMaxAzimuth_deg.value();
+
+		if (mMinAltitude_deg.has_value())
+			sensor_limits["min altitude (deg)"] = mMinAltitude_deg.value();
+
+		if (mMaxAltitude_deg.has_value())
+			sensor_limits["max altitude (deg)"] = mMaxAltitude_deg.value();
+
+		infoDoc["sensor limits"] = sensor_limits;
+	}
+
+	mDirty = false;
+}
+
+
+
+
+cLidarMapConfigScan::cLidarMapConfigScan()
+{}
+
+cLidarMapConfigScan::cLidarMapConfigScan(const std::string& name)
+: cLidarMapConfigScanInfo(name)
+{}
+
+void cLidarMapConfigScan::clear()
+{
+	cLidarMapConfigScanInfo::clear();
+	mKinematics.clear();
+}
+
+bool cLidarMapConfigScan::empty() const
+{
+	return cLidarMapConfigScanInfo::empty() && mKinematics.empty();
+}
+
+bool cLidarMapConfigScan::isDirty() const
+{
+	bool dirty = cLidarMapConfigScanInfo::isDirty();
 
 	dirty |= mKinematics.isDirty();
 
 	return dirty;
 }
-
-const std::string& cLidarMapConfigScan::getMeasurementName() const
-{
-	return mMeasurementName;
-}
-
-const std::optional<double>& cLidarMapConfigScan::getSensorMountPitch_deg() const { return mSensorMountPitch_deg; }
-const std::optional<double>& cLidarMapConfigScan::getSensorMountRoll_deg() const { return mSensorMountRoll_deg; }
-const std::optional<double>& cLidarMapConfigScan::getSensorMountYaw_deg() const { return mSensorMountYaw_deg; }
-
-const std::optional<rfm::rappPoint_t>& cLidarMapConfigScan::getReferencePoint() const
-{
-	return mReferencePoint; 
-}
-
-const std::optional<double>& cLidarMapConfigScan::getMinDistance_m() const { return mMinDistance_m; }
-const std::optional<double>& cLidarMapConfigScan::getMaxDistance_m() const { return mMaxDistance_m; }
-const std::optional<double>& cLidarMapConfigScan::getMinAzimuth_deg() const { return mMinAzimuth_deg; }
-const std::optional<double>& cLidarMapConfigScan::getMaxAzimuth_deg() const { return mMaxAzimuth_deg; }
-const std::optional<double>& cLidarMapConfigScan::getMinAltitude_deg() const { return mMinAltitude_deg; }
-const std::optional<double>& cLidarMapConfigScan::getMaxAltitude_deg() const { return mMaxAltitude_deg; }
 
 const std::optional<eKinematicModel>* cLidarMapConfigScan::getKinematicModel(int date) const
 {
@@ -614,131 +899,13 @@ cLidarMapConfigScan::iterator cLidarMapConfigScan::find_exact(const int month, c
 }
 
 
-void cLidarMapConfigScan::setMeasurementName(const std::string& name)
-{
-	mDirty |= (mMeasurementName != name);
-	mMeasurementName = name;
-}
-
-void cLidarMapConfigScan::resetSensorMountPitch_deg()
-{
-	reset(mSensorMountPitch_deg);
-}
-
-void cLidarMapConfigScan::resetSensorMountRoll_deg()
-{
-	reset(mSensorMountRoll_deg);
-}
-
-void cLidarMapConfigScan::resetSensorMountYaw_deg()
-{
-	reset(mSensorMountYaw_deg);
-}
-
-void cLidarMapConfigScan::setSensorMountPitch_deg(const std::optional<double>& pitch_deg)
-{
-	mDirty |= (mSensorMountPitch_deg != pitch_deg);
-	mSensorMountPitch_deg = pitch_deg;
-}
-
-void cLidarMapConfigScan::setSensorMountRoll_deg(const std::optional<double>& roll_deg)
-{
-	mDirty |= (mSensorMountRoll_deg != roll_deg);
-	mSensorMountRoll_deg = roll_deg;
-}
-
-void cLidarMapConfigScan::setSensorMountYaw_deg(const std::optional<double>& yaw_deg)
-{
-	mDirty |= (mSensorMountYaw_deg != yaw_deg);
-	mSensorMountYaw_deg = yaw_deg;
-}
-
-void cLidarMapConfigScan::resetReferencePoint()
-{
-	reset(mReferencePoint);
-}
-
-void cLidarMapConfigScan::setReferencePoint(const std::optional<rfm::rappPoint_t>& rp)
-{
-	mDirty |= (mReferencePoint != rp);
-	mReferencePoint = rp;
-}
-
-void cLidarMapConfigScan::resetMinDistance_m()
-{
-	reset(mMinDistance_m);
-}
-
-void cLidarMapConfigScan::resetMaxDistance_m()
-{
-	reset(mMaxDistance_m);
-}
-
-void cLidarMapConfigScan::resetMinAzimuth_deg()
-{
-	reset(mMinAzimuth_deg);
-}
-
-void cLidarMapConfigScan::resetMaxAzimuth_deg()
-{
-	reset(mMaxAzimuth_deg);
-}
-
-void cLidarMapConfigScan::resetMinAltitude_deg()
-{
-	reset(mMinAltitude_deg);
-}
-
-void cLidarMapConfigScan::resetMaxAltitude_deg()
-{
-	reset(mMaxAltitude_deg);
-}
-
-void cLidarMapConfigScan::setMinDistance_m(const std::optional<double>& dist_m)
-{
-	mDirty |= (mMinDistance_m != dist_m);
-	mMinDistance_m = dist_m;
-}
-
-void cLidarMapConfigScan::setMaxDistance_m(const std::optional<double>& dist_m)
-{
-	mDirty |= (mMaxDistance_m != dist_m);
-	mMaxDistance_m = dist_m;
-}
-
-void cLidarMapConfigScan::setMinAzimuth_deg(const std::optional<double>& azimuth_deg)
-{
-	mDirty |= (mMinAzimuth_deg != azimuth_deg);
-	mMinAzimuth_deg = azimuth_deg;
-}
-
-void cLidarMapConfigScan::setMaxAzimuth_deg(const std::optional<double>& azimuth_deg)
-{
-	mDirty |= (mMaxAzimuth_deg != azimuth_deg);
-	mMaxAzimuth_deg = azimuth_deg;
-}
-
-void cLidarMapConfigScan::setMinAltitude_deg(const std::optional<double>& altitude_deg)
-{
-	mDirty |= (mMinAltitude_deg != altitude_deg);
-	mMinAltitude_deg = altitude_deg;
-}
-
-void cLidarMapConfigScan::setMaxAltitude_deg(const std::optional<double>& altitude_deg)
-{
-	mDirty |= (mMaxAltitude_deg != altitude_deg);
-	mMaxAltitude_deg = altitude_deg;
-}
-
 cLidarMapConfigKinematicParameters& cLidarMapConfigScan::add(const int date)
 {
-	mDirty = true;
 	return mKinematics.add(date);
 }
 
 cLidarMapConfigKinematicParameters& cLidarMapConfigScan::add(const int month, const int day)
 {
-	mDirty = true;
 	return mKinematics.add(month, day);
 }
 
@@ -754,74 +921,14 @@ void cLidarMapConfigScan::setDirtyFlag()
 
 void cLidarMapConfigScan::setDirty(bool dirty)
 {
-	mDirty = dirty;
+	cLidarMapConfigScanInfo::setDirty(dirty);
 	mKinematics.setDirtyFlag(dirty);
 }
 
 
 void cLidarMapConfigScan::load(const nlohmann::json& jdoc)
 {
-	if (jdoc.contains("experiment_name"))
-		mMeasurementName = jdoc["experiment_name"];
-
-	if (jdoc.contains("experiment name"))
-		mMeasurementName = jdoc["experiment name"];
-
-	if (jdoc.contains("measurement_name"))
-		mMeasurementName = jdoc["measurement_name"];
-
-	if (jdoc.contains("measurement name"))
-		mMeasurementName = jdoc["measurement name"];
-
-
-	if (jdoc.contains("sensor mount orientation"))
-	{
-		auto orientation = jdoc["sensor mount orientation"];
-
-		if (orientation.contains("pitch (deg)"))
-			mSensorMountPitch_deg = orientation["pitch (deg)"];
-
-		if (orientation.contains("roll (deg)"))
-			mSensorMountRoll_deg = orientation["roll (deg)"];
-
-		if (orientation.contains("yaw (deg)"))
-			mSensorMountYaw_deg = orientation["yaw (deg)"];
-	}
-
-	if (jdoc.contains("sensor limits"))
-	{
-		auto sensor_limits = jdoc["sensor limits"];
-
-		if (sensor_limits.contains("min distance (m)"))
-			mMinDistance_m = sensor_limits["min distance (m)"].get<double>();
-
-		if (sensor_limits.contains("max distance (m)"))
-			mMaxDistance_m = sensor_limits["max distance (m)"].get<double>();
-
-		if (sensor_limits.contains("min azimuth (deg)"))
-			mMinAzimuth_deg = sensor_limits["min azimuth (deg)"].get<double>();
-
-		if (sensor_limits.contains("max azimuth (deg)"))
-			mMaxAzimuth_deg = sensor_limits["max azimuth (deg)"].get<double>();
-
-		if (sensor_limits.contains("min altitude (deg)"))
-			mMinAltitude_deg = sensor_limits["min altitude (deg)"].get<double>();
-
-		if (sensor_limits.contains("max altitude (deg)"))
-			mMaxAltitude_deg = sensor_limits["max altitude (deg)"].get<double>();
-	}
-
-	if (jdoc.contains("reference_point"))
-	{
-		auto reference_point = jdoc["reference_point"];
-
-		rfm::rappPoint_t p;
-		p.x_mm = reference_point["x (mm)"];
-		p.y_mm = reference_point["y (mm)"];
-		p.z_mm = reference_point["z (mm)"];
-
-		mReferencePoint = p;
-	}
+	cLidarMapConfigScanInfo::load(jdoc);
 
 	if (jdoc.contains("kinematics"))
 	{
@@ -834,69 +941,12 @@ nlohmann::json cLidarMapConfigScan::save()
 {
 	nlohmann::json scanDoc;
 
-	scanDoc["measurement name"] = mMeasurementName;
-
-	if (mSensorMountPitch_deg.has_value() || mSensorMountRoll_deg.has_value() || mSensorMountYaw_deg.has_value())
-	{
-		nlohmann::json orientation;
-
-		if (mSensorMountPitch_deg.has_value())
-			orientation["pitch (deg)"] = mSensorMountPitch_deg.value();
-
-		if (mSensorMountRoll_deg.has_value())
-			orientation["roll (deg)"] = mSensorMountRoll_deg.value();
-
-		if (mSensorMountYaw_deg.has_value())
-			orientation["yaw (deg)"] = mSensorMountYaw_deg.value();
-
-		scanDoc["sensor mount orientation"] = orientation;
-	}
-
-	if (mReferencePoint.has_value())
-	{
-		nlohmann::json reference_point;
-
-		rfm::rappPoint_t p = mReferencePoint.value();
-
-		reference_point["x (mm)"] = p.x_mm;
-		reference_point["y (mm)"] = p.y_mm;
-		reference_point["z (mm)"] = p.z_mm;
-
-		scanDoc["reference_point"] = reference_point;
-	}
-
-	if (mMinDistance_m.has_value() || mMaxDistance_m.has_value() || mMinAzimuth_deg.has_value()
-		|| mMaxAzimuth_deg.has_value() || mMinAltitude_deg.has_value() || mMaxAltitude_deg.has_value())
-	{
-		nlohmann::json sensor_limits;
-
-		if (mMinDistance_m.has_value())
-			sensor_limits["min distance (m)"] = mMinDistance_m.value();
-
-		if (mMaxDistance_m.has_value())
-			sensor_limits["max distance (m)"] = mMaxDistance_m.value();
-
-		if (mMinAzimuth_deg.has_value())
-			sensor_limits["min azimuth (deg)"] = mMinAzimuth_deg.value();
-
-		if (mMaxAzimuth_deg.has_value())
-			sensor_limits["max azimuth (deg)"] = mMaxAzimuth_deg.value();
-
-		if (mMinAltitude_deg.has_value())
-			sensor_limits["min altitude (deg)"] = mMinAltitude_deg.value();
-
-		if (mMaxAltitude_deg.has_value())
-			sensor_limits["max altitude (deg)"] = mMaxAltitude_deg.value();
-
-		scanDoc["sensor limits"] = sensor_limits;
-	}
+	cLidarMapConfigScanInfo::save(scanDoc);
 
 	auto kinematicDoc = mKinematics.save();
 
 	if (!kinematicDoc.is_null())
 		scanDoc["kinematics"] = kinematicDoc;
-
-	mDirty = false;
 
 	return scanDoc;
 }
