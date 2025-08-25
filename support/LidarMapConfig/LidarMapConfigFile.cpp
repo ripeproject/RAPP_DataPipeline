@@ -422,7 +422,9 @@ void cLidarMapConfigFile::save_temporary_file()
 
 	for (auto& entry : mScans)
 	{
+		bool scan_dirty = entry.isDirty();
 		scansDoc.push_back(entry.save());
+		entry.setDirty(scan_dirty);
 	}
 
 	if (!scansDoc.is_null())
