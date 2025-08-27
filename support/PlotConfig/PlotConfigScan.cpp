@@ -5,7 +5,10 @@
 
 namespace plot_config
 {
-	extern int to_date(int month, int day);
+	inline int to_date(int month, int day)
+	{
+		return month * 100 + day;
+	}
 }
 
 namespace
