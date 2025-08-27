@@ -53,6 +53,9 @@ void cHySpexSWIR384_2_Png::setRgbWavelengths_nm(float red_nm, float green_nm, fl
     mBlue_nm = blue_nm;
 }
 
+void cHySpexSWIR384_2_Png::onBeginReference(uint8_t device_id) {}
+void cHySpexSWIR384_2_Png::onEndOfReference(uint8_t device_id) {}
+
 void cHySpexSWIR384_2_Png::onID(uint8_t device_id, std::string id) 
 {
     mId = id;

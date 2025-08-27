@@ -159,7 +159,7 @@ find_package(OpenCV REQUIRED)
 # Find and include my libraries for data collection
 find_package(CBDF REQUIRED cbdf ctrl hyperspectral)
 find_package(spidercam REQUIRED)
-find_package(HySpexConnect REQUIRED)
+find_package(hyspex_connect REQUIRED)
 
 
 #******************************************************************************

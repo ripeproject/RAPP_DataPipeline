@@ -32,6 +32,9 @@ public:
 	void onEndRecordingTimestamp(uint64_t timestamp_ns);
 
 private:
+	void onBeginReference(uint8_t device_id) override;
+	void onEndOfReference(uint8_t device_id) override;
+
 	// HySpex VNIR 3000N Parser Methods
 	void onID(uint8_t device_id, std::string id) override;
 	void onSerialNumber(uint8_t device_id, std::string serialNumber) override;
