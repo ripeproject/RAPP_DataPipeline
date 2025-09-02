@@ -48,7 +48,7 @@ cMainFrame::cMainFrame()
 	mpMainWindow = new cMainWindow(this);
 
 	// set the frame icon
-	SetIcon(wxICON(CeresDataVerification));
+	SetIcon(wxICON(CeresDailyChecker));
 
 #if wxUSE_MENUBAR
 	// create a menu bar
@@ -134,7 +134,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetCopyright(wxT("Copyright (c) 2025, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
-	info.SetIcon(wxICON(CeresDataVerification));
+	info.SetIcon(wxICON(CeresDailyChecker));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
