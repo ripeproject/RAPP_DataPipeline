@@ -36,7 +36,6 @@ public:
 
 cCeresDailyCheckerApp::cCeresDailyCheckerApp()
 {
-    SetAppDisplayName("Ceres Daily Checker");
 }
 
 cCeresDailyCheckerApp::~cCeresDailyCheckerApp()
@@ -48,6 +47,11 @@ bool cCeresDailyCheckerApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
+
+    // Fill in the application information fields before creating wxConfig.
+    SetVendorName("University of Illinois at Urbana-Champaign");
+    SetAppName("CeresDailyChecker");
+    SetAppDisplayName("Ceres Daily Checker");
 
     // Create the main frame window
     cMainFrame* frame = new cMainFrame();
