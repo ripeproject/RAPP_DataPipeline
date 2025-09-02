@@ -8,6 +8,7 @@
 #include <cbdf/BlockDataFile.hpp>
 
 #include <filesystem>
+#include <atomic>
 #include <string>
 
 namespace ceres_file_verifier
