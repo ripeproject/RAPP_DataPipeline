@@ -22,13 +22,6 @@ public:
 	typedef LidarScan_t::iterator				iterator;
 	typedef LidarScan_t::const_iterator			const_iterator;
 
-/*
-	typedef std::map<int, cLidarMapConfigCatalog> LidarCatalog_t;
-
-	typedef LidarCatalog_t::iterator				iterator;
-	typedef LidarCatalog_t::const_iterator			const_iterator;
-*/
-
 public:
 	cLidarMapConfigFile();
 	~cLidarMapConfigFile();
@@ -103,9 +96,5 @@ private:
 	std::set<std::string> mMeasurementNames;
 
 	LidarScan_t mScans;
-
-/*
-	LidarCatalog_t mCatalog;
-*/
 };
 

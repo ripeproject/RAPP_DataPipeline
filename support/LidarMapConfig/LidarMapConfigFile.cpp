@@ -285,6 +285,14 @@ void cLidarMapConfigFile::save()
 		}
 	}
 
+	mOptions.setDirty(false);
+	mDefaults.setDirty(false);
+
+	for (auto& entry : mScans)
+	{
+		entry.setDirty(false);
+	}
+
 	mIsDirty = false;
 }
 
@@ -336,6 +344,14 @@ void cLidarMapConfigFile::save_as(const std::string& file_name)
 
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
+
+	mOptions.setDirty(false);
+	mDefaults.setDirty(false);
+
+	for (auto& entry : mScans)
+	{
+		entry.setDirty(false);
+	}
 
 	mIsDirty = false;
 }
