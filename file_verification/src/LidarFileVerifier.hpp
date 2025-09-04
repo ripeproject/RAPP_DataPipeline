@@ -30,7 +30,7 @@ public:
 	cLidarFileVerifier::eRETURN_TYPE run();
 
 protected:
-	void moveFileToFailed();
+	bool moveFileToFailed();
 
 private:
 	const int mID;

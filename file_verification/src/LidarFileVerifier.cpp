@@ -146,14 +146,17 @@ cLidarFileVerifier::eRETURN_TYPE cLidarFileVerifier::run()
         mpFileReader->close();
         std::string msg = e.what();
 
-        moveFileToFailed();
+        if (!moveFileToFailed())
+            return eRETURN_TYPE::ABORT;
+
         return eRETURN_TYPE::INVALID_FILE;
     }
     catch (const std::exception& e)
     {
         if (!mpFileReader->eof())
         {
-            moveFileToFailed();
+            if (!moveFileToFailed())
+                return eRETURN_TYPE::ABORT;
         }
         return eRETURN_TYPE::INVALID_FILE;
     }
@@ -164,7 +167,7 @@ cLidarFileVerifier::eRETURN_TYPE cLidarFileVerifier::run()
 }
 
 //-----------------------------------------------------------------------------
-void cLidarFileVerifier::moveFileToFailed()
+bool cLidarFileVerifier::moveFileToFailed()
 {
     using namespace ceres_file_verifier;
 
@@ -174,9 +177,29 @@ void cLidarFileVerifier::moveFileToFailed()
     ::create_directory(mFailedDirectory);
 
     std::filesystem::path dest = mFailedDirectory / mFileToCheck.filename();
-    std::filesystem::rename(mFileToCheck, dest);
+
+    try
+    {
+        std::filesystem::rename(mFileToCheck, dest);
+    }
+    catch (const std::filesystem::filesystem_error& e)
+    {
+        std::string msg = "Move File To Failed: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::string msg = "Move File To Failed: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
 
     ++g_num_failed_files;
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
