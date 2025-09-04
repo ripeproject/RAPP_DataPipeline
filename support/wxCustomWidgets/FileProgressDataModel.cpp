@@ -22,11 +22,11 @@ std::size_t cFileProgressDataModel::Append(const wxString& text)
 {
     auto row = mTimestampColValues.size();
 
-    mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
-    mFilenameColValues.Add(text);
-    mPrefixColValues.Add("");
-    mProgressColValues.Add(0);
-    mResultColValues.Add("");
+    mTimestampColValues.push_back(wxDateTime::Now().FormatISOTime());
+    mFilenameColValues.push_back(text);
+    mPrefixColValues.push_back("");
+    mProgressColValues.push_back(0);
+    mResultColValues.push_back("");
     RowAppended();
 
     return row;
@@ -36,11 +36,11 @@ std::size_t cFileProgressDataModel::Append(const wxString& text, const wxString&
 {
     auto row = mTimestampColValues.size();
 
-    mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
-    mFilenameColValues.Add(text);
-    mPrefixColValues.Add(prefix);
-    mProgressColValues.Add(0);
-    mResultColValues.Add("");
+    mTimestampColValues.push_back(wxDateTime::Now().FormatISOTime());
+    mFilenameColValues.push_back(text);
+    mPrefixColValues.push_back(prefix);
+    mProgressColValues.push_back(0);
+    mResultColValues.push_back("");
 
     RowAppended();
 
@@ -51,11 +51,11 @@ std::size_t cFileProgressDataModel::Append(const wxString& text, const wxString&
 {
     auto row = mTimestampColValues.size();
 
-    mTimestampColValues.Add(wxDateTime::Now().FormatISOTime());
-    mFilenameColValues.Add(text);
-    mPrefixColValues.Add(prefix);
-    mProgressColValues.Add(0);
-    mResultColValues.Add(result);
+    mTimestampColValues.push_back(wxDateTime::Now().FormatISOTime());
+    mFilenameColValues.push_back(text);
+    mPrefixColValues.push_back(prefix);
+    mProgressColValues.push_back(0);
+    mResultColValues.push_back(result);
 
     RowAppended();
 
@@ -71,13 +71,13 @@ void cFileProgressDataModel::DeleteItem(const wxDataViewItem& item)
 
     mTimestampColValues.erase(mTimestampColValues.begin() + row);
 
-    if (row >= mFilenameColValues.GetCount())
+    if (row >= mFilenameColValues.size())
         return;
 
-    mFilenameColValues.RemoveAt(row);
-    mPrefixColValues.RemoveAt(row);
-    mProgressColValues.RemoveAt(row);
-    mResultColValues.RemoveAt(row);
+    mFilenameColValues.erase(mFilenameColValues.begin() + row);
+    mPrefixColValues.erase(mPrefixColValues.begin() + row);
+    mProgressColValues.erase(mProgressColValues.begin() + row);
+    mResultColValues.erase(mResultColValues.begin() + row);
     RowDeleted(row);
 }
 
@@ -88,7 +88,7 @@ void cFileProgressDataModel::DeleteItems(const wxDataViewItemArray& items)
     for (i = 0; i < items.GetCount(); i++)
     {
         unsigned int row = GetRow(items[i]);
-        if (row < mFilenameColValues.GetCount())
+        if (row < mFilenameColValues.size())
         {
             wxASSERT(row < mFilenameColValues.size());
             rows.Add(row);
@@ -99,7 +99,7 @@ void cFileProgressDataModel::DeleteItems(const wxDataViewItemArray& items)
     {
         // none of the selected items were in the range of the items
         // which we store... for simplicity, don't allow removing them
-        wxLogError("Cannot remove rows with an index greater than %u", unsigned(mFilenameColValues.GetCount()));
+        wxLogError("Cannot remove rows with an index greater than %u", unsigned(mFilenameColValues.size()));
         return;
     }
 
@@ -144,30 +144,30 @@ void cFileProgressDataModel::GetValueByRow(wxVariant& variant, unsigned int row,
     switch (col)
     {
     case columnTimestamp:
-        if (row < mTimestampColValues.GetCount())
+        if (row < mTimestampColValues.size())
             variant = mTimestampColValues[row];
 
         break;
 
     case columnFilename:
-        if (row < mFilenameColValues.GetCount())
+        if (row < mFilenameColValues.size())
             variant = mFilenameColValues[row];
 
         break;
 
     case columnPrefix:
-        if (row < mPrefixColValues.GetCount())
+        if (row < mPrefixColValues.size())
             variant = mPrefixColValues[row];
 
         break;
 
     case columnProgress:
-        if (row < mProgressColValues.GetCount())
+        if (row < mProgressColValues.size())
             variant = wxVariant(mProgressColValues[row]);
         break;
 
     case columnResult:
-        if (row < mResultColValues.GetCount())
+        if (row < mResultColValues.size())
             variant = wxVariant(mResultColValues[row]);
         break;
     }

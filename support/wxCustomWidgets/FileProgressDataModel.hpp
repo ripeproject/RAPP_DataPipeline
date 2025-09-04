@@ -8,7 +8,10 @@
 #include <wx/wx.h>
 #endif
 
-#include "wx/dataview.h"
+#include <wx/dataview.h>
+#include <wx/string.h>
+
+#include <vector>
 
 
 class cFileProgressDataModel: public wxDataViewVirtualListModel
@@ -47,10 +50,10 @@ public:
     bool SetValueByRow( const wxVariant &variant, unsigned int row, unsigned int col ) override;
 
 private:
-    wxArrayString mTimestampColValues;
-    wxArrayString mFilenameColValues;
-    wxArrayString mPrefixColValues;
-    wxArrayInt    mProgressColValues;
-    wxArrayString mResultColValues;
+    std::vector<wxString> mTimestampColValues;
+    std::vector<wxString> mFilenameColValues;
+    std::vector<wxString> mPrefixColValues;
+    std::vector<int>      mProgressColValues;
+    std::vector<wxString> mResultColValues;
 };
 
