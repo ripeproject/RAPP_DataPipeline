@@ -501,7 +501,7 @@ wxThread::ExitCode cMainWindow::Entry()
 		const std::chrono::time_point now{ std::chrono::system_clock::now() };
 		const std::chrono::year_month_day ymd{ std::chrono::floor<std::chrono::days>(now) };
 
-		log << "Scan performed on : " << ymd << "\n";
+		log << "Scan performed on : " << static_cast<int>(ymd.year()) << "-" << static_cast<unsigned int>(ymd.month()) << "-" << static_cast<unsigned int>(ymd.day()) << "\n";
 		log << "Number of files scanned: " << g_num_files_scanned << "\n";
 
 		if (ceres_file_verifier::g_num_failed_files == 0)
