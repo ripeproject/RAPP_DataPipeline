@@ -13,11 +13,15 @@
 #include <cbdf/BlockDataFile.hpp>
 
 #include <filesystem>
+#include <fstream>
 #include <atomic>
 #include <memory>
 #include <map>
+#include <chrono>
 
 using namespace std::filesystem;
+
+std::atomic<uint32_t> g_num_files_scanned;
 
 namespace
 {
@@ -361,6 +365,8 @@ void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
 	msg += mSourceDataDirectory;
 	wxLogMessage(msg);
 
+	g_num_files_scanned = numOfFiles;
+
 	startDataProcessing();
 }
 
@@ -481,10 +487,70 @@ wxThread::ExitCode cMainWindow::Entry()
 	cResultsDlg dlg;
 	dlg.setFileVerificationResults(ceres_file_verifier::g_num_failed_files);
 	dlg.setFileRepairResults(ceres_file_repair::g_num_partial_files, ceres_file_repair::g_num_repaired_files);
-	dlg.setDataVerificationResults(ceres_data_verifier::g_num_failed_files, ceres_data_verifier::g_num_invalid_files,ceres_data_verifier::g_num_missing_data );
-	dlg.setDataRepairResults(ceres_data_repair::g_num_partial_data_files,ceres_data_repair::g_num_repaired_data_files );
+	dlg.setDataVerificationResults(ceres_data_verifier::g_num_failed_files, ceres_data_verifier::g_num_invalid_files, ceres_data_verifier::g_num_missing_data);
+	dlg.setDataRepairResults(ceres_data_repair::g_num_partial_data_files, ceres_data_repair::g_num_repaired_data_files);
 
 	dlg.ShowModal();
+
+	std::filesystem::path log_file_name = source_dir / "daily_checker.log";
+
+	std::ofstream log(log_file_name, std::ios_base::app);
+
+	if (log.is_open())
+	{
+		const std::chrono::time_point now{ std::chrono::system_clock::now() };
+		const std::chrono::year_month_day ymd{ std::chrono::floor<std::chrono::days>(now) };
+
+		log << "Scan performed on : " << ymd << "\n";
+		log << "Number of files scanned: " << g_num_files_scanned << "\n";
+
+		if (ceres_file_verifier::g_num_failed_files == 0)
+		{
+			log << "All files passed file verification.\n";
+		}
+		else
+		{
+			log << "Number of files failing verification: " << ceres_file_verifier::g_num_failed_files << "\n";
+
+			if ((ceres_file_repair::g_num_partial_files == 0) && (ceres_file_repair::g_num_repaired_files == ceres_file_verifier::g_num_failed_files))
+			{
+				log << "All files were able to be repaired.\n";
+			}
+			else
+			{
+				log << "Number of files partially repaired:" << ceres_file_repair::g_num_partial_files << "\n";
+				log << "Number of files fully repaired:" << ceres_file_repair::g_num_repaired_files << "\n";
+			}
+		}
+
+
+		auto num_bad_data_files = ceres_data_verifier::g_num_failed_files + ceres_data_verifier::g_num_invalid_files + ceres_data_verifier::g_num_missing_data;
+
+		if (num_bad_data_files == 0)
+		{
+			log << "All files passed data verification.\n";
+		}
+		else
+		{
+			log << "Number of files failing due to bad files: " << ceres_data_verifier::g_num_failed_files << "\n";
+			log << "Number of files failing due to invalid data: " << ceres_data_verifier::g_num_invalid_files << "\n";
+			log << "Number of files failing due to missing data: " << ceres_data_verifier::g_num_missing_data << "\n";
+
+			if ((ceres_data_repair::g_num_partial_data_files == 0) && (ceres_data_repair::g_num_repaired_data_files == num_bad_data_files))
+			{
+				log << "All files were able to be repaired.\n";
+			}
+			else
+			{
+				log << "Number of files partially repaired: " << ceres_data_repair::g_num_partial_data_files << "\n";
+				log << "Number of files fully repaired: " << ceres_data_repair::g_num_repaired_data_files << "\n";
+			}
+		}
+
+		log << std::endl;
+
+		log.close();
+	}
 
 /*
 	if (ceres_file_verifier::g_num_failed_files != 0)
