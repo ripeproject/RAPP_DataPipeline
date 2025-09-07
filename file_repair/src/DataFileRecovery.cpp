@@ -101,7 +101,8 @@ bool cDataFileRecovery::run()
 
     if (result)
     {
-        result = (mRecoveredFileSize == mOriginalFileSize);
+        auto diff = mRecoveredFileSize - mOriginalFileSize;
+        result = (mRecoveredFileSize >= mOriginalFileSize);
 //        removeFailedFile();
     }
 

@@ -18,7 +18,7 @@ class cDataFileRecovery;
 class cFileRepairProcessor
 {
 public:
-	enum class eRETURN_TYPE { REPAIRED, COULD_NOT_OPEN_FILE, FAILED };
+	enum class eRETURN_TYPE { REPAIRED, COULD_NOT_OPEN_FILE, FAILED, ABORT };
 
 public:
 	cFileRepairProcessor(int id, std::filesystem::path temp_dir,
@@ -35,8 +35,8 @@ public:
 	eRETURN_TYPE run();
 
 private:
-	void moveToPartialRepaired();
-	void moveToFullyRepaired();
+	bool moveToPartialRepaired();
+	bool moveToFullyRepaired();
 
 private:
 	const int mID;

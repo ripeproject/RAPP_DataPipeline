@@ -1,4 +1,6 @@
 
+add_subdirectory(bdf_v1)
+
 
 # Create the version information code
 configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)

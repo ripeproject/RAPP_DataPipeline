@@ -19,6 +19,7 @@
 #include <cbdf/extra/AxisCommunicationsDataIdentifiers.hpp>
 #include <cbdf/extra/SsnxDataIdentifiers.hpp>
 #include <cbdf/extra/OusterDataIdentifiers.hpp>
+#include <cbdf/extra/HySpexDataIdentifiers.hpp>
 
 #include <cbdf/extra/WeatherClassIdentifiers.hpp>
 #include <cbdf/extra/WeatherDataIdentifiers.hpp>
@@ -48,7 +49,7 @@ bool cBlockDataFileRecovery::processBlock()
 
     mStartOfBlock = mFile.tellg();
 
-    std::uint32_t len = 0;
+    std::size_t len = 0;
     mFile.read(reinterpret_cast<char*>(&len), sizeof(len));
     if (mFile.bad())
     {
@@ -136,6 +137,15 @@ bool cBlockDataFileRecovery::processBlock()
     cBlockID blockId(static_cast<BLOCK_CLASS_ID_t>(classID), majorVersion, minorVersion);
     blockId.dataID(data_id);
 
+    auto result = checkBlockId(blockId, len);
+    if (result == eBlockStatus::BAD_CLASS_ID)
+    {
+        if (tryToFixBlock(blockId, len))
+        {
+            return !mFile.eof();
+        }
+    }
+
     if (len == 0)
     {
         mStartOfCRC = mFile.tellg();
@@ -186,7 +196,6 @@ bool cBlockDataFileRecovery::processBlock()
             throw bdf::crc_error(classID, majorVersion, minorVersion, data_id, msg);
         }
 */
-
         uint32_t crc = bdf::crc(blockId, mBuffer.data(), len);
         if (file_crc != crc)
         {
@@ -221,7 +230,7 @@ bool cBlockDataFileRecovery::processBlock()
     return !mFile.eof();
 }
 
-void cBlockDataFileRecovery::readPayload(uint32_t len, cDataBuffer& buffer)
+void cBlockDataFileRecovery::readPayload(std::size_t len, cDataBuffer& buffer)
 {
     if (buffer.capacity() < len)
     {
@@ -275,7 +284,7 @@ bool cBlockDataFileRecovery::tryToFixBlockId(const cBlockID blockID)
         return fixAtBlockId(blockID, 0, result);
     }
     
-    uint32_t testLen = 0;
+    std::size_t testLen = 0;
     BLOCK_CLASS_ID_t classID = 0;
     BLOCK_MAJOR_VERSION_t majorVer = 0;
     BLOCK_MINOR_VERSION_t minorVer = 0;
@@ -298,15 +307,92 @@ bool cBlockDataFileRecovery::tryToFixBlockId(const cBlockID blockID)
     return false;
 }
 
-bool cBlockDataFileRecovery::tryToFixBlock(const cBlockID blockID, const cDataBuffer buffer, const uint32_t len)
+bool cBlockDataFileRecovery::tryToFixBlock(const cBlockID blockID, const std::size_t len)
+{
+    std::ifstream::pos_type mStartPos = mFile.tellg();;
+
+    std::size_t insertedLen = 0;
+    BLOCK_CLASS_ID_t classID = 0;
+    BLOCK_MAJOR_VERSION_t majorVer = 0;
+    BLOCK_MINOR_VERSION_t minorVer = 0;
+    BLOCK_DATA_ID_t dataID = 0;
+    cBlockID insertedBlockID;
+    uint32_t insertedCRC = 0;
+
+    eBlockStatus result;
+    do
+    {
+        mFile.seekg(mStartPos);
+        mFile.read(reinterpret_cast<char*>(&insertedLen), sizeof(insertedLen));
+        mFile.read(reinterpret_cast<char*>(&classID), sizeof(classID));
+        mFile.read(reinterpret_cast<char*>(&majorVer), sizeof(majorVer));
+        mFile.read(reinterpret_cast<char*>(&minorVer), sizeof(minorVer));
+        mFile.read(reinterpret_cast<char*>(&dataID), sizeof(dataID));
+
+        insertedBlockID.classID(static_cast<BLOCK_CLASS_ID_t>(classID));
+        insertedBlockID.setVersion(majorVer, minorVer);
+        insertedBlockID.dataID(dataID);
+
+        mStartPos += 1;
+
+        if (mFile.eof() || mFile.fail())
+            return false;
+
+        result = checkBlockId(insertedBlockID, insertedLen);
+
+        if (result == eBlockStatus::BAD_CRC)
+        {
+            if (insertedLen == 0)
+                processBlock(insertedBlockID);
+            else
+            {
+                cDataBuffer insertedBuffer;
+                std::ifstream::pos_type start_pos = mFile.tellg();
+                readPayload(insertedLen, insertedBuffer);
+
+                processBlock(insertedBlockID, insertedBuffer.data(), insertedLen);
+            }
+
+            return true;
+        }
+
+    } while (eBlockStatus::OK != result);
+
+    if (insertedLen == 0)
+    {
+        processBlock(insertedBlockID);
+    }
+    else
+    {
+        cDataBuffer insertedBuffer;
+        std::ifstream::pos_type start_pos = mFile.tellg();
+        readPayload(insertedLen, insertedBuffer);
+
+        processBlock(insertedBlockID, insertedBuffer.data(), insertedLen);
+    }
+
+    return true;
+}
+
+bool cBlockDataFileRecovery::tryToFixBlock(const cBlockID blockID, const cDataBuffer buffer, const std::size_t len)
 {
     auto result = checkBlockId(blockID, len);
+    if (result == eBlockStatus::BAD_CRC)
+    {
+        if (len == 0)
+            processBlock(blockID);
+        else
+            processBlock(blockID, buffer.data(), len);
+
+        return true;
+    }
+
     if (result != eBlockStatus::OK)
     {
         return fixAtBlockId(blockID, len, result);
     }
 
-    uint32_t testLen = 0;
+    std::size_t testLen = 0;
     BLOCK_CLASS_ID_t classID = 0;
     BLOCK_MAJOR_VERSION_t majorVer = 0;
     BLOCK_MINOR_VERSION_t minorVer = 0;
@@ -346,7 +432,7 @@ bool cBlockDataFileRecovery::tryToFixBlock(const cBlockID blockID, const cDataBu
     return false;
 }
 
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkBlockId(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkBlockId(const cBlockID blockID, std::size_t len)
 {
     switch (static_cast<ClassIDs>(blockID.classID()))
     {
@@ -408,11 +494,11 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkBlockId(const 
     }
     case static_cast<ClassIDs>(SensorClassIDs::HYSPEX_SWIR_384):
     {
-        return eBlockStatus::BAD_CLASS_ID;
+        return checkHySpexSwirBlock(blockID, len);
     }
     case static_cast<ClassIDs>(SensorClassIDs::HYSPEX_VNIR_3000N):
     {
-        return eBlockStatus::BAD_CLASS_ID;
+        return checkHySpexVnirBlock(blockID, len);
     }
     case static_cast<ClassIDs>(SensorClassIDs::AXIS_COMMUNICATIONS):
     {
@@ -445,7 +531,7 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkBlockId(const 
     return eBlockStatus::OK;
 }
 
-bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32_t originalLen, eBlockStatus blockStatus)
+bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, std::size_t originalLen, eBlockStatus blockStatus)
 {
     std::ifstream::pos_type mStartPos = 0;
     std::ifstream::pos_type mEndPos = 0;
@@ -453,19 +539,19 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
     {
     case eBlockStatus::BAD_CLASS_ID:
         mEndPos = mStartPos = mStartOfClassID;
-        mEndPos += 6;
+        mEndPos += sizeof(BLOCK_CLASS_ID_t) + sizeof(BLOCK_MAJOR_VERSION_t) + sizeof(BLOCK_MINOR_VERSION_t) + sizeof(BLOCK_DATA_ID_t);
         break;
     case eBlockStatus::BAD_MAJOR_VERSION:
         mEndPos = mStartPos = mStartOfMajorVersion;
-        mEndPos += 4;
+        mEndPos += sizeof(BLOCK_MAJOR_VERSION_t) + sizeof(BLOCK_MINOR_VERSION_t) + sizeof(BLOCK_DATA_ID_t);
         break;
     case eBlockStatus::BAD_MINOR_VERSION:
         mEndPos = mStartPos = mStartOfMinorVersion;
-        mEndPos += 3;
+        mEndPos += sizeof(BLOCK_MINOR_VERSION_t) + sizeof(BLOCK_DATA_ID_t);
         break;
     case eBlockStatus::BAD_DATA_ID:
         mEndPos = mStartPos = mStartOfDataID;
-        mEndPos += 2;
+        mEndPos += sizeof(BLOCK_DATA_ID_t);
         break;
     case eBlockStatus::BAD_PAYLOAD:
         mEndPos = mStartPos = mStartOfPayload;
@@ -474,7 +560,7 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
         return false;
     }
 
-    uint32_t insertedLen = 0;
+    std::size_t insertedLen = 0;
     BLOCK_CLASS_ID_t classID = 0;
     BLOCK_MAJOR_VERSION_t majorVer = 0;
     BLOCK_MINOR_VERSION_t minorVer = 0;
@@ -482,6 +568,7 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
     cBlockID insertedBlockID;
     uint32_t insertedCRC = 0;
 
+    eBlockStatus result;
     do
     {
         mFile.seekg(mStartPos);
@@ -500,7 +587,25 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
         if (mStartPos == mEndPos)
             return false;
 
-    } while (eBlockStatus::OK != checkBlockId(insertedBlockID, insertedLen));
+        result = checkBlockId(insertedBlockID, insertedLen);
+
+        if (result == eBlockStatus::BAD_CRC)
+        {
+            if (insertedLen == 0)
+                processBlock(insertedBlockID);
+            else
+            {
+                cDataBuffer insertedBuffer;
+                std::ifstream::pos_type start_pos = mFile.tellg();
+                readPayload(insertedLen, insertedBuffer);
+
+                processBlock(insertedBlockID, insertedBuffer.data(), insertedLen);
+            }
+
+            return true;
+        }
+
+    } while (eBlockStatus::OK != result);
 
     cDataBuffer insertedBuffer;
 
@@ -535,12 +640,6 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
             auto crc = bdf::crc(testID, mBuffer.data(), originalLen);
             if (crc == test_crc)
             {
-                if (originalLen != mBuffer.read_size())
-                {
-                    int x = 5;
-                    ++x;
-                }
-
                 processBlock(testID, mBuffer.data(), originalLen);
                 processBlock(insertedBlockID);
                 return true;
@@ -576,12 +675,6 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
             auto crc = bdf::crc(testID, mBuffer.data(), originalLen);
             if (crc == test_crc)
             {
-                if (originalLen != mBuffer.read_size())
-                {
-                    int x = 5;
-                    ++x;
-                }
-
                 processBlock(testID, mBuffer.data(), originalLen);
                 processBlock(insertedBlockID);
                 return true;
@@ -655,12 +748,6 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
         uint32_t test_crc = readCRC();
         if (crc == test_crc)
         {
-            if (insertedLen != insertedBuffer.read_size())
-            {
-                int x = 5;
-                ++x;
-            }
-
             processBlock(testID, mBuffer.data(), originalLen);
             processBlock(insertedBlockID, insertedBuffer.data(), insertedLen);
             return true;
@@ -804,7 +891,7 @@ bool cBlockDataFileRecovery::fixAtBlockId(const cBlockID originalBlockID, uint32
     return false;
 }
 
-bool cBlockDataFileRecovery::recoverBlockID(cBlockID& blockID, uint32_t len, eBlockStatus blockStatus)
+bool cBlockDataFileRecovery::recoverBlockID(cBlockID& blockID, std::size_t len, eBlockStatus blockStatus)
 {
     BLOCK_CLASS_ID_t classID = 0;
     BLOCK_MAJOR_VERSION_t majorVer = 0;
@@ -842,6 +929,8 @@ bool cBlockDataFileRecovery::recoverBlockID(cBlockID& blockID, uint32_t len, eBl
         mFile.read(reinterpret_cast<char*>(&dataID), sizeof(dataID));
         blockID.dataID(dataID);
         break;
+    case eBlockStatus::BAD_CRC:
+        return true;
     case eBlockStatus::BAD_PAYLOAD:
     default:
         return false;
@@ -851,8 +940,8 @@ bool cBlockDataFileRecovery::recoverBlockID(cBlockID& blockID, uint32_t len, eBl
 }
 
 bool cBlockDataFileRecovery::fixAtDataBuffer(const std::size_t pos,
-    const cBlockID originalBlockID, uint32_t originalLen,
-    const cBlockID insertedBlockID, uint32_t insertedLen)
+    const cBlockID originalBlockID, std::size_t originalLen,
+    const cBlockID insertedBlockID, std::size_t insertedLen)
 {
     if (pos == 0)
     {
@@ -863,14 +952,14 @@ bool cBlockDataFileRecovery::fixAtDataBuffer(const std::size_t pos,
     return false;
 }
 
-bool cBlockDataFileRecovery::fixAtStartPayload(const cBlockID originalBlockID, uint32_t originalLen,
-            const cBlockID insertedBlockID, uint32_t insertedLen)
+bool cBlockDataFileRecovery::fixAtStartPayload(const cBlockID originalBlockID, std::size_t originalLen,
+            const cBlockID insertedBlockID, std::size_t insertedLen)
 {
     // This is a check to make sure we are setting the file position
     // correctly
     mFile.seekg(mStartOfPayload);
 
-    uint32_t testLen = 0;
+    std::size_t testLen = 0;
     BLOCK_CLASS_ID_t testClassID = 0;
     BLOCK_MAJOR_VERSION_t testMajorVer = 0;
     BLOCK_MINOR_VERSION_t testMinorVer = 0;
@@ -1038,14 +1127,14 @@ bool cBlockDataFileRecovery::fixAtStartPayload(const cBlockID originalBlockID, u
 }
 
 bool cBlockDataFileRecovery::fixAtCRC(const cBlockID originalBlockID,
-    const cBlockID insertedBlockID, uint32_t insertedLen)
+    const cBlockID insertedBlockID, std::size_t insertedLen)
 {
     uint32_t originalCRC = bdf::crc(originalBlockID);
     return false;
 }
 
 bool cBlockDataFileRecovery::fixAtCRC(const cBlockID originalBlockID, const cDataBuffer originalBuffer,
-    uint32_t originalLen, const cBlockID insertedBlockID, uint32_t insertedLen)
+    std::size_t originalLen, const cBlockID insertedBlockID, std::size_t insertedLen)
 {
     uint32_t originalCRC = bdf::crc(originalBlockID, originalBuffer.data(), originalLen);
 
@@ -1091,7 +1180,7 @@ bool cBlockDataFileRecovery::fixAtCRC(const cBlockID originalBlockID, const cDat
     {
         if (crc2 != originalCRC)
         {
-            uint32_t testLen = crc2;
+            std::size_t testLen = crc2;
             BLOCK_CLASS_ID_t classID = 0;
             BLOCK_MAJOR_VERSION_t majorVer = 0;
             BLOCK_MINOR_VERSION_t minorVer = 0;
@@ -1133,7 +1222,7 @@ bool cBlockDataFileRecovery::fixAtCRC(const cBlockID originalBlockID, const cDat
 /**********************************************************
  * Data Block Verification
  **********************************************************/
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkExperimentBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkExperimentBlock(const cBlockID blockID, std::size_t len)
 {
     auto dataId = static_cast<experiment::DataID>(blockID.dataID());
 
@@ -1195,7 +1284,7 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkExperimentBloc
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkPvtBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkPvtBlock(const cBlockID blockID, std::size_t len)
 {
     auto dataId = static_cast<pvt::DataID>(blockID.dataID());
 
@@ -1219,7 +1308,7 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkPvtBlock(const
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkAxisCommunicationBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkAxisCommunicationBlock(const cBlockID blockID, std::size_t len)
 {
     auto dataId = static_cast<axis::DataID>(blockID.dataID());
 
@@ -1248,7 +1337,7 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkAxisCommunicat
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkOusterLidarBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkOusterLidarBlock(const cBlockID blockID, std::size_t len)
 {
     auto dataId = static_cast<ouster::DataID>(blockID.dataID());
 
@@ -1277,7 +1366,7 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkOusterLidarBlo
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSpidercamBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSpidercamBlock(const cBlockID blockID, std::size_t len)
 {
     auto dataId = static_cast<spidercam::DataID>(blockID.dataID());
 
@@ -1294,7 +1383,7 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSpidercamBlock
     return eBlockStatus::OK;
 }
 
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSsnxBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSsnxBlock(const cBlockID blockID, std::size_t len)
 {
     auto dataId = static_cast<ssnx::DataID>(blockID.dataID());
 
@@ -1380,8 +1469,99 @@ cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkSsnxBlock(cons
     return eBlockStatus::OK;
 }
 
+/* HySpex Data Identifiers
+CAMERA_ID = 0,
+SERIAL_NUMBER,
+WAVELENGTH_RANGE,
+SPATIAL_SIZE,
+SPECTRAL_SIZE,
+MAX_SPATIAL_SIZE,
+MAX_SPECTRAL_SIZE,
+MAX_PIXEL_VALUE,
+SPECTRAL_CALIBRATION,
+RESPONSIVITY_MATRIX,
+QUANTUM_EFFICIENCY_DATA,
+LENS_NAME,
+LENS_WORKING_DISTANCE_CM,
+LENS_FIELD_OF_VIEW_RAD,
+AVERAGE_FRAMES,
+FRAME_PERIOD_US,
+INTEGRATION_TIME_US,
+BACKGROUND_MATRIX_AGE_MS,
+NUMBER_OF_BACKGROUNDS,
+BAD_PIXELS,
+BAD_PIXEL_CORRECTION,
+BAD_PIXEL_MATRIX,
+SENSOR_TEMPERATURE_C,
+SENSOR_TEMPERATURE_K,
+AMBIENT_TEMPERATURE_C,
+BACKGROUND_MATRIX,
+IMAGE,
+IMAGE_REDUCED,
+START_OF_REFERENCE,
+END_OF_REFERENCE,
+*/
 
-cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkWeatherBlock(const cBlockID blockID, uint32_t len)
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkHySpexVnirBlock(const cBlockID blockID, std::size_t len)
+{
+    auto dataId = static_cast<hyspex::DataID>(blockID.dataID());
+
+    if (dataId > hyspex::DataID::END_OF_REFERENCE)
+        return eBlockStatus::BAD_CLASS_ID;
+
+    switch (dataId)
+    {
+    case hyspex::DataID::IMAGE:
+        if (len == 4771243)                  // 4771243 is the normal image size of the VNIR-3000N camera
+            return eBlockStatus::BAD_CRC;
+
+        return eBlockStatus::BAD_PAYLOAD;
+    case hyspex::DataID::START_OF_REFERENCE:
+        if (len == 1)
+            return eBlockStatus::BAD_CRC;
+
+        return eBlockStatus::BAD_PAYLOAD;
+    case hyspex::DataID::END_OF_REFERENCE:
+        if (len == 1)
+            return eBlockStatus::BAD_CRC;
+
+        return eBlockStatus::BAD_PAYLOAD;
+    }
+
+    return eBlockStatus::OK;
+}
+
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkHySpexSwirBlock(const cBlockID blockID, std::size_t len)
+{
+    auto dataId = static_cast<hyspex::DataID>(blockID.dataID());
+
+    if (dataId > hyspex::DataID::END_OF_REFERENCE)
+        return eBlockStatus::BAD_CLASS_ID;
+
+    switch (dataId)
+    {
+    case hyspex::DataID::IMAGE:
+        if (len == 221227)                  // 221227 is the normal image size of the SWIR-384 camera
+            return eBlockStatus::BAD_CRC;
+
+        return eBlockStatus::BAD_PAYLOAD;
+    case hyspex::DataID::START_OF_REFERENCE:
+        if (len == 1)
+            return eBlockStatus::BAD_CRC;
+
+        return eBlockStatus::BAD_PAYLOAD;
+    case hyspex::DataID::END_OF_REFERENCE:
+        if (len == 1)
+            return eBlockStatus::BAD_CRC;
+
+        return eBlockStatus::BAD_PAYLOAD;
+    }
+
+    return eBlockStatus::OK;
+}
+
+
+cBlockDataFileRecovery::eBlockStatus cBlockDataFileRecovery::checkWeatherBlock(const cBlockID blockID, std::size_t len)
 {
     auto dataId = static_cast<weather::DataID>(blockID.dataID());
 

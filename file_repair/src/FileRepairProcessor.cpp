@@ -50,6 +50,7 @@ cFileRepairProcessor::cFileRepairProcessor(int id, std::filesystem::path temp_di
 :
     mID(id), mTemporaryDirectory(temp_dir), mPartialRepairedDirectory(partial_repaired_dir), mFullyRepairedDirectory(fully_repaired_dir)
 {
+    mDataFileRecovery = std::make_unique<cDataFileRecovery>(mID, mTemporaryDirectory);
 }
 
 cFileRepairProcessor::~cFileRepairProcessor()
@@ -69,8 +70,6 @@ bool cFileRepairProcessor::setFileToRepair(std::filesystem::directory_entry file
 
 void cFileRepairProcessor::process_file()
 {
-    mDataFileRecovery = std::make_unique<cDataFileRecovery>(mID, mTemporaryDirectory);
-    
     if (mDataFileRecovery->open(mInputFile))
     {
         new_file_progress(mID, mInputFile.string());
@@ -90,9 +89,7 @@ bool cFileRepairProcessor::open(std::filesystem::path file_to_repair)
     {
         mInputFile = file_to_repair;
         auto result = mDataFileRecovery->open(mInputFile);
-        mTemporaryFile = mDataFileRecovery->tempFileName();
-
-        return true;
+        return result;
     }
 
     return false;
@@ -100,7 +97,7 @@ bool cFileRepairProcessor::open(std::filesystem::path file_to_repair)
 
 cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::run()
 {
-    if (mDataFileRecovery->is_open())
+    if (!mDataFileRecovery->is_open())
         return eRETURN_TYPE::COULD_NOT_OPEN_FILE;
 
     mTemporaryFile = mDataFileRecovery->tempFileName();
@@ -108,18 +105,20 @@ cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::run()
     // Try to recover the data file
     if (!mDataFileRecovery->run())
     {
-        moveToPartialRepaired();
+        if (!moveToPartialRepaired())
+            return eRETURN_TYPE::ABORT;
 
         return eRETURN_TYPE::FAILED;
     }
 
 
-    moveToFullyRepaired();
+    if (!moveToFullyRepaired())
+        return eRETURN_TYPE::ABORT;
 
     return eRETURN_TYPE::REPAIRED;
 }
 
-void cFileRepairProcessor::moveToPartialRepaired()
+bool cFileRepairProcessor::moveToPartialRepaired()
 {
     using namespace ceres_file_repair;
 
@@ -127,12 +126,31 @@ void cFileRepairProcessor::moveToPartialRepaired()
 
     std::filesystem::path out_file = mPartialRepairedDirectory / mInputFile.filename();
 
-    std::filesystem::rename(mTemporaryFile, out_file);
+    try
+    {
+        std::filesystem::rename(mTemporaryFile, out_file);
+    }
+    catch (const std::filesystem::filesystem_error& e)
+    {
+        std::string msg = "Move File To Partial Repaired: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::string msg = "Move File To Partial Repaired: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
 
     ++g_num_partial_files;
+
+    return true;
 }
 
-void cFileRepairProcessor::moveToFullyRepaired()
+bool cFileRepairProcessor::moveToFullyRepaired()
 {
     using namespace ceres_file_repair;
 
@@ -140,8 +158,27 @@ void cFileRepairProcessor::moveToFullyRepaired()
 
     std::filesystem::path out_file = mFullyRepairedDirectory / mInputFile.filename();
 
-    std::filesystem::rename(mTemporaryFile, out_file);
+    try
+    {
+        std::filesystem::rename(mTemporaryFile, out_file);
+    }
+    catch (const std::filesystem::filesystem_error& e)
+    {
+        std::string msg = "Move File To Repaired: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::string msg = "Move File To Repaired: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
 
     ++g_num_repaired_files;
+
+    return true;
 }
 

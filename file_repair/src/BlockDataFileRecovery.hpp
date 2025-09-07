@@ -19,41 +19,44 @@ public:
 	virtual void processBlock(const cBlockID& id, const std::byte* buf, std::size_t len) = 0;
 
 private:
-	void readPayload(uint32_t len, cDataBuffer& buffer);
+	void readPayload(std::size_t len, cDataBuffer& buffer);
 	uint32_t readCRC();
 
 	bool tryToFixBlockId(const cBlockID blockID);
-	bool tryToFixBlock(const cBlockID blockID, const cDataBuffer buffer, const uint32_t len);
+	bool tryToFixBlock(const cBlockID blockID, const std::size_t len);
+	bool tryToFixBlock(const cBlockID blockID, const cDataBuffer buffer, const std::size_t len);
 
-	enum class eBlockStatus { OK, BAD_CLASS_ID, BAD_MAJOR_VERSION, BAD_MINOR_VERSION, BAD_DATA_ID, BAD_PAYLOAD };
-	eBlockStatus checkBlockId(const cBlockID blockID, uint32_t len);
+	enum class eBlockStatus { OK, BAD_CLASS_ID, BAD_MAJOR_VERSION, BAD_MINOR_VERSION, BAD_DATA_ID, BAD_PAYLOAD, BAD_CRC};
+	eBlockStatus checkBlockId(const cBlockID blockID, std::size_t len);
 
 private:
-	bool fixAtBlockId(const cBlockID originalBlockID, uint32_t originalLen, eBlockStatus blockStatus);
+	bool fixAtBlockId(const cBlockID originalBlockID, std::size_t originalLen, eBlockStatus blockStatus);
 
 	bool fixAtDataBuffer(const std::size_t pos, 
-		const cBlockID originalBlockID, uint32_t originalLen,
-		const cBlockID insertedBlockID, uint32_t insertedLen);
+		const cBlockID originalBlockID, std::size_t originalLen,
+		const cBlockID insertedBlockID, std::size_t insertedLen);
 
-	bool fixAtStartPayload(const cBlockID originalBlockID, uint32_t originalLen,
-							const cBlockID insertedBlockID, uint32_t insertedLen);
+	bool fixAtStartPayload(const cBlockID originalBlockID, std::size_t originalLen,
+							const cBlockID insertedBlockID, std::size_t insertedLen);
 
 	bool fixAtCRC(const cBlockID originalBlockID,
-		const cBlockID insertedBlockID, uint32_t insertedLen);
+		const cBlockID insertedBlockID, std::size_t insertedLen);
 
 	bool fixAtCRC(const cBlockID originalBlockID, const cDataBuffer originalBuffer,
-		uint32_t originalLen, const cBlockID insertedBlockID, uint32_t insertedLen);
+		std::size_t originalLen, const cBlockID insertedBlockID, std::size_t insertedLen);
 
-	bool recoverBlockID(cBlockID& blockID, uint32_t len, eBlockStatus blockStatus);
+	bool recoverBlockID(cBlockID& blockID, std::size_t len, eBlockStatus blockStatus);
 
 private:
-	eBlockStatus checkExperimentBlock(const cBlockID blockID, uint32_t len);
-	eBlockStatus checkPvtBlock(const cBlockID blockID, uint32_t len);
-	eBlockStatus checkAxisCommunicationBlock(const cBlockID blockID, uint32_t len);
-	eBlockStatus checkOusterLidarBlock(const cBlockID blockID, uint32_t len);
-	eBlockStatus checkSpidercamBlock(const cBlockID blockID, uint32_t len);
-	eBlockStatus checkSsnxBlock(const cBlockID blockID, uint32_t len);
-	eBlockStatus checkWeatherBlock(const cBlockID blockID, uint32_t len);
+	eBlockStatus checkExperimentBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkPvtBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkAxisCommunicationBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkOusterLidarBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkSpidercamBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkSsnxBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkHySpexVnirBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkHySpexSwirBlock(const cBlockID blockID, std::size_t len);
+	eBlockStatus checkWeatherBlock(const cBlockID blockID, std::size_t len);
 
 private:
 	std::ifstream::pos_type mStartOfBlock;
