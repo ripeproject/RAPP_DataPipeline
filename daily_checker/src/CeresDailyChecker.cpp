@@ -94,6 +94,7 @@ void cCeresDailyChecker::process_file()
             switch (result)
             {
             case cCeresFileVerifier::eRETURN_TYPE::COULD_NOT_OPEN_FILE:
+            case cCeresFileVerifier::eRETURN_TYPE::ABORT:
                 return;
             case cCeresFileVerifier::eRETURN_TYPE::PASSED:
                 needs_repair = false;
