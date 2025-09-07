@@ -42,7 +42,7 @@ protected:
 	// Pass2: A pass through the file doing a data validation
 	bool pass2();
 
-	void moveFileToFailed();
+	bool moveFileToFailed();
 
 private:
 	const int mID;

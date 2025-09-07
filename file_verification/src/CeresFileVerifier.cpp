@@ -113,7 +113,10 @@ cCeresFileVerifier::eRETURN_TYPE cCeresFileVerifier::run()
     if (!pass1())
     {
         mFileReader.close();
-        moveFileToFailed();
+
+        if (!moveFileToFailed())
+            return eRETURN_TYPE::ABORT;
+
         return eRETURN_TYPE::INVALID_FILE;
     }
 
@@ -124,7 +127,10 @@ cCeresFileVerifier::eRETURN_TYPE cCeresFileVerifier::run()
     if (!pass2())
     {
         mFileReader.close();
-        moveFileToFailed();
+
+        if (!moveFileToFailed())
+            return eRETURN_TYPE::ABORT;
+
         return eRETURN_TYPE::INVALID_FILE;
     }
 
@@ -163,18 +169,9 @@ bool cCeresFileVerifier::pass1()
     catch (const bdf::crc_error& e)
     {
         std::string msg = mFileToCheck.string();
-        msg += ": CRC Error, ";
-        msg += " class id = ";
-        msg += std::to_string(e.class_id);
-        msg += ", major version = ";
-        msg += std::to_string(e.major_version);
-        msg += ", minor version = ";
-        msg += std::to_string(e.minor_version);
-        msg += ", data id = ";
-        msg += std::to_string(e.data_id);
-        msg += ", ";
-
+        msg += ": ";
         msg += e.what();
+
         console_message(msg);
 
         return false;
@@ -217,14 +214,12 @@ bool cCeresFileVerifier::pass1()
     }
     catch (const std::exception& e)
     {
-        if (!mFileReader.eof())
+//        if (!mFileReader.eof())
         {
             std::string msg = mFileToCheck.string();
             msg += ": std::exception, ";
             msg += e.what();
             console_message(msg);
-
-            moveFileToFailed();
 
             return false;
         }
@@ -295,7 +290,7 @@ bool cCeresFileVerifier::pass2()
     }
     catch (const std::exception& e)
     {
-        if (!mFileReader.eof())
+//        if (!mFileReader.eof())
         {
             std::string msg = mFileToCheck.string();
             msg += ":  std::exception, ";
@@ -312,7 +307,7 @@ bool cCeresFileVerifier::pass2()
 }
 
 //-----------------------------------------------------------------------------
-void cCeresFileVerifier::moveFileToFailed()
+bool cCeresFileVerifier::moveFileToFailed()
 {
     using namespace ceres_file_verifier;
 
@@ -329,9 +324,28 @@ void cCeresFileVerifier::moveFileToFailed()
     msg += dest.string();
     console_message(msg);
 
-    std::filesystem::rename(mFileToCheck, dest);
+    try
+    {
+        std::filesystem::rename(mFileToCheck, dest);
+    }
+    catch (const std::filesystem::filesystem_error& e)
+    {
+        std::string msg = "Move File To Failed: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
+    catch (const std::bad_alloc& e)
+    {
+        std::string msg = "Move File To Failed: ";
+        msg += e.what();
+        console_message(msg);
+        return false;
+    }
 
     ++g_num_failed_files;
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
