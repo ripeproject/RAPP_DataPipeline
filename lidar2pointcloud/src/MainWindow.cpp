@@ -407,6 +407,7 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	/*
 	 * Create list of days to process
 	 */
+	if (!mIsFile)
 	{
 		if (input.has_parent_path())
 		{
