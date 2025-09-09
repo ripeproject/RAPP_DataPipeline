@@ -111,11 +111,15 @@ cFileRepairProcessor::eRETURN_TYPE cFileRepairProcessor::run()
         return eRETURN_TYPE::FAILED;
     }
 
-
     if (!moveToFullyRepaired())
         return eRETURN_TYPE::ABORT;
 
     return eRETURN_TYPE::REPAIRED;
+}
+
+std::filesystem::path cFileRepairProcessor::repairedFileName() const
+{
+    return mOutputFile;
 }
 
 bool cFileRepairProcessor::moveToPartialRepaired()
@@ -124,11 +128,11 @@ bool cFileRepairProcessor::moveToPartialRepaired()
 
     ::create_directory(mPartialRepairedDirectory);
 
-    std::filesystem::path out_file = mPartialRepairedDirectory / mInputFile.filename();
+    mOutputFile = mPartialRepairedDirectory / mInputFile.filename();
 
     try
     {
-        std::filesystem::rename(mTemporaryFile, out_file);
+        std::filesystem::rename(mTemporaryFile, mOutputFile);
     }
     catch (const std::filesystem::filesystem_error& e)
     {
@@ -156,11 +160,11 @@ bool cFileRepairProcessor::moveToFullyRepaired()
 
     ::create_directory(mFullyRepairedDirectory);
 
-    std::filesystem::path out_file = mFullyRepairedDirectory / mInputFile.filename();
+    mOutputFile = mFullyRepairedDirectory / mInputFile.filename();
 
     try
     {
-        std::filesystem::rename(mTemporaryFile, out_file);
+        std::filesystem::rename(mTemporaryFile, mOutputFile);
     }
     catch (const std::filesystem::filesystem_error& e)
     {

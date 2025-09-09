@@ -34,6 +34,8 @@ public:
 	bool open(std::filesystem::path file_to_repair);
 	eRETURN_TYPE run();
 
+	std::filesystem::path repairedFileName() const;
+
 private:
 	bool moveToPartialRepaired();
 	bool moveToFullyRepaired();
@@ -48,6 +50,7 @@ private:
 	const std::filesystem::path mFullyRepairedDirectory;
 
 	std::filesystem::path mInputFile;
+	std::filesystem::path mOutputFile;
 
 	std::unique_ptr<cDataFileRecovery>	mDataFileRecovery;
 };
