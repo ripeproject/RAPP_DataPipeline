@@ -9,6 +9,7 @@
 
 #include <wx/thread.h>
 #include <wx/config.h>
+#include <wx/msgdlg.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
@@ -276,6 +277,17 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
+
+	std::filesystem::path source_dir = dlg.GetPath().ToStdString();
+	std::filesystem::path log_file_name = source_dir / "daily_checker.log";
+
+	if (std::filesystem::exists(log_file_name))
+	{
+		int answer = wxMessageBox(wxT("The directory has already been scanned.  Do you wish to rescan the directory?"), wxT("Confirm"), wxYES_NO, this);
+
+		if (answer == wxNO)
+			return;
+	}
 
 	mSourceDataDirectory = dlg.GetPath().ToStdString();
 	mpSourceCtrl->SetValue(mSourceDataDirectory);

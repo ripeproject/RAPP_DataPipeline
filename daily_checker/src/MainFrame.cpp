@@ -129,7 +129,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxAboutDialogInfo info;
 	info.SetName(wxTheApp->GetAppDisplayName());
-	info.SetVersion("1.0", "0.1.0");
+	info.SetVersion("1.0", "Version 1.0");
 	info.SetDescription(_("Verifies the data integrity of Ceres data files.\n"));
 	info.SetCopyright(wxT("Copyright (c) 2025, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"

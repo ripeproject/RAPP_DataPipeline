@@ -122,10 +122,10 @@ void cCeresDailyChecker::process_file()
         std::filesystem::path failed_file = mSourceDir / "failed_files" / filename;
 
         std::filesystem::path tmp_dir = mSourceDir / "file_repair_tmp";
-        std::filesystem::path partial_repaired_dir = mSourceDir / "partial_repaired_files";
+        std::filesystem::path partial_repaired_files = mSourceDir / "partial_repaired_files";
         std::filesystem::path repaired_files = mSourceDir / "fully_repaired_files";
 
-        std::unique_ptr<cFileRepairProcessor> pFileRepair = std::make_unique<cFileRepairProcessor>(mID, tmp_dir, partial_repaired_dir, repaired_files);
+        std::unique_ptr<cFileRepairProcessor> pFileRepair = std::make_unique<cFileRepairProcessor>(mID, tmp_dir, partial_repaired_files, repaired_files);
 
         if (pFileRepair->open(failed_file))
         {
@@ -134,6 +134,7 @@ void cCeresDailyChecker::process_file()
                 auto result = pFileRepair->run();
 
                 std::filesystem::path repaired_file = repaired_files / filename;
+
                 std::filesystem::path out_file = mSourceDir / filename;
 
                 if (std::filesystem::exists(repaired_file) && !std::filesystem::exists(out_file))
@@ -142,7 +143,13 @@ void cCeresDailyChecker::process_file()
                 }
                 else
                 {
-                    complete_file_progress(mID, "Error", "Error in copying repaired file!");
+                    std::filesystem::path partial_repaired_file = partial_repaired_files / filename;
+
+                    if (std::filesystem::exists(partial_repaired_file))
+                        complete_file_progress(mID, "Warning", "The file could only be partially repaired.");
+                    else
+                        complete_file_progress(mID, "Error", "Error in copying repaired file!");
+
                     return;
                 }
             }
