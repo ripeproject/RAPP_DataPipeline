@@ -173,7 +173,7 @@ void cFieldScanDataModel::loadFieldScanData(const std::string& filename)
     bool hasSpidercamInfo = mSpiderCamInfo->hasPositionData();
     if (hasSpidercamInfo)
     {
-        mSpiderCamInfo->findStartAndEndIndex(2.0);
+        mSpiderCamInfo->findStartAndEndIndex(2.5);
     }
 
     mGroundTrack_deg = mSsnxInfo->computeAvgGroundTrack_deg();
