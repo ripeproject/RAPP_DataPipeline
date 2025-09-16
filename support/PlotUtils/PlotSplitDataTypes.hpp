@@ -19,6 +19,16 @@ namespace rfm
 		rappPoint2D_t northWestCorner;
 		rappPoint2D_t southEastCorner;
 		rappPoint2D_t southWestCorner;
+
+		std::int32_t length() const
+		{
+			return ((northEastCorner.y_mm - northWestCorner.y_mm) + (southEastCorner.y_mm - southWestCorner.y_mm)) / 2;
+		}
+
+		std::int32_t width() const
+		{
+			return ((southEastCorner.x_mm - northEastCorner.x_mm) + (southWestCorner.x_mm - northWestCorner.x_mm)) / 2;
+		}
 	};
 }
 
