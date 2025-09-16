@@ -309,6 +309,8 @@ void cMainWindow::OnExperimentDirectory(wxCommandEvent& WXUNUSED(event))
 
 void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
 {
+	mpCheckButton->Disable();
+
 	const std::filesystem::path source_dir = mSourceDataDirectory.ToStdString();
 
 	std::vector<directory_entry> files_to_verify;
@@ -326,6 +328,8 @@ void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
 	if (files_to_verify.empty())
 	{
 		// No files to repair!
+		mpCheckButton->Enable();
+
 		return;
 	}
 
