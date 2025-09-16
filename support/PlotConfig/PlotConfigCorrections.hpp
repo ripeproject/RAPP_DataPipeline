@@ -45,8 +45,16 @@ public:
 	const cPlotConfigIsolationMethod& getIsolationMethod() const;
 	cPlotConfigIsolationMethod& getIsolationMethod();
 
+	bool hasExclusions() const;
+
+	const std::vector<cPlotConfigExclusion>& getExclusions() const;
+	std::vector<cPlotConfigExclusion>& getExclusions();
+
 	void setBounds(const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
+
+	cPlotConfigExclusion& add(const ePlotExclusionType type);
+	void clearExclusions();
 
 	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);

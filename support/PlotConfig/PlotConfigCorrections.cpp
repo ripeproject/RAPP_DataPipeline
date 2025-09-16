@@ -74,6 +74,21 @@ cPlotConfigIsolationMethod& cPlotConfigCorrection::getIsolationMethod()
 	return mIsolationMethod;
 }
 
+bool cPlotConfigCorrection::hasExclusions() const
+{
+	return !mExclusions.empty();
+}
+
+const std::vector<cPlotConfigExclusion>& cPlotConfigCorrection::getExclusions() const
+{
+	return mExclusions;
+}
+
+std::vector<cPlotConfigExclusion>& cPlotConfigCorrection::getExclusions()
+{
+	return mExclusions;
+}
+
 void cPlotConfigCorrection::setBounds(const cPlotConfigBoundary& bounds)
 {
 	mBounds = bounds;
@@ -82,6 +97,21 @@ void cPlotConfigCorrection::setBounds(const cPlotConfigBoundary& bounds)
 void cPlotConfigCorrection::setIsolationMethod(const cPlotConfigIsolationMethod& method)
 {
 	mIsolationMethod = method;
+}
+
+cPlotConfigExclusion& cPlotConfigCorrection::add(const ePlotExclusionType type)
+{
+	mExclusions.emplace_back(type);
+
+	cPlotConfigExclusion& e = mExclusions.back();
+	e.setDirtyFlag(true);
+
+	return e;
+}
+
+void cPlotConfigCorrection::clearExclusions()
+{
+	mExclusions.clear();
 }
 
 void cPlotConfigCorrection::clearDirtyFlag()

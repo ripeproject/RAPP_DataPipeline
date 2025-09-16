@@ -4,6 +4,7 @@
 #include "datatypes.hpp"
 
 #include "PlotSplitDataTypes.hpp"
+#include "PlotConfigInclusion.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -77,6 +78,8 @@ private:
 
 	double mTolerance_mm = 15.0;
 	double mBounds_pct = 50.0;
+
+	std::vector<cPlotConfigInclusion> mInclusions;
 
 	friend class cPlotConfigFile;
 	friend class cPlotConfigPlotInfo;

@@ -11,8 +11,11 @@
 
 
 cPlotConfigExclusion::cPlotConfigExclusion()
-{
-}
+{}
+
+cPlotConfigExclusion::cPlotConfigExclusion(ePlotExclusionType type)
+	: mType(type)
+{}
 
 void cPlotConfigExclusion::clear()
 {
@@ -35,6 +38,11 @@ bool cPlotConfigExclusion::empty() const
 bool cPlotConfigExclusion::isDirty() const
 {
 	return mDirty;
+}
+
+ePlotExclusionType cPlotConfigExclusion::getType() const
+{
+	return mType;
 }
 
 cPlotConfigExclusion::operator rfm::sPlotBoundingBox_t() const
@@ -71,6 +79,26 @@ rfm::rappPoint2D_t cPlotConfigExclusion::center() const
 	return { static_cast<std::int32_t>(mCenterX_mm), static_cast<std::int32_t>(mCenterY_mm)};
 }
 
+uint32_t cPlotConfigExclusion::radius_mm() const
+{
+	return mRadius_mm;
+}
+
+uint32_t cPlotConfigExclusion::length_mm() const
+{
+	return mLength_mm;
+}
+
+uint32_t cPlotConfigExclusion::width_mm() const
+{
+	return mWidth_mm;
+}
+
+double cPlotConfigExclusion::orientation_deg() const
+{
+	return mOrientation_deg;
+}
+
 bool cPlotConfigExclusion::contains(rfm::rappPoint2D_t point) const
 {
 	return contains(point.x_mm, point.y_mm);
@@ -79,6 +107,12 @@ bool cPlotConfigExclusion::contains(rfm::rappPoint2D_t point) const
 bool cPlotConfigExclusion::contains(std::int32_t x_mm, std::int32_t y_mm) const
 {
 	return true;
+}
+
+void cPlotConfigExclusion::setType(ePlotExclusionType type)
+{
+	mDirty |= mType != type;
+	mType = type;
 }
 
 void cPlotConfigExclusion::setCenterX_mm(uint32_t x_mm)
@@ -97,6 +131,12 @@ void cPlotConfigExclusion::setCenter(uint32_t x_mm, uint32_t y_mm)
 {
 	setCenterX_mm(x_mm);
 	setCenterY_mm(y_mm);
+}
+
+void cPlotConfigExclusion::setRadius_mm(uint32_t radius_mm)
+{
+	mDirty |= mRadius_mm != radius_mm;
+	mRadius_mm = radius_mm;
 }
 
 void cPlotConfigExclusion::setLength_mm(uint32_t length_mm)
@@ -129,10 +169,40 @@ void cPlotConfigExclusion::load(const nlohmann::json& jdoc)
 	mCenterX_mm = center["x (mm)"];
 	mCenterY_mm = center["y (mm)"];
 
-	mLength_mm = jdoc["length (mm)"];
-	mWidth_mm = jdoc["width (mm)"];
+	auto type = jdoc["type"];
 
-	mOrientation_deg = jdoc["orientation (deg)"];
+	if (type == "circle")
+	{
+		mType = ePlotExclusionType::CIRCLE;
+		mRadius_mm = jdoc["radius (mm)"];
+	}
+	else if (type == "oval")
+	{
+		mType = ePlotExclusionType::OVAL;
+		mLength_mm = jdoc["length (mm)"];
+		mWidth_mm = jdoc["width (mm)"];
+
+		mOrientation_deg = jdoc["orientation (deg)"];
+	}
+	else if (type == "square")
+	{
+		mType = ePlotExclusionType::SQUARE;
+		mLength_mm = jdoc["length (mm)"];
+		mOrientation_deg = jdoc["orientation (deg)"];
+	}
+	else if (type == "rectangle")
+	{
+		mType = ePlotExclusionType::RECTANGLE;
+		mLength_mm = jdoc["length (mm)"];
+		mWidth_mm = jdoc["width (mm)"];
+
+		mOrientation_deg = jdoc["orientation (deg)"];
+	}
+	else
+	{
+		throw std::logic_error("Unknown exclusion type.");
+	}
+
 	mDirty = false;
 }
 
@@ -146,10 +216,34 @@ nlohmann::json cPlotConfigExclusion::save()
 
 	jdoc["center"] = center;
 
-	jdoc["length (mm)"] = mLength_mm;
-	jdoc["width (mm)"] = mWidth_mm;
+	switch (mType)
+	{
+	case ePlotExclusionType::CIRCLE:
+		jdoc["type"] = "circle";
+		jdoc["radius (mm)"] = mRadius_mm;
+		break;
+	case ePlotExclusionType::OVAL:
+		jdoc["type"] = "oval";
+		jdoc["length (mm)"] = mLength_mm;
+		jdoc["width (mm)"] = mWidth_mm;
 
-	jdoc["orientation (deg)"] = mOrientation_deg;
+		jdoc["orientation (deg)"] = mOrientation_deg;
+		break;
+	case ePlotExclusionType::SQUARE:
+		jdoc["type"] = "square";
+		jdoc["length (mm)"] = mLength_mm;
+
+		jdoc["orientation (deg)"] = mOrientation_deg;
+		break;
+	case ePlotExclusionType::RECTANGLE:
+		jdoc["type"] = "rectangle";
+		jdoc["length (mm)"] = mLength_mm;
+		jdoc["width (mm)"] = mWidth_mm;
+
+		jdoc["orientation (deg)"] = mOrientation_deg;
+		break;
+	}
+
 	mDirty = false;
 
 	return jdoc;
