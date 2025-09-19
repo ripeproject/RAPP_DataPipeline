@@ -6,6 +6,7 @@
 #include "PlotConfigScan.hpp"
 
 #include "PlotSplitUtils.hpp"
+#include "RappUtils.hpp"
 
 #include "StringUtils.hpp"
 #include "ExportUtils.hpp"
@@ -291,7 +292,7 @@ void cFileProcessor::doPlotSplit()
         if (!pointCloud.groundLevel_mm().has_value())
         {
             if (mPlotInfo.hasGroundLevel())
-                pointCloud.setGroundLevel_mm(mPlotInfo.getGroundLevel_mm());
+                pointCloud.setGroundLevel_mm(mPlotInfo.getGroundLevel_mm().value());
         }
 
         for (const auto& plotInfo : mPlotInfo)
@@ -308,12 +309,14 @@ void cFileProcessor::doPlotSplit()
             if (!method)
                 continue;
 
+            cPlotPointCloud plotPointCloud;
+
             switch (method->getMethod())
             {
             case ePlotIsolationMethod::NONE:
             {
                 {
-                    auto plotPointCloud = plot::isolate_basic(pointCloud, bounds->getBoundingBox());
+                    plotPointCloud = plot::isolate_basic(pointCloud, bounds->getBoundingBox());
 
                     if (plotPointCloud.empty())
                     {
@@ -331,14 +334,6 @@ void cFileProcessor::doPlotSplit()
                         console_message(msg);
                         continue;
                     }
-
-                    cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
-
-                    fillPlotInformation(plot, plotInfo);
-
-                    plot->setPointCloud(plotPointCloud);
-
-                    mPlots.push_back(plot);
                 }
 
                 if (hasSubPlot)
@@ -386,13 +381,6 @@ void cFileProcessor::doPlotSplit()
                     continue;
                 }
 
-                cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
-
-                fillPlotInformation(plot, plotInfo);
-
-                plot->setPointCloud(plotPointCloud);
-
-                mPlots.push_back(plot);
                 break;
             }
             case ePlotIsolationMethod::CENTER_OF_HEIGHT:
@@ -410,14 +398,6 @@ void cFileProcessor::doPlotSplit()
                             console_message(msg);
                             continue;
                         }
-
-                        cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
-
-                        fillPlotInformation(plot, plotInfo);
-
-                        plot->setPointCloud(plotPointCloud);
-
-                        mPlots.push_back(plot);
                     }
 
                     auto plotPointClouds = plot::isolate_center_of_height(pointCloud, bounds->getBoundingBox(),
@@ -459,18 +439,30 @@ void cFileProcessor::doPlotSplit()
                         console_message(msg);
                         continue;
                     }
-
-                    cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
-
-                    fillPlotInformation(plot, plotInfo);
-
-                    plot->setPointCloud(plotPointCloud);
-
-                    mPlots.push_back(plot);
                 }
                 break;
             }
             }
+
+            const auto* exclusions = plotInfo.getExclusions(date);
+            if (exclusions)
+            {
+                int32_t x_mm = bounds->getBoundingBox().northWestCorner.x_mm;
+                int32_t y_mm = bounds->getBoundingBox().northWestCorner.y_mm;
+
+                rapp::remove_exclusions(plotPointCloud, x_mm, y_mm, exclusions->begin(), exclusions->end());
+            }
+
+            if (plotPointCloud.empty())
+                continue;
+
+            cRappPlot* plot = new cRappPlot(plotInfo.getPlotNumber());
+
+            fillPlotInformation(plot, plotInfo);
+
+            plot->setPointCloud(plotPointCloud);
+
+            mPlots.push_back(plot);
         }
     }
 }
