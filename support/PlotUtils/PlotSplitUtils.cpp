@@ -408,8 +408,63 @@ plot::sLine_t plot::computeLineParameters(rfm::rappPoint2D_t p1, rfm::rappPoint2
 	return result;
 }
 
+
+
 namespace
 {
+	template<typename POINT>
+	cPlotPointCloud trim_inside(const std::vector<POINT>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm)
+	{
+		cPlotPointCloud result;
+
+		std::array<rfm::rappPoint2D_t, 4> corners = { box.northEastCorner, box.northWestCorner, box.southEastCorner, box.southWestCorner };
+
+		orderBoundingBox(corners);
+
+		auto line1 = plot::computeLineParameters(corners[0], corners[1], true);
+		auto line2 = plot::computeLineParameters(corners[1], corners[2]);
+		auto line3 = plot::computeLineParameters(corners[2], corners[3], true);
+		auto line4 = plot::computeLineParameters(corners[3], corners[0]);
+
+		double x, y;
+
+		for (const auto& point : points)
+		{
+			x = line1.slope * point.y_mm + line1.intercept;
+
+			if (point.x_mm >= x)
+			{
+				x = line3.slope * point.y_mm + line3.intercept;
+
+				if (point.x_mm <= x)
+				{
+					y = line2.slope * point.x_mm + line2.intercept;
+
+					if (point.y_mm <= y)
+					{
+						y = line4.slope * point.x_mm + line4.intercept;
+
+						if (point.y_mm >= y)
+						{
+							continue;
+						}
+					}
+				}
+			}
+
+			result.push_back(to_point(point));
+		}
+
+		result.setVegetationOnly(vegetationOnly);
+
+		if (groundLevel_mm.has_value())
+			result.setGroundLevel_mm(groundLevel_mm.value());
+		else
+			result.clearGroundLevel_mm();
+
+		return result;
+	}
+
 	template<typename POINT>
 	cPlotPointCloud trim_outside(const std::vector<POINT>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm)
 	{
@@ -481,7 +536,7 @@ namespace
 			result.setGroundLevel_mm(groundLevel_mm.value());
 		else
 			result.clearGroundLevel_mm();
-	
+
 		return result;
 	}
 
@@ -510,6 +565,25 @@ namespace
 	}
 }
 
+cPlotPointCloud plot::trim_inside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box)
+{
+	return ::trim_inside(pc.data(), box, pc.vegetationOnly(), pc.groundLevel_mm());
+}
+
+cPlotPointCloud plot::trim_inside(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box)
+{
+	return ::trim_inside(pc.data(), box, pc.vegetationOnly(), pc.groundLevel_mm());
+}
+
+cPlotPointCloud plot::trim_inside(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm)
+{
+	return ::trim_inside(points, box, vegetationOnly, groundLevel_mm);
+}
+
+cPlotPointCloud plot::trim_inside(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm)
+{
+	return ::trim_inside(points, box, vegetationOnly, groundLevel_mm);
+}
 cPlotPointCloud plot::trim_outside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box)
 {
 	return ::trim_outside(pc.data(), box, pc.vegetationOnly(), pc.groundLevel_mm());

@@ -119,6 +119,7 @@ public:
 	void rotate(double yaw_deg, double pitch_deg, double roll_deg);
 	void translate(int dx_mm, int dy_mm, int dz_mm);
 
+	void trim_inside(pointcloud::sBoundingBox_t box);
 	void trim_outside(pointcloud::sBoundingBox_t box);
 
 	void trim_below(int z_mm);

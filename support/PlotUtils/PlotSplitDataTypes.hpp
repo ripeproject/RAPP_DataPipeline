@@ -30,5 +30,13 @@ namespace rfm
 			return ((southEastCorner.x_mm - northEastCorner.x_mm) + (southWestCorner.x_mm - northWestCorner.x_mm)) / 2;
 		}
 	};
+
+	struct sPlotBoundingCircle_t
+	{
+		int32_t	plotNumber = -1;
+
+		std::int32_t radius_mm = 0;
+		rappPoint2D_t center;
+	};
 }
 

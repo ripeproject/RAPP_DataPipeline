@@ -41,6 +41,11 @@ namespace pointcloud
 	// The intercept will be in the same units as sPoint2D_t (meters)
 	sLine_t computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis = false);
 
+	cRappPointCloud trim_inside(const cRappPointCloud& pc, sBoundingBox_t box);
+
+	template<typename POINT>
+	std::vector<POINT> trim_inside(const std::vector<POINT>& pc, sBoundingBox_t box);
+
 	cRappPointCloud trim_outside(const cRappPointCloud& pc, sBoundingBox_t box);
 
 	template<typename POINT>
@@ -158,6 +163,57 @@ namespace pointcloud
 * Implementation
 * 
 ******************************************************************************/
+
+template<typename POINT>
+std::vector<POINT> pointcloud::trim_inside(const std::vector<POINT>& pc, pointcloud::sBoundingBox_t box)
+{
+	std::vector<POINT> result;
+
+	orderBoundingBox(box);
+
+	// Convert bounding box coordinates (m) to spidercam coordinates (mm)
+	for (auto& point : box.corners)
+	{
+		point.X_m *= nConstants::M_TO_MM;
+		point.Y_m *= nConstants::M_TO_MM;
+	}
+
+	auto line1 = computeLineParameters(box.corners[0], box.corners[1], true);
+	auto line2 = computeLineParameters(box.corners[1], box.corners[2]);
+	auto line3 = computeLineParameters(box.corners[2], box.corners[3], true);
+	auto line4 = computeLineParameters(box.corners[3], box.corners[0]);
+
+	double x, y;
+
+	for (const POINT& point : pc)
+	{
+		x = line1.slope * point.y_mm + line1.intercept;
+
+		if (point.x_mm > x)
+		{
+			x = line3.slope * point.y_mm + line3.intercept;
+
+			if (point.x_mm < x)
+			{
+				y = line2.slope * point.x_mm + line2.intercept;
+
+				if (point.y_mm < y)
+				{
+					y = line4.slope * point.x_mm + line4.intercept;
+
+					if (point.y_mm > y)
+					{
+						continue;
+					}
+				}
+			}
+		}
+
+		result.push_back(point);
+	}
+
+	return result;
+}
 
 template<typename POINT>
 std::vector<POINT> pointcloud::trim_outside(const std::vector<POINT>& pc, pointcloud::sBoundingBox_t box)

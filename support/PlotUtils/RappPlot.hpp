@@ -69,6 +69,7 @@ public:
 	void setVegetationOnly(const bool vegetation_only);
 
 	void setPointCloud(const cPlotPointCloud& pointCloud);
+	void setPointCloud(const cPlotPointCloud::vCloud_t& data);
 
 
 	plot::sPoint3D_t getPoint(int x_mm, int y_mm, int r_mm) const;

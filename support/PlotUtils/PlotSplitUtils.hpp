@@ -62,6 +62,11 @@ namespace plot
 
 	sLine_t computeLineParameters(rfm::rappPoint2D_t p1, rfm::rappPoint2D_t, bool swapAxis = false);
 
+	cPlotPointCloud trim_inside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box);
+	cPlotPointCloud trim_inside(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box);
+	cPlotPointCloud trim_inside(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm);
+	cPlotPointCloud trim_inside(const std::vector<rfm::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm);
+
 	cPlotPointCloud trim_outside(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box);
 	cPlotPointCloud trim_outside(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box);
 	cPlotPointCloud trim_outside(const std::vector<plot::sPoint3D_t>& pc, rfm::sPlotBoundingBox_t box, bool vegetationOnly, std::optional<double> groundLevel_mm);

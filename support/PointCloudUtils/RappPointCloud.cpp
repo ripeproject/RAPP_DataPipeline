@@ -466,6 +466,15 @@ void cRappPointCloud::translate(int dx_mm, int dy_mm, int dz_mm)
 	recomputeBounds();
 }
 
+void cRappPointCloud::trim_inside(pointcloud::sBoundingBox_t box)
+{
+	auto cloud = pointcloud::trim_inside(mCloud, box);
+
+	mCloud = cloud;
+
+	recomputeBounds();
+}
+
 void cRappPointCloud::trim_outside(pointcloud::sBoundingBox_t box)
 {
 	auto cloud = pointcloud::trim_outside(mCloud, box);

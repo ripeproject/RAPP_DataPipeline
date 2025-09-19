@@ -102,6 +102,11 @@ void cRappPlot::setPointCloud(const cPlotPointCloud& pointCloud)
 	mCloud = pointCloud;
 }
 
+void cRappPlot::setPointCloud(const cPlotPointCloud::vCloud_t& data)
+{
+	mCloud.assign(data);
+}
+
 plot::sPoint3D_t cRappPlot::getPoint(int x_mm, int y_mm, int r_mm) const
 {
 	plot::sPoint3D_t result = {x_mm, y_mm, plot::INVALID_HEIGHT};
