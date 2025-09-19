@@ -8,20 +8,8 @@ set(PLOT_SPLIT_COMMON_FILES
 	FileProcessor.hpp
 	FileProcessor.cpp
 
-#	PlotConfigFile.hpp
-#	PlotConfigFile.cpp
-
-#	PlotConfigOptions.hpp
-#	PlotConfigOptions.cpp
-
-#	PlotConfigScan.hpp
-#	PlotConfigScan.cpp
-
-#	PlotConfigBoundary.hpp
-#	PlotConfigBoundary.cpp
-
-#	PlotConfigIsolationMethod.hpp
-#	PlotConfigIsolationMethod.cpp
+	RappUtils.hpp
+	RappUtils.cpp
 
 	PointCloudInfo.hpp
 	PointCloudInfo.cpp
