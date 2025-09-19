@@ -79,6 +79,16 @@ rfm::rappPoint2D_t cPlotConfigExclusion::center() const
 	return { static_cast<std::int32_t>(mCenterX_mm), static_cast<std::int32_t>(mCenterY_mm)};
 }
 
+uint32_t cPlotConfigExclusion::x_mm() const
+{
+	return mCenterX_mm;
+}
+
+uint32_t cPlotConfigExclusion::y_mm() const
+{
+	return mCenterY_mm;
+}
+
 uint32_t cPlotConfigExclusion::radius_mm() const
 {
 	return mRadius_mm;

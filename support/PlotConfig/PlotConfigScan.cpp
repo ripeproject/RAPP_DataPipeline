@@ -603,6 +603,40 @@ cPlotConfigIsolationMethod* const cPlotConfigPlotInfo::getIsolationMethod(const 
 	return getIsolationMethod(plot_config::to_date(month, day));
 }
 
+const std::vector<cPlotConfigExclusion>* const cPlotConfigPlotInfo::getExclusions(const int date) const
+{
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getExclusions());
+
+	return &(it->second.getExclusions());
+}
+
+std::vector<cPlotConfigExclusion>* const cPlotConfigPlotInfo::getExclusions(const int date)
+{
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getExclusions());
+
+	return &(it->second.getExclusions());
+}
+
+const std::vector<cPlotConfigExclusion>* const cPlotConfigPlotInfo::getExclusions(const int month, const int day) const
+{
+	return getExclusions(plot_config::to_date(month, day));
+}
+
+std::vector<cPlotConfigExclusion>* const cPlotConfigPlotInfo::getExclusions(const int month, const int day)
+{
+	return getExclusions(plot_config::to_date(month, day));
+}
+
 void cPlotConfigPlotInfo::setPlotNumber(uint32_t num)
 {
 	uint32_t plotNumber = num;
@@ -755,6 +789,8 @@ void cPlotConfigPlotInfo::clearTreatments()
 
 void cPlotConfigPlotInfo::addTreatment(const std::string& treatment)
 {
+	if (treatment.empty()) return;
+
 	mDirty = true;
 	mTreatments.push_back(treatment);
 }
@@ -786,6 +822,18 @@ void cPlotConfigPlotInfo::setIsolationMethod(const int month, const int day,cons
 	}
 	else
 		it->second.setIsolationMethod(method);
+}
+
+void cPlotConfigPlotInfo::setExclusions(const int month, const int day, const std::vector<cPlotConfigExclusion>& exclusions)
+{
+	auto it = find_exact(month, day);
+
+	if (it == mCorrections.end())
+	{
+		mCorrections.add(month, day).setExclusions(exclusions);
+	}
+	else
+		it->second.setExclusions(exclusions);
 }
 
 void cPlotConfigPlotInfo::clearDirtyFlag()

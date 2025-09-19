@@ -26,10 +26,14 @@ void cPlotConfigCorrection::clear()
 {
 	mBounds.clear();
 	mIsolationMethod.clear();
+	mExclusions.clear();
+	mDirty = false;
 }
 
 bool cPlotConfigCorrection::isDirty() const
 {
+	if (mDirty) return true;
+
 	for (const auto& exclusion : mExclusions)
 	{
 		if (exclusion.isDirty())
@@ -99,23 +103,31 @@ void cPlotConfigCorrection::setIsolationMethod(const cPlotConfigIsolationMethod&
 	mIsolationMethod = method;
 }
 
+void cPlotConfigCorrection::setExclusions(const std::vector<cPlotConfigExclusion>& exclusions)
+{
+	mDirty |= (mExclusions != exclusions);
+	mExclusions = exclusions;
+}
+
 cPlotConfigExclusion& cPlotConfigCorrection::add(const ePlotExclusionType type)
 {
 	mExclusions.emplace_back(type);
 
-	cPlotConfigExclusion& e = mExclusions.back();
-	e.setDirtyFlag(true);
+	mDirty = true;
 
-	return e;
+	return mExclusions.back();
 }
 
 void cPlotConfigCorrection::clearExclusions()
 {
+	mDirty |= (mExclusions.size() > 0);
 	mExclusions.clear();
 }
 
 void cPlotConfigCorrection::clearDirtyFlag()
 {
+	mDirty = false;
+
 	mBounds.clearDirtyFlag();
 	mIsolationMethod.clearDirtyFlag();
 
@@ -127,6 +139,8 @@ void cPlotConfigCorrection::clearDirtyFlag()
 
 void cPlotConfigCorrection::setDirtyFlag(bool dirty)
 {
+	mDirty = dirty;
+
 	mBounds.setDirtyFlag(dirty);
 	mIsolationMethod.setDirtyFlag(dirty);
 
@@ -151,6 +165,8 @@ void cPlotConfigCorrection::load(const nlohmann::json& jdoc)
 			mExclusions.push_back(e);
 		}
 	}
+
+	mDirty = false;
 }
 
 nlohmann::json cPlotConfigCorrection::save()
@@ -178,6 +194,8 @@ nlohmann::json cPlotConfigCorrection::save()
 		if (!exclusionDoc.is_null())
 			correctionDoc["exclusions"] = exclusionDoc;
 	}
+
+	mDirty = false;
 
 	return correctionDoc;
 }
@@ -314,6 +332,34 @@ const cPlotConfigIsolationMethod& cPlotConfigCorrections::getIsolationMethod(int
 cPlotConfigIsolationMethod& cPlotConfigCorrections::getIsolationMethod(int month, int day)
 {
 	return getIsolationMethod(plot_config::to_date(month, day));
+}
+
+const std::vector<cPlotConfigExclusion>& cPlotConfigCorrections::getExclusions(int date) const
+{
+	auto it = find(date);
+	if (it == mCorrections.end())
+		throw std::logic_error("oops");
+
+	return it->second.getExclusions();
+}
+
+std::vector<cPlotConfigExclusion>& cPlotConfigCorrections::getExclusions(int date)
+{
+	auto it = find(date);
+	if (it == mCorrections.end())
+		throw std::logic_error("oops");
+
+	return it->second.getExclusions();
+}
+
+const std::vector<cPlotConfigExclusion>& cPlotConfigCorrections::getExclusions(int month, int day) const
+{
+	return getExclusions(plot_config::to_date(month, day));
+}
+
+std::vector<cPlotConfigExclusion>& cPlotConfigCorrections::getExclusions(int month, int day)
+{
+	return getExclusions(plot_config::to_date(month, day));
 }
 
 void cPlotConfigCorrections::clearDirtyFlag()

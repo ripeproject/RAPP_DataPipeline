@@ -31,6 +31,8 @@ public:
 	rfm::sPlotBoundingBox_t getBoundingBox() const;
 
 	rfm::rappPoint2D_t center() const;
+	uint32_t x_mm() const;
+	uint32_t y_mm() const;
 
 	uint32_t radius_mm() const;
 

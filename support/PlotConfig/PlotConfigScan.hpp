@@ -172,6 +172,12 @@ public:
 	const cPlotConfigIsolationMethod* const getIsolationMethod(const int month, const int day) const;
 	cPlotConfigIsolationMethod* const getIsolationMethod(const int month, const int day);
 
+	const std::vector<cPlotConfigExclusion>* const getExclusions(const int date) const;
+	std::vector<cPlotConfigExclusion>* const getExclusions(const int date);
+
+	const std::vector<cPlotConfigExclusion>* const getExclusions(const int month, const int day) const;
+	std::vector<cPlotConfigExclusion>* const getExclusions(const int month, const int day);
+
 	void setPlotNumber(uint32_t num);
 //	void setSubPlotNumber(uint8_t num);
 	void setPlotName(const std::string& name);
@@ -195,6 +201,7 @@ public:
 
 	void setBounds(const int month, const int day, const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const int month, const int day, const cPlotConfigIsolationMethod& method);
+	void setExclusions(const int month, const int day, const std::vector<cPlotConfigExclusion>& exclusions);
 
 	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);

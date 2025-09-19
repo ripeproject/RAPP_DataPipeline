@@ -53,6 +53,8 @@ public:
 	void setBounds(const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
 
+	void setExclusions(const std::vector<cPlotConfigExclusion>& exclusions);
+
 	cPlotConfigExclusion& add(const ePlotExclusionType type);
 	void clearExclusions();
 
@@ -64,6 +66,8 @@ protected:
 	nlohmann::json save();
 
 private:
+	bool mDirty = false;
+
 	const int mEffectiveMonth;
 	const int mEffectiveDay;
 
@@ -116,6 +120,12 @@ public:
 
 	const cPlotConfigIsolationMethod& getIsolationMethod(int month, int day) const;
 	cPlotConfigIsolationMethod& getIsolationMethod(int month, int day);
+
+	const std::vector<cPlotConfigExclusion>& getExclusions(int date) const;
+	std::vector<cPlotConfigExclusion>& getExclusions(int date);
+
+	const std::vector<cPlotConfigExclusion>& getExclusions(int month, int day) const;
+	std::vector<cPlotConfigExclusion>& getExclusions(int month, int day);
 
 	iterator		begin();
 	iterator		end();
