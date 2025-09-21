@@ -38,5 +38,17 @@ namespace rfm
 		std::int32_t radius_mm = 0;
 		rappPoint2D_t center;
 	};
+
+	struct sPlotBoundingEllipse_t
+	{
+		int32_t	plotNumber = -1;
+
+		std::int32_t semi_major_mm = 0;
+		std::int32_t semi_minor_mm = 0;
+
+		double orientation_deg = 0;
+
+		rappPoint2D_t center;
+	};
 }
 
