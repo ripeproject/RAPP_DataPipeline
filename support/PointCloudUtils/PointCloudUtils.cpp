@@ -191,11 +191,47 @@ pointcloud::sLine_t pointcloud::computeLineParameters(sPoint2D_t p1, sPoint2D_t 
     return result;
 }
 
+cRappPointCloud pointcloud::trim_inside(const cRappPointCloud& pc, pointcloud::sBoundingCircle_t box)
+{
+    cRappPointCloud result;
+
+    result.assign(pointcloud::trim_inside(pc.data(), box));
+
+    result.recomputeBounds();
+
+    result.setName(pc.name());
+
+    if (pc.referenceValid())
+        result.setReferencePoint(pc.referencePoint());
+
+    result.setVegetationOnly(pc.vegetationOnly());
+
+    return result;
+}
+
 cRappPointCloud pointcloud::trim_inside(const cRappPointCloud& pc, pointcloud::sBoundingBox_t box)
 {
     cRappPointCloud result;
 
     result.assign(pointcloud::trim_inside(pc.data(), box));
+
+    result.recomputeBounds();
+
+    result.setName(pc.name());
+
+    if (pc.referenceValid())
+        result.setReferencePoint(pc.referencePoint());
+
+    result.setVegetationOnly(pc.vegetationOnly());
+
+    return result;
+}
+
+cRappPointCloud pointcloud::trim_outside(const cRappPointCloud& pc, pointcloud::sBoundingCircle_t box)
+{
+    cRappPointCloud result;
+
+    result.assign(pointcloud::trim_outside(pc.data(), box));
 
     result.recomputeBounds();
 

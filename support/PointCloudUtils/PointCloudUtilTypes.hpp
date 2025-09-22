@@ -49,4 +49,13 @@ namespace pointcloud
     {
         std::array<sPoint2D_t, 4> corners;
     };
+
+	//
+	// A bounding circle data struct used in various utilities.
+	//
+	struct sBoundingCircle_t
+	{
+		sPoint2D_t center;
+		double radius_m = 0.0;
+	};
 }

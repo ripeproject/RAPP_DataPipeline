@@ -41,15 +41,35 @@ namespace pointcloud
 	// The intercept will be in the same units as sPoint2D_t (meters)
 	sLine_t computeLineParameters(sPoint2D_t p1, sPoint2D_t p2, bool swapAxis = false);
 
+	//
+	// The trim inside functions will remove all of the points from the point cloud
+	// inside the given shape
+	//
+	cRappPointCloud trim_inside(const cRappPointCloud& pc, sBoundingCircle_t box);
+
+	template<typename POINT>
+	std::vector<POINT> trim_inside(const std::vector<POINT>& pc, sBoundingCircle_t box);
+
 	cRappPointCloud trim_inside(const cRappPointCloud& pc, sBoundingBox_t box);
 
 	template<typename POINT>
 	std::vector<POINT> trim_inside(const std::vector<POINT>& pc, sBoundingBox_t box);
 
+
+	//
+	// The trim outside functions will remove all of the points from the point cloud
+	// outside the given shape
+	//
+	cRappPointCloud trim_outside(const cRappPointCloud& pc, sBoundingCircle_t box);
+
+	template<typename POINT>
+	std::vector<POINT> trim_outside(const std::vector<POINT>& pc, sBoundingCircle_t box);
+
 	cRappPointCloud trim_outside(const cRappPointCloud& pc, sBoundingBox_t box);
 
 	template<typename POINT>
 	std::vector<POINT> trim_outside(const std::vector<POINT>& pc, sBoundingBox_t box);
+
 
 	template<typename POINT>
 	std::vector<POINT> sliceAtGivenX(std::vector<POINT> pc, double x_mm, double tolerance_mm);
@@ -165,6 +185,48 @@ namespace pointcloud
 ******************************************************************************/
 
 template<typename POINT>
+std::vector<POINT> pointcloud::trim_inside(const std::vector<POINT>& pc, pointcloud::sBoundingCircle_t circle)
+{
+	std::vector<POINT> result;
+
+	auto radius_mm = circle.radius_m * nConstants::M_TO_MM;
+
+	auto r2 = radius_mm * radius_mm;
+
+	double xn_mm = (circle.center.X_m - circle.radius_m) * nConstants::M_TO_MM;
+	double xs_mm = (circle.center.X_m + circle.radius_m) * nConstants::M_TO_MM;
+
+	double yw_mm = (circle.center.Y_m - circle.radius_m) * nConstants::M_TO_MM;
+	double ye_mm = (circle.center.Y_m + circle.radius_m) * nConstants::M_TO_MM;
+
+	double xc_mm = circle.center.X_m * nConstants::M_TO_MM;
+	double yc_mm = circle.center.Y_m * nConstants::M_TO_MM;
+
+	for (const POINT& point : pc)
+	{
+		if (point.x_mm > xn_mm)
+		{
+			if (point.x_mm < xs_mm)
+			{
+				if (point.y_mm < ye_mm)
+				{
+					if (point.y_mm > yw_mm)
+					{
+						int d_mm = sqrt(r2 - (point.x_mm - xc_mm) * (point.x_mm - xc_mm));
+						if ((point.y_mm >= (yc_mm - d_mm)) && (point.y_mm <= (yc_mm + d_mm)))
+							continue;
+					}
+				}
+			}
+		}
+
+		result.push_back(point);
+	}
+
+	return result;
+}
+
+template<typename POINT>
 std::vector<POINT> pointcloud::trim_inside(const std::vector<POINT>& pc, pointcloud::sBoundingBox_t box)
 {
 	std::vector<POINT> result;
@@ -210,6 +272,46 @@ std::vector<POINT> pointcloud::trim_inside(const std::vector<POINT>& pc, pointcl
 		}
 
 		result.push_back(point);
+	}
+
+	return result;
+}
+
+template<typename POINT>
+std::vector<POINT> pointcloud::trim_outside(const std::vector<POINT>& pc, pointcloud::sBoundingCircle_t circle)
+{
+	std::vector<POINT> result;
+
+	auto radius_mm = circle.radius_m * nConstants::M_TO_MM;
+
+	auto r2 = radius_mm * radius_mm;
+
+	double xn_mm = (circle.center.X_m - circle.radius_m) * nConstants::M_TO_MM;
+	double xs_mm = (circle.center.X_m + circle.radius_m) * nConstants::M_TO_MM;
+
+	double yw_mm = (circle.center.Y_m - circle.radius_m) * nConstants::M_TO_MM;
+	double ye_mm = (circle.center.Y_m + circle.radius_m) * nConstants::M_TO_MM;
+
+	double xc_mm = circle.center.X_m * nConstants::M_TO_MM;
+	double yc_mm = circle.center.Y_m * nConstants::M_TO_MM;
+
+	for (const POINT& point : pc)
+	{
+		if (point.x_mm > xn_mm)
+		{
+			if (point.x_mm < xs_mm)
+			{
+				if (point.y_mm < ye_mm)
+				{
+					if (point.y_mm > yw_mm)
+					{
+						int d_mm = sqrt(r2 - (point.x_mm - xc_mm) * (point.x_mm - xc_mm));
+						if ((point.y_mm >= (yc_mm - d_mm)) && (point.y_mm <= (yc_mm + d_mm)))
+							result.push_back(point);
+					}
+				}
+			}
+		}
 	}
 
 	return result;
