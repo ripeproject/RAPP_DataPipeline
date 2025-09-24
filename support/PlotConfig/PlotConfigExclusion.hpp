@@ -53,6 +53,7 @@ public:
 	void setCenterX_mm(uint32_t x_mm);
 	void setCenterY_mm(uint32_t y_mm);
 	void setCenter(uint32_t x_mm, uint32_t y_mm);
+	void setCenter(rfm::rappPoint2D_t center);
 
 	void setRadius_mm(uint32_t radius_mm);
 

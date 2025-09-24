@@ -143,6 +143,12 @@ void cPlotConfigExclusion::setCenter(uint32_t x_mm, uint32_t y_mm)
 	setCenterY_mm(y_mm);
 }
 
+void cPlotConfigExclusion::setCenter(rfm::rappPoint2D_t center)
+{
+	setCenterX_mm(center.x_mm);
+	setCenterY_mm(center.y_mm);
+}
+
 void cPlotConfigExclusion::setRadius_mm(uint32_t radius_mm)
 {
 	mDirty |= mRadius_mm != radius_mm;
