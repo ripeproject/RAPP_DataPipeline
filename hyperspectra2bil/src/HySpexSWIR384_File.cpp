@@ -90,6 +90,9 @@ void cHySpexSWIR384_File::onEndRecordingTimestamp(uint64_t timestamp_ns)
     mActiveRow = 0;
 }
 
+void cHySpexSWIR384_File::onBeginReference(uint8_t device_id) {};
+void cHySpexSWIR384_File::onEndOfReference(uint8_t device_id) {};
+
 void cHySpexSWIR384_File::onID(uint8_t device_id, std::string id) {}
 void cHySpexSWIR384_File::onSerialNumber(uint8_t device_id, std::string serialNumber) {}
 void cHySpexSWIR384_File::onWavelengthRange_nm(uint8_t device_id, uint16_t minWavelength_nm, uint16_t maxWavelength_nm) {}

@@ -26,6 +26,9 @@ public:
 	void onEndRecordingTimestamp(uint64_t timestamp_ns);
 
 private:
+	void onBeginReference(uint8_t device_id) override;
+	void onEndOfReference(uint8_t device_id) override;
+
 	void onID(uint8_t device_id, std::string id) override;
 	void onSerialNumber(uint8_t device_id, std::string serialNumber) override;
 	void onWavelengthRange_nm(uint8_t device_id, uint16_t minWavelength_nm, uint16_t maxWavelength_nm) override;

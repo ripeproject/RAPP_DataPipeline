@@ -93,6 +93,8 @@ void cHySpexVNIR3000N_File::onEndRecordingTimestamp(uint64_t timestamp_ns)
     mActiveRow = 0;
 }
 
+void cHySpexVNIR3000N_File::onBeginReference(uint8_t device_id) {};
+void cHySpexVNIR3000N_File::onEndOfReference(uint8_t device_id) {};
 
 void cHySpexVNIR3000N_File::onID(uint8_t device_id, std::string id) {}
 void cHySpexVNIR3000N_File::onSerialNumber(uint8_t device_id, std::string serialNumber) {}

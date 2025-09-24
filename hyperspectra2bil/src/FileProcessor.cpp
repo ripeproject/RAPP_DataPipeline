@@ -205,7 +205,9 @@ void cFileProcessor::onResearcher(const std::string& researcher) {}
 
 void cFileProcessor::onSpecies(const std::string& species) {}
 void cFileProcessor::onCultivar(const std::string& cultivar) {}
+void cFileProcessor::onTrialInfo(const std::string& trial) {}
 void cFileProcessor::onPermitInfo(const std::string& permit) {}
+void cFileProcessor::onPermitInfo(const std::string& authorization, const std::string& permit) {}
 void cFileProcessor::onExperimentDoc(const std::string& doc) {}
 
 void cFileProcessor::onBeginTreatmentList() {}
@@ -234,6 +236,8 @@ void cFileProcessor::onDayOfYear(std::uint16_t day_of_year) {}
 void cFileProcessor::onBeginSensorList() {}
 void cFileProcessor::onEndOfSensorList() {}
 void cFileProcessor::onSensorBlockInfo(uint16_t class_id, const std::string& name) {}
+void cFileProcessor::onSensorBlockInfo(uint16_t class_id, const std::string& name, const std::string& instance,
+    const std::string& manufacturer, const std::string& model, const std::string& serial_number, uint8_t device_id) {}
 
 void cFileProcessor::onStartTime(sExperimentTime_t time) {}
 void cFileProcessor::onEndTime(sExperimentTime_t time) {}
@@ -259,5 +263,9 @@ void cFileProcessor::onPosition(spidercam::sPosition_1_t pos)
     mSwirConverter->onPosition(pos.X_mm, pos.Y_mm, pos.Z_mm, pos.speed_mmps);
 }
 
+void cFileProcessor::onStartPosition(spidercam::sPosition_1_t position)
+{}
 
+void cFileProcessor::onEndPosition(spidercam::sPosition_1_t position)
+{}
 
