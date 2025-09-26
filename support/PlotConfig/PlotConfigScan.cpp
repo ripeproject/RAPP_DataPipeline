@@ -486,6 +486,58 @@ cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::find_exact(const int month, c
 	return mCorrections.find(month, day);
 }
 
+cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::find_prev(const int date) const
+{
+	auto it = mCorrections.find(date);
+
+	if (it == mCorrections.begin())
+		return it;
+
+	if (mCorrections.begin() == mCorrections.end())
+		return it;
+
+	return --it;
+}
+
+cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::find_prev(const int date)
+{
+	auto it = mCorrections.find(date);
+
+	if (it == mCorrections.begin())
+		return it;
+
+	if (mCorrections.begin() == mCorrections.end())
+		return it;
+
+	return --it;
+}
+
+cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::find_prev(const int month, const int day) const
+{
+	auto it = mCorrections.find(month, day);
+
+	if (it == mCorrections.begin())
+		return it;
+
+	if (mCorrections.begin() == mCorrections.end())
+		return it;
+
+	return --it;
+}
+
+cPlotConfigPlotInfo::iterator cPlotConfigPlotInfo::find_prev(const int month, const int day)
+{
+	auto it = mCorrections.find(month, day);
+
+	if (it == mCorrections.begin())
+		return it;
+
+	if (mCorrections.begin() == mCorrections.end())
+		return it;
+
+	return --it;
+}
+
 
 bool cPlotConfigPlotInfo::contains(const int date) const
 {

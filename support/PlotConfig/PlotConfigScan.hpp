@@ -160,6 +160,12 @@ public:
 	const_iterator	find_exact(const int month, const int day) const;
 	iterator		find_exact(const int month, const int day);
 
+	const_iterator	find_prev(const int date) const;
+	iterator		find_prev(const int date);
+
+	const_iterator	find_prev(const int month, const int day) const;
+	iterator		find_prev(const int month, const int day);
+
 	const cPlotConfigBoundary* const getBounds(const int date) const;
 	cPlotConfigBoundary* const getBounds(const int date);
 
