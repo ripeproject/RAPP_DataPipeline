@@ -311,6 +311,12 @@ void cMainWindow::OnVerify(wxCommandEvent& WXUNUSED(event))
 {
 	mpCheckButton->Disable();
 
+	{
+		wxString msg = "Scanning input directory: ";
+		msg += mSourceDataDirectory;
+		wxLogMessage(msg);
+	}
+
 	const std::filesystem::path source_dir = mSourceDataDirectory.ToStdString();
 
 	std::vector<directory_entry> files_to_verify;
