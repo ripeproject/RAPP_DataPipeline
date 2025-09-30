@@ -149,13 +149,15 @@ void cFieldScanDataModel::loadFieldScanData(const std::string& filename)
     mExperimentTitle = mExperimentInfo->experimentTitle();
     mMeasurementTitle = mExperimentInfo->measurementTitle();
 
-    if (mExperimentTitle.empty())
+//    if (mExperimentTitle.empty())
+    if (mMeasurementTitle.empty())
     {
         nStringUtils::sPathAndFilename pf = nStringUtils::splitPathname(mFilename);
         auto fe = nStringUtils::removeMeasurementTimestamp(pf.filename);
         mExperimentInfo->setExperimentTitle(fe.filename);
 
-        mExperimentTitle = fe.filename;
+//        mExperimentTitle = fe.filename;
+        mMeasurementTitle = fe.filename;
     }
 
     auto ouster = mOusterInfo->getPointCloudGenerator().lock();
