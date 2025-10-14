@@ -37,7 +37,7 @@ extern void complete_file_progress(const int id);
 
 namespace
 {
-    void save_plot_to_pointcloud(const cRappPointCloud& in, cPlotPointCloud& out)
+    void save_plot_to_pointcloud(const cPlotPointCloud& in, cPlotPointCloud& out)
     {
         assert(in.size() == out.size());
 
@@ -516,12 +516,19 @@ void cFileProcessor::savePlotFile()
 
     writeExperimentInfo(experimentSerializer);
 
+    plotInfoSerializer.writeBeginPlotInfoList();
+
+    if (mPlotInfo.getGroundLevel_mm().has_value())
+        plotInfoSerializer.writeGroundLevel(mPlotInfo.getGroundLevel_mm().value());
+
     for (auto plot : mPlots)
     {
         std::size_t buffersize = std::max<std::size_t>(plot->data().size() * sizeof(cRappPlot::value_type), 4096ULL);
         plotInfoSerializer.setBufferCapacity(buffersize);
 
         update_progress(mID, static_cast<int>((100.0 * i++) / n));
+
+        plotInfoSerializer.writeBeginPlotInfoBlock();
 
         if (plot->subPlotId() > 0)
             plotInfoSerializer.writeID(plot->id(), plot->subPlotId());
@@ -560,16 +567,20 @@ void cFileProcessor::savePlotFile()
 
         plotInfoSerializer.writeVegetationOnly(plot->vegetationOnly());
 
-        cPlotPointCloud point_cloud = plot->pointCloud();
-//        point_cloud.resize(plot->pointCloud().size());
-//        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+        cPlotPointCloud point_cloud;
+        point_cloud.resize(plot->pointCloud().size());
+        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
 
         plotInfoSerializer.writeDimensions(point_cloud.minX_mm() * nConstants::MM_TO_M, point_cloud.maxX_mm() * nConstants::MM_TO_M,
             point_cloud.minY_mm() * nConstants::MM_TO_M, point_cloud.maxY_mm() * nConstants::MM_TO_M,
             point_cloud.minZ_mm() * nConstants::MM_TO_M, point_cloud.maxZ_mm() * nConstants::MM_TO_M);
 
         plotInfoSerializer.write(point_cloud);
+
+        plotInfoSerializer.writeEndPlotInfoBlock();
     }
+
+    plotInfoSerializer.writeEndPlotInfoList();
 
     fileWriter.close();
 }
@@ -612,6 +623,13 @@ void cFileProcessor::savePlotFiles()
 
         writeExperimentInfo(experimentSerializer);
 
+        plotInfoSerializer.writeBeginPlotInfoList();
+
+        if (mPlotInfo.getGroundLevel_mm().has_value())
+            plotInfoSerializer.writeGroundLevel(mPlotInfo.getGroundLevel_mm().value());
+
+        plotInfoSerializer.writeBeginPlotInfoBlock();
+
         if (plot->subPlotId() > 0)
             plotInfoSerializer.writeID(plot->id(), plot->subPlotId());
         else
@@ -645,15 +663,18 @@ void cFileProcessor::savePlotFiles()
             plotInfoSerializer.writeCopyNumber(plot->copyNumber());
 
 
-        cPlotPointCloud point_cloud = plot->pointCloud();
-//        point_cloud.resize(plot->pointCloud().size());
-//        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
+        cPlotPointCloud point_cloud;
+        point_cloud.resize(plot->pointCloud().size());
+        save_plot_to_pointcloud(plot->pointCloud(), point_cloud);
 
         plotInfoSerializer.writeDimensions(point_cloud.minX_mm() * nConstants::MM_TO_M, point_cloud.maxX_mm() * nConstants::MM_TO_M,
             point_cloud.minY_mm() * nConstants::MM_TO_M, point_cloud.maxY_mm() * nConstants::MM_TO_M,
             point_cloud.minZ_mm() * nConstants::MM_TO_M, point_cloud.maxZ_mm() * nConstants::MM_TO_M);
 
         plotInfoSerializer.write(point_cloud);
+
+        plotInfoSerializer.writeEndPlotInfoBlock();
+        plotInfoSerializer.writeEndPlotInfoList();
 
         fileWriter.close();
     }
