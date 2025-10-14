@@ -770,6 +770,16 @@ void cPointCloud2Ply::onPosition(spidercam::sPosition_1_t pos)
     }
 }
 
+void cPointCloud2Ply::onStartPosition(spidercam::sPosition_1_t position)
+{
+
+}
+
+void cPointCloud2Ply::onEndPosition(spidercam::sPosition_1_t position)
+{
+
+}
+
 void cPointCloud2Ply::writePosition(std::filesystem::path filename)
 {
     using namespace tinyply;

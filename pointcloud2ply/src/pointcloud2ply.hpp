@@ -102,6 +102,8 @@ private:
 
 private:
     void onPosition(spidercam::sPosition_1_t pos) override;
+    void onStartPosition(spidercam::sPosition_1_t position) override;
+    void onEndPosition(spidercam::sPosition_1_t position) override;
 
     void writePosition(std::filesystem::path filename);
     void writePointcloud(std::filesystem::path filename);
