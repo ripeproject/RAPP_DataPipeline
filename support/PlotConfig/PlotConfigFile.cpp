@@ -67,7 +67,7 @@ bool cPlotConfigFile::open(const std::string& file_name)
 	catch (const nlohmann::json::parse_error& e)
 	{
 		auto msg = e.what();
-		return false;
+		throw std::runtime_error(msg);
 	}
 	catch (const std::exception& e)
 	{
