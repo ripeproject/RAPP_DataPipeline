@@ -29,6 +29,12 @@ namespace rfm
 		{
 			return ((southEastCorner.x_mm - northEastCorner.x_mm) + (southWestCorner.x_mm - northWestCorner.x_mm)) / 2;
 		}
+
+		bool operator==(const sPlotBoundingBox_t& rhs) const
+		{
+			return (northEastCorner == rhs.northEastCorner) && (northWestCorner == rhs.northWestCorner)
+				&& (southEastCorner == rhs.southEastCorner) && (southWestCorner == rhs.southWestCorner);
+		}
 	};
 
 	struct sPlotBoundingCircle_t
