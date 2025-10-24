@@ -13,6 +13,8 @@
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentSerializer.hpp>
+#include <cbdf/SsnxSerializer.hpp>
+#include <cbdf/SpiderCamSerializer.hpp>
 
 #include <filesystem>
 #include <string>
@@ -140,6 +142,23 @@ void cFileProcessor::process_file()
         if (startZ_m < -5.0) startZ_m = height.getHeight_m();
         if (endZ_m < -5.0) endZ_m = height.getHeight_m();
         break;
+    }
+
+    auto ref_pt = converter->getSsnxInfo()->getReferencePoint();
+    if (ref_pt.has_value())
+    {
+        auto rp = ref_pt.value();
+        rfm::rappPoint_t point = rfb::fromGPS(rp.avgLat_rad, rp.avgLng_rad, rp.avgHeight_m);
+
+        converter->setReferencePosition_mm(point.x_mm, point.y_mm, point.z_mm);
+    }
+    else
+    {
+        if (converter->getSpiderCamInfo()->hasStartPositionData())
+        {
+            auto point = converter->getSpiderCamInfo()->startPosition();
+            converter->setReferencePosition_mm(point.X_mm, point.Y_mm, point.Z_mm);
+        }
     }
 
     converter->setInitialPosition_m(startX_m, startY_m, startZ_m);
@@ -426,6 +445,8 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
 {
     auto processingInfo = data.getProcessingInfo();
     auto experimentInfo = data.getExperimentInfo();
+    auto ssnxInfo = data.getSsnxInfo();
+    auto spidercamInfo = data.getSpiderCamInfo();
 
     std::string filename = mOutputFile.string();
 
@@ -506,6 +527,12 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
         }
 
         pointCloudSerializer.writeEndSensorKinematics();
+    }
+    
+    if (pc.referenceValid())
+    {
+        auto point = pc.referencePoint();
+        pointCloudSerializer.writeReferencePoint(point.x_mm, point.y_mm, point.z_mm);
     }
 
     if (pc.hasPixelInfo())
@@ -651,6 +678,27 @@ void cFileProcessor::writeExperimentInfo(const cExperimentInfo& info, cExperimen
     serializer.writeEndOfHeader();
 }
 
+//-----------------------------------------------------------------------------
+void cFileProcessor::writeSsnxInfo(const cSsnxInfo& info, cSsnxSerializer& serializer)
+{
+    if (info.hasReferencePoint())
+    {
+        auto rp = info.getReferencePoint().value();
+        serializer.writeReferencePoint(0, rp.avgLat_rad, rp.avgLng_rad, rp.avgHeight_m, rp.stdLat_rad, rp.stdLng_rad, rp.stdHeight_m, rp.heightValid);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::writeSpiderCamInfo(const cSpiderCamInfo& info, cSpidercamSerializer& serializer)
+{
+    if (info.hasStartPositionData())
+    {
+//        serializer.writeStartPosition(const spidercam::sPosition_1_t & pos);
+    }
+
+//    serializer.writeEndPosition(const spidercam::sPosition_1_t & pos);
+//    void write(const spidercam::sPosition_1_t & pos);
+}
 
 //-----------------------------------------------------------------------------
 std::string cFileProcessor::getExperimentName(const cFieldScanDataModel* data) const

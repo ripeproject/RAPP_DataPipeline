@@ -89,6 +89,14 @@ void cLidar2PointCloud::setAltitudeWindow_deg(double min_altitude_deg, double ma
 		std::swap(mMinAltitude_deg, mMaxAltitude_deg);
 }
 
+void cLidar2PointCloud::setReferencePosition_mm(int32_t x_mm, int32_t y_mm, int32_t z_mm)
+{
+	mHasReferencePoint = true;
+	mRefX_mm = x_mm;
+	mRefY_mm = y_mm;
+	mRefZ_mm = z_mm;
+}
+
 void cLidar2PointCloud::setInitialPosition_m(double x_m, double y_m, double z_m)
 {
 	mStartX_mm = static_cast<int32_t>(x_m * nConstants::M_TO_MM);

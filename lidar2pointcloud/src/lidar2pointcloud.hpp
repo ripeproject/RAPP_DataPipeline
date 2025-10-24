@@ -70,6 +70,8 @@ public:
 	 */
 	void setAltitudeWindow_deg(double min_altitude_deg, double max_altitude_deg);
 
+	void setReferencePosition_mm(int32_t x_mm, int32_t y_mm, int32_t z_mm);
+
 	void setInitialPosition_m(double x_m, double y_m, double z_m);
 	void setFinalPosition_m(double x_m, double y_m, double z_m);
 
@@ -131,6 +133,11 @@ private:
 
 	double mMinAltitude_deg = -25.0;
 	double mMaxAltitude_deg = 25.0;
+
+	bool mHasReferencePoint = false;
+	int32_t mRefX_mm = 0;
+	int32_t mRefY_mm = 0;
+	int32_t mRefZ_mm = 0;
 
 	int32_t mStartX_mm = 0;
 	int32_t mStartY_mm = 0;
