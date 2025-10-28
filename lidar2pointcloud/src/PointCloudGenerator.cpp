@@ -729,6 +729,9 @@ bool cPointCloudGenerator::computePointCloud(int id)
                 point.reflectivity = column[p].reflectivity;
                 point.nir = column[p].nir;
 
+                point.chnNum = c;
+                point.pixelNum = p;
+
                 cloud_frame.set(p, c, point);
             }
         }
