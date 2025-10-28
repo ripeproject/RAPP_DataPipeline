@@ -324,6 +324,9 @@ void cRappPointCloud::clear()
 	mMaxZ_mm = 0.0;
 
 	mCentroid = rfm::sCentroid_t();
+
+	mHasFrameIDs = false;
+	mHasPixelInfo = false;
 }
 
 void cRappPointCloud::sort()
@@ -354,6 +357,9 @@ void cRappPointCloud::recomputeBounds()
 
 		mMinZ_mm = 0.0;
 		mMaxZ_mm = 0.0;
+
+		mHasFrameIDs = false;
+		mHasPixelInfo = false;
 
 		return;
 	}
@@ -389,11 +395,17 @@ void cRappPointCloud::recomputeBounds()
 	double sum_z = 0.0;
 	auto n = mCloud.size();
 
+	mHasFrameIDs = false;
+	mHasPixelInfo = false;
+
 	for (auto& point : mCloud)
 	{
 		sum_x += point.x_mm;
 		sum_y += point.y_mm;
 		sum_z += point.z_mm;
+
+		mHasFrameIDs |= (point.frameID > 0);
+		mHasPixelInfo |= (point.chnNum > 0) || (point.pixelNum > 0);
 	}
 
 	double x_mm = sum_x / n;
@@ -727,6 +739,9 @@ void cRappPointCloud::addPoint(const rfm::sPoint3D_t& cloudPoint)
 		if (cloudPoint.z_mm > mMaxZ_mm)
 			mMaxZ_mm = cloudPoint.z_mm;
 	}
+
+	mHasFrameIDs  |= (cloudPoint.frameID > 0);
+	mHasPixelInfo |= (cloudPoint.chnNum > 0) || (cloudPoint.pixelNum > 0);
 
 	mCloud.push_back(cloudPoint);
 }
