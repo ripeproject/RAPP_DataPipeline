@@ -135,9 +135,14 @@ public:
 	const std::string& getLeafType() const;
 	const std::vector<std::string>& getTreatments() const;
 
-	bool contains_point(rfm::rappPoint2D_t point);
-	bool contains_point(std::int32_t x_mm, std::int32_t y_mm);
+	bool contains_point(rfm::rappPoint2D_t point) const;
+	bool contains_point(std::int32_t x_mm, std::int32_t y_mm) const;
 
+	bool contains_point(const int date, rfm::rappPoint2D_t point) const;
+	bool contains_point(const int date, std::int32_t x_mm, std::int32_t y_mm) const;
+
+	bool contains_point(const int month, const int day, rfm::rappPoint2D_t point) const;
+	bool contains_point(const int month, const int day, std::int32_t x_mm, std::int32_t y_mm) const;
 
 	bool contains(const int date) const;
 	bool contains(const int month, const int day) const;

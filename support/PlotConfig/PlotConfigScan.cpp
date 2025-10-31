@@ -446,14 +446,44 @@ const std::vector<std::string>& cPlotConfigPlotInfo::getTreatments() const
 	return mTreatments;
 }
 
-bool cPlotConfigPlotInfo::contains_point(rfm::rappPoint2D_t point)
+bool cPlotConfigPlotInfo::contains_point(rfm::rappPoint2D_t point) const
 {
 	return mCorrections.contains_point(point); // mBounds.contains(point);
 }
 
-bool cPlotConfigPlotInfo::contains_point(std::int32_t x_mm, std::int32_t y_mm)
+bool cPlotConfigPlotInfo::contains_point(std::int32_t x_mm, std::int32_t y_mm) const
 {
 	return mCorrections.contains_point(x_mm, y_mm); // mBounds.contains(x_mm, y_mm);
+}
+
+bool cPlotConfigPlotInfo::contains_point(const int date, rfm::rappPoint2D_t point) const
+{
+	const auto* bounds = getBounds(date);
+
+	if (bounds)
+		return bounds->contains(point);
+
+	return false;
+}
+
+bool cPlotConfigPlotInfo::contains_point(const int date, std::int32_t x_mm, std::int32_t y_mm) const
+{
+	const auto* bounds = getBounds(date);
+
+	if (bounds)
+		return bounds->contains(x_mm, y_mm);
+
+	return false;
+}
+
+bool cPlotConfigPlotInfo::contains_point(const int month, const int day, rfm::rappPoint2D_t point) const
+{
+	return contains_point(plot_config::to_date(month, day), point);
+}
+
+bool cPlotConfigPlotInfo::contains_point(const int month, const int day, std::int32_t x_mm, std::int32_t y_mm) const
+{
+	return contains_point(plot_config::to_date(month, day), x_mm, y_mm);
 }
 
 cPlotConfigPlotInfo::const_iterator	cPlotConfigPlotInfo::find(const int date) const
