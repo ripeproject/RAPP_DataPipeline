@@ -81,6 +81,9 @@ namespace
 
     void writeImage(const std::filesystem::path& filename, const cImageBuffer& buffer)
     {
+        if (buffer.empty())
+            return;
+
         std::filebuf binary_buffer;
         binary_buffer.open(filename, std::ios::out | std::ios::binary);
         std::ostream outstream_binary(&binary_buffer);
@@ -94,6 +97,9 @@ namespace
     void writeImage(const std::filesystem::path& filename, const cImageBuffer& buffer, const sPosTime_t& pos_time)
     {
         using namespace Exiv2;
+
+        if (buffer.empty())
+            return;
 
         auto image = ImageFactory::open(reinterpret_cast<const byte*>(buffer.data()), buffer.size());
 
@@ -138,6 +144,7 @@ namespace
 
 cExportJpegs::cExportJpegs() : cAxisCommunicationsParser()
 {
+    mDistance_mm = std::numeric_limits<double>::max();
 }
 
 cExportJpegs::~cExportJpegs()
@@ -169,6 +176,16 @@ void cExportJpegs::setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file)
     mPlotConfigData = plot_file;
 }
 
+void cExportJpegs::usePlotFilename(bool enable)
+{
+    mUsePlotFilename = enable;
+}
+
+void cExportJpegs::usePlotPrefix(bool enable)
+{
+    mUsePlotPrefix = enable;
+}
+
 
 // Experiment Info handlers
 void cExportJpegs::onBeginHeader() {}
@@ -181,7 +198,7 @@ void cExportJpegs::onExperimentTitle(const std::string& title)
 {
     mExperimentTitle = title;
 
-    if (mPlotConfigData)
+    if (mPlotConfigData && mPlots.empty())
     {
         auto it = mPlotConfigData->find_by_measurement_name(mExperimentTitle);
 
@@ -191,7 +208,8 @@ void cExportJpegs::onExperimentTitle(const std::string& title)
         }
         else
         {
-            mAbort = true;
+            if (!mMeasurementTitle.empty())
+                mAbort = true;
         }
     }
 }
@@ -223,7 +241,9 @@ void cExportJpegs::onResearcher(const std::string& researcher) {}
 
 void cExportJpegs::onSpecies(const std::string& species) {}
 void cExportJpegs::onCultivar(const std::string& cultivar) {}
+void cExportJpegs::onTrialInfo(const std::string& trial) {}
 void cExportJpegs::onPermitInfo(const std::string& permit) {}
+void cExportJpegs::onPermitInfo(const std::string& authorization, const std::string& permit) {}
 void cExportJpegs::onExperimentDoc(const std::string& doc) {}
 
 void cExportJpegs::onBeginTreatmentList() {}
@@ -244,7 +264,13 @@ void cExportJpegs::onBeginCommentList() {}
 void cExportJpegs::onEndOfCommentList() {}
 void cExportJpegs::onComment(const std::string& comment) {}
 
-void cExportJpegs::onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) {}
+void cExportJpegs::onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) 
+{
+    mUtcYear = year;
+    mUtcMonth = month;
+    mUtcDay = day;
+}
+
 void cExportJpegs::onFileTime(std::uint8_t hour, std::uint8_t minute, std::uint8_t seconds) {}
 
 void cExportJpegs::onDayOfYear(std::uint16_t day_of_year) {}
@@ -283,17 +309,30 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 {
     cPlotConfigPlotInfo info;
 
+    if (mPlotConfigData && mPlots.empty())
+    {
+        auto it = mPlotConfigData->find_by_measurement_name(mRootFileName);
+
+        if (it != mPlotConfigData->end())
+        {
+            mPlots = it->data();
+        }
+    }
+
     for (auto& plot : mPlots)
     {
-        if (plot.contains(mX_mm, mY_mm))
-        {
-            info = plot;
-            auto center = plot.getBounds().center();
-            double d = (center.x_mm - mX_mm) * (center.x_mm - mX_mm) + (center.y_mm - mY_mm) * (center.y_mm - mY_mm);
+        int date = (mUtcMonth * 100) + mUtcDay;
 
-            if (d < mDistance)
+        if (plot.contains_point(date, mX_mm, mY_mm))
+        {
+
+            info = plot;
+            auto center = plot.getBounds(date)->center();
+            double d_mm = sqrt((center.x_mm - mX_mm) * (center.x_mm - mX_mm) + (center.y_mm - mY_mm) * (center.y_mm - mY_mm));
+
+            if (d_mm < mDistance_mm)
             {
-                mDistance = d;
+                mDistance_mm = d_mm;
 
                 mCenterPos.positionValid = mPositionValid;
                 mCenterPos.lat_deg = mLat_deg;
@@ -308,15 +347,26 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
                 mCenterPos.utcMinute = mUtcMinute;
                 mCenterPos.utcSecond = mUtcSecond;
             }
-
-            if (d > mDistance)
+            else if (d_mm > mDistance_mm)
             {
                 if (!mCenterPos.positionValid)
                     return;
 
                 std::filesystem::path filename;
 
-                if (mUsePlotPrefix)
+                if (mUsePlotFilename)
+                {
+                    std::string fname = "Plot_" + std::to_string(info.getPlotNumber());
+
+                    fname += "_";
+                    fname += mTimeStamp;
+
+                    filename = mOutputPath / fname;
+
+                    std::string ext = ".jpeg";
+                    filename.replace_extension(ext);
+                }
+                else if (mUsePlotPrefix)
                 {
                     std::string fname = "Plot_" + std::to_string(info.getPlotNumber());
 
@@ -356,7 +406,7 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 
     if (!mPlots.empty() && info.empty())
     {
-        mDistance = std::numeric_limits<double>::max();
+        mDistance_mm = std::numeric_limits<double>::max();
         return;
     }
 
@@ -404,6 +454,8 @@ void cExportJpegs::onPosition(spidercam::sPosition_1_t position)
     mY_mm = position.Y_mm;
     mZ_mm = position.Z_mm;
 }
+void cExportJpegs::onStartPosition(spidercam::sPosition_1_t position) {}
+void cExportJpegs::onEndPosition(spidercam::sPosition_1_t position) {}
 
 // GPS Handlers - Used to GeoTag images
 void cExportJpegs::onPVT_Cartesian(uint8_t device_id, ssnx::gps::PVT_Cartesian_1_t pos) {}

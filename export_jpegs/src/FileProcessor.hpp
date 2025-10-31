@@ -21,6 +21,9 @@ public:
 
 	void setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file);
 
+	void usePlotFilename(bool enable);
+	void usePlotPrefix(bool enable);
+
 	bool open(std::filesystem::path out);
 
 	void process_file();

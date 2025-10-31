@@ -401,6 +401,8 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		if (mPlotConfigData)
 			fp->setPlotFile(mPlotConfigData);
 
+		fp->usePlotFilename(true);
+
 		mFileProcessors.push(fp);
 	}
 

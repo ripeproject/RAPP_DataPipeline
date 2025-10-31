@@ -38,6 +38,16 @@ void cFileProcessor::setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file)
     mConverter->setPlotFile(plot_file);
 }
 
+void cFileProcessor::usePlotFilename(bool enable)
+{
+    mConverter->usePlotFilename(enable);
+}
+
+void cFileProcessor::usePlotPrefix(bool enable)
+{
+    mConverter->usePlotPrefix(enable);
+}
+
 bool cFileProcessor::open(std::filesystem::path out)
 {
 //    std::filesystem::path outFile  = out.replace_extension();

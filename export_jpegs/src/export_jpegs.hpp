@@ -44,6 +44,10 @@ public:
 
     void setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file);
 
+    void usePlotFilename(bool enable);
+    void usePlotPrefix(bool enable);
+
+
 // Experiment Info handlers
 private:
     void onBeginHeader() override;
@@ -62,7 +66,9 @@ private:
 
     void onSpecies(const std::string& species) override;
     void onCultivar(const std::string& cultivar) override;
+    void onTrialInfo(const std::string& trial) override;
     void onPermitInfo(const std::string& permit) override;
+    void onPermitInfo(const std::string& authorization, const std::string& permit) override;
     void onExperimentDoc(const std::string& doc) override;
 
     void onBeginTreatmentList() override;
@@ -112,6 +118,8 @@ private:
 
 // Spidercam handlers
     void onPosition(spidercam::sPosition_1_t position) override;
+    void onStartPosition(spidercam::sPosition_1_t position) override;
+    void onEndPosition(spidercam::sPosition_1_t position) override;
 
 // GPS handlers
 private:
@@ -140,6 +148,7 @@ private:
     std::string mTimeStamp;
 
     bool mUsePlotPrefix = false;
+    bool mUsePlotFilename = false;
 
     std::shared_ptr<cPlotConfigFile> mPlotConfigData;
     std::vector<cPlotConfigPlotInfo> mPlots;
@@ -156,7 +165,7 @@ private:
     double	mX_mm = 0;
     double	mY_mm = 0;
     double	mZ_mm = 0;
-    double	mDistance = 0;
+    double	mDistance_mm = 0;
 
     bool    mPositionValid = false;
     double	mLat_deg = 0;
