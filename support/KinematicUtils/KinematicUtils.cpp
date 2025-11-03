@@ -87,6 +87,36 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCa
     return computeDollyKinematics(-1, data, startIndex, endIndex);
 }
 
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCamTypes::sPosition_t>& data, rfm::rappPoint_t startPos, rfm::rappPoint_t endPos)
+{
+    uint32_t start_index = 0;
+    uint32_t end_index = 0;
+
+    for (start_index = 0; start_index < data.size(); ++start_index)
+    {
+        const auto& p = data[start_index];
+        if ((std::abs(static_cast<int32_t>(p.X_mm) - startPos.x_mm) < 10)
+            && (std::abs(static_cast<int32_t>(p.Y_mm) - startPos.y_mm) < 10)
+            && (std::abs(static_cast<int32_t>(p.Z_mm) - startPos.z_mm) < 10))
+        {
+            break;
+        }
+    }
+
+    for (end_index = start_index; end_index < data.size(); ++end_index)
+    {
+        const auto& p = data[end_index];
+        if ((std::abs(static_cast<int32_t>(p.X_mm) - endPos.x_mm) < 10)
+            && (std::abs(static_cast<int32_t>(p.Y_mm) - endPos.y_mm) < 10)
+            && (std::abs(static_cast<int32_t>(p.Z_mm) - endPos.z_mm) < 10))
+        {
+            break;
+        }
+    }
+
+    return computeDollyKinematics(-1, data, start_index, end_index);
+}
+
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data)
 {
     return computeDollyKinematics(-1, data);
@@ -215,7 +245,7 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
     result.push_back(entry);
 
     auto last = data.begin();
-    if (endIndex >= (data.size() - 1))
+    if ((endIndex == 0) || (endIndex >= (data.size() - 1)))
     {
         last = data.end();
     }
@@ -225,6 +255,9 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
     }
 
     auto n = std::abs(static_cast<int>(endIndex) - static_cast<int>(startIndex));
+    if (n == 0)
+        n = static_cast<int>(data.size());
+
     int i = 0;
 
     for (++it; it != last; ++it)

@@ -21,6 +21,7 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& st
 	const rfm::rappSpeeds_t& speed, double* scan_time_sec = nullptr);
 
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCamTypes::sPosition_t>& data, uint32_t startIndex, uint32_t endIndex);
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCamTypes::sPosition_t>& data, rfm::rappPoint_t startPos, rfm::rappPoint_t endPos);
 
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data);
 
