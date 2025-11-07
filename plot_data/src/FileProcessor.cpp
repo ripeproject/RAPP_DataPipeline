@@ -10,12 +10,10 @@
 #include "StringUtils.hpp"
 #include "DateTimeUtils.hpp"
 
-#include <cbdf/ProcessingInfoSerializer.hpp>
-#include <cbdf/PlotInfoSerializer.hpp>
 #include <cbdf/PlotInfoLoader.hpp>
-#include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentInfoLoader.hpp>
+#include <cbdf/WeatherInfoLoader.hpp>
 
 #include <filesystem>
 #include <string>
@@ -128,9 +126,11 @@ bool cFileProcessor::loadFileData()
 
     std::unique_ptr<cExperimentInfoLoader> pExpInfo  = std::make_unique<cExperimentInfoLoader>(mExpInfo);
     std::unique_ptr<cPlotInfoLoader> pPlotInfo       = std::make_unique<cPlotInfoLoader>(mPlotInfo);
+    std::unique_ptr<cWeatherInfoLoader> pWeatherInfo = std::make_unique<cWeatherInfoLoader>(mWeatherInfo);
 
     mFileReader.attach(pExpInfo.get());
     mFileReader.attach(pPlotInfo.get());
+    mFileReader.attach(pWeatherInfo.get());
 
     try
     {

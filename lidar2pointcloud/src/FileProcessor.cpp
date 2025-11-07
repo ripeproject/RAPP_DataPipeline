@@ -15,6 +15,7 @@
 #include <cbdf/ExperimentSerializer.hpp>
 #include <cbdf/SsnxSerializer.hpp>
 #include <cbdf/SpiderCamSerializer.hpp>
+#include <cbdf/WeatherSerializer.hpp>
 
 #include <filesystem>
 #include <string>
@@ -447,6 +448,7 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
     auto experimentInfo = data.getExperimentInfo();
     auto ssnxInfo = data.getSsnxInfo();
     auto spidercamInfo = data.getSpiderCamInfo();
+    auto weatherInfo = data.getWeatherInfo();
 
     std::string filename = mOutputFile.string();
 
@@ -472,6 +474,7 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
         return;
     }
 
+    if (processingInfo)
     {
   //      console_message("cProcessingInfoSerializer");
 
@@ -484,7 +487,8 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
         processInfoSerializer.detach();
     }
     update_progress(mID, 33);
-
+    
+    if (experimentInfo)
     {
 //        console_message("cExperimentSerializer");
 
@@ -497,6 +501,17 @@ void cFileProcessor::savePointCloudFile(const cLidar2PointCloud& data, const cRa
         experimentSerializer.detach();
     }
     update_progress(mID, 67);
+
+    if (weatherInfo)
+    {
+        cWeatherSerializer weatherSerializer;
+        weatherSerializer.setBufferCapacity(4096 * 1024);
+        weatherSerializer.attach(&fileWriter);
+
+        writeWeatherInfo(*weatherInfo, weatherSerializer);
+
+        weatherSerializer.detach();
+    }
 
 //    console_message("pointCloudSerializer");
 
@@ -698,6 +713,20 @@ void cFileProcessor::writeSpiderCamInfo(const cSpiderCamInfo& info, cSpidercamSe
 
 //    serializer.writeEndPosition(const spidercam::sPosition_1_t & pos);
 //    void write(const spidercam::sPosition_1_t & pos);
+}
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::writeWeatherInfo(const cWeatherInfo& info, cWeatherSerializer& serializer)
+{
+    for (const auto& data : info.weatherData())
+    {
+        serializer.writeBeginWeatherInfoBlock(data.timestamp_ns);
+        serializer.writeWindData_mps(data.wind_data_valid, data.wind_speed_mps, data.wind_direction_deg);
+        serializer.writeTemperature_C(data.temp_C);
+        serializer.writeRelativeHumidity_pct(data.rh_pct);
+        serializer.writePAR_umole(data.par_umole);
+        serializer.writeEndWeatherInfoBlock();
+    }
 }
 
 //-----------------------------------------------------------------------------

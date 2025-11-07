@@ -7,6 +7,7 @@
 #include <cbdf/PlotInfo.hpp>
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/ExperimentInfo.hpp>
+#include <cbdf/WeatherInfo.hpp>
 
 #include <filesystem>
 #include <string>
@@ -63,6 +64,7 @@ private:
 
 	std::shared_ptr<cExperimentInfo> mExpInfo;
 	std::shared_ptr<cPlotInfo>		 mPlotInfo;
+	std::shared_ptr<cWeatherInfo>	 mWeatherInfo;
 
 	std::vector<cRappPlot*> mPlots;
 };

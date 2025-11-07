@@ -10,6 +10,7 @@
 #include <cbdf/SsnxInfoLoader.hpp>
 #include <cbdf/SpiderCamInfoLoader.hpp>
 #include <cbdf/OusterInfoLoader.hpp>
+#include <cbdf/WeatherInfoLoader.hpp>
 
 #include <iostream>
 #include <filesystem>
@@ -48,12 +49,14 @@ bool cFieldScanLoader::run()
     auto ctrl = std::make_unique<cSpiderCamInfoLoader>(mModel.getSpiderCamInfo());
     auto ssnx = std::make_unique<cSsnxInfoLoader>(mModel.getSsnxInfo());
     auto ouster = std::make_unique<cOusterInfoLoader>(mModel.getOusterInfo());
+    auto weather = std::make_unique<cWeatherInfoLoader>(mModel.getWeatherInfo());
 
     fileReader.attach(processing.get());
     fileReader.attach(info.get());
     fileReader.attach(ctrl.get());
     fileReader.attach(ssnx.get());
     fileReader.attach(ouster.get());
+    fileReader.attach(weather.get());
 
     auto file_size = fileReader.file_size();
 

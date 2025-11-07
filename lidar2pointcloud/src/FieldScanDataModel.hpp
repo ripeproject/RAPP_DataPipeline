@@ -14,6 +14,7 @@
 #include <cbdf/ExperimentInfo.hpp>
 #include <cbdf/SsnxInfo.hpp>
 #include <cbdf/SpiderCamInfo.hpp>
+#include <cbdf/WeatherInfo.hpp>
 
 #include <string>
 #include <vector>
@@ -61,6 +62,9 @@ public:
 	std::shared_ptr<cOusterInfo>	 getOusterInfo();
 	std::shared_ptr<cOusterInfo>	 getOusterInfo() const;
 
+	std::shared_ptr<cWeatherInfo>	 getWeatherInfo();
+	std::shared_ptr<cWeatherInfo>	 getWeatherInfo() const;
+
 	void setScanTime_sec(double time_sec);
 	void setGroundTrack_deg(double track_deg);
 
@@ -84,5 +88,6 @@ private:
 	std::shared_ptr<cSpiderCamInfo>  mSpiderCamInfo;
 	std::shared_ptr<cSsnxInfo>		 mSsnxInfo;
 	std::shared_ptr<cOusterInfo>	 mOusterInfo;
+	std::shared_ptr<cWeatherInfo>	 mWeatherInfo;
 };
 

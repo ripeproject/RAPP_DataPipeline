@@ -18,6 +18,7 @@ cFieldScanDataModel::cFieldScanDataModel(int id)
     mSpiderCamInfo = std::make_shared<cSpiderCamInfo>();
     mSsnxInfo = std::make_shared<cSsnxInfo>();
     mOusterInfo = std::make_shared<cOusterInfo>();
+    mWeatherInfo = std::make_shared<cWeatherInfo>();
 }
 
 cFieldScanDataModel::~cFieldScanDataModel()
@@ -61,6 +62,7 @@ void cFieldScanDataModel::clear()
     mSpiderCamInfo->clear();
     mSsnxInfo->clear();
     mOusterInfo->clear();
+    mWeatherInfo->clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -128,6 +130,16 @@ std::shared_ptr<cOusterInfo> cFieldScanDataModel::getOusterInfo()
 std::shared_ptr<cOusterInfo> cFieldScanDataModel::getOusterInfo() const
 {
     return mOusterInfo;
+}
+
+std::shared_ptr<cWeatherInfo>	 cFieldScanDataModel::getWeatherInfo()
+{
+    return mWeatherInfo;
+}
+
+std::shared_ptr<cWeatherInfo>	 cFieldScanDataModel::getWeatherInfo() const
+{
+    return mWeatherInfo;
 }
 
 void cFieldScanDataModel::loadFieldScanData(const std::string& filename)

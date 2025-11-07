@@ -26,6 +26,7 @@ class cExperimentSerializer;
 class cSsnxInfo;
 class cSsnxSerializer;
 class cSpidercamSerializer;
+class cWeatherSerializer;
 
 
 class cFileProcessor
@@ -64,6 +65,7 @@ private:
 	void writeExperimentInfo(const cExperimentInfo& info, cExperimentSerializer& serializer);
 	void writeSsnxInfo(const cSsnxInfo& info, cSsnxSerializer& serializer);
 	void writeSpiderCamInfo(const cSpiderCamInfo& info, cSpidercamSerializer& serializer);
+	void writeWeatherInfo(const cWeatherInfo& info, cWeatherSerializer& serializer);
 
 private:
 	std::string getExperimentName(const cFieldScanDataModel* data) const;
