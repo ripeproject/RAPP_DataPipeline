@@ -8,6 +8,7 @@
 #include <cbdf/ProcessingInfo.hpp>
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/ExperimentInfo.hpp>
+#include <cbdf/WeatherInfo.hpp>
 
 #include <filesystem>
 #include <string>
@@ -21,6 +22,7 @@ class cPlotBoundaries;
 class cPlotConfigPlotInfo;
 class cProcessingInfoSerializer;
 class cExperimentSerializer;
+class cWeatherSerializer;
 class cPlotConfigScan;
 
 
@@ -59,6 +61,7 @@ private:
 
 	void writeProcessingInfo(cProcessingInfoSerializer& serializer);
 	void writeExperimentInfo(cExperimentSerializer& serializer);
+	void writeWeatherInfo(cWeatherSerializer& serializer);
 
 	void fillPlotInformation(cRappPlot* plot, const cPlotConfigPlotInfo& info);
 
@@ -91,6 +94,7 @@ private:
 
 	std::shared_ptr<cProcessingInfo> mProcessingInfo;
 	std::shared_ptr<cExperimentInfo> mExpInfo;
+	std::shared_ptr<cWeatherInfo>	 mWeatherInfo;
 	std::shared_ptr<cPointCloudInfo> mPointCloudInfo;
 
 	std::vector<cRappPlot*> mPlots;

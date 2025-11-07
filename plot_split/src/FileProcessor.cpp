@@ -16,8 +16,10 @@
 #include <cbdf/ProcessingInfoLoader.hpp>
 #include <cbdf/ProcessingInfoSerializer.hpp>
 #include <cbdf/ExperimentSerializer.hpp>
+#include <cbdf/WeatherSerializer.hpp>
 #include <cbdf/BlockDataFileExceptions.hpp>
 #include <cbdf/ExperimentInfoLoader.hpp>
+#include <cbdf/WeatherInfoLoader.hpp>
 
 #include <filesystem>
 #include <string>
@@ -87,6 +89,7 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
 
     mProcessingInfo = std::make_shared<cProcessingInfo>();
     mExpInfo        = std::make_shared<cExperimentInfo>();
+    mWeatherInfo    = std::make_shared<cWeatherInfo>();
     mPointCloudInfo = std::make_shared<cPointCloudInfo>();
 }
 
@@ -212,10 +215,12 @@ bool cFileProcessor::loadFileData()
 
     std::unique_ptr<cProcessingInfoLoader> pProcessingInfo  = std::make_unique<cProcessingInfoLoader>(mProcessingInfo);
     std::unique_ptr<cExperimentInfoLoader> pExpInfo         = std::make_unique<cExperimentInfoLoader>(mExpInfo);
+    std::unique_ptr<cWeatherInfoLoader> pWeatherInfo        = std::make_unique<cWeatherInfoLoader>(mWeatherInfo);
     std::unique_ptr<cPointCloudLoader> pPcInfo              = std::make_unique<cPointCloudLoader>(mPointCloudInfo);
 
     mFileReader.attach(pProcessingInfo.get());
     mFileReader.attach(pExpInfo.get());
+    mFileReader.attach(pWeatherInfo.get());
     mFileReader.attach(pPcInfo.get());
 
     try
@@ -498,6 +503,7 @@ void cFileProcessor::savePlotFile()
     cBlockDataFileWriter fileWriter;
 
     cExperimentSerializer       experimentSerializer;
+    cWeatherSerializer          weatherSerializer;
     cProcessingInfoSerializer   processInfoSerializer;
     cPlotInfoSerializer 	    plotInfoSerializer;
 
@@ -505,6 +511,7 @@ void cFileProcessor::savePlotFile()
     processInfoSerializer.setBufferCapacity(4096);
 
     experimentSerializer.attach(&fileWriter);
+    weatherSerializer.attach(&fileWriter);
     processInfoSerializer.attach(&fileWriter);
     plotInfoSerializer.attach(&fileWriter);
 
@@ -515,6 +522,8 @@ void cFileProcessor::savePlotFile()
     writeProcessingInfo(processInfoSerializer);
 
     writeExperimentInfo(experimentSerializer);
+
+    writeWeatherInfo(weatherSerializer);
 
     plotInfoSerializer.writeBeginPlotInfoList();
 
@@ -604,6 +613,7 @@ void cFileProcessor::savePlotFiles()
         cBlockDataFileWriter fileWriter;
 
         cExperimentSerializer       experimentSerializer;
+        cWeatherSerializer          weatherSerializer;
         cProcessingInfoSerializer   processInfoSerializer;
         cPlotInfoSerializer 	    plotInfoSerializer;
 
@@ -612,6 +622,7 @@ void cFileProcessor::savePlotFiles()
         plotInfoSerializer.setBufferCapacity(plot->data().size() * sizeof(cRappPlot::value_type));
 
         experimentSerializer.attach(&fileWriter);
+        weatherSerializer.attach(&fileWriter);
         processInfoSerializer.attach(&fileWriter);
         plotInfoSerializer.attach(&fileWriter);
 
@@ -622,6 +633,8 @@ void cFileProcessor::savePlotFiles()
         writeProcessingInfo(processInfoSerializer);
 
         writeExperimentInfo(experimentSerializer);
+
+        writeWeatherInfo(weatherSerializer);
 
         plotInfoSerializer.writeBeginPlotInfoList();
 
@@ -794,6 +807,23 @@ void cFileProcessor::writeExperimentInfo(cExperimentSerializer& serializer)
         serializer.writeDayOfYear(mExpInfo->dayOfYear().value());
 
     serializer.writeEndOfHeader();
+}
+
+//-----------------------------------------------------------------------------
+void cFileProcessor::writeWeatherInfo(cWeatherSerializer& serializer)
+{
+    if (mWeatherInfo)
+    {
+        for (const auto& data : mWeatherInfo->weatherData())
+        {
+            serializer.writeBeginWeatherInfoBlock(data.timestamp_ns);
+            serializer.writeWindData_mps(data.wind_data_valid, data.wind_speed_mps, data.wind_direction_deg);
+            serializer.writeTemperature_C(data.temp_C);
+            serializer.writeRelativeHumidity_pct(data.rh_pct);
+            serializer.writePAR_umole(data.par_umole);
+            serializer.writeEndWeatherInfoBlock();
+        }
+    }
 }
 
 
