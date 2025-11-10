@@ -276,6 +276,22 @@ void cPlotData::addPlotLAI(int plot_id, int doy, double lai)
 	mPlotLAIs[plot_id].push_back(data);
 }
 
+
+void cPlotData::addWeather(int doy, bool wind_data_valid, double wind_speed_mps, double wind_direction_deg,
+	double temp_C, double rh_pct, double par_umole)
+{
+	sWeatherData_t data;
+
+	data.wind_data_valid = false;
+	data.wind_speed_mps = 0.0;
+	data.wind_direction_deg = 0.0;
+	data.temp_C = 0.0;
+	data.rh_pct = 0.0;
+	data.par_umole = 0.0;
+
+	mWeatherPoints[doy].push_back(data);
+}
+
 void cPlotData::computeReplicateData()
 {
 	// Compute Plot Num Points Data
@@ -754,6 +770,37 @@ void cPlotData::write_metadata_file(const std::string& directory, const std::str
 	out.close();
 }
 
+void cPlotData::write_weather_file(const std::string& directory)
+{
+	write_weather_file(directory, mRootFileName);
+}
+
+void cPlotData::write_weather_file(const std::string& directory, const std::string& filename)
+{
+	if (mDates.empty())
+		return;
+
+	if (mWeatherPoints.empty())
+		return;
+
+	std::filesystem::path weather_file = directory;
+
+	weather_file /= filename;
+	weather_file.replace_extension("weather.csv");
+
+	std::ofstream out;
+	out.open(weather_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	if (mSaveRowMajor)
+		write_weather_file_by_row(out);
+	else
+		write_weather_file_by_column(out);
+
+	out.close();
+}
+
 void cPlotData::write_plot_num_points_file(const std::string& directory)
 {
 	write_plot_num_points_file(directory, mRootFileName);
@@ -814,6 +861,34 @@ void cPlotData::write_plot_height_file(const std::string& directory, const std::
 		write_plot_height_file_by_column(out);
 
 	out.close();
+}
+
+void cPlotData::write_weather_file_by_row(std::ofstream& out)
+{
+	auto doy_last = --(mDates.end());
+
+	out << "Date, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "DayOfYear, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ", ";
+	}
+	out << doy_last->doy << "\n";
+
+
+}
+
+void cPlotData::write_weather_file_by_column(std::ofstream& out)
+{
+	out << "Date, " << "DayOfYear, " << "Wind Speed (m/s), " << "Wind Direction (deg), " << "Temperature (C), " << "Relative Humidity (%), " << "PAR (umole)\n";
+
+
 }
 
 void cPlotData::write_plot_num_points_file_by_row(std::ofstream& out)

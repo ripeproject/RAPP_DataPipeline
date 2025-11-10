@@ -564,6 +564,8 @@ wxThread::ExitCode cMainWindow::Entry()
 
 	mResults.write_metadata_file(mDstDirectory.ToStdString());
 
+	mResults.write_weather_file(mDstDirectory.ToStdString());
+
 	mResults.write_plot_num_points_file(mDstDirectory.ToStdString());
 
 	if (mResults.hasGroupInfo())

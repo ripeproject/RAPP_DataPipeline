@@ -1,5 +1,9 @@
 
 
+# Create the version information code
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
 
 set(PLOT_DATA_COMMON_FILES
 
@@ -43,6 +47,9 @@ set(PLOT_DATA_COMMON_FILES
 
 	FileProcessor.hpp
 	FileProcessor.cpp
+	
+	version.hpp
+	version.cpp
 )
 
 
@@ -64,6 +71,7 @@ PRIVATE
 )
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(console_app PRIVATE ${PCL_INCLUDE_DIRS})
 target_include_directories(console_app PRIVATE "../support/PlotUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
@@ -115,6 +123,7 @@ if(wxWidgets_FOUND)
 
 	endif()
 
+
 	add_executable(gui_app WIN32 MACOSX_BUNDLE)
 
 	set_target_properties(gui_app PROPERTIES LANGUAGE CXX)
@@ -139,6 +148,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 	target_include_directories(gui_app PRIVATE ${PCL_INCLUDE_DIRS})
 	target_include_directories(gui_app PRIVATE "../support/PlotUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")

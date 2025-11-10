@@ -38,8 +38,9 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
 {
     mInputFile = in;
 
-    mExpInfo  = std::make_shared<cExperimentInfo>();
-    mPlotInfo = std::make_shared<cPlotInfo>();
+    mExpInfo      = std::make_shared<cExperimentInfo>();
+    mWeatherInfo  = std::make_shared<cWeatherInfo>();
+    mPlotInfo     = std::make_shared<cPlotInfo>();
 }
 
 cFileProcessor::~cFileProcessor()
@@ -260,12 +261,23 @@ void cFileProcessor::fillPlotInfo()
     }
 
     mResults.addDate(month, day, year, mDayOfYear);
+
     auto n = mPlotInfo->size();
 
     for (std::size_t i = 0; i < n; ++i)
     {
         const auto& plot = (*mPlotInfo)[i];
         mResults.addPlotInfo(*plot);
+    }
+
+    if (mWeatherInfo->hasData())
+    {
+        bool valid = mWeatherInfo->avgWindDirection_deg().has_value();
+
+        mResults.addWeather(mDayOfYear, valid, mWeatherInfo->avgWindSpeed_mps(), valid ? mWeatherInfo->avgWindDirection_deg().value() : 0,
+            mWeatherInfo->avgTemperature_C(), mWeatherInfo->avgRelativeHumidity_pct(), mWeatherInfo->avgPAR_umole());
+
+        mWeatherInfo->clear();
     }
 
     mResults.splitIntoGroups();

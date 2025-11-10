@@ -66,10 +66,17 @@ public:
 
 	void addPlotLAI(int plot_id, int doy, double lai);
 
+	void addWeather(int doy, bool wind_data_valid, double wind_speed_mps, double wind_direction_deg,
+							double temp_C, double rh_pct, double par_umole );
+
+
 	void computeReplicateData();
 
 	void write_metadata_file(const std::string& directory);
 	void write_metadata_file(const std::string& directory, const std::string& filename);
+
+	void write_weather_file(const std::string& directory);
+	void write_weather_file(const std::string& directory, const std::string& filename);
 
 	void write_plot_num_points_file(const std::string& directory);
 	void write_plot_num_points_file(const std::string& directory, const std::string& filename);
@@ -96,6 +103,9 @@ public:
 	void write_replicate_lai_file(const std::string& directory, const std::string& filename);
 
 protected:
+	void write_weather_file_by_row(std::ofstream& out);
+	void write_weather_file_by_column(std::ofstream& out);
+
 	void write_plot_num_points_file_by_row(std::ofstream& out);
 	void write_plot_num_points_file_by_column(std::ofstream& out);
 
@@ -159,6 +169,18 @@ private:
 	};
 
 	std::set<sPlotDate_t> mDates;
+
+	struct sWeatherData_t
+	{
+		bool  wind_data_valid = false;
+		double wind_speed_mps = 0.0;
+		double wind_direction_deg = 0.0;
+		double temp_C = 0.0;
+		double rh_pct = 0.0;
+		double par_umole = 0.0;
+	};
+
+	std::map<int, std::vector<sWeatherData_t> > mWeatherPoints;
 
 	struct sPlotNumPointData_t
 	{
