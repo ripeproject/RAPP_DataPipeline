@@ -49,7 +49,6 @@ set(PLOT_DATA_COMMON_FILES
 	FileProcessor.cpp
 	
 	version.hpp
-	version.cpp
 )
 
 
@@ -66,6 +65,8 @@ PRIVATE
 	BS_thread_pool.hpp
 	
 	${PLOT_DATA_COMMON_FILES}
+
+	version.cpp
 	
 	ConsoleApp.cpp
 )
@@ -141,6 +142,8 @@ if(wxWidgets_FOUND)
 
 		${PLOT_DATA_COMMON_FILES}
 		${resource_files}
+
+		version.cpp
 		
 		GuiApp.cpp
 	)
