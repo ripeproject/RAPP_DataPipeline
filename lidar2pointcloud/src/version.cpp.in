@@ -1,0 +1,27 @@
+
+#include "version.hpp"
+
+std::string getVersionString()
+{
+	return "@lidar2pointcloud_VERSION@";
+}
+
+unsigned int getMajorVersion()
+{
+	return @lidar2pointcloud_VERSION_MAJOR@ +0;
+}
+
+unsigned int getMinorVersion()
+{
+	return @lidar2pointcloud_VERSION_MINOR@ +0;
+}
+
+unsigned int getPatchVersion()
+{
+	return @lidar2pointcloud_VERSION_PATCH@ +0;
+}
+
+unsigned int getTweakVersion()
+{
+	return @lidar2pointcloud_VERSION_TWEAK@ +0;
+}
