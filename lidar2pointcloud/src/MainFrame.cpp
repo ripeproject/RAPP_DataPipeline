@@ -2,9 +2,11 @@
 #include "MainFrame.hpp"
 #include "MainWindow.hpp"
 #include "GroundModelUtils.hpp"
+#include "./version.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
 #include "Resources/LidarConvert.xpm"
+#else
 #endif
 
 #include <wx/aui/framemanager.h>
@@ -165,8 +167,13 @@ void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxAboutDialogInfo info;
+
+	wxString version_number = std::to_string(getMajorVersion()) + "." + std::to_string(getMinorVersion()) + "." + std::to_string(getPatchVersion());
+	wxString long_version_number = getVersionString();
+
 	info.SetName(wxTheApp->GetAppDisplayName());
-	info.SetVersion("1.1", "1.1.0");
+	info.SetVersion(version_number, long_version_number);
+
 	info.SetDescription(_("Convert LiDAR data to point cloud data in a Ceres data formatted file.     \n"));
 	info.SetCopyright(wxT("Copyright (c) 2023..2025, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"

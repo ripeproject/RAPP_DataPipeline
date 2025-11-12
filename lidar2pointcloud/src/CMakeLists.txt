@@ -1,5 +1,10 @@
 
 
+# Create the version information code
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
+
 set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 
 	ParserExceptions.hpp
@@ -29,6 +34,9 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	
 	FileProcessor.hpp
 	FileProcessor.cpp
+	
+	version.hpp
+	version.cpp
 )
 
 
@@ -51,6 +59,7 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(console_app PRIVATE ${PCL_INCLUDE_DIRS})
 target_include_directories(console_app PRIVATE "../support/common")
 target_include_directories(console_app PRIVATE "../support/FieldUtils")
@@ -134,6 +143,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 	target_include_directories(gui_app PRIVATE ${PCL_INCLUDE_DIRS})
 	target_include_directories(gui_app PRIVATE "../support/common")
 	target_include_directories(gui_app PRIVATE "../support/FieldUtils")

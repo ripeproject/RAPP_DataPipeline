@@ -60,18 +60,45 @@ if (MSVC)
     option(MSVC_STATIC_RUNTIME "Link static runtime libraries" OFF)
 endif()
 
+
+#******************************************************************************
+# PROJECT LANGUAGE SUPPORT
+#******************************************************************************
+
+# We need a C and C++ compiler, so make sure project() test for it.
+project(lidar2pointcloud LANGUAGES C CXX)
+
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Turn off any compiler extensions
+set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
+#******************************************************************************
+# PROJECT VERSION INFORMATION
+#******************************************************************************
+
+
 # Use integer versions instead of strings for easier handling if required
-SET(LIDAR_2_POINTCLOUD_MAJOR 1)
-SET(LIDAR_2_POINTCLOUD_MINOR 0)
-SET(LIDAR_2_POINTCLOUD_PATCH 0)
+SET(lidar2pointcloud_VERSION_MAJOR 1)
+SET(lidar2pointcloud_VERSION_MINOR 0)
+SET(lidar2pointcloud_VERSION_PATCH 0)
+SET(lidar2pointcloud_VERSION_TWEAK 0)
 
 ADD_DEFINITIONS(
-     -DLIDAR_2_POINTCLOUD_MAJOR=${LIDAR_2_POINTCLOUD_MAJOR}
-     -DLIDAR_2_POINTCLOUD_MINOR=${LIDAR_2_POINTCLOUD_MINOR}
-     -DLIDAR_2_POINTCLOUD_PATCH=${LIDAR_2_POINTCLOUD_PATCH}
+     -DLIDAR_2_POINTCLOUD_MAJOR=${lidar2pointcloud_VERSION_MAJOR}
+     -DLIDAR_2_POINTCLOUD_MINOR=${lidar2pointcloud_VERSION_MINOR}
+     -DLIDAR_2_POINTCLOUD_PATCH=${lidar2pointcloud_VERSION_PATCH}
+     -DLIDAR_2_POINTCLOUD_TWEAK=${lidar2pointcloud_VERSION_TWEAK}
 )
 
-SET(LIDAR_2_POINTCLOUD_VERSION "${LIDAR_2_POINTCLOUD_MAJOR}.${LIDAR_2_POINTCLOUD_MINOR}.${LIDAR_2_POINTCLOUD_PATCH}")
+SET(lidar2pointcloud_VERSION "${lidar2pointcloud_VERSION_MAJOR}.${lidar2pointcloud_VERSION_MINOR}.${lidar2pointcloud_VERSION_PATCH}.${lidar2pointcloud_VERSION_TWEAK}")
+
+ADD_DEFINITIONS(-DLIDAR_2_POINTCLOUD_VERSION="${lidar2pointcloud_VERSION}")
+
 
 # Public version has format YY.V, where:
 # -- YY - two last digits of the year of release
@@ -83,22 +110,6 @@ SET(LIDAR_2_POINTCLOUD_VERSION "${LIDAR_2_POINTCLOUD_MAJOR}.${LIDAR_2_POINTCLOUD
 #STRING(TIMESTAMP CURRENTYEAR "%Y")
 #SET(COPYRIGHT_YEARS "2000-${CURRENTYEAR}")
 
-
-
-#******************************************************************************
-# PROJECT LANGUAGE SUPPORT
-#******************************************************************************
-
-# We need a C and C++ compiler, so make sure project() test for it.
-project(lidar2pointcloud VERSION "${LIDAR_2_POINTCLOUD_VERSION}" LANGUAGES C CXX)
-
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Turn off any compiler extensions
-set(CMAKE_C_EXTENSIONS OFF)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 #******************************************************************************
 # PROJECT DIRECTORY SUPPORT
