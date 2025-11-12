@@ -281,6 +281,14 @@ bool cFileProcessor::loadFileData()
 
     mFileReader.close();
 
+    auto file_date = mExpInfo->fileDate();
+
+    if (file_date.has_value())
+    {
+        mMonth = file_date.value().month;
+        mDay = file_date.value().day;
+    }
+
     return true;
 }
 
@@ -293,6 +301,9 @@ void cFileProcessor::doPlotSplit()
     for (auto pointCloud : mPointCloudInfo->getPointClouds())
     {
         int date = pointCloud.date();
+
+        if (date == 0)
+            date = mMonth * 100 + mDay;
 
         if (!pointCloud.groundLevel_mm().has_value())
         {
@@ -374,7 +385,7 @@ void cFileProcessor::doPlotSplit()
             }
             case ePlotIsolationMethod::CENTER_OF_PLOT:
             {
-                auto plotPointCloud = plot::isolate_center_of_plot(pointCloud, bounds->getBoundingBox(),
+                plotPointCloud = plot::isolate_center_of_plot(pointCloud, bounds->getBoundingBox(),
                     method->getPlotWidth_mm(), method->getPlotLength_mm());
 
                 if (plotPointCloud.empty())
@@ -393,7 +404,7 @@ void cFileProcessor::doPlotSplit()
                 if (hasSubPlot)
                 {
                     {
-                        auto plotPointCloud = plot::isolate_basic(pointCloud, bounds->getBoundingBox());
+                        plotPointCloud = plot::isolate_basic(pointCloud, bounds->getBoundingBox());
 
                         if (plotPointCloud.empty())
                         {
@@ -433,7 +444,7 @@ void cFileProcessor::doPlotSplit()
                 }
                 else
                 {
-                    auto plotPointCloud = plot::isolate_center_of_height(pointCloud, bounds->getBoundingBox(),
+                    plotPointCloud = plot::isolate_center_of_height(pointCloud, bounds->getBoundingBox(),
                         method->getPlotWidth_mm(), method->getPlotLength_mm(), method->getHeightThreshold_pct().value());
 
                     if (plotPointCloud.empty())

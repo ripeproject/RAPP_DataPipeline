@@ -73,6 +73,9 @@ private:
 
 	std::set<std::string> mAllowedExperimentNames;
 
+	uint8_t mMonth = 0;
+	uint8_t mDay = 0;
+
 	const int mID;
 
 	bool mSavePlotsInSingleFile = false;

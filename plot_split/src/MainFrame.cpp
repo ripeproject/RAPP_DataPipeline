@@ -1,6 +1,7 @@
 
 #include "MainFrame.hpp"
 #include "MainWindow.hpp"
+#include "version.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
 #include "Resources/PlotSplit.xpm"
@@ -130,10 +131,15 @@ void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxAboutDialogInfo info;
+
+	wxString version_number = std::to_string(getMajorVersion()) + "." + std::to_string(getMinorVersion()) + "." + std::to_string(getPatchVersion());
+	wxString long_version_number = getVersionString();
+
 	info.SetName(wxTheApp->GetAppDisplayName());
-	info.SetVersion("1.0", "0.1.0");
-	info.SetDescription(_("Convert older experimental data files to a Ceres data formatted file.     \n"));
-	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetVersion(version_number, long_version_number);
+
+	info.SetDescription(_("Split experimental point cloud into separate plot point clouds.     \n"));
+	info.SetCopyright(wxT("Copyright (c) 2023..2025, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(PlotSplit));
@@ -144,7 +150,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 		"distribution.  This includes PlotSplit’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
-		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
+		"Copyright(c) 2023.2025, Carl R.Woese Institute for Genomic Biology\n"
 		"All rights reserved.\n"
 		"\n"
 		"Redistribution and use in source and binary forms, with or without\n"

@@ -1,5 +1,9 @@
 
 
+# Create the version information code
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
 
 set(PLOT_SPLIT_COMMON_FILES
 
@@ -18,6 +22,8 @@ set(PLOT_SPLIT_COMMON_FILES
 	
 	ExportUtils.hpp
 	ExportUtils.cpp
+
+	version.hpp
 )
 
 
@@ -34,11 +40,14 @@ PRIVATE
 	BS_thread_pool.hpp
 	
 	${PLOT_SPLIT_COMMON_FILES}
+
+	version.cpp
 	
 	ConsoleApp.cpp
 )
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(console_app PRIVATE "../support/PlotUtils")
 target_include_directories(console_app PRIVATE "../support/PlotConfig")
 target_include_directories(console_app PRIVATE "../support/PointCloudUtils")
@@ -48,7 +57,7 @@ target_include_directories(console_app PRIVATE "../support/MathUtils")
 target_include_directories(console_app PRIVATE "../support/common")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
-target_link_libraries(console_app PRIVATE cbdf::info)
+target_link_libraries(console_app PRIVATE cbdf::info cbdf::weather)
 target_link_libraries(console_app PRIVATE cbdf::processing_info)
 target_link_libraries(console_app PRIVATE cbdf::pointcloud)
 target_link_libraries(console_app PRIVATE cbdf::plot_info)
@@ -107,6 +116,8 @@ if(wxWidgets_FOUND)
 
 		${PLOT_SPLIT_COMMON_FILES}
 		${resource_files}
+
+		version.cpp
 		
 		GuiApp.cpp
 	)
@@ -114,6 +125,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 	target_include_directories(gui_app PRIVATE "../support/PlotUtils")
 	target_include_directories(gui_app PRIVATE "../support/PlotConfig")
 	target_include_directories(gui_app PRIVATE "../support/PointCloudUtils")
@@ -125,7 +137,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
-	target_link_libraries(gui_app PRIVATE cbdf::info)
+	target_link_libraries(gui_app PRIVATE cbdf::info cbdf::weather)
 	target_link_libraries(gui_app PRIVATE cbdf::processing_info)
 	target_link_libraries(gui_app PRIVATE cbdf::pointcloud)
 	target_link_libraries(gui_app PRIVATE cbdf::plot_info)

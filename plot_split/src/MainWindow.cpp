@@ -504,6 +504,7 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 		fp->enableSavingFrameIDs(enableFrameIds);
 		fp->enableSavingPixelInfo(enablePixelInfo);
 
+		fp->setAllowedExperimentNames(mConfigData.getAllowedExperimentNames());
 //Fix		fp->setPlotInfo(mConfigData->getPlotInfo(in_file.path().filename().string()));
 
 		mFileProcessors.push(fp);
