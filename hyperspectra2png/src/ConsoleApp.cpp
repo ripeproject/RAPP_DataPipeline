@@ -1,9 +1,8 @@
 
 #include "BS_thread_pool.hpp"
 
-#include "HySpexVNIR3000N_2_PNG.hpp"
-#include "HySpexSWIR384_2_PNG.hpp"
-#include "FileProcessor.hpp"
+#include "FileProcessor_Ceres.hpp"
+#include "FileProcessor_BIL.hpp"
 #include "StringUtils.hpp"
 
 #include <lyra/lyra.hpp>
@@ -95,11 +94,18 @@ int main(int argc, char** argv)
 		if (!dir_entry.is_regular_file())
 			return 2;
 
-		if (dir_entry.path().extension() != ".ceres")
-			return 3;
+		auto ext = dir_entry.path().extension();
 
-		if (!isCeresFile(dir_entry.path().string()))
-			return 4;
+		if (ext == ".ceres")
+		{
+			if (!isCeresFile(dir_entry.path().string()))
+				return 4;
+		}
+		else if ((ext == ".bil") || (ext == ".BIL"))
+		{
+		}
+		else
+			return 3;
 
 		files_to_process.push_back(dir_entry);
 	}
@@ -111,10 +117,16 @@ int main(int argc, char** argv)
 				continue;
 
 			auto ext = dir_entry.path().extension();
-			if (ext != ".ceres")
-				continue;
 
-			if (!isCeresFile(dir_entry.path().string()))
+			if (ext == ".ceres")
+			{
+				if (!isCeresFile(dir_entry.path().string()))
+					continue;
+			}
+			else if ((ext == ".bil") || (ext == ".BIL"))
+			{
+			}
+			else
 				continue;
 
 			files_to_process.push_back(dir_entry);
@@ -181,7 +193,12 @@ int main(int argc, char** argv)
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+		cFileProcessor* fp = nullptr;
+
+		if ((fe.extension == "BIL") || (fe.extension == "bil"))
+			fp = new cFileProcessor_BIL(numFilesToProcess++, in_file, out_file);
+		else
+			fp = new cFileProcessor_Ceres(numFilesToProcess++, in_file, out_file);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 

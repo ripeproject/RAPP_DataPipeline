@@ -1,8 +1,7 @@
 
 #include "MainWindow.hpp"
-#include "HySpexVNIR3000N_2_PNG.hpp"
-#include "HySpexSWIR384_2_PNG.hpp"
-#include "FileProcessor.hpp"
+#include "FileProcessor_Ceres.hpp"
+#include "FileProcessor_BIL.hpp"
 #include "StringUtils.hpp"
 
 #include <wx/thread.h>
@@ -209,7 +208,7 @@ void cMainWindow::OnSourceFile(wxCommandEvent& WXUNUSED(event))
 	}
 
 	wxFileDialog dlg(this, _("Open file"), wxString(fpath.string()), wxString(fname.filename().string()),
-		"Ceres files (*.ceres)|*.ceres", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+		"Ceres files (*.ceres)|*.ceres|Hyperspectral files (*.bil)|*.bil", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
 		return;     // the user changed their mind...
@@ -300,10 +299,18 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		if (!dir_entry.is_regular_file())
 			return;
 
-		if (dir_entry.path().extension() != ".ceres")
-			return;
+		auto ext = dir_entry.path().extension();
 
-		if (!isCeresFile(dir_entry.path().string()))
+		if (ext == ".ceres")
+		{
+			if (!isCeresFile(dir_entry.path().string()))
+				return;
+		}
+		if ((ext == ".BIL") || (ext == ".bil"))
+		{
+
+		}
+		else
 			return;
 
 		files_to_process.push_back(dir_entry);
@@ -316,10 +323,17 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 				continue;
 
 			auto ext = dir_entry.path().extension();
-			if (ext != ".ceres")
-				continue;
 
-			if (!isCeresFile(dir_entry.path().string()))
+			if (ext == ".ceres")
+			{
+				if (!isCeresFile(dir_entry.path().string()))
+					continue;
+			}
+			if ((ext == ".BIL") || (ext == ".bil"))
+			{
+
+			}
+			else
 				continue;
 
 			files_to_process.push_back(dir_entry);
@@ -341,11 +355,6 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-//		if (mIsFile)
-//		{
-//			out_file = std::filesystem::path{ mDestinationDataDirectory.ToStdString()};
-//		}
-
 		if (out_file.empty())
 		{
 			std::string out_filename = fe.filename;
@@ -358,7 +367,12 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 			}
 		}
 
-		cFileProcessor* fp = new cFileProcessor(mNumFilesToProcess++, in_file, out_file);
+		cFileProcessor* fp = nullptr;
+		
+		if ((fe.extension == "BIL") || (fe.extension == "bil"))
+			fp = new cFileProcessor_BIL(mNumFilesToProcess++, in_file, out_file);
+		else
+			fp = new cFileProcessor_Ceres(mNumFilesToProcess++, in_file, out_file);
 
 		fp->setVnirRgb(mVnirRed_nm, mVnirGreen_nm, mVnirBlue_nm);
 		fp->setSwirRgb(mSwirRed_nm, mSwirGreen_nm, mSwirBlue_nm);

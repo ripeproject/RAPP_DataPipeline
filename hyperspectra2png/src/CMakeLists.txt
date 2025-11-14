@@ -12,6 +12,12 @@ set(HYPER_SPECTRA_2_PNG_COMMON_FILES
 
 	FileProcessor.hpp
 	FileProcessor.cpp
+
+	FileProcessor_Ceres.hpp
+	FileProcessor_Ceres.cpp
+
+	FileProcessor_BIL.hpp
+	FileProcessor_BIL.cpp
 )
 
 
