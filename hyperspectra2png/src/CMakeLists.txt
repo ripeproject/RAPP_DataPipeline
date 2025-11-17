@@ -10,6 +10,9 @@ set(HYPER_SPECTRA_2_PNG_COMMON_FILES
 	HySpexSWIR384_2_PNG.hpp
 	HySpexSWIR384_2_PNG.cpp
 
+	BIL_2_PNG.hpp
+	BIL_2_PNG.cpp
+
 	FileProcessor.hpp
 	FileProcessor.cpp
 
