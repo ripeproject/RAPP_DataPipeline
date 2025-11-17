@@ -356,7 +356,9 @@ std::string nStringUtils::compactFilename(const std::string& filename, std::size
 
 bool nStringUtils::isMonthDirectory(const std::string& dir)
 {
-	if (dir.starts_with( "Jan")) return true;
+	if (dir.size() > 6) return false;
+
+	if (dir.starts_with("Jan")) return true;
 	if (dir.starts_with("Feb")) return true;
 	if (dir.starts_with("Mar")) return true;
 	if (dir.starts_with("Apr")) return true;
