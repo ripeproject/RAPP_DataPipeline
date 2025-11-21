@@ -7,18 +7,24 @@
 
 namespace nStringUtils
 {
-	// trim from start (in place)
+	// trim whitespaces from beginning of string (in place)
 	void ltrim(std::string& s);
 
 	// trim from end (in place)
 	void rtrim(std::string& s);
 
-	// trim from both ends (in place)
+	// trim whitespaces from both end of string (in place)
 	inline void trim(std::string& s) 
 	{
 		rtrim(s);
 		ltrim(s);
 	}
+
+	// trim whitespaces from both ends
+	std::string strim(const std::string& s);
+
+	// lowercase a string
+	std::string toLower(const std::string& s);
 
 	/**
 	 * Case insensitive compare of two strings
