@@ -206,11 +206,12 @@ void cBIL_2_Png::writeRgbImage(std::filesystem::path in, std::filesystem::path o
     auto samples = std::stoi(mHeader.at("samples"));
     auto data_type = std::stoi(mHeader.at("data type"));
 
-    mImage.create(lines, samples, CV_8UC3);
+    mImage.create(lines, samples, CV_16UC4);
 
     int maxPixelValue = std::pow(2, data_type);
 
     mColorScale = 255.0 / maxPixelValue;
+    mColorScale = 65535.0 / maxPixelValue;
     mColorScale *= 4.0;
 
     auto bil = readBIL<unsigned short>(in.string(), lines, samples, bands);
@@ -227,11 +228,17 @@ void cBIL_2_Png::writeRgbImage(std::filesystem::path in, std::filesystem::path o
 
         for (int i = 0; i < samples; ++i)
         {
-            uint8_t r = nMathUtils::bound<uint8_t>(red[i] * mColorScale);
-            uint8_t g = nMathUtils::bound<uint8_t>(green[i] * mColorScale);
-            uint8_t b = nMathUtils::bound<uint8_t>(blue[i] * mColorScale);
+            uint16_t r = nMathUtils::bound<uint16_t>(red[i] * mColorScale);
+            uint16_t g = nMathUtils::bound<uint16_t>(green[i] * mColorScale);
+            uint16_t b = nMathUtils::bound<uint16_t>(blue[i] * mColorScale);
+
+            uint16_t a = 65535;
+
+            if (r == 0 && b == 0 && g == 0)
+                a = 0;
+
             cv::Point p(i, l);
-            mImage.at<cv::Vec3b>(p) = { b,g,r };
+            mImage.at<cv::Vec4w>(p) = { b,g,r,a };
         }
     }
 
