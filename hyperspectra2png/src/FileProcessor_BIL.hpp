@@ -2,6 +2,7 @@
 #pragma once
 
 #include "FileProcessor.hpp"
+#include "BIL_2_PNG.hpp"
 
 
 // Forward Declarations
@@ -22,4 +23,5 @@ public:
 private:
 
 private:
+	cBIL_2_Png mConverter;
 };

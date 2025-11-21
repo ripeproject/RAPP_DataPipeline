@@ -18,7 +18,9 @@ cFileProcessor_BIL::cFileProcessor_BIL(int id, std::filesystem::directory_entry 
                                 std::filesystem::path out) 
 :
     cFileProcessor(id, in, out)
-{}
+{
+    mOutputFile.replace_extension("png");
+}
 
 cFileProcessor_BIL::~cFileProcessor_BIL()
 {
@@ -26,15 +28,42 @@ cFileProcessor_BIL::~cFileProcessor_BIL()
 
 bool cFileProcessor_BIL::open(std::filesystem::path out)
 {
-    std::filesystem::path outFile  = out.replace_extension();
-    std::filesystem::path testFile = outFile;
+    std::filesystem::path headerFile = mInputFile;
+    headerFile.replace_extension("hdr");
+
+    if (!mConverter.loadHeader(headerFile.string()))
+    {
+        return false;
+    }
+
+    auto range = mConverter.getWavelengthRange();
+
+    auto vnirFirst = mVnirBlue_nm;
+    auto vnirLast = mVnirBlue_nm;
+
+    vnirFirst = std::min(vnirFirst, mVnirGreen_nm);
+    vnirFirst = std::min(vnirFirst, mVnirRed_nm);
+
+    vnirLast = std::max(vnirFirst, mVnirGreen_nm);
+    vnirLast = std::max(vnirFirst, mVnirRed_nm);
+
+    if ((range.first <= vnirFirst) && (vnirLast <= range.second))
+    {
+        mConverter.setRgbWavelengths_nm(mVnirRed_nm, mVnirGreen_nm, mVnirBlue_nm);
+    }
+    else
+    {
+        mConverter.setRgbWavelengths_nm(mSwirRed_nm, mSwirGreen_nm, mSwirBlue_nm);
+    }
+
+    std::filesystem::path testFile  = out.replace_extension("png");
 
     if (std::filesystem::exists(testFile))
     {
         return false;
     }
 
-    return false;
+    return true;
 }
 
 void cFileProcessor_BIL::process_file()
@@ -49,6 +78,7 @@ void cFileProcessor_BIL::process_file()
 
 void cFileProcessor_BIL::run()
 {
+    mConverter.writeRgbImage(mInputFile, mOutputFile);
 }
 
 
