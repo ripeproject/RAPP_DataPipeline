@@ -36,6 +36,13 @@ void update_file_progress(const int id, const int progress_pct)
 {
 }
 
+void update_file_progress(const int id, std::string prefix, const int progress_pct)
+{
+}
+
+void complete_file_progress(const int id)
+{
+}
 
 int main(int argc, char** argv)
 {

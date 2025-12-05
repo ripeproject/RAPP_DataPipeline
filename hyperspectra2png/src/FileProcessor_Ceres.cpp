@@ -16,6 +16,8 @@
 extern void console_message(const std::string& msg);
 extern void new_file_progress(const int id, std::string filename);
 extern void update_file_progress(const int id, const int progress_pct);
+extern void update_file_progress(const int id, std::string prefix, const int progress_pct);
+extern void complete_file_progress(const int id);
 
 
 cFileProcessor_Ceres::cFileProcessor_Ceres(int id, std::filesystem::directory_entry in,
@@ -84,6 +86,8 @@ void cFileProcessor_Ceres::run()
     cHySpexSWIR384_2_Png* pSwir = mSwirConverter.get();
     mFileReader.attach(static_cast<cHySpexSWIR_384_Parser*>(pSwir));
 
+    update_file_progress(mID, "Converting...", 0);
+
 	try
     {
         while (!mFileReader.eof())
@@ -126,7 +130,7 @@ void cFileProcessor_Ceres::run()
         console_message(msg);
     }
 
-    update_file_progress(mID, 100);
+    complete_file_progress(mID);
 }
 
 

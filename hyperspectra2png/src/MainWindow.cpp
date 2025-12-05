@@ -5,9 +5,11 @@
 #include "StringUtils.hpp"
 
 #include <wx/thread.h>
+#include <wx/config.h>
 
 #include <cbdf/BlockDataFile.hpp>
 
+#include <map>
 #include <filesystem>
 
 using namespace std::filesystem;
@@ -15,6 +17,8 @@ using namespace std::filesystem;
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
+
+	std::map<int, int> prev_progress;
 }
 
 void console_message(const std::string& msg)
@@ -31,6 +35,8 @@ void new_file_progress(const int id, std::string filename)
 		event->SetFileName(filename);
 
 		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress[id] = -1;
 	}
 }
 
@@ -38,13 +44,48 @@ void update_file_progress(const int id, const int progress_pct)
 {
 	if (g_pEventHandler)
 	{
+		if (prev_progress[id] != progress_pct)
+		{
+			auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
+			event->SetFileProcessID(id);
+			event->SetProgress_pct(progress_pct);
+
+			wxQueueEvent(g_pEventHandler, event);
+
+			prev_progress[id] = progress_pct;
+		}
+	}
+}
+
+void update_file_progress(const int id, std::string prefix, const int progress_pct)
+{
+	if (g_pEventHandler)
+	{
 		auto event = new cFileProgressEvent(UPDATE_FILE_PROGRESS);
 		event->SetFileProcessID(id);
+		event->SetPrefix(prefix);
 		event->SetProgress_pct(progress_pct);
 
 		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress[id] = progress_pct;
 	}
 }
+
+void complete_file_progress(const int id)
+{
+	if (g_pEventHandler)
+	{
+		auto event = new cFileProgressEvent(COMPLETE_FILE_PROGRESS);
+		event->SetFileProcessID(id);
+		event->SetPrefix("Complete");
+		event->SetProgress_pct(100);
+		wxQueueEvent(g_pEventHandler, event);
+
+		prev_progress.erase(id);
+	}
+}
+
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -66,10 +107,20 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 	CreateControls();
 	CreateLayout();
+
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Png");
+
+	config->Read("Files/Source", &mSource);
+	config->Read("Files/Destination", &mDestinationDataDirectory);
 }
 
 cMainWindow::~cMainWindow()
 {
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Png");
+
+	config->Write("Files/Source", mSource);
+	config->Write("Files/Destination", mDestinationDataDirectory);
+
 	g_pEventHandler = nullptr;
 
 	delete mpOriginalLog;
@@ -111,7 +162,7 @@ void cMainWindow::CreateControls()
 	mpExportButton->Disable();
 	mpExportButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExport, this);
 
-	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY);
+	mpProgressCtrl = new cFileProgressCtrl(this, wxID_ANY, "Phase", 150);
 	g_pEventHandler = mpProgressCtrl;
 
 	// redirect logs from our event handlers to text control

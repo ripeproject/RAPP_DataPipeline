@@ -24,8 +24,6 @@ public:
 protected:
 	const int mID;
 
-	std::uintmax_t mFileSize;
-
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
 

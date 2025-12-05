@@ -18,6 +18,12 @@
 #include <cctype>
 
 
+extern void new_file_progress(const int id, std::string filename);
+extern void update_file_progress(const int id, const int progress_pct);
+extern void update_file_progress(const int id, std::string prefix, const int progress_pct);
+extern void complete_file_progress(const int id);
+
+
 // Reads a BIL header file into a map
 bool readBILHeader(const std::string& filename, std::map<std::string, std::string>& headerMap) 
 {
@@ -67,7 +73,7 @@ bool readBILHeader(const std::string& filename, std::map<std::string, std::strin
 
 // Reads a BIL file into a 3D vector: data[band][row][col]
 template <typename T>
-std::vector<std::vector<std::vector<T>>> readBIL(const std::string& filename, size_t rows, size_t cols, size_t bands)
+std::vector<std::vector<std::vector<T>>> readBIL(int id, const std::string& filename, size_t rows, size_t cols, size_t bands)
 {
     // Open file in binary mode
     std::ifstream file(filename, std::ios::binary);
@@ -92,6 +98,10 @@ std::vector<std::vector<std::vector<T>>> readBIL(const std::string& filename, si
                 throw std::runtime_error("Error: Unexpected end of file while reading.");
             }
         }
+
+
+        auto file_pos = 100.0 * (static_cast<double>(row) / static_cast<double>(rows));
+        update_file_progress(id, static_cast<int>(file_pos));
     }
 
     return data;
@@ -121,7 +131,7 @@ std::vector<float> toArray(const std::string& in)
     return out;
 }
 
-cBIL_2_Png::cBIL_2_Png()
+cBIL_2_Png::cBIL_2_Png(int id) : mID(id)
 {
 }
 
@@ -214,11 +224,15 @@ void cBIL_2_Png::writeRgbImage(std::filesystem::path in, std::filesystem::path o
     mColorScale = 65535.0 / maxPixelValue;
     mColorScale *= 4.0;
 
-    auto bil = readBIL<unsigned short>(in.string(), lines, samples, bands);
+    update_file_progress(mID, "Loading file...", 0);
+
+    auto bil = readBIL<unsigned short>(mID, in.string(), lines, samples, bands);
 
     const auto& red_slice = bil[mRedIndex];
     const auto& green_slice = bil[mGreenIndex];
     const auto& blue_slice = bil[mBlueIndex];
+
+    update_file_progress(mID, "Saving PNG file...", 0);
 
     for (int l = 0; l < lines; ++l)
     {
@@ -240,10 +254,15 @@ void cBIL_2_Png::writeRgbImage(std::filesystem::path in, std::filesystem::path o
             cv::Point p(i, l);
             mImage.at<cv::Vec4w>(p) = { b,g,r,a };
         }
+
+        auto file_pos = 100.0 * (static_cast<double>(l) / static_cast<double>(lines));
+        update_file_progress(mID, static_cast<int>(file_pos));
     }
 
     cv::String name = out.string();
     cv::imwrite(name, mImage);
+
+    complete_file_progress(mID);
 }
 
 

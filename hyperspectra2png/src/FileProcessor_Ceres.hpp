@@ -95,7 +95,7 @@ private:
 	void onEndPosition(spidercam::sPosition_1_t position) override;
 
 private:
-	std::uintmax_t mFileSize;
+	std::uintmax_t mFileSize = 0;
 	cBlockDataFileReader mFileReader;
 
 	std::unique_ptr<cHySpexVNIR3000N_2_Png> mVnirConverter;

@@ -17,7 +17,7 @@ extern void update_file_progress(const int id, const int progress_pct);
 cFileProcessor_BIL::cFileProcessor_BIL(int id, std::filesystem::directory_entry in,
                                 std::filesystem::path out) 
 :
-    cFileProcessor(id, in, out)
+    cFileProcessor(id, in, out), mConverter(id)
 {
     mOutputFile.replace_extension("png");
 }

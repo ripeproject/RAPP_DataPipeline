@@ -13,7 +13,7 @@
 class cBIL_2_Png
 {
 public:
-	cBIL_2_Png();
+	cBIL_2_Png(int id);
 	~cBIL_2_Png();
 
 	bool loadHeader(const std::string& in);
@@ -25,7 +25,9 @@ public:
     void writeRgbImage(std::filesystem::path in, std::filesystem::path out);
 
 private:
-    std::filesystem::path mOutputPath;
+	const int mID;
+	
+	std::filesystem::path mOutputPath;
 
 	float mColorScale = 1.0;
 
