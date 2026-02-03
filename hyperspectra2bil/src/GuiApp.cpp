@@ -34,7 +34,7 @@ public:
 
 cExport2PngApp::cExport2PngApp()
 {
-    SetAppDisplayName("Hyperspectral to Png Files");
+    SetAppDisplayName("Hyperspectral Data to GIS Files (BIL, BIP, or BSQ)");
 }
 
 cExport2PngApp::~cExport2PngApp()

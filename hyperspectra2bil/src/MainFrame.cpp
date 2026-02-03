@@ -42,7 +42,7 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Export to png")
+	: wxFrame(NULL, wxID_ANY, "Export Hyperspectral Data to GIS Files (BIL, BIP, or BSQ)")
 {
 	mpMainWindow = new cMainWindow(this);
 
@@ -119,15 +119,15 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	wxAboutDialogInfo info;
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
-	info.SetDescription(_("Export hyperspectral data in ceres data files to png based files.\n"));
-	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetDescription(_("Export hyperspectral data in ceres data files to GIS based files.\n"));
+	info.SetCopyright(wxT("Copyright (c) 2023..26, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(Export2Png));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the hyperspectral2png repository and source\n"
+		"This license applies to all files in the hyperspectral2bil repository and source\n"
 		"distribution.This includes hyperspectral2png’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
