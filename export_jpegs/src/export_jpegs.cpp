@@ -9,6 +9,8 @@
 
 #include <iostream>
 
+extern uint32_t g_NumOfPictures;
+
 namespace
 {
     std::string latToExifString(double lat_deg, bool bRational)
@@ -92,6 +94,8 @@ namespace
 
         outstream_binary.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
         binary_buffer.close();
+
+        ++g_NumOfPictures;
     }
 
     void writeImage(const std::filesystem::path& filename, const cImageBuffer& buffer, const sPosTime_t& pos_time)
@@ -136,8 +140,9 @@ namespace
             file.open("wb");
             file.write(image->io());
             file.close();
-        }
 
+            ++g_NumOfPictures;
+        }
     }
 }
 

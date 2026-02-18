@@ -15,6 +15,7 @@
 
 
 std::mutex g_console_mutex;
+uint32_t   g_NumOfPictures = 0;
 
 namespace
 {

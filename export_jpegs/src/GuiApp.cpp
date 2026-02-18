@@ -9,6 +9,8 @@
 
 #include "MainFrame.hpp"
 
+uint32_t g_NumOfPictures = 0;
+
 
 // ----------------------------------------------------------------------------
 // private classes

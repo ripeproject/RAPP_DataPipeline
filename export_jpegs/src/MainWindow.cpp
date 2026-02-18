@@ -13,6 +13,8 @@
 
 using namespace std::filesystem;
 
+extern uint32_t g_NumOfPictures;
+
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
@@ -50,11 +52,13 @@ void update_file_progress(const int id, const int progress_pct)
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
+wxDEFINE_EVENT(COMPUTATION_COMPLETE, wxCommandEvent);
 
 // the event tables connect the wxWidgets events with the functions (event
 // handlers) which process them. It can be also done at run-time, but for the
 // simple menu events like this the static method is much simpler.
 wxBEGIN_EVENT_TABLE(cMainWindow, wxPanel)
+	EVT_COMMAND(wxID_ANY, COMPUTATION_COMPLETE, cMainWindow::OnComplete)
 wxEND_EVENT_TABLE()
 
 
@@ -84,6 +88,17 @@ cMainWindow::~cMainWindow()
 	config->Write("Files/Configuration", mCfgFilename);
 
 	g_pEventHandler = nullptr;
+}
+
+void cMainWindow::OnComplete(wxCommandEvent& WXUNUSED(event))
+{
+	mpExportButton->Enable();
+
+	if ((g_NumOfPictures == 0) && (mOutputDir.exists()))
+	{
+		if (std::filesystem::is_empty(mOutputDir))
+			std::filesystem::remove(mOutputDir);
+	}
 }
 
 void cMainWindow::CreateControls()
@@ -200,8 +215,6 @@ void cMainWindow::OnSourceDirectory(wxCommandEvent& WXUNUSED(event))
 	mpSrcCtrl->SetValue(mSource);
 
 	mIsFile = false;
-
-	mpLogCtrl->Clear();
 
 	if (!mpDstCtrl->GetValue().IsEmpty())
 		mpExportButton->Enable();
@@ -344,9 +357,6 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	}
 
 
-
-
-
 	int numFilesToProcess = 0;
 
 	/*
@@ -406,70 +416,7 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		mFileProcessors.push(fp);
 	}
 
-
-
-
-
-
-	/*
-	 * Add all of the files to process
-	 */
-/*
-	int numFilesToProcess = 0;
-	for (auto& in_file : files_to_process)
-	{
-		std::filesystem::path out_file;
-		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
-
-		if (mIsFile)
-		{
-			out_file = std::filesystem::path{ mDestinationDataDirectory.ToStdString()};
-		}
-		else
-		{
-			if (!month_dir.empty())
-			{
-				std::string last_dir;
-				out_file = mDestinationDataDirectory.ToStdString();
-
-				if (out_file.has_parent_path())
-				{
-					last_dir = out_file.filename().string();
-				}
-
-				if (month_dir != last_dir)
-				{
-					out_file /= month_dir;
-				}
-			}
-
-		}
-
-		if (out_file.empty())
-		{
-			std::string out_filename = fe.filename;
-			out_file = mDestinationDataDirectory.ToStdString();
-			out_file /= addProcessedTimestamp(out_filename);
-
-			if (!fe.extension.empty())
-			{
-				out_file.replace_extension(fe.extension);
-			}
-		}
-
-		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
-
-		if (mPlotConfigData)
-			fp->setPlotFile(mPlotConfigData);
-
-		mFileProcessors.push(fp);
-	}
-*/
-
-
-
-
-
+	g_NumOfPictures = 0;
 
 	mpExportButton->Disable();
 
@@ -498,11 +445,14 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		wxLogMessage(msg);
 	}
 
+	mOutputDir = std::filesystem::directory_entry();
+
 	if (!output_dir.exists() && (numFilesToProcess > 0))
 	{
 		try
 		{
 			std::filesystem::create_directories(output_dir);
+			mOutputDir = output_dir;
 		}
 		catch (const std::filesystem::filesystem_error& e)
 		{
@@ -562,9 +512,28 @@ wxThread::ExitCode cMainWindow::Entry()
 		delete fp;
 	}
 
-	wxString msg = "Finished processing ";
+	wxString msg = "Finished processing: ";
 	msg += mSource;
+	if (g_NumOfPictures == 0)
+	{
+		msg += "  (no pictures exported)";
+	}
+	else if (g_NumOfPictures == 1)
+	{
+		msg += "  (single picture exported)";
+	}
+	else
+	{
+		msg += "  (";
+		msg += wxString::Format("%u", g_NumOfPictures);
+		msg += " pictures exported)";
+	}
+
 	wxLogMessage(msg);
+
+	auto event = new wxCommandEvent(COMPUTATION_COMPLETE);
+
+	wxQueueEvent(this, event);
 
 	return (wxThread::ExitCode) 0;
 }

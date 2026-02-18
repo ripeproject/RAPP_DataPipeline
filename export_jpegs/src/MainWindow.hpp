@@ -35,6 +35,7 @@ public:
 	// event handlers (these functions should _not_ be virtual)
 
 protected:
+	void OnComplete(wxCommandEvent& event);
 	void OnSourceFile(wxCommandEvent& event);
 	void OnSourceDirectory(wxCommandEvent& event);
 	void OnDestinationDirectory(wxCommandEvent& event);
@@ -76,6 +77,8 @@ private:
 	wxString mCfgFilename;
 
 	std::shared_ptr<cPlotConfigFile> mPlotConfigData;
+
+	std::filesystem::directory_entry mOutputDir;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();
