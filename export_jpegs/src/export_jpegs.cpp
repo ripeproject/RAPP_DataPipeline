@@ -330,6 +330,11 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 
         if (plot.contains_point(date, mX_mm, mY_mm))
         {
+            if (mLastPlotNumber != plot.getPlotNumber())
+            {
+                mLastPlotNumber = plot.getPlotNumber();
+                mDistance_mm = std::numeric_limits<double>::max();
+            }
 
             info = plot;
             auto center = plot.getBounds(date)->center();

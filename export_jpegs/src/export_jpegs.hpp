@@ -167,6 +167,8 @@ private:
     double	mZ_mm = 0;
     double	mDistance_mm = 0;
 
+    int     mLastPlotNumber = 0;
+
     bool    mPositionValid = false;
     double	mLat_deg = 0;
     double	mLon_deg = 0;
