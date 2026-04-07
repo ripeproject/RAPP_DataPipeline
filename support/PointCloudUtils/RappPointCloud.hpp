@@ -67,6 +67,8 @@ public:
 	bool vegetationOnly() const;
 	void setVegetationOnly(const bool vegetation_only);
 
+	bool hasGroundLevel() const;
+
 	std::optional<double> groundLevel_mm() const;
 	void clearGroundLevel_mm();
 	void setGroundLevel_mm(const double ground_level_mm);

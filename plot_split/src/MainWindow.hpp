@@ -81,7 +81,6 @@ private:
 	wxString mDstDirectory;
 	wxString mConfigFileName;
 
-//	std::unique_ptr<cConfigFileData> mConfigData;
 	cPlotConfigFile mConfigData;
 
 	// any class wishing to process wxWidgets events must use this macro

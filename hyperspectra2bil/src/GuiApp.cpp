@@ -15,11 +15,11 @@
 // ----------------------------------------------------------------------------
 
 // Define a new application type
-class cExport2PngApp : public wxApp
+class cExport2GisApp : public wxApp
 {
 public:
-    cExport2PngApp();
-    virtual ~cExport2PngApp();
+    cExport2GisApp();
+    virtual ~cExport2GisApp();
 
     virtual bool OnInit() wxOVERRIDE;
 };
@@ -29,20 +29,20 @@ public:
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// The Hyperspectral 2 Png Application
+// The Hyperspectral 2 GIS Application
 // ----------------------------------------------------------------------------
 
-cExport2PngApp::cExport2PngApp()
+cExport2GisApp::cExport2GisApp()
 {
     SetAppDisplayName("Hyperspectral Data to GIS Files (BIL, BIP, or BSQ)");
 }
 
-cExport2PngApp::~cExport2PngApp()
+cExport2GisApp::~cExport2GisApp()
 {
 }
 
 // `Main program' equivalent, creating windows and returning main app frame
-bool cExport2PngApp::OnInit()
+bool cExport2GisApp::OnInit()
 {
     if (!wxApp::OnInit())
         return false;
@@ -62,4 +62,4 @@ bool cExport2PngApp::OnInit()
 // static object for many reasons) and also implements the accessor function
 // wxGetApp() which will return the reference of the right type
 // (i.e. cCeresDataRepairApp and not wxApp)
-wxIMPLEMENT_APP(cExport2PngApp);
+wxIMPLEMENT_APP(cExport2GisApp);

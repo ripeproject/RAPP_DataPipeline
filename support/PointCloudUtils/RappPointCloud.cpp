@@ -252,6 +252,11 @@ void cRappPointCloud::setVegetationOnly(const bool vegetation_only)
 	mVegetationOnly = vegetation_only;
 }
 
+bool cRappPointCloud::hasGroundLevel() const
+{
+	return mGroundLevel_mm.has_value();
+}
+
 std::optional<double> cRappPointCloud::groundLevel_mm() const
 {
 	return mGroundLevel_mm;
