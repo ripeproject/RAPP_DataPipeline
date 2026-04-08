@@ -44,6 +44,10 @@ int main(int argc, char** argv)
 	using namespace nStringUtils;
 
 	int num_of_threads = 1;
+
+	std::string export_string;
+	std::string header_string;
+
 	std::string input_directory = current_path().string();
 	std::string output_directory = current_path().string();
 
@@ -57,11 +61,19 @@ int main(int argc, char** argv)
 		["-t"]["--threads"]
 		("The number of threads to use for converting data files.")
 		.optional()
+		| lyra::opt(export_string, "export format")
+		["-e"]["--export_format"]
+		("The export format: BIL, BIP or BSQ.")
+		.optional()
+		| lyra::opt(header_string, "header format")
+		["-f"]["--header_format"]
+		("The format of the header file: ENVI or ArcMap.")
+		.optional()
 		| lyra::arg(input_directory, "input directory")
-		("The path to input directory/file for converting pointcloud data to a ply file(s).")
+		("The path to input directory/file for converting hyperspectral data to a multiband image file(s).")
 		.required()
 		| lyra::arg(output_directory, "output directory")
-		("The path to output directory/file for the ply file(s).")
+		("The path to output directory/file for the multiband image file(s).")
 		.required();
 
 	auto result = cli.parse({argc, argv});
@@ -81,9 +93,32 @@ int main(int argc, char** argv)
 	}
 
 
+	eExportFormat export_format = eExportFormat::BIL;
+	eHeaderFormat header_format = eHeaderFormat::ENVI;
+
+	if (!export_string.empty())
+	{
+		if (nStringUtils::iequal(export_string, "BIL"))
+			export_format = eExportFormat::BIL;
+		else if (nStringUtils::iequal(export_string, "BIP"))
+			export_format = eExportFormat::BIP;
+		else if (nStringUtils::iequal(export_string, "BSQ"))
+			export_format = eExportFormat::BSQ;
+	}
+
+	if (!header_string.empty())
+	{
+		if (nStringUtils::iequal(header_string, "ENVI"))
+			header_format = eHeaderFormat::ENVI;
+		else if (nStringUtils::iequal(header_string, "ArcMap"))
+			header_format = eHeaderFormat::ArcMap;
+	}
+
 	const std::filesystem::path input{ input_directory };
 
 	std::vector<directory_entry> files_to_process;
+
+	isFile = std::filesystem::is_regular_file(input);
 
 	/*
 	 * Create list of files to process
@@ -164,10 +199,10 @@ int main(int argc, char** argv)
 		std::filesystem::path out_file;
 		auto fe = removeProcessedTimestamp(in_file.path().filename().string());
 
-		if (isFile)
-		{
-			out_file = std::filesystem::path{ output_directory };
-		}
+//		if (isFile)
+//		{
+//			out_file = std::filesystem::path{ output_directory };
+//		}
 
 		if (out_file.empty())
 		{
@@ -182,6 +217,8 @@ int main(int argc, char** argv)
 		}
 
 		cFileProcessor* fp = new cFileProcessor(numFilesToProcess++, in_file, out_file);
+
+		fp->setFormat(export_format, header_format);
 
 		pool.push_task(&cFileProcessor::process_file, fp);
 
