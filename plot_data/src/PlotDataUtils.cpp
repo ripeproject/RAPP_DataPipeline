@@ -250,8 +250,10 @@ double nPlotUtils::computeDigitalBiomass_oct_tree(const cPlotPointCloud& plot, d
     return biomass;
 }
 
-double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot, double voxel_size_mm, int min_points_per_voxel)
+nPlotUtils::sVoxelResults_t nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot, double voxel_size_mm, int min_points_per_voxel)
 {
+    sVoxelResults_t result;
+
     auto num_points_in_cloud = plot.size();
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
@@ -280,24 +282,22 @@ double nPlotUtils::computeDigitalBiomass_voxel_grid(const cPlotPointCloud& plot,
 
     auto num_points_in_voxels = voxels->data.size();
 
-    auto num_voxels = voxels->height * voxels->width;
+    result.num_voxels = voxels->height * voxels->width;
 
-    double volume_mm3 = single_voxel_volume_mm3 * num_voxels;
+    double volume_mm3 = single_voxel_volume_mm3 * result.num_voxels;
 
     double dx_mm = plot.maxX_mm() - plot.minX_mm();
     double dy_mm = plot.maxY_mm() - plot.minY_mm();
 
     double area_mm2 = dx_mm * dy_mm;
 
-    double biomass = 0;
-
     if (area_mm2 > 0.0)
-        biomass = volume_mm3 / area_mm2;
+        result.digitalBiomass = volume_mm3 / area_mm2;
 
-    return biomass;
+    return result;
 }
 
-double nPlotUtils::computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot)
+nPlotUtils::sConvexHullResults_t nPlotUtils::computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot)
 {
 /*
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>),
@@ -352,7 +352,7 @@ double nPlotUtils::computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot
    
     return (0);
 */
-
+    sConvexHullResults_t result;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
 
@@ -394,21 +394,20 @@ double nPlotUtils::computeDigitalBiomass_convex_hull(const cPlotPointCloud& plot
     chull.setInputCloud(cloud_projected);
     chull.reconstruct(*cloud_hull);
 
+    result.num_convex_hull = cloud_hull->size();
 //    std::cerr << "Convex hull has: " << cloud_hull->size() << " data points." << std::endl;
 
-    double volume_mm3 = 0;
+    double volume_mm3 = chull.getTotalVolume();
 
     double dx_mm = plot.maxX_mm() - plot.minX_mm();
     double dy_mm = plot.maxY_mm() - plot.minY_mm();
 
     double area_mm2 = dx_mm * dy_mm;
 
-    double biomass = 0;
-
     if (area_mm2 > 0.0)
-        biomass = volume_mm3 / area_mm2;
+        result.digitalBiomass = volume_mm3 / area_mm2;
 
-    return biomass;
+    return result;
 }
 
 /*

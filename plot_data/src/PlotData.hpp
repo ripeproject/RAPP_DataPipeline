@@ -58,7 +58,7 @@ public:
 	void addBiomassMetaInfo(std::string_view info);
 	void addBiomassMetaInfo(const std::vector<std::string>& info);
 
-	void addPlotBiomass(int plot_id, int doy, double biomass);
+	void addPlotBiomass(int plot_id, int doy, int num_of_volume_points, double biomass);
 
 	void clearLAI_MetaInfo();
 	void addLAI_MetaInfo(std::string_view info);
@@ -90,6 +90,12 @@ public:
 	void write_replicate_height_file(const std::string& directory);
 	void write_replicate_height_file(const std::string& directory, const std::string& filename);
 
+	void write_plot_num_volume_points_file(const std::string& directory);
+	void write_plot_num_volume_points_file(const std::string& directory, const std::string& filename);
+
+	void write_replicate_num_volume_points_file(const std::string& directory);
+	void write_replicate_num_volume_points_file(const std::string& directory, const std::string& filename);
+
 	void write_plot_biomass_file(const std::string& directory);
 	void write_plot_biomass_file(const std::string& directory, const std::string& filename);
 
@@ -117,6 +123,12 @@ protected:
 
 	void write_replicate_height_file_by_row(std::ofstream& out);
 	void write_replicate_height_file_by_column(std::ofstream& out);
+
+	void write_plot_num_volume_points_file_by_row(std::ofstream& out);
+	void write_plot_num_volume_points_file_by_column(std::ofstream& out);
+
+	void write_replicate_num_volume_points_file_by_row(std::ofstream& out);
+	void write_replicate_num_volume_points_file_by_column(std::ofstream& out);
 
 	void write_plot_biomass_file_by_row(std::ofstream& out);
 	void write_plot_biomass_file_by_column(std::ofstream& out);
@@ -221,6 +233,23 @@ private:
 	std::map<int, std::vector<sGroupHeightData_t> > mGroupHeights;
 
 	std::vector<std::string> mBioMassMetaData;
+
+	struct sPlotNumVolumePointData_t
+	{
+		int doy = 0;
+		int num_volume_points = 0;
+	};
+
+	std::map<int, std::vector<sPlotNumVolumePointData_t> > mPlotNumVolumePoints;
+
+	struct sGroupNumVolumePoints_t
+	{
+		int doy = 0;
+		double avgNumVolumePoints = 0;
+		double stdNumVolumePoints = 0;
+	};
+
+	std::map<int, std::vector<sGroupNumVolumePoints_t> > mGroupNumVolumePoints;
 
 	struct sPlotBioMassData_t
 	{

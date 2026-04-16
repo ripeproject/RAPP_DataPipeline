@@ -580,6 +580,13 @@ wxThread::ExitCode cMainWindow::Entry()
 		mResults.write_replicate_height_file(mDstDirectory.ToStdString());
 	}
 
+	mResults.write_plot_num_volume_points_file(mDstDirectory.ToStdString());
+
+	if (mResults.hasGroupInfo())
+	{
+		mResults.write_replicate_num_volume_points_file(mDstDirectory.ToStdString());
+	}
+
 	mResults.write_plot_biomass_file(mDstDirectory.ToStdString());
 
 	if (mResults.hasGroupInfo())

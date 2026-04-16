@@ -454,21 +454,32 @@ void cFileProcessor::computePlotBioMasses()
         }
 
         double biomass = 0.0;
+        unsigned int num_volume_points = 0;
 
         switch (algorithm_type)
         {
         case eBiomassAlgorithmType::OCT_TREE:
+        {
             biomass = nPlotUtils::computeDigitalBiomass_oct_tree(plot, voxel_size_mm, min_bin_count);
             break;
+        }
         case eBiomassAlgorithmType::VOXEL_GRID:
-            biomass = nPlotUtils::computeDigitalBiomass_voxel_grid(plot, voxel_size_mm, min_bin_count);
-            break;
-        case eBiomassAlgorithmType::CONVEX_HULL:
-            biomass = nPlotUtils::computeDigitalBiomass_convex_hull(plot);
+        {
+            auto result = nPlotUtils::computeDigitalBiomass_voxel_grid(plot, voxel_size_mm, min_bin_count);
+            biomass = result.digitalBiomass;
+            num_volume_points = result.num_voxels;
             break;
         }
+        case eBiomassAlgorithmType::CONVEX_HULL:
+        {
+            auto result = nPlotUtils::computeDigitalBiomass_convex_hull(plot);
+            biomass = result.digitalBiomass;
+            num_volume_points = result.num_convex_hull;
+            break;
+        }
+        }
 
-        mResults.addPlotBiomass(plot.id(), mDayOfYear, biomass);
+        mResults.addPlotBiomass(plot.id(), mDayOfYear, num_volume_points, biomass);
     }
 }
 

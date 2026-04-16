@@ -238,8 +238,18 @@ void cPlotData::addBiomassMetaInfo(const std::vector<std::string>& info)
 	std::copy(info.begin(), info.end(), std::back_inserter(mBioMassMetaData));
 }
 
-void cPlotData::addPlotBiomass(int plot_id, int doy, double biomass)
+void cPlotData::addPlotBiomass(int plot_id, int doy, int num_of_volume_points, double biomass)
 {
+	if (num_of_volume_points > 0)
+	{
+		sPlotNumVolumePointData_t data;
+
+		data.doy = doy;
+		data.num_volume_points = num_of_volume_points;
+
+		mPlotNumVolumePoints[plot_id].push_back(data);
+	}
+
 	sPlotBioMassData_t data;
 
 	data.doy = doy;
@@ -811,7 +821,7 @@ void cPlotData::write_plot_num_points_file(const std::string& directory, const s
 	if (mDates.empty())
 		return;
 
-	if (mPlotHeights.empty())
+	if (mPlotNumPoints.empty())
 		return;
 
 	std::filesystem::path plot_num_points_file = directory;
@@ -1340,6 +1350,264 @@ void cPlotData::write_replicate_height_file_by_column(std::ofstream& out)
 			out << ",\n";
 		else
 			out << height->avgHeight_mm << ", " << height->stdHeight_mm << "\n";
+	}
+}
+
+void cPlotData::write_plot_num_volume_points_file(const std::string& directory)
+{
+	write_plot_num_volume_points_file(directory, mRootFileName);
+}
+
+void cPlotData::write_plot_num_volume_points_file(const std::string& directory, const std::string& filename)
+{
+	if (mDates.empty())
+		return;
+
+	if (mPlotNumVolumePoints.empty())
+		return;
+
+	std::filesystem::path plot_num_volume_points_file = directory;
+
+	plot_num_volume_points_file /= filename;
+	plot_num_volume_points_file.replace_extension("plot_num_volume_points.csv");
+
+	std::ofstream out;
+	out.open(plot_num_volume_points_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	if (mSaveRowMajor)
+		write_plot_num_volume_points_file_by_row(out);
+	else
+		write_plot_num_volume_points_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_plot_num_volume_points_file_by_row(std::ofstream& out)
+{
+	auto doy_last = --(mDates.end());
+
+	out << "Date, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "DayOfYear, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ", ";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& plot : mPlotNumVolumePoints)
+	{
+		out << "Plot_" << plot.first << ", ";
+
+		const auto& numPoints = plot.second;
+
+		for (auto date = mDates.begin(); date != doy_last; ++date)
+		{
+			auto doy = date->doy;
+
+			auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (points == numPoints.end())
+				out << ", ";
+			else
+				out << points->num_volume_points << ", ";
+		}
+
+		auto doy = doy_last->doy;
+
+		auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (points == numPoints.end())
+			out << "\n";
+		else
+			out << points->num_volume_points << "\n";
+	}
+}
+
+void cPlotData::write_plot_num_volume_points_file_by_column(std::ofstream& out)
+{
+	out << "Date, " << "DayOfYear, ";
+
+	auto plot_last = --(mPlotNumVolumePoints.end());
+	for (auto it = mPlotNumVolumePoints.begin(); it != plot_last; ++it)
+	{
+		out << "Plot_" << it->first << ", ";
+	}
+	out << "Plot_" << plot_last->first << "\n";
+
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
+
+		auto doy = date_it->doy;
+
+		for (auto it = mPlotNumVolumePoints.begin(); it != plot_last; ++it)
+		{
+			const auto& numPoints = it->second;
+
+			auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (points == numPoints.end())
+				out << ", ";
+			else
+				out << points->num_volume_points << ", ";
+		}
+
+		const auto& numPoints = plot_last->second;
+
+		auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (points == numPoints.end())
+			out << "\n";
+		else
+			out << points->num_volume_points << "\n";
+	}
+}
+
+void cPlotData::write_replicate_num_volume_points_file(const std::string& directory)
+{
+	write_replicate_num_volume_points_file(directory, mRootFileName);
+}
+
+void cPlotData::write_replicate_num_volume_points_file(const std::string& directory, const std::string& filename)
+{
+	if (mDates.empty())
+		return;
+
+	if (mGroupNumVolumePoints.empty())
+		return;
+
+	std::filesystem::path num_volume_points_file = directory;
+
+	num_volume_points_file /= filename;
+	num_volume_points_file.replace_extension("num_volume_points.csv");
+
+	std::ofstream out;
+	out.open(num_volume_points_file, std::ios::trunc);
+	if (!out.is_open())
+		return;
+
+	if (mSaveRowMajor)
+		write_replicate_num_volume_points_file_by_row(out);
+	else
+		write_replicate_num_volume_points_file_by_column(out);
+
+	out.close();
+}
+
+void cPlotData::write_replicate_num_volume_points_file_by_row(std::ofstream& out)
+{
+	auto doy_last = --(mDates.end());
+
+	out << "Date, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->month << "/" << it->day << "/" << it->year << ", ";
+	}
+	out << doy_last->month << "/" << doy_last->day << "/" << doy_last->year << "\n";
+
+	out << "Day of Year, ";
+	for (auto it = mDates.begin(); it != doy_last; ++it)
+	{
+		out << it->doy << ", ";
+	}
+	out << doy_last->doy << "\n";
+
+	for (const auto& group : mGroupNumVolumePoints)
+	{
+		auto group_num = group.first + 1;
+
+		out << "Group_" << group_num << ", ";
+
+		const auto& num_points = group.second;
+
+		auto last = num_points.end();
+		--last;
+
+		for (auto it = num_points.begin(); it != last; ++it)
+		{
+			out << it->avgNumVolumePoints << ", " << it->stdNumVolumePoints << ", ";
+		}
+		out << last->avgNumVolumePoints << ", " << last->stdNumVolumePoints << "\n";
+	}
+}
+
+void cPlotData::write_replicate_num_volume_points_file_by_column(std::ofstream& out)
+{
+	out << "Date, " << "DayOfYear, ";
+
+	auto group_last = mGroups.size();
+	--group_last;
+
+	for (auto i = 0; i < group_last; ++i)
+	{
+		auto group_num = i + 1;
+		out << "Group_" << group_num << " (avg), " << "Group_" << group_num << " (std dev), ";
+	}
+	++group_last;
+	out << "Group_" << group_last << " (avg), " << "Group_" << group_last << " (std dev)\n";
+
+	auto num_points_last = --(mGroupNumVolumePoints.end());
+
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
+
+		auto doy = date_it->doy;
+
+		for (auto it = mGroupNumVolumePoints.begin(); it != num_points_last; ++it)
+		{
+			const auto& num_points = it->second;
+
+			auto num_point = std::find_if(num_points.begin(), num_points.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (num_point == num_points.end())
+				out << ", , ";
+			else
+				out << num_point->avgNumVolumePoints << ", " << num_point->stdNumVolumePoints << ", ";
+		}
+
+		const auto& num_points = num_points_last->second;
+
+		auto num_point = std::find_if(num_points.begin(), num_points.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+
+		if (num_point == num_points.end())
+			out << ",,\n";
+		else
+			out << num_point->avgNumVolumePoints << ", " << num_point->stdNumVolumePoints << "\n";
 	}
 }
 
