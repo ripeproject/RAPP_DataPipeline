@@ -3,7 +3,7 @@
 #include "MainWindow.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
-    #include "Resources/Export2Png.xpm"
+    #include "Resources/Export2Bil.xpm"
 #endif
 
 #include <wx/aui/framemanager.h>
@@ -47,7 +47,7 @@ cMainFrame::cMainFrame()
 	mpMainWindow = new cMainWindow(this);
 
 	// set the frame icon
-	SetIcon(wxICON(Export2Png));
+	SetIcon(wxICON(Export2Bil));
 
 #if wxUSE_MENUBAR
 	// create a menu bar
@@ -123,12 +123,12 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.SetCopyright(wxT("Copyright (c) 2023..26, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
-	info.SetIcon(wxICON(Export2Png));
+	info.SetIcon(wxICON(Export2Bil));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
 		"This license applies to all files in the hyperspectral2bil repository and source\n"
-		"distribution.This includes hyperspectral2png’s source code, the examples, and\n"
+		"distribution.This includes hyperspectral2bil’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
 		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
