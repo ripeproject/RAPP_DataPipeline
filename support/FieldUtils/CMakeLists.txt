@@ -65,7 +65,7 @@ endif()
 # PROJECT LANGUAGE SUPPORT
 #******************************************************************************
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Turn off any compiler extensions
@@ -81,7 +81,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 #find_package(Eigen3 REQUIRED)
 find_package(dlib REQUIRED)
-find_package(csv2 REQUIRED)
+find_package(rapidcsv REQUIRED)
 find_package(VTK 9.0 REQUIRED COMPONENTS 
   CommonCore
   CommonDataModel
