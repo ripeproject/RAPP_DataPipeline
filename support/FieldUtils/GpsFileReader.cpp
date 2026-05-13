@@ -2,8 +2,6 @@
 #include "GpsFileReader.hpp"
 #include "RappFieldBoundary.hpp"
 
-#include "Constants.hpp"
-
 #include <rapidcsv.h>
 
 cGpsFileReader::cGpsFileReader()
@@ -27,7 +25,7 @@ const std::vector<rfm::rappPoint_t>& cGpsFileReader::GetRappPoints() const
 
 void cGpsFileReader::loadFromFile(const std::string& filename)
 {
-	rapidcsv::Document doc(filename, rapidcsv::LabelParams(0, 0));
+	rapidcsv::Document doc(filename, rapidcsv::LabelParams(0, -1));
 
 	if (doc.GetColumnCount() == 0)
 	{
@@ -36,7 +34,7 @@ void cGpsFileReader::loadFromFile(const std::string& filename)
 
 	bool isIlStatePlane = true;
 
-	auto header = doc.GetColumnNames();	//reader.header();
+	auto header = doc.GetColumnNames();
 
 	if (header.size() > 0)
 	{
@@ -75,31 +73,13 @@ void cGpsFileReader::loadFromFile(const std::string& filename)
 	auto c = doc.GetColumnCount();
 	auto n = doc.GetRowCount();
 
-/*
-	for (const auto& row : reader)
+	for (size_t i = 0; i < n; ++i)
 	{
-		if (row.length() == 0) break;
+		auto values = doc.GetRow<std::string>(i);
 
-		auto it = row.begin();
-
-		std::string val;
-		(*it).read_value<std::string>(val);
-		++it;	// The first value is the point label, which we don't care about
-		val.clear();
-
-		(*it).read_value<std::string>(val);
-		auto northing_ft = std::stod(val);
-		++it;
-		val.clear();
-
-		(*it).read_value<std::string>(val);
-		auto easting_ft = std::stod(val);
-		++it;
-		val.clear();
-
-		(*it).read_value<std::string>(val);
-		auto elevation_ft = std::stod(val);
-		val.clear();
+		auto northing_ft = std::stod(values.at(1));
+		auto easting_ft = std::stod(values.at(2));
+		auto elevation_ft = std::stod(values.at(3));
 
 		rfm::rappPoint_t point;
 		if (isIlStatePlane)
@@ -112,6 +92,5 @@ void cGpsFileReader::loadFromFile(const std::string& filename)
 		}
 		mRappPoints.emplace_back(point);
 	}
-*/
 }
 
