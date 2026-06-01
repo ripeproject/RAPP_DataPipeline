@@ -3,9 +3,9 @@
 #include "OusterDataIdentifiers.hpp"
 #include "BlockDataFile.hpp"
 
-#include <ouster/ouster_defs.h>
-#include <ouster/ouster_utils.h>
-#include <ouster/OusterLidarData.h>
+#include <ouster_connect/ouster_defs.h>
+#include <ouster_connect/ouster_utils.h>
+#include <ouster_connect/OusterLidarData.h>
 
 #include <cassert>
 #include <stdexcept>

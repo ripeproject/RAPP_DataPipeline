@@ -2,7 +2,7 @@
 #include "OusterVerificationParser.hpp"
 #include "ParserExceptions.hpp"
 
-#include <ouster/ouster_defs.h>
+#include <ouster_connect/ouster_defs.h>
 
 #include <stdexcept>
 

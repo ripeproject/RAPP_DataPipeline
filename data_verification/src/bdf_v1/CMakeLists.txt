@@ -58,7 +58,7 @@ PRIVATE
 
 target_include_directories(BlockDataFile_v1 PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
 
-target_link_libraries(BlockDataFile_v1 PUBLIC ouster::ouster_static)
+target_link_libraries(BlockDataFile_v1 PUBLIC ouster_connect::ouster_connect_minimal)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
