@@ -3,8 +3,8 @@
 #include "OusterDataIdentifiers.hpp"
 #include "BlockDataFile.hpp"
 
-#include <ouster/ouster_utils.h>
-#include <ouster/OusterLidarData.h>
+#include <ouster_connect/ouster_utils.h>
+#include <ouster_connect/OusterLidarData.h>
 
 #include <stdexcept>
 

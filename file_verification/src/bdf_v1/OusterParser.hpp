@@ -7,8 +7,8 @@
 #include "BlockParser.hpp"
 #include "OusterBlockId.hpp"
 
-#include <ouster/ouster_defs.h>
-#include <ouster/OusterLidarData.h>
+#include <ouster_connect/ouster_defs.h>
+#include <ouster_connect/OusterLidarData.h>
 
 // Forward Declarations
 class cOusterLidarData;
