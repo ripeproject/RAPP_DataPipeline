@@ -16,7 +16,9 @@ public:
 	cGpsFileReader();
 	explicit cGpsFileReader(const std::string& filename);
 
-	void loadFromFile(const std::string& filename);
+	bool empty() const;
+
+	bool loadFromFile(const std::string& filename);
 
 	const std::optional<rfm::rappPoint_t>& GetRefPoint() const;
 

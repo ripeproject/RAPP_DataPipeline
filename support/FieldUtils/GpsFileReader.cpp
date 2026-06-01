@@ -13,6 +13,12 @@ cGpsFileReader::cGpsFileReader(const std::string& filename)
 	loadFromFile(filename);
 }
 
+bool cGpsFileReader::empty() const
+{
+	return mRappPoints.empty();
+}
+
+
 const std::optional<rfm::rappPoint_t>& cGpsFileReader::GetRefPoint() const
 {
 	return mRefPoint;
@@ -23,13 +29,13 @@ const std::vector<rfm::rappPoint_t>& cGpsFileReader::GetRappPoints() const
 	return mRappPoints;
 }
 
-void cGpsFileReader::loadFromFile(const std::string& filename)
+bool cGpsFileReader::loadFromFile(const std::string& filename)
 {
 	rapidcsv::Document doc(filename, rapidcsv::LabelParams(0, -1));
 
 	if (doc.GetColumnCount() == 0)
 	{
-		return;
+		return false;
 	}
 
 	bool isIlStatePlane = true;
@@ -92,5 +98,7 @@ void cGpsFileReader::loadFromFile(const std::string& filename)
 		}
 		mRappPoints.emplace_back(point);
 	}
+
+	return true;
 }
 
