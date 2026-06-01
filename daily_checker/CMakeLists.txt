@@ -66,7 +66,7 @@ endif()
 
 # Use integer versions instead of strings for easier handling if required
 SET(DAILY_CHECKER_MAJOR 1)
-SET(DAILY_CHECKER_MINOR 0)
+SET(DAILY_CHECKER_MINOR 2)
 SET(DAILY_CHECKER_PATCH 0)
 SET(DAILY_CHECKER_TWEAK 0)
 
@@ -167,11 +167,9 @@ find_package(file_verificator REQUIRED)
 find_package(file_repair REQUIRED)
 find_package(data_verificator REQUIRED)
 find_package(data_repair REQUIRED)
-find_package(ouster REQUIRED)
-find_package(ssnx REQUIRED)
-#FIND_PACKAGE(ssnx2net REQUIRED)
-#FIND_PACKAGE(spidercam REQUIRED)
-
+find_package(ouster_connect REQUIRED)
+find_package(ssnx_connect REQUIRED)
+find_package(lucid_vision_labs_connect REQUIRED)
 
 #******************************************************************************
 # BUILD TYPE AND CODE
