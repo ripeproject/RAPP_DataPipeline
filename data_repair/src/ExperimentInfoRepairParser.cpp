@@ -528,6 +528,42 @@ void cExperimentInfoRepairParser::onComment(const std::string& comments)
 	mComments.push_back(comments);
 }
 
+
+void cExperimentInfoRepairParser::onBeginCustomInfoList()
+{
+	if (mSerializer)
+	{
+		if (!mNeedsUpdating)
+			mSerializer.writeBeginCustomInfoBlock();
+
+		return;
+	}
+
+	mCustomInfo.clear();
+}
+
+void cExperimentInfoRepairParser::onEndOfCustomInfoList()
+{
+	if (mSerializer && !mNeedsUpdating)
+		mSerializer.writeEndOfCustomInfoBlock();
+}
+
+void cExperimentInfoRepairParser::onCustomInfo(const std::string& tag, const std::string& info)
+{
+	if (mSerializer)
+	{
+		if (!mNeedsUpdating)
+			mSerializer.writeCustomInfo(tag, info);
+
+		return;
+	}
+
+	if (tag.empty() || info.empty())
+		return;
+
+	mCustomInfo[tag] = info;
+}
+
 void cExperimentInfoRepairParser::onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day)
 {
 	if (mSerializer)

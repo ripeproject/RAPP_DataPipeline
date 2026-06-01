@@ -314,9 +314,9 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		std::tie(month, day, year) = date_split(date_string);
 
 		nExpTypes::sDateDoy_t date;
-		date.month = std::stoi(month);
-		date.day = std::stoi(day);
-		date.year = std::stoi(year);
+		date.month = static_cast<uint8_t>(std::stoi(month));
+		date.day = static_cast<uint8_t>(std::stoi(day));
+		date.year = static_cast<uint16_t>(std::stoi(year));
 		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mPlantingDate = date;
@@ -328,9 +328,9 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		std::tie(day, month, year) = date_split(date_string);
 
 		nExpTypes::sDateDoy_t date;
-		date.month = std::stoi(month);
-		date.day = std::stoi(day);
-		date.year = std::stoi(year);
+		date.month = static_cast<uint8_t>(std::stoi(month));
+		date.day = static_cast<uint8_t>(std::stoi(day));
+		date.year = static_cast<uint16_t>(std::stoi(year));
 		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mPlantingDate = date;
@@ -342,9 +342,9 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		std::tie(year, month, day) = date_split(date_string);
 
 		nExpTypes::sDateDoy_t date;
-		date.month = std::stoi(month);
-		date.day = std::stoi(day);
-		date.year = std::stoi(year);
+		date.month = static_cast<uint8_t>(std::stoi(month));
+		date.day = static_cast<uint8_t>(std::stoi(day));
+		date.year = static_cast<uint16_t>(std::stoi(year));
 		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mPlantingDate = date;
@@ -356,9 +356,9 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		std::tie(month, day, year) = date_split(date_string);
 
 		nExpTypes::sDateDoy_t date;
-		date.month = std::stoi(month);
-		date.day = std::stoi(day);
-		date.year = std::stoi(year);
+		date.month = static_cast<uint8_t>(std::stoi(month));
+		date.day = static_cast<uint8_t>(std::stoi(day));
+		date.year = static_cast<uint16_t>(std::stoi(year));
 		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mHarvestDate = date;
@@ -370,9 +370,9 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		std::tie(day, month, year) = date_split(date_string);
 
 		nExpTypes::sDateDoy_t date;
-		date.month = std::stoi(month);
-		date.day = std::stoi(day);
-		date.year = std::stoi(year);
+		date.month = static_cast<uint8_t>(std::stoi(month));
+		date.day = static_cast<uint8_t>(std::stoi(day));
+		date.year = static_cast<uint16_t>(std::stoi(year));
 		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mHarvestDate = date;
@@ -384,9 +384,9 @@ void cExperimentInfoFromJson::parse(const nlohmann::json& jdoc)
 		std::tie(year, month, day) = date_split(date_string);
 
 		nExpTypes::sDateDoy_t date;
-		date.month = std::stoi(month);
-		date.day = std::stoi(day);
-		date.year = std::stoi(year);
+		date.month = static_cast<uint8_t>(std::stoi(month));
+		date.day = static_cast<uint8_t>(std::stoi(day));
+		date.year = static_cast<uint16_t>(std::stoi(year));
 		date.doy = nDateUtils::to_day_of_year(month, day, year);
 
 		mHarvestDate = date;

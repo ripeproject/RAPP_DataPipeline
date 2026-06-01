@@ -15,6 +15,7 @@
 #include <optional>
 #include <vector>
 #include <memory>
+#include <map>
 
 // Forward Declarations
 namespace cdr
@@ -77,6 +78,10 @@ protected:
 	void onEndOfCommentList() override;
 	void onComment(const std::string& comments) override;
 
+	void onBeginCustomInfoList() override;
+	void onEndOfCustomInfoList() override;
+	void onCustomInfo(const std::string& tag, const std::string& info) override;
+
 	void onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) override;
 	void onFileTime(std::uint8_t hour, std::uint8_t minute, std::uint8_t seconds) override;
 
@@ -118,6 +123,8 @@ private:
 	std::string mAuthorization;
 	std::string mPermit;
 	std::string mTrial;
+
+	std::map<std::string, std::string> mCustomInfo;
 
 	std::optional<nExpTypes::sDateDoy_t> mPlantingDate;
 	std::optional<nExpTypes::sDateDoy_t> mHarvestDate;

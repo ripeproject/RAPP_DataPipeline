@@ -36,12 +36,12 @@ void new_file_progress(const int id, std::string filename)
 
 void update_prefix_progress(const int id, std::string prefix, const int progress_pct)
 {
-	progress_bar.updateProgressEntry(id, prefix, progress_pct);
+	progress_bar.updateProgressEntry(id, prefix, static_cast<float>(progress_pct));
 }
 
 void update_progress(const int id, const int progress_pct)
 {
-	progress_bar.updateProgressEntry(id, progress_pct);
+	progress_bar.updateProgressEntry(id, static_cast<float>(progress_pct));
 }
 
 void complete_file_progress(const int id, std::string prefix, std::string suffix)
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 
 	std::vector<cDataRepairProcessor*> file_processors;
 
-	int numFilesToProcess = 0;
+	numFilesToProcess = 0;
 	for (auto& file : files_to_repair)
 	{
 		cDataRepairProcessor* fp = new cDataRepairProcessor(numFilesToProcess++, temporary_dir, failed_dir, repaired_dir, experiment_dir);

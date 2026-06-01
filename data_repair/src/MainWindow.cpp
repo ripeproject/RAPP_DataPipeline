@@ -68,7 +68,7 @@ namespace
 
 					exp_files.insert(std::make_pair(filename, entry));
 				}
-				catch (const std::exception& e)
+				catch (const std::exception& )
 				{
 				}
 			}

@@ -25,6 +25,11 @@ set_target_properties(CeresDataRepair_static PROPERTIES LANGUAGE CXX)
 
 target_compile_features(CeresDataRepair_static PRIVATE cxx_std_20)
 
+target_compile_options(CeresDataRepair_static PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+	$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 #target_include_directories(FileVerificator_static PUBLIC
 #	$<BUILD_INTERFACE:${LIBSPIDERCAM_INCLUDE_DIR}>
 #	$<INSTALL_INTERFACE:include>
@@ -57,6 +62,7 @@ PRIVATE
 
 target_include_directories(CeresDataRepair_static PRIVATE "../support/Utilities")
 
+
 #target_link_libraries(CeresDataRepair_static PRIVATE utilities)
 
 #
@@ -76,6 +82,11 @@ set_target_properties(console_app PROPERTIES LANGUAGE CXX)
 set_target_properties(console_app PROPERTIES OUTPUT_NAME "DataRepair")
 
 target_compile_features(console_app PRIVATE cxx_std_20)
+
+target_compile_options(console_app PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+	$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
 
 target_sources(console_app
 PRIVATE
@@ -135,6 +146,11 @@ if(wxWidgets_FOUND)
 	set_target_properties(gui_app PROPERTIES OUTPUT_NAME "CeresDataRepair")
 
 	target_compile_features(gui_app PRIVATE cxx_std_20)
+
+	target_compile_options(gui_app PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+		$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+	)
 
 	target_sources(gui_app
 	PRIVATE

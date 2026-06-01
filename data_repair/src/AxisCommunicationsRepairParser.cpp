@@ -55,7 +55,7 @@ void cAxisCommunicationsRepairParser::onImageSize(uint8_t instance_id, int width
         throw bdf::invalid_data("Invalid image size!");
     }
 
-    mSerializer.writeImageSize(instance_id, width, height);
+    mSerializer.writeImageSize(instance_id, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
 }
 
 void cAxisCommunicationsRepairParser::onBitmap(uint8_t instance_id, const cBitmapBuffer& buffer)
