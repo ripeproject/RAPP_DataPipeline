@@ -102,6 +102,7 @@ target_include_directories(kinematic_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/.
 
 target_link_libraries(kinematic_utils PRIVATE field_utils)
 target_link_libraries(kinematic_utils PRIVATE math_utils)
+target_link_libraries(kinematic_utils PUBLIC cbdf::ctrl cbdf::gps cbdf::lidar)
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries

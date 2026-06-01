@@ -8,8 +8,8 @@
 #include <cbdf/SpiderCamInfoTypes.hpp>
 #include <cbdf/SsnxInfoTypes.hpp>
 
-#include <ouster/simple_blas.h>
-#include <ouster/ouster_utils.h>
+#include <ouster_connect/simple_blas.h>
+#include <ouster_connect/ouster_utils.h>
 
 #include <vector>
 #include <deque>
