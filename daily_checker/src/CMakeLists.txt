@@ -1,5 +1,12 @@
 
 
+# Configure version resource file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/CeresDailyChecker.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/CeresDailyChecker.rc
+    @ONLY
+)
+
 # Create the version information code
 configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
