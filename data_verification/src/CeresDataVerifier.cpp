@@ -228,8 +228,12 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
     {
         if (gps->mNumPosition == 0)
         {
+            mMessage = "Missing GPS position data!";
+
             std::string msg = mFileToCheck.string();
-            msg += ": Missing GPS position data!";
+            msg += ": ";
+            msg += mMessage;
+
             console_message(msg);
 
             return eRETURN_TYPE::WARNING_MISSING_DATA;
@@ -240,8 +244,12 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
     {
         if (ouster->mNumLidarDataFrames == 0)
         {
+            mMessage = "Missing LiDAR data!";
+
             std::string msg = mFileToCheck.string();
-            msg += ": Missing LiDAR data!";
+            msg += ": ";
+            msg += mMessage;
+
             console_message(msg);
 
             return eRETURN_TYPE::WARNING_MISSING_DATA;
@@ -252,8 +260,12 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
     {
         if (axis->mNumImages == 0)
         {
+            mMessage = "Missing Axis Communications data!";
+
             std::string msg = mFileToCheck.string();
-            msg += ": Missing Axis Communications data!";
+            msg += ": ";
+            msg += mMessage;
+
             console_message(msg);
 
             return eRETURN_TYPE::WARNING_MISSING_DATA;
@@ -264,8 +276,12 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
     {
         if (vnir->mNumImages == 0)
         {
+            mMessage = "Missing HySpex VNIR 3000N image data!";
+
             std::string msg = mFileToCheck.string();
-            msg += ": Missing HySpex VNIR 3000N image data!";
+            msg += ": ";
+            msg += mMessage;
+
             console_message(msg);
 
             return eRETURN_TYPE::WARNING_MISSING_DATA;
@@ -276,8 +292,12 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
     {
         if (swir->mNumImages == 0)
         {
+            mMessage = "Missing HySpex SWIR 384 image data!";
+
             std::string msg = mFileToCheck.string();
-            msg += ": Missing HySpex SWIR 384 image data!";
+            msg += ": ";
+            msg += mMessage;
+
             console_message(msg);
 
             return eRETURN_TYPE::WARNING_MISSING_DATA;

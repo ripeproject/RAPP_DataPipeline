@@ -127,22 +127,28 @@ void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 
 void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
+	wxString version = CERES_DAILY_CHECKER_MAJOR_VERSION;
+	version += ".";
+	version += CERES_DAILY_CHECKER_MINOR_VERSION;
+
+	wxString full_version = CERES_DAILY_CHECKER_VERSION;
+
 	wxAboutDialogInfo info;
 	info.SetName(wxTheApp->GetAppDisplayName());
-	info.SetVersion("1.0", "Version 1.0");
+	info.SetVersion(version, "Version " + full_version);
 	info.SetDescription(_("Verifies the data integrity of Ceres data files.\n"));
-	info.SetCopyright(wxT("Copyright (c) 2025, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetCopyright(wxT("Copyright (c) 2026, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(CeresDailyChecker));
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the data_verificator repository and source\n"
-		"distribution.This includes data_verificator’s source code, the examples, and\n"
+		"This license applies to all files in the data_checker repository and source\n"
+		"distribution.This includes data_checker’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
-		"Copyright(c) 2025, Carl R.Woese Institute for Genomic Biology\n"
+		"Copyright(c) 2026, Carl R.Woese Institute for Genomic Biology\n"
 		"All rights reserved.\n"
 		"\n"
 		"Redistribution and use in source and binary forms, with or without\n"

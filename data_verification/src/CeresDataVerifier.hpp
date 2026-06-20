@@ -39,6 +39,8 @@ public:
 	bool open(std::filesystem::path file_to_check);
 	eRETURN_TYPE run();
 
+	const std::string& message() const { return mMessage; }
+
 protected:
 	void moveFileToInvalid();
 
@@ -53,5 +55,7 @@ private:
 	std::filesystem::path mInvalidDirectory;
 	std::filesystem::path mFileToCheck;
 	std::filesystem::path mExperimentFile;
+
+	std::string mMessage;
 };
 

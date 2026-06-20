@@ -199,6 +199,12 @@ void cCeresDailyChecker::process_file()
                 return;
 
             }
+            case cCeresDataVerifier::eRETURN_TYPE::WARNING_MISSING_DATA:
+            {
+                complete_file_progress(mID, "Warning", pDataVerifier->message());
+                return;
+
+            }
             }
         }
         catch (const std::exception& e)

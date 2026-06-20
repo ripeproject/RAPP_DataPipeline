@@ -61,7 +61,7 @@ target_link_libraries(console_app PRIVATE data_verificator::CeresDataVerifier_st
 target_link_libraries(console_app PRIVATE data_repair::CeresDataRepair_static)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
-target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
+target_link_libraries(console_app PRIVATE cbdf::gps cbdf::lidar cbdf::rgb cbdf::hyperspectral)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
 
@@ -124,6 +124,14 @@ if(wxWidgets_FOUND)
 		GuiApp.cpp
 	)
 
+	get_source_file_property(defs MainFrame.cpp COMPILE_DEFINITIONS)
+		list(APPEND defs "CERES_DAILY_CHECKER_VERSION=\"${daily_checker_VERSION}\"")
+		list(APPEND defs "CERES_DAILY_CHECKER_MAJOR_VERSION=\"${daily_checker_VERSION_MAJOR}\"")
+		list(APPEND defs "CERES_DAILY_CHECKER_MINOR_VERSION=\"${daily_checker_VERSION_MINOR}\"")
+		set_source_files_properties(MainFrame.cpp PROPERTIES
+			COMPILE_DEFINITIONS "${defs}"
+	)
+
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
@@ -139,7 +147,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE data_repair::CeresDataRepair_static)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
-	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)
+	target_link_libraries(gui_app PRIVATE cbdf::gps cbdf::lidar cbdf::rgb cbdf::hyperspectral)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE utilities)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
