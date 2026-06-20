@@ -61,7 +61,7 @@ if (MSVC)
 endif()
 
 # Use integer versions instead of strings for easier handling if required
-SET(DATA_VERIFICATOR_MAJOR 1)
+SET(DATA_VERIFICATOR_MAJOR 2)
 SET(DATA_VERIFICATOR_MINOR 0)
 SET(DATA_VERIFICATOR_PATCH 0)
 
@@ -161,6 +161,7 @@ find_package(wxWidgets QUIET COMPONENTS core base aui)
 find_package(CBDF REQUIRED cbdf sensors)
 find_package(ouster_connect REQUIRED)
 find_package(ssnx_connect REQUIRED)
+find_package(hyspex_connect REQUIRED)
 find_package(lucid_vision_labs_connect REQUIRED)
 
 
