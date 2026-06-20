@@ -7,6 +7,8 @@
 
 void cAxisCommunicationsVerificationParser::onActiveCameraId(uint8_t instance_id, int id)
 {
+    sensorPresent = true;
+
     if ((id < 1) || (id > 4))
     {
         throw bdf::invalid_data("Invalid active camera id!");
@@ -15,6 +17,8 @@ void cAxisCommunicationsVerificationParser::onActiveCameraId(uint8_t instance_id
 
 void cAxisCommunicationsVerificationParser::onFramesPerSecond(uint8_t instance_id, int frames_per_sec)
 {
+    sensorPresent = true;
+
     if ((frames_per_sec < 1) || (frames_per_sec > 30))
     {
         throw bdf::invalid_data("Invalid frames per second!");
@@ -23,6 +27,8 @@ void cAxisCommunicationsVerificationParser::onFramesPerSecond(uint8_t instance_i
 
 void cAxisCommunicationsVerificationParser::onImageSize(uint8_t instance_id, int width, int height)
 {
+    sensorPresent = true;
+
     bool validWidth = (width == 480) || (width == 640) || (width == 800) ||
         (width == 854) || (width == 1024) || (width == 1280) || (width == 1920);
 
@@ -38,13 +44,22 @@ void cAxisCommunicationsVerificationParser::onImageSize(uint8_t instance_id, int
 }
 
 void cAxisCommunicationsVerificationParser::onBitmap(uint8_t instance_id, const cBitmapBuffer& buffer)
-{}
+{
+    sensorPresent = true;
+    ++mNumImages;
+}
 
 void cAxisCommunicationsVerificationParser::onJPEG(uint8_t instance_id, const cJpegBuffer& buffer)
-{}
+{
+    sensorPresent = true;
+    ++mNumImages;
+}
 
 void cAxisCommunicationsVerificationParser::onMpegFrame(uint8_t instance_id, const cMpegFrameBuffer& buffer)
-{}
+{
+    sensorPresent = true;
+    ++mNumImages;
+}
 
 void cAxisCommunicationsVerificationParser::processActiveCameraId(cDataBuffer& buffer)
 {

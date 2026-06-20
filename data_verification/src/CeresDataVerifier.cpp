@@ -1,8 +1,11 @@
 
 #include "CeresDataVerifier.hpp"
 #include "ParserExceptions.hpp"
+#include "SsnxVerificationParser.hpp"
 #include "OusterVerificationParser.hpp"
 #include "AxisCommunicationsVerificationParser.hpp"
+#include "HySpexVNIR_3000N_VerificationParser.hpp"
+#include "HySpexSWIR_384_VerificationParser.hpp"
 #include "ExperimentInfoFromJson.hpp"
 
 #include <cbdf/ExperimentInfoLoader.hpp>
@@ -121,6 +124,11 @@ void cCeresDataVerifier::process_file()
             complete_file_progress(mID, "Failed!");
             break;
         }
+        case eRETURN_TYPE::WARNING_MISSING_DATA:
+        {
+            complete_file_progress(mID, "Warning Missing Data");
+            break;
+        }
         case eRETURN_TYPE::COULD_NOT_OPEN_FILE:
             break;
         }
@@ -139,12 +147,20 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
     }
 
     auto info = std::make_unique<cExperimentInfoLoader>(mExperimentInfo);
+    auto gps = std::make_unique<cSsnxVerificationParser>();
     auto ouster = std::make_unique<cOusterVerificationParser>();
     auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
+    auto vnir = std::make_unique<cHySpexVNIR_3000N_VerificationParser>();
+    auto swir = std::make_unique<cHySpexSWIR_384_VerificationParser>();
+
 
     mFileReader.attach(info.get());
+    mFileReader.attach(gps.get());
     mFileReader.attach(ouster.get());
     mFileReader.attach(axis.get());
+    mFileReader.attach(vnir.get());
+    mFileReader.attach(swir.get());
+
 
     mFileSize = mFileReader.file_size();
 
@@ -208,6 +224,67 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
         }
     }
 
+    if (gps->sensorPresent)
+    {
+        if (gps->mNumPosition == 0)
+        {
+            std::string msg = mFileToCheck.string();
+            msg += ": Missing GPS position data!";
+            console_message(msg);
+
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
+        }
+    }
+
+    if (ouster->sensorPresent)
+    {
+        if (ouster->mNumLidarDataFrames == 0)
+        {
+            std::string msg = mFileToCheck.string();
+            msg += ": Missing LiDAR data!";
+            console_message(msg);
+
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
+        }
+    }
+
+    if (axis->sensorPresent)
+    {
+        if (axis->mNumImages == 0)
+        {
+            std::string msg = mFileToCheck.string();
+            msg += ": Missing Axis Communications data!";
+            console_message(msg);
+
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
+        }
+    }
+
+    if (vnir->sensorPresent)
+    {
+        if (vnir->mNumImages == 0)
+        {
+            std::string msg = mFileToCheck.string();
+            msg += ": Missing HySpex VNIR 3000N image data!";
+            console_message(msg);
+
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
+        }
+    }
+
+    if (swir->sensorPresent)
+    {
+        if (swir->mNumImages == 0)
+        {
+            std::string msg = mFileToCheck.string();
+            msg += ": Missing HySpex SWIR 384 image data!";
+            console_message(msg);
+
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
+        }
+    }
+
+
     // Check the experiment information to see is the most basic information is there...
     if (!mExperimentInfo->experimentDoc().empty())
     {
@@ -222,7 +299,7 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
 
             moveFileToInvalid();
 
-            return eRETURN_TYPE::INVALID_DATA;
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
         }
 
         return eRETURN_TYPE::PASSED;

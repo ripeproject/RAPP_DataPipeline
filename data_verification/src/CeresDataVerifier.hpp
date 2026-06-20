@@ -22,7 +22,7 @@ namespace ceres_data_verifier
 class cCeresDataVerifier 
 {
 public:
-	enum class eRETURN_TYPE {PASSED, COULD_NOT_OPEN_FILE, INVALID_DATA, INVALID_FILE };
+	enum class eRETURN_TYPE {PASSED, COULD_NOT_OPEN_FILE, INVALID_DATA, INVALID_FILE, WARNING_MISSING_DATA};
 
 
 public:

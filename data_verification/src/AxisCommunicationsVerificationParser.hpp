@@ -9,6 +9,10 @@
 class cAxisCommunicationsVerificationParser : public cAxisCommunicationsParser
 {
 public:
+	bool sensorPresent = false;
+
+	int mNumImages = 0;
+
 	void onActiveCameraId(uint8_t instance_id, int id) override;
 	void onFramesPerSecond(uint8_t instance_id, int frames_per_sec) override;
 	void onImageSize(uint8_t instance_id, int width, int height) override;

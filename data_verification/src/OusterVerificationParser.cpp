@@ -7,31 +7,48 @@
 using namespace ouster;
 
 void cOusterVerificationParser::onConfigParam(uint8_t instance_id, ouster::config_param_2_t config_param)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onSensorInfo(uint8_t instance_id, ouster::sensor_info_2_t sensor_info)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onTimestamp(uint8_t instance_id, ouster::timestamp_2_t timestamp)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onSyncPulseIn(uint8_t instance_id, ouster::sync_pulse_in_2_t pulse_info)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onSyncPulseOut(uint8_t instance_id, ouster::sync_pulse_out_2_t pulse_info)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onMultipurposeIo(uint8_t instance_id, ouster::multipurpose_io_2_t io)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onNmea(uint8_t instance_id, ouster::nmea_2_t nmea)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onTimeInfo(uint8_t instance_id, ouster::time_info_2_t time_info)
-{}
+{
+    sensorPresent = true;
+}
 
 void cOusterVerificationParser::onBeamIntrinsics(uint8_t instance_id, ouster::beam_intrinsics_2_t intrinsics)
 {
+    sensorPresent = true;
     if (intrinsics.altitude_angles_deg.empty() || intrinsics.azimuth_angles_deg.empty())
     {
         throw bdf::invalid_data("Invalid beam intrinsics version 2!");
@@ -40,6 +57,7 @@ void cOusterVerificationParser::onBeamIntrinsics(uint8_t instance_id, ouster::be
 
 void cOusterVerificationParser::onImuIntrinsics(uint8_t instance_id, ouster::imu_intrinsics_2_t intrinsics)
 {
+    sensorPresent = true;
     if (intrinsics.imu_to_sensor_transform.empty())
     {
         throw bdf::invalid_data("Invalid imu intrinsics version 2!");
@@ -48,6 +66,7 @@ void cOusterVerificationParser::onImuIntrinsics(uint8_t instance_id, ouster::imu
 
 void cOusterVerificationParser::onLidarIntrinsics(uint8_t instance_id, ouster::lidar_intrinsics_2_t intrinsics)
 {
+    sensorPresent = true;
     if (intrinsics.lidar_to_sensor_transform.empty())
     {
         throw bdf::invalid_data("Invalid lidar intrinsics version 2!");
@@ -56,6 +75,7 @@ void cOusterVerificationParser::onLidarIntrinsics(uint8_t instance_id, ouster::l
 
 void cOusterVerificationParser::onLidarDataFormat(uint8_t instance_id, ouster::lidar_data_format_2_t format)
 {
+    sensorPresent = true;
     if (format.pixels_per_column < 32)
     {
         throw bdf::invalid_data("Invalid lidar data format version 2!");
@@ -63,10 +83,14 @@ void cOusterVerificationParser::onLidarDataFormat(uint8_t instance_id, ouster::l
 }
 
 void cOusterVerificationParser::onImuData(uint8_t instance_id, ouster::imu_data_t data)
-{}
+{
+    sensorPresent = true;
+    ++mNumImuDataFrames;
+}
 
 void cOusterVerificationParser::onLidarData(uint8_t instance_id, cOusterLidarData data)
 {
+    sensorPresent = true;
     auto n = data.columnsPerFrame();
 
     for (std::size_t col = 0; col < n; ++col)
@@ -78,6 +102,7 @@ void cOusterVerificationParser::onLidarData(uint8_t instance_id, cOusterLidarDat
             if (pixels.range_mm > 1000)
             {
                 mNumBadFrames = 0;
+                ++mNumLidarDataFrames;
                 return;
             }
         }

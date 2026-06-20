@@ -42,11 +42,21 @@ PRIVATE
 	ExperimentInfoFromJson.hpp
 	ExperimentInfoFromJson.cpp
 
+	SsnxVerificationParser.hpp
+	SsnxVerificationParser.cpp
+
 	OusterTypes.hpp
 	OusterVerificationParser.hpp
 	OusterVerificationParser.cpp
+
 	AxisCommunicationsVerificationParser.hpp
 	AxisCommunicationsVerificationParser.cpp
+
+	HySpexVNIR_3000N_VerificationParser.hpp
+	HySpexVNIR_3000N_VerificationParser.cpp
+
+	HySpexSWIR_384_VerificationParser.hpp
+	HySpexSWIR_384_VerificationParser.cpp
 
 	CeresDataVerifier.cpp
 )
@@ -93,7 +103,7 @@ target_link_libraries(console_app PRIVATE BlockDataFile_v1)
 target_link_libraries(console_app PRIVATE CeresDataVerifier_static)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info)
-target_link_libraries(console_app PRIVATE cbdf::lidar cbdf::rgb)
+target_link_libraries(console_app PRIVATE cbdf::gps cbdf::lidar cbdf::rgb cbdf::hyperspectral)
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE utilities)
 
@@ -160,7 +170,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE CeresDataVerifier_static)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info)
-	target_link_libraries(gui_app PRIVATE cbdf::lidar cbdf::rgb)
+	target_link_libraries(gui_app PRIVATE cbdf::gps cbdf::lidar cbdf::rgb cbdf::hyperspectral)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE utilities)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)

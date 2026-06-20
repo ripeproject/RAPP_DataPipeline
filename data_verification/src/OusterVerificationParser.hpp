@@ -10,6 +10,11 @@
 class cOusterVerificationParser : public cOusterParser
 {
 public:
+	bool sensorPresent = false;
+
+	int mNumImuDataFrames = 0;
+	int mNumLidarDataFrames = 0;
+
 	void onConfigParam(uint8_t instance_id, ouster::config_param_2_t config_param) override;
 	void onSensorInfo(uint8_t instance_id, ouster::sensor_info_2_t sensor_info) override;
 	void onTimestamp(uint8_t instance_id, ouster::timestamp_2_t timestamp) override;
