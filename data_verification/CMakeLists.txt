@@ -163,6 +163,7 @@ find_package(ouster_connect REQUIRED)
 find_package(ssnx_connect REQUIRED)
 find_package(hyspex_connect REQUIRED)
 find_package(lucid_vision_labs_connect REQUIRED)
+find_package(teledyne_atlas_connect REQUIRED)
 
 
 #******************************************************************************

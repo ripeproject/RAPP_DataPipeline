@@ -142,13 +142,11 @@ void cHySpexVNIR_3000N_VerificationParser::onBackgroundMatrix(uint8_t device_id,
 
 void cHySpexVNIR_3000N_VerificationParser::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
-	sensorPresent = true;
 	++mNumImages;
 }
 
 void cHySpexVNIR_3000N_VerificationParser::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
-	sensorPresent = true;
 	++mNumImages;
 }
 

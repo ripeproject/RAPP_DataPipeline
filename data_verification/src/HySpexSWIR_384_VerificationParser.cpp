@@ -143,13 +143,11 @@ void cHySpexSWIR_384_VerificationParser::onBackgroundMatrix(uint8_t device_id, H
 
 void cHySpexSWIR_384_VerificationParser::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image)
 {
-	sensorPresent = true;
 	++mNumImages;
 }
 
 void cHySpexSWIR_384_VerificationParser::onImage(uint8_t device_id, HySpexConnect::cImageData<uint16_t> image, uint8_t spatialSkip, uint8_t spectralSkip)
 {
-	sensorPresent = true;
 	++mNumImages;
 }
 

@@ -4,8 +4,11 @@
 #include "SsnxVerificationParser.hpp"
 #include "OusterVerificationParser.hpp"
 #include "AxisCommunicationsVerificationParser.hpp"
+#include "LucidTritonVerificationParser.hpp"
 #include "HySpexVNIR_3000N_VerificationParser.hpp"
 #include "HySpexSWIR_384_VerificationParser.hpp"
+#include "TeledyneAtlasFlirVerificationParser.hpp"
+
 #include "ExperimentInfoFromJson.hpp"
 
 #include <cbdf/ExperimentInfoLoader.hpp>
@@ -150,16 +153,20 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
     auto gps = std::make_unique<cSsnxVerificationParser>();
     auto ouster = std::make_unique<cOusterVerificationParser>();
     auto axis = std::make_unique<cAxisCommunicationsVerificationParser>();
+    auto triton = std::make_unique<cLucidTritonVerificationParser>();
     auto vnir = std::make_unique<cHySpexVNIR_3000N_VerificationParser>();
     auto swir = std::make_unique<cHySpexSWIR_384_VerificationParser>();
+    auto flir = std::make_unique<cTeledyneAtlasFlirVerificationParser>();
 
 
     mFileReader.attach(info.get());
     mFileReader.attach(gps.get());
     mFileReader.attach(ouster.get());
     mFileReader.attach(axis.get());
+    mFileReader.attach(triton.get());
     mFileReader.attach(vnir.get());
     mFileReader.attach(swir.get());
+    mFileReader.attach(flir.get());
 
 
     mFileSize = mFileReader.file_size();
@@ -272,6 +279,22 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
         }
     }
 
+    if (triton->sensorPresent)
+    {
+        if (triton->mNumImages == 0)
+        {
+            mMessage = "Missing Lucid Vision Labs Triton image data!";
+
+            std::string msg = mFileToCheck.string();
+            msg += ": ";
+            msg += mMessage;
+
+            console_message(msg);
+
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
+        }
+    }
+
     if (vnir->sensorPresent)
     {
         if (vnir->mNumImages == 0)
@@ -293,6 +316,22 @@ cCeresDataVerifier::eRETURN_TYPE cCeresDataVerifier::run()
         if (swir->mNumImages == 0)
         {
             mMessage = "Missing HySpex SWIR 384 image data!";
+
+            std::string msg = mFileToCheck.string();
+            msg += ": ";
+            msg += mMessage;
+
+            console_message(msg);
+
+            return eRETURN_TYPE::WARNING_MISSING_DATA;
+        }
+    }
+
+    if (flir->sensorPresent)
+    {
+        if (flir->mNumImages == 0)
+        {
+            mMessage = "Missing Teledyne Atlas FLIR image data!";
 
             std::string msg = mFileToCheck.string();
             msg += ": ";
