@@ -39,3 +39,4 @@ build
 # OS files
 .DS_Store
 /daily_checker/src/Resources/CeresDailyChecker.rc
+/daily_checker/src/Resources/DailyChecker.rc

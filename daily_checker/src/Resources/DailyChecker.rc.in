@@ -1,14 +1,5 @@
 #include "winver.h"
 
-// note that the icon used by the Explorer (i.e. the programs icon) is the
-// first icon in the executable and the icons are sorted both by their order
-// and alphabetically (!), so put this icon first and give it a name
-// starting with "a"
-aaaaaaaa ICON "ripe.ico"
-
-// this icon is used with wxFrame::SetIcon()
-CeresDailyChecker ICON "ripe.ico"
-
 // set this to 1 if you don't want to use manifest resource (manifest resource
 // is needed to enable visual styles on Windows XP - see docs/msw/winxp.txt
 // for more information)
@@ -18,7 +9,6 @@ CeresDailyChecker ICON "ripe.ico"
 // very slightly larger): this file contains the standard icons, cursors, ...
 #include "wx/msw/wx.rc"
 
-//IDI_ICON1               ICON    DISCARDABLE     "Icons/ripe.ico"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION @daily_checker_VERSION_MAJOR@,@daily_checker_VERSION_MINOR@,@daily_checker_VERSION_PATCH@,@daily_checker_VERSION_TWEAK@
@@ -34,12 +24,12 @@ BEGIN
         BLOCK "000004b0"
         BEGIN
             VALUE "CompanyName", "University of Illinois at Urbana-Champaign"
-            VALUE "FileDescription", "Ceres Daily Checker Software"
+            VALUE "FileDescription", "Daily Checker Software"
             VALUE "FileVersion", "@daily_checker_VERSION_MAJOR@.@daily_checker_VERSION_MINOR@.@daily_checker_VERSION_PATCH@.@daily_checker_VERSION_TWEAK@\0"
             VALUE "LegalCopyright", "Copyright (C) 2022..2026 UIUC"
-            VALUE "InternalName", "CeresDailyChecker"
-            VALUE "OriginalFilename", "CeresDailyChecker.exe"
-            VALUE "ProductName", "CeresDailyChecker"
+            VALUE "InternalName", "DailyChecker"
+            VALUE "OriginalFilename", "DailyChecker.exe"
+            VALUE "ProductName", "DailyChecker"
             VALUE "ProductVersion", "@daily_checker_VERSION_MAJOR@.@daily_checker_VERSION_MINOR@.@daily_checker_VERSION_PATCH@\0"
         END
     END

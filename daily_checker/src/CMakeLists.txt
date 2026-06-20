@@ -2,13 +2,32 @@
 
 # Configure version resource file
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/CeresDailyChecker.rc.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/CeresDailyChecker.rc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/DailyChecker.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/DailyChecker.rc
     @ONLY
 )
 
 # Create the version information code
 configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
+if(WIN32)
+	# Include a RC file for windows
+	set(daily_checker_resource_files
+		./Resources/DailyChecker.rc
+	)
+
+	source_group("Resources" FILES
+		${daily_checker_resource_files}
+	)
+
+elseif(APPLE)
+
+	# Add an icon for the apple .app file
+	set(daily_checker_resource_files
+		Resources/ripe.icns
+	)
+
+endif()
 
 
 add_executable(console_app)
@@ -25,6 +44,8 @@ PRIVATE
 
 	CeresDailyChecker.hpp
 	CeresDailyChecker.cpp
+
+	${daily_checker_resource_files}
 
 	ConsoleApp.cpp
 )
@@ -49,21 +70,28 @@ set_property(TARGET console_app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<
 
 if(wxWidgets_FOUND)
 
+	# Configure version resource file
+	configure_file(
+		${CMAKE_CURRENT_SOURCE_DIR}/Resources/CeresDailyChecker.rc.in
+		${CMAKE_CURRENT_SOURCE_DIR}/Resources/CeresDailyChecker.rc
+		@ONLY
+	)
+
 	if(WIN32)
 		# Include a RC file for windows
-		set(resource_files
+		set(ceres_daily_checker_resource_files
 			./Resources/ripe.ico
 			./Resources/CeresDailyChecker.rc
 		)
 
 		source_group("Resources" FILES
-			${resource_files}
+			${ceres_daily_checker_resource_files}
 		)
 
 	elseif(APPLE)
 
 		# Add an icon for the apple .app file
-		set(resource_files
+		set(ceres_daily_checker_resource_files
 			Resources/ripe.icns
 		)
 
@@ -89,8 +117,7 @@ if(wxWidgets_FOUND)
 		CeresDailyChecker.hpp
 		CeresDailyChecker.cpp
 
-
-		${resource_files}
+		${ceres_daily_checker_resource_files}
 		
 #		version.cpp
 		
