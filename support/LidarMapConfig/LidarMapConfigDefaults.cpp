@@ -59,6 +59,12 @@ cLidarMapConfigDefaults_Flattening& cLidarMapConfigDefaults::getFlattening() { r
 void cLidarMapConfigDefaults::setDirty(bool dirty)
 {
 	mDirty = dirty;
+
+//	mDollySpeeds.setDirty(dirty);
+//	mDollyHeight.setDirty(dirty);
+//	mSensorOrientation.setDirty(dirty);
+//	mSensorLimits.setDirty(dirty);
+//	mOptions.setDirty(dirty);
 }
 
 void cLidarMapConfigDefaults::load(const nlohmann::json& jdoc)

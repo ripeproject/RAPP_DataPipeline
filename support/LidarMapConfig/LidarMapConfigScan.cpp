@@ -294,6 +294,8 @@ void cLidarMapConfigScanInfo::load(const nlohmann::json& jdoc)
 
 		mReferencePoint = p;
 	}
+
+	mDirty = false;
 }
 
 void cLidarMapConfigScanInfo::save(nlohmann::json& infoDoc)

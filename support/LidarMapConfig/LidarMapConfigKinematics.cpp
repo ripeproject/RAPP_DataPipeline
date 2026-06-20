@@ -994,6 +994,8 @@ void cLidarMapConfigKinematicParameters::load(const nlohmann::json& jdoc)
 			}
 		}
 	}
+
+	mDirty = false;
 }
 
 nlohmann::json cLidarMapConfigKinematicParameters::save()
@@ -1688,7 +1690,7 @@ cLidarMapConfigKinematicParameters& cLidarMapConfigKinematics::add(const int dat
 	mKinematics.insert(std::make_pair(date, std::move(parameters)));
 
 	cLidarMapConfigKinematicParameters& result = mKinematics.find(date)->second;
-	result.setDirtyFlag();
+//BAF	result.setDirtyFlag();
 
 	return result;
 }
