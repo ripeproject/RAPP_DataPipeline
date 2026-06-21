@@ -70,7 +70,7 @@ endif()
 #******************************************************************************
 
 # We need a C and C++ compiler, so make sure project() test for it.
-project(daily_checker VERSION 2.0.0.0 LANGUAGES C CXX)
+project(daily_checker VERSION 2.1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -145,6 +145,7 @@ find_package(ouster_connect REQUIRED)
 find_package(ssnx_connect REQUIRED)
 find_package(hyspex_connect REQUIRED)
 find_package(lucid_vision_labs_connect REQUIRED)
+find_package(teledyne_atlas_connect REQUIRED)
 
 #******************************************************************************
 # BUILD TYPE AND CODE
