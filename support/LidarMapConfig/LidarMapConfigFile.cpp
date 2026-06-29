@@ -80,6 +80,9 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
+	if (configDoc.contains("default_point_clod_path"))
+		mDefaultPointCloudPath = configDoc["default_point_clod_path"];
+
 	if (configDoc.contains("allowed_experiment_names"))
 	{
 		auto allowed = configDoc["allowed_experiment_names"];
@@ -243,6 +246,9 @@ void cLidarMapConfigFile::save()
 
 	nlohmann::json configDoc;
 
+	if (!mDefaultPointCloudPath.empty())
+		 configDoc["default_point_clod_path"] = mDefaultPointCloudPath;
+
 	if (mAllowedExperimentNames.size() == 1)
 	{
 		configDoc["allowed_experiment_names"] = *(mAllowedExperimentNames.begin());
@@ -299,6 +305,9 @@ void cLidarMapConfigFile::save()
 void cLidarMapConfigFile::save_as(const std::string& file_name)
 {
 	nlohmann::json configDoc;
+
+	if (!mDefaultPointCloudPath.empty())
+		configDoc["default_point_clod_path"] = mDefaultPointCloudPath;
 
 	if (mAllowedExperimentNames.size() == 1)
 	{
@@ -390,6 +399,9 @@ bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
 		mFileName.clear();
 	}
 
+	if (configDoc.contains("default_point_clod_path"))
+		mDefaultPointCloudPath = configDoc["default_point_clod_path"];
+
 	if (configDoc.contains("allowed_experiment_names"))
 	{
 		auto allowed = configDoc["allowed_experiment_names"];
@@ -426,6 +438,9 @@ void cLidarMapConfigFile::save_temporary_file()
 {
 	nlohmann::json configDoc;
 
+	if (!mDefaultPointCloudPath.empty())
+		configDoc["default_point_clod_path"] = mDefaultPointCloudPath;
+
 	bool options_dirty = mOptions.isDirty();
 	configDoc["options"] = mOptions.save();
 	mOptions.setDirty(options_dirty);
@@ -452,6 +467,17 @@ void cLidarMapConfigFile::save_temporary_file()
 		return;
 
 	out << std::setw(4) << configDoc << std::endl;
+}
+
+const std::string& cLidarMapConfigFile::getDefaultPointCloudPath() const
+{
+	return mDefaultPointCloudPath;
+}
+
+void cLidarMapConfigFile::setDefaultPointCloudPath(const std::string& path)
+{
+	mIsDirty = mDefaultPointCloudPath != path;
+	mDefaultPointCloudPath = path;
 }
 
 void cLidarMapConfigFile::clearAllowedExperimentNames()

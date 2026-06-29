@@ -42,6 +42,9 @@ public:
 	bool open_temporary_file(const std::string& file_name);
 	void save_temporary_file();
 
+	const std::string& getDefaultPointCloudPath() const;
+	void setDefaultPointCloudPath(const std::string& path);
+
 	void clearAllowedExperimentNames();
 	std::set<std::string> getAllowedExperimentNames() const;
 	void setAllowedExperimentNames(std::set<std::string> names);
@@ -89,6 +92,8 @@ private:
 	bool mIsDirty = false;
 
 	std::set<std::string> mAllowedExperimentNames;
+
+	std::string mDefaultPointCloudPath;
 
 	cLidarMapConfigOptions  mOptions;
 	cLidarMapConfigDefaults mDefaults;
