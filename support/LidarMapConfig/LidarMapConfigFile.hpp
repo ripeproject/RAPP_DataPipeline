@@ -45,6 +45,9 @@ public:
 	const std::string& getDefaultPointCloudPath() const;
 	void setDefaultPointCloudPath(const std::string& path);
 
+	const std::string& getDefaultExportPath() const;
+	void setDefaultExportPath(const std::string& path);
+
 	void clearAllowedExperimentNames();
 	std::set<std::string> getAllowedExperimentNames() const;
 	void setAllowedExperimentNames(std::set<std::string> names);
@@ -94,6 +97,7 @@ private:
 	std::set<std::string> mAllowedExperimentNames;
 
 	std::string mDefaultPointCloudPath;
+	std::string mDefaultExportPath;
 
 	cLidarMapConfigOptions  mOptions;
 	cLidarMapConfigDefaults mDefaults;
