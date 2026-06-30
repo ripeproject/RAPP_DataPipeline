@@ -269,6 +269,10 @@ void cExportJpegs::onBeginCommentList() {}
 void cExportJpegs::onEndOfCommentList() {}
 void cExportJpegs::onComment(const std::string& comment) {}
 
+void cExportJpegs::onBeginCustomInfoList() {}
+void cExportJpegs::onEndOfCustomInfoList() {}
+void cExportJpegs::onCustomInfo(const std::string& tag, const std::string& info) {}
+
 void cExportJpegs::onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) 
 {
     mUtcYear = year;

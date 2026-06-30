@@ -160,9 +160,10 @@ find_package(wxWidgets QUIET COMPONENTS core base)
 find_package(CBDF REQUIRED cbdf sensors)
 
 # Required for the cbdf::sensors library
-find_package(ouster REQUIRED)
-find_package(ssnx REQUIRED)
-find_package(Spidercam REQUIRED)
+find_package(ouster_connect REQUIRED)
+find_package(ssnx_connect REQUIRED)
+find_package(spidercam_connect REQUIRED)
+find_package(lucid_vision_labs_connect REQUIRED)
 
 
 #******************************************************************************
