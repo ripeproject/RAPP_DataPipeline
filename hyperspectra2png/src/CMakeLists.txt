@@ -53,7 +53,7 @@ target_link_libraries(console_app PRIVATE cbdf::ctrl)
 target_link_libraries(console_app PRIVATE cbdf::hyperspectral)
 target_link_libraries(console_app PRIVATE math_utils)
 target_link_libraries(console_app PRIVATE string_utils)
-target_link_libraries(console_app PRIVATE hyspex_connect::hyspex_connect_minimal_static)
+target_link_libraries(console_app PRIVATE hyspex_connect::hyspex_connect_minimal)
 target_link_libraries(console_app PRIVATE ${OpenCV_LIBS} )
 
 
@@ -123,7 +123,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE math_utils)
 	target_link_libraries(gui_app PRIVATE string_utils)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
-	target_link_libraries(gui_app PRIVATE hyspex_connect::hyspex_connect_minimal_static)
+	target_link_libraries(gui_app PRIVATE hyspex_connect::hyspex_connect_minimal)
 	target_link_libraries(gui_app PRIVATE ${OpenCV_LIBS} )
 
 	#

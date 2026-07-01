@@ -71,6 +71,10 @@ private:
 	void onEndOfCommentList() override;
 	void onComment(const std::string& comment) override;
 
+	void onBeginCustomInfoList() override;
+	void onEndOfCustomInfoList() override;
+	void onCustomInfo(const std::string& tag, const std::string& info) override;
+
 	void onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) override;
 	void onFileTime(std::uint8_t hour, std::uint8_t minute, std::uint8_t seconds) override;
 
