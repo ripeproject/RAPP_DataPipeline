@@ -10,7 +10,7 @@
 
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/OusterParser.hpp>
-#include <ouster/simple_blas.h>
+#include <ouster_connect/simple_blas.h>
 
 #include <filesystem>
 #include <string>

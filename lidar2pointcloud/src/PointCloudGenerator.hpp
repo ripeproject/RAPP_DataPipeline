@@ -10,7 +10,7 @@
 #include <cbdf/SsnxInfoTypes.hpp>
 #include <cbdf/SpiderCamInfoTypes.hpp>
 
-#include <ouster/OusterLidarData.h>
+#include <ouster_connect/OusterLidarData.h>
 
 #include <string>
 #include <numbers>

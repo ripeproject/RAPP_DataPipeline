@@ -170,17 +170,18 @@ find_package(wxWidgets QUIET COMPONENTS core base aui)
 find_package(fmt REQUIRED)
 find_package(dlib REQUIRED)
 find_package(tinyply REQUIRED)
+find_package(lz4 REQUIRED)
 
 
 # Find and include my libraries for data collection
 find_package(cbdf REQUIRED cbdf info ctrl sensors processing_info pointcloud)
 
 # Required for the cbdf::sensors library
-find_package(ouster REQUIRED)
-find_package(ssnx REQUIRED)
+find_package(ouster_connect REQUIRED)
+find_package(ssnx_connect REQUIRED)
 
 # Required for the cbdf::ctrl library
-find_package(spidercam REQUIRED)
+find_package(spidercam_connect REQUIRED)
 
 
 #******************************************************************************
