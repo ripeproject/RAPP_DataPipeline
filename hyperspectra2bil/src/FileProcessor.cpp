@@ -228,6 +228,10 @@ void cFileProcessor::onBeginCommentList() {}
 void cFileProcessor::onEndOfCommentList() {}
 void cFileProcessor::onComment(const std::string& comment) {}
 
+void cFileProcessor::onBeginCustomInfoList() {}
+void cFileProcessor::onEndOfCustomInfoList() {}
+void cFileProcessor::onCustomInfo(const std::string& tag, const std::string& info) {}
+
 void cFileProcessor::onFileDate(std::uint16_t year, std::uint8_t month, std::uint8_t day) {}
 void cFileProcessor::onFileTime(std::uint8_t hour, std::uint8_t minute, std::uint8_t seconds) {}
 
