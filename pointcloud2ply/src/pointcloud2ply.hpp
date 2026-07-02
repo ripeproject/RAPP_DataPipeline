@@ -30,6 +30,7 @@ public:
     void close();
 
 private:
+    // cPointCloudParser
     void onBeginPointCloudBlock() override;
     void onEndPointCloudBlock() override;
 
@@ -67,6 +68,7 @@ private:
     void onPointCloudData(uint16_t frameID, uint64_t timestamp_ns, cSensorPointCloudByFrame_SensorInfo pointCloud) override;
 
 private:
+    // cPlotInfoParser
     void onBeginPlotInfoList() override;
     void onEndPlotInfoList() override;
 
@@ -94,6 +96,10 @@ private:
     void onCopyNumber(const std::string& copy_number) override;
     void onLeafType(const std::string& leaf_type) override;
 
+    void onBeginCustomInfoList() override;
+    void onEndOfCustomInfoList() override;
+    void onCustomInfo(const std::string& tag, const std::string& info) override;
+
     void onPlotDimensions(double x_min_m, double x_max_m,
         double y_min_m, double y_max_m, double z_min_m, double z_max_m) override;
 
@@ -101,6 +107,7 @@ private:
 
 
 private:
+    // cSpidercamParser
     void onPosition(spidercam::sPosition_1_t pos) override;
     void onStartPosition(spidercam::sPosition_1_t position) override;
     void onEndPosition(spidercam::sPosition_1_t position) override;

@@ -657,6 +657,11 @@ void cPointCloud2Ply::onSeedGeneration(const std::string& seed_generation) {}
 void cPointCloud2Ply::onCopyNumber(const std::string& copy_number) {}
 void cPointCloud2Ply::onLeafType(const std::string& leaf_type) {}
 
+void cPointCloud2Ply::onBeginCustomInfoList() {}
+void cPointCloud2Ply::onEndOfCustomInfoList() {}
+void cPointCloud2Ply::onCustomInfo(const std::string& tag, const std::string& info) {}
+
+
 void cPointCloud2Ply::onPlotDimensions(double x_min_m, double x_max_m,
     double y_min_m, double y_max_m, double z_min_m, double z_max_m) {}
 
