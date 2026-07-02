@@ -161,7 +161,7 @@ find_package(wxWidgets QUIET COMPONENTS core base)
 
 # Find and include my libraries for data collection
 find_package(CBDF REQUIRED cbdf ctrl processing_info pointcloud plot_info)
-find_package(spidercam REQUIRED)
+find_package(spidercam_connect REQUIRED)
 
 
 #******************************************************************************
