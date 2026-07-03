@@ -8,6 +8,7 @@
 #include <tinyply.h>
 
 #include <iostream>
+#include <format>
 
 
 //#define USE_BINARY
@@ -740,8 +741,9 @@ void cPointCloud2Ply::onPlotPointCloudData(cPlotPointCloud pointCloud)
         mFrameIDs.insert(mFrameIDs.end(), frameIDs.begin(), frameIDs.end());
 
     std::string pathname = mOutputPath.string();
-    pathname += "_Plot";
-    pathname += std::to_string(mPlotId);
+    pathname += "_Plot_";
+//    pathname += std::to_string(mPlotId);
+    pathname += std::format("{:03d}", mPlotId);
 
     if (mSubPlotId > 0)
     {
