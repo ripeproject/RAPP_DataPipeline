@@ -20,6 +20,8 @@ public:
     static bool mSaveDollyPositions;
     static bool mUseBinaryFormat;
     static bool mResetOrigin;
+    static bool mRemoveGroundPoints;
+
 
 public:
 	cPointCloud2Ply();

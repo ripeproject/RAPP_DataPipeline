@@ -19,7 +19,6 @@ public:
 				std::filesystem::path out);
 	~cFileProcessor();
 
-
 	bool open(std::filesystem::path out);
 
 	void process_file();

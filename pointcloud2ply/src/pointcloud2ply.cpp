@@ -17,6 +17,8 @@ bool cPointCloud2Ply::mIndividualPlyFiles = false;
 bool cPointCloud2Ply::mSaveDollyPositions = false;
 bool cPointCloud2Ply::mUseBinaryFormat    = false;
 bool cPointCloud2Ply::mResetOrigin        = false;
+bool cPointCloud2Ply::mRemoveGroundPoints = true;
+
 
 cPointCloud2Ply::cPointCloud2Ply() : cPointCloudParser()
 {
@@ -670,7 +672,7 @@ void cPointCloud2Ply::onPlotPointCloudData(cPlotPointCloud pointCloud)
 {
     auto cloud_data = pointCloud.data();
 
-    if (mGroundLevel_mm.has_value())
+    if (mGroundLevel_mm.has_value() && mRemoveGroundPoints)
     {
         auto ground_level_mm = mGroundLevel_mm.value();
 

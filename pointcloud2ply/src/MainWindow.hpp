@@ -58,6 +58,7 @@ private:
 	wxCheckBox* mpSavePositionFile = nullptr;
 	wxCheckBox* mpUseBinaryFormat = nullptr;
 	wxCheckBox* mpResetOrigin = nullptr;
+	wxCheckBox* mpRemoveGroundPoints = nullptr;
 
 	wxButton* mpExportButton = nullptr;
 
