@@ -3,6 +3,8 @@
 
 #include "QuadTree.hpp"
 
+#include <algorithm>
+
 
 cAerialDataModel::cAerialDataModel()
 {}
@@ -42,7 +44,8 @@ void cAerialDataModel::addAerialPoint(const rfm::planePoint_t& gps_point)
 
     auto point = rfb::toRappCoordinates(gps_point);
 
-    mAerialPoints.push_back(point);
+    if (std::find(mAerialPoints.begin(), mAerialPoints.end(), point) == mAerialPoints.end())
+        mAerialPoints.push_back(point);
 }
 
 void cAerialDataModel::addAerialPoint(const rfm::rappPoint_t& rapp_point)
@@ -50,7 +53,8 @@ void cAerialDataModel::addAerialPoint(const rfm::rappPoint_t& rapp_point)
     if (!rfb::withinBoundary(rapp_point))
         return;
 
-    mAerialPoints.push_back(rapp_point);
+    if (std::find(mAerialPoints.begin(), mAerialPoints.end(), rapp_point) == mAerialPoints.end())
+        mAerialPoints.push_back(rapp_point);
 }
 
 void cAerialDataModel::addAerialPoints(const std::vector<rfm::planePoint_t>& gps_points)

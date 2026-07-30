@@ -25,8 +25,6 @@ public:
 	std::size_t numOfTriangles() const;
 	std::size_t numOfAerialPoints() const;
 
-	void addAerialPoint(const rfm::planePoint_t& gps_point);
-	void addAerialPoint(const rfm::rappPoint_t& rapp_point);
 	void addAerialPoints(const std::vector<rfm::planePoint_t>& gps_points);
 	void addAerialPoints(const std::vector<rfm::rappPoint_t>& rapp_points);
 
@@ -36,6 +34,10 @@ public:
 	const std::vector<rfm::rappPoint_t>& getAerialPoints() const;
 	double getMeshHeight_mm(std::int32_t x_mm, std::int32_t y_mm);
 	double getDollyOffset_mm(std::int32_t x_mm, std::int32_t y_mm, std::int32_t ref_height_mm);
+
+private:
+	void addAerialPoint(const rfm::planePoint_t& gps_point);
+	void addAerialPoint(const rfm::rappPoint_t& rapp_point);
 
 private:
 	std::vector<rfm::rappPoint_t> mAerialPoints;
