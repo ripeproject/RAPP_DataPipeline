@@ -42,6 +42,8 @@ void cLidarMapConfigFile::clear()
 {
 	mIsDirty = false;
 	mFileName.clear();
+	mDefaultPointCloudPath.clear();
+	mDefaultExportPath.clear();
 	mAllowedExperimentNames.clear();
 	mOptions.clear();
 	mScans.clear();
