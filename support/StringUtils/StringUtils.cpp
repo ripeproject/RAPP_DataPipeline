@@ -468,3 +468,21 @@ std::string nStringUtils::convert_temp_filename(const std::string& filename)
 
 }
 
+std::string nStringUtils::to_human_readable_size(std::uintmax_t fs)
+{
+	int i = 0;
+	double mantissa = fs;
+	for (; mantissa >= 1024.0; mantissa /= 1024.0, ++i) {}
+	mantissa = std::ceil(mantissa * 10.0) / 10.0;
+
+	std::ostringstream out;
+	out.precision(3);
+	out << std::fixed << mantissa;
+	std::string result = out.str();
+	result += "BKMGTPE"[i];
+	if (i > 0)
+		result += "B";
+
+	return result;
+}
+

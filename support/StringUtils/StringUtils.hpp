@@ -149,4 +149,6 @@ namespace nStringUtils
 	 */
 	std::string convert_temp_filename(const std::string& filename);
 
+	std::string to_human_readable_size(std::uintmax_t fs);
+
 } // End of Namespace nStringUtils
