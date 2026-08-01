@@ -42,7 +42,7 @@ void cLidarMapConfigFile::clear()
 {
 	mIsDirty = false;
 	mFileName.clear();
-	mDefaultPointCloudPath.clear();
+	mRelativePointCloudPath.clear();
 	mDefaultExportPath.clear();
 	mAllowedExperimentNames.clear();
 	mOptions.clear();
@@ -82,8 +82,8 @@ bool cLidarMapConfigFile::open(const std::string& file_name)
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
 
-	if (configDoc.contains("default_point_cloud_path"))
-		mDefaultPointCloudPath = configDoc["default_point_cloud_path"];
+	if (configDoc.contains("relative_point_cloud_path"))
+		mRelativePointCloudPath = configDoc["relative_point_cloud_path"];
 
 	if (configDoc.contains("default_export_path"))
 		mDefaultExportPath = configDoc["default_export_path"];
@@ -251,8 +251,8 @@ void cLidarMapConfigFile::save()
 
 	nlohmann::json configDoc;
 
-	if (!mDefaultPointCloudPath.empty())
-		 configDoc["default_point_cloud_path"] = mDefaultPointCloudPath;
+	if (!mRelativePointCloudPath.empty())
+		 configDoc["relative_point_cloud_path"] = mRelativePointCloudPath;
 
 	if (!mDefaultExportPath.empty())
 		configDoc["default_export_path"] = mDefaultExportPath;
@@ -314,8 +314,8 @@ void cLidarMapConfigFile::save_as(const std::string& file_name)
 {
 	nlohmann::json configDoc;
 
-	if (!mDefaultPointCloudPath.empty())
-		configDoc["default_point_cloud_path"] = mDefaultPointCloudPath;
+	if (!mRelativePointCloudPath.empty())
+		configDoc["relative_point_cloud_path"] = mRelativePointCloudPath;
 
 	if (!mDefaultExportPath.empty())
 		configDoc["default_export_path"] = mDefaultExportPath;
@@ -410,8 +410,8 @@ bool cLidarMapConfigFile::open_temporary_file(const std::string& file_name)
 		mFileName.clear();
 	}
 
-	if (configDoc.contains("default_point_cloud_path"))
-		mDefaultPointCloudPath = configDoc["default_point_cloud_path"];
+	if (configDoc.contains("relative_point_cloud_path"))
+		mRelativePointCloudPath = configDoc["relative_point_cloud_path"];
 
 	if (configDoc.contains("default_export_path"))
 		mDefaultExportPath = configDoc["default_export_path"];
@@ -452,8 +452,8 @@ void cLidarMapConfigFile::save_temporary_file()
 {
 	nlohmann::json configDoc;
 
-	if (!mDefaultPointCloudPath.empty())
-		configDoc["default_point_cloud_path"] = mDefaultPointCloudPath;
+	if (!mRelativePointCloudPath.empty())
+		configDoc["relative_point_cloud_path"] = mRelativePointCloudPath;
 
 	if (!mDefaultExportPath.empty())
 		configDoc["default_export_path"] = mDefaultExportPath;
@@ -486,15 +486,15 @@ void cLidarMapConfigFile::save_temporary_file()
 	out << std::setw(4) << configDoc << std::endl;
 }
 
-const std::string& cLidarMapConfigFile::getDefaultPointCloudPath() const
+const std::string& cLidarMapConfigFile::getRelativePointCloudPath() const
 {
-	return mDefaultPointCloudPath;
+	return mRelativePointCloudPath;
 }
 
-void cLidarMapConfigFile::setDefaultPointCloudPath(const std::string& path)
+void cLidarMapConfigFile::setRelativePointCloudPath(const std::string& path)
 {
-	mIsDirty |= mDefaultPointCloudPath != path;
-	mDefaultPointCloudPath = path;
+	mIsDirty |= mRelativePointCloudPath != path;
+	mRelativePointCloudPath = path;
 }
 
 const std::string& cLidarMapConfigFile::getDefaultExportPath() const

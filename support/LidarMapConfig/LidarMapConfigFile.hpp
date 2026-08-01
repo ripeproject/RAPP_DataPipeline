@@ -42,8 +42,8 @@ public:
 	bool open_temporary_file(const std::string& file_name);
 	void save_temporary_file();
 
-	const std::string& getDefaultPointCloudPath() const;
-	void setDefaultPointCloudPath(const std::string& path);
+	const std::string& getRelativePointCloudPath() const;
+	void setRelativePointCloudPath(const std::string& path);
 
 	const std::string& getDefaultExportPath() const;
 	void setDefaultExportPath(const std::string& path);
@@ -96,7 +96,7 @@ private:
 
 	std::set<std::string> mAllowedExperimentNames;
 
-	std::string mDefaultPointCloudPath;
+	std::string mRelativePointCloudPath;
 	std::string mDefaultExportPath;
 
 	cLidarMapConfigOptions  mOptions;
