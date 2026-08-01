@@ -39,6 +39,9 @@ void cPlotConfigFile::clear()
 {
 	mIsDirty = false;
 	mFileName.clear();
+	mRelativePointCloudPath.clear();
+	mRelativePlotPath.clear();
+	mDefaultExportPath.clear();
 	mAllowedExperimentNames.clear();
 	mOptions.clear();
 	mScans.clear();
@@ -76,6 +79,15 @@ bool cPlotConfigFile::open(const std::string& file_name)
 
 	mFileName = file_name;
 	mTmpFileName = nStringUtils::make_temp_filename(mFileName);
+
+	if (configDoc.contains("relative_point_cloud_path"))
+		mRelativePointCloudPath = configDoc["relative_point_cloud_path"];
+
+	if (configDoc.contains("relative_plot_path"))
+		mRelativePlotPath = configDoc["relative_plot_path"];
+
+	if (configDoc.contains("default_export_path"))
+		mDefaultExportPath = configDoc["default_export_path"];
 
 	if (configDoc.contains("allowed_experiment_names"))
 	{
@@ -119,6 +131,15 @@ void cPlotConfigFile::save()
 	if (mFileName.empty()) return;
 
 	nlohmann::json configDoc;
+
+	if (!mRelativePointCloudPath.empty())
+		configDoc["relative_point_cloud_path"] = mRelativePointCloudPath;
+
+	if (!mRelativePlotPath.empty())
+		configDoc["relative_plot_path"] = mRelativePlotPath;
+
+	if (!mDefaultExportPath.empty())
+		configDoc["default_export_path"] = mDefaultExportPath;
 
 	if (mAllowedExperimentNames.size() == 1)
 	{
@@ -167,6 +188,15 @@ void cPlotConfigFile::save()
 void cPlotConfigFile::save_as(const std::string& file_name)
 {
 	nlohmann::json configDoc;
+
+	if (!mRelativePointCloudPath.empty())
+		configDoc["relative_point_cloud_path"] = mRelativePointCloudPath;
+
+	if (!mRelativePlotPath.empty())
+		configDoc["relative_plot_path"] = mRelativePlotPath;
+
+	if (!mDefaultExportPath.empty())
+		configDoc["default_export_path"] = mDefaultExportPath;
 
 	if (mAllowedExperimentNames.size() == 1)
 	{
@@ -248,6 +278,15 @@ bool cPlotConfigFile::open_temporary_file(const std::string& file_name)
 		mFileName.clear();
 	}
 
+	if (configDoc.contains("relative_point_cloud_path"))
+		mRelativePointCloudPath = configDoc["relative_point_cloud_path"];
+
+	if (configDoc.contains("relative_plot_path"))
+		mRelativePlotPath = configDoc["relative_plot_path"];
+
+	if (configDoc.contains("default_export_path"))
+		mDefaultExportPath = configDoc["default_export_path"];
+
 	if (configDoc.contains("allowed_experiment_names"))
 	{
 		auto allowed = configDoc["allowed_experiment_names"];
@@ -289,6 +328,15 @@ void cPlotConfigFile::save_temporary_file()
 {
 	nlohmann::json configDoc;
 
+	if (!mRelativePointCloudPath.empty())
+		configDoc["relative_point_cloud_path"] = mRelativePointCloudPath;
+
+	if (configDoc.contains("relative_plot_path"))
+		mRelativePlotPath = configDoc["relative_plot_path"];
+
+	if (configDoc.contains("default_export_path"))
+		mDefaultExportPath = configDoc["default_export_path"];
+
 	bool options_dirty = mOptions.isDirty();
 	configDoc["options"] = mOptions.save();
 	mOptions.setDirty(options_dirty);
@@ -311,6 +359,39 @@ void cPlotConfigFile::save_temporary_file()
 		return;
 
 	out << std::setw(4) << configDoc << std::endl;
+}
+
+const std::string& cPlotConfigFile::getRelativePointCloudPath() const
+{
+	return mRelativePointCloudPath;
+}
+
+void cPlotConfigFile::setRelativePointCloudPath(const std::string& path)
+{
+	mIsDirty |= mRelativePointCloudPath != path;
+	mRelativePointCloudPath = path;
+}
+
+const std::string& cPlotConfigFile::getRelativePlotPath() const
+{
+	return mRelativePlotPath;
+}
+
+void cPlotConfigFile::setRelativePlotPath(const std::string& path)
+{
+	mIsDirty |= mRelativePlotPath != path;
+	mRelativePlotPath = path;
+}
+
+const std::string& cPlotConfigFile::getDefaultExportPath() const
+{
+	return mDefaultExportPath;
+}
+
+void cPlotConfigFile::setDefaultExportPath(const std::string& path)
+{
+	mIsDirty |= mDefaultExportPath != path;
+	mDefaultExportPath = path;
 }
 
 void cPlotConfigFile::clearAllowedExperimentNames()

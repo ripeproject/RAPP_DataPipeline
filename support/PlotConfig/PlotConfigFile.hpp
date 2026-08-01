@@ -38,6 +38,15 @@ public:
 	bool open_temporary_file(const std::string& file_name);
 	void save_temporary_file();
 
+	const std::string& getRelativePointCloudPath() const;
+	void setRelativePointCloudPath(const std::string& path);
+
+	const std::string& getRelativePlotPath() const;
+	void setRelativePlotPath(const std::string& path);
+
+	const std::string& getDefaultExportPath() const;
+	void setDefaultExportPath(const std::string& path);
+
 	void clearAllowedExperimentNames();
 	std::set<std::string> getAllowedExperimentNames() const;
 	void setAllowedExperimentNames(std::set<std::string> names);
@@ -80,6 +89,11 @@ private:
 private:
 	std::string mFileName;
 	std::string mTmpFileName;
+
+	std::string mRelativePointCloudPath;
+	std::string mRelativePlotPath;
+
+	std::string mDefaultExportPath;
 
 	bool mIsDirty = false;
 
