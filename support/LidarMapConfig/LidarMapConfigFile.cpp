@@ -458,6 +458,18 @@ void cLidarMapConfigFile::save_temporary_file()
 	if (!mDefaultExportPath.empty())
 		configDoc["default_export_path"] = mDefaultExportPath;
 
+	if (mAllowedExperimentNames.size() == 1)
+	{
+		configDoc["allowed_experiment_names"] = *(mAllowedExperimentNames.begin());
+	}
+	else if (mAllowedExperimentNames.size() > 1)
+	{
+		for (const auto& name : mAllowedExperimentNames)
+		{
+			configDoc["allowed_experiment_names"].push_back(name);
+		}
+	}
+
 	bool options_dirty = mOptions.isDirty();
 	configDoc["options"] = mOptions.save();
 	mOptions.setDirty(options_dirty);
