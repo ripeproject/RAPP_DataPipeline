@@ -35,7 +35,7 @@ bool load_ground_data(const std::string& ground_data_filename)
 	if (data.empty())
 		return false;
 
-	auto mesh = computeGroundMesh(data);
+	auto mesh = computeDelaunay2dMesh(data);
 
 	if (mesh.empty())
 		return false;

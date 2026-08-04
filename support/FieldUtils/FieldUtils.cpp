@@ -19,17 +19,17 @@ namespace
 
 
 //-----------------------------------------------------------------------------
-std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>& ground_points)
+std::vector<cRappTriangle> computeDelaunay2dMesh(const std::vector<rfm::rappPoint_t>& points, double max_length_mm)
 {
     vtkDoubleArray* x = vtkDoubleArray::New();
     vtkDoubleArray* y = vtkDoubleArray::New();
     vtkDoubleArray* z = vtkDoubleArray::New();
 
-    for (const auto& ground_point : ground_points)
+    for (const auto& point : points)
     {
-        x->InsertNextTuple1(ground_point.x_mm);
-        y->InsertNextTuple1(ground_point.y_mm);
-        z->InsertNextTuple1(ground_point.z_mm);
+        x->InsertNextTuple1(point.x_mm);
+        y->InsertNextTuple1(point.y_mm);
+        z->InsertNextTuple1(point.z_mm);
     }
 
     vtkNew<vtkTable> table;
@@ -62,39 +62,39 @@ std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>
         auto p2_id = pts->GetId(1);
         auto p3_id = pts->GetId(2);
 
-        double d_mm = (ground_points[p1_id].x_mm - ground_points[p2_id].x_mm) * (ground_points[p1_id].x_mm - ground_points[p2_id].x_mm);
-        d_mm += (ground_points[p1_id].y_mm - ground_points[p2_id].y_mm) * (ground_points[p1_id].y_mm - ground_points[p2_id].y_mm);
+        double d_mm = (points[p1_id].x_mm - points[p2_id].x_mm) * (points[p1_id].x_mm - points[p2_id].x_mm);
+        d_mm += (points[p1_id].y_mm - points[p2_id].y_mm) * (points[p1_id].y_mm - points[p2_id].y_mm);
         d_mm = sqrt(d_mm);
 
-        if (d_mm > 10000)
+        if (d_mm > max_length_mm)
         {
             continue;
         }
 
-        d_mm = (ground_points[p1_id].x_mm - ground_points[p3_id].x_mm) * (ground_points[p1_id].x_mm - ground_points[p3_id].x_mm);
-        d_mm += (ground_points[p1_id].y_mm - ground_points[p3_id].y_mm) * (ground_points[p1_id].y_mm - ground_points[p3_id].y_mm);
+        d_mm = (points[p1_id].x_mm - points[p3_id].x_mm) * (points[p1_id].x_mm - points[p3_id].x_mm);
+        d_mm += (points[p1_id].y_mm - points[p3_id].y_mm) * (points[p1_id].y_mm - points[p3_id].y_mm);
         d_mm = sqrt(d_mm);
 
-        if (d_mm > 10000)
+        if (d_mm > max_length_mm)
         {
             continue;
         }
 
-        d_mm = (ground_points[p3_id].x_mm - ground_points[p2_id].x_mm) * (ground_points[p3_id].x_mm - ground_points[p2_id].x_mm);
-        d_mm += (ground_points[p3_id].y_mm - ground_points[p2_id].y_mm) * (ground_points[p3_id].y_mm - ground_points[p2_id].y_mm);
+        d_mm = (points[p3_id].x_mm - points[p2_id].x_mm) * (points[p3_id].x_mm - points[p2_id].x_mm);
+        d_mm += (points[p3_id].y_mm - points[p2_id].y_mm) * (points[p3_id].y_mm - points[p2_id].y_mm);
         d_mm = sqrt(d_mm);
 
-        if (d_mm > 10000)
+        if (d_mm > max_length_mm)
         {
             continue;
         }
 
-        data.emplace_back(ground_points[p1_id], ground_points[p2_id], ground_points[p3_id]);
+        data.emplace_back(points[p1_id], points[p2_id], points[p3_id]);
     }
 
     pts->Delete();
 
-    return data;
+    return std::move(data);
 }
 
 //-----------------------------------------------------------------------------

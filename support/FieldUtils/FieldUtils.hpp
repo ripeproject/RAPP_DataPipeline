@@ -9,7 +9,7 @@
 #include <vector>
 
 
-std::vector<cRappTriangle> computeGroundMesh(const std::vector<rfm::rappPoint_t>& ground_points);
+std::vector<cRappTriangle> computeDelaunay2dMesh(const std::vector<rfm::rappPoint_t>& points, double max_length_mm = 1'000'000.0);
 
 struct sLineParameters_t
 {
