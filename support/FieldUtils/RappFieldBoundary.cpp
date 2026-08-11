@@ -4,13 +4,26 @@
 #include "Constants.hpp"
 
 
+#include <proj/coordinateoperation.hpp>
+#include <proj/crs.hpp>
+#include <proj/io.hpp>
+#include <proj/util.hpp> // for nn_dynamic_pointer_cast
+
+using namespace NS_PROJ::crs;
+using namespace NS_PROJ::io;
+using namespace NS_PROJ::operation;
+using namespace NS_PROJ::util;
+
+#include <array>
+#include <stdexcept>
+
 namespace
 {
-	constexpr double Re_lat_m = 6361721.0810512137;
-	constexpr double Re_lat_ft = Re_lat_m * nConstants::M_TO_FT;
+//	constexpr double Re_lat_m = 6361721.0810512137;
+//	constexpr double Re_lat_ft = Re_lat_m * nConstants::M_TO_FT;
 
-	constexpr double Re_lng_m = 4888165.4030188089;
-	constexpr double Re_lng_ft = Re_lng_m * nConstants::M_TO_FT;
+//	constexpr double Re_lng_m = 4888165.4030188089;
+//	constexpr double Re_lng_ft = Re_lng_m * nConstants::M_TO_FT;
 
 	const std::array<rfm::planePoint_t, 4> mUIUC_TowerLocations = {
 		rfm::planePoint_t(1237093.164, 1019287.146, 710.708),
@@ -80,6 +93,11 @@ uint32_t rfb::minY_mm()
 	return mRappTowerLocations[0].y_mm;
 }
 
+uint32_t rfb::minZ_mm()
+{
+	return 0;
+}
+
 uint32_t rfb::maxX_mm()
 {
 	return mRappTowerLocations[2].x_mm;
@@ -90,6 +108,11 @@ uint32_t rfb::maxY_mm()
 	return mRappTowerLocations[2].y_mm;
 }
 
+uint32_t rfb::maxZ_mm()
+{
+	return 10000;
+}
+
 bool rfb::withinBoundary(const rfm::planePoint_t& point)
 {
 	rfm::rappPoint_t p = toRappCoordinates(point);
@@ -98,10 +121,15 @@ bool rfb::withinBoundary(const rfm::planePoint_t& point)
 
 bool rfb::withinBoundary(const rfm::rappPoint_t& point)
 {
-	if ((point.x_mm < minX_mm()) || (point.x_mm > maxX_mm()))
+	return withinBoundary(point.x_mm, point.y_mm);
+}
+
+bool rfb::withinBoundary(const std::int32_t x_mm, const std::int32_t y_mm)
+{
+	if ((x_mm < minX_mm()) || (x_mm > maxX_mm()))
 		return false;
 
-	if ((point.y_mm < minY_mm()) || (point.y_mm > maxY_mm()))
+	if ((y_mm < minY_mm()) || (y_mm > maxY_mm()))
 		return false;
 
 	return true;
@@ -131,21 +159,78 @@ rfm::rappPoint_t rfb::fromStatePlane(const double northing_ft, const double east
 
 rfm::rappPoint_t rfb::fromGPS(const double lat_rad, const double lng_rad, const double height_m)
 {
-	double theta = mRappTowerLocations_WGS84[0].mLatitude_rad - lat_rad;
+	static double ref_north_m = (mUIUC_TowerLocations[0].northing_ft * nConstants::FT_TO_M);
+	static double ref_east_m = (mUIUC_TowerLocations[0].easting_ft * nConstants::FT_TO_M);
 
-	double northing_m = theta * Re_lat_m;
+	static auto dbContext = DatabaseContext::create();
 
-	theta = lng_rad - mRappTowerLocations_WGS84[0].mLongitude_rad;
+	// Instantiate a generic authority factory, that is not tied to a particular
+	// authority, to be able to get transformations registered by different
+	// authorities. This can only be used for CoordinateOperationContext.
+	static auto authFactory = AuthorityFactory::create(dbContext, std::string());
 
-	double easting_m = theta * Re_lng_m;
+	// Create a coordinate operation context, that can be customized to ammend
+	// the way coordinate operations are computed. Here we ask for default
+	// settings.
+	static auto coord_op_context = CoordinateOperationContext::create(authFactory, nullptr, 0.0);
+
+	// Instantiate a authority factory for EPSG related objects.
+	static auto authFactoryEPSG = AuthorityFactory::create(dbContext, "EPSG");
+
+	// Instantiate source CRS from EPSG code: WGS84
+	static auto wgs84_CRS = authFactoryEPSG->createCoordinateReferenceSystem("4326");
+
+	// Instantiate target CRS from EPSG code: Illinois East NAD83(2011)
+	static auto il_state_plane_east_CRS = authFactoryEPSG->createCoordinateReferenceSystem("6454");
+
+	// List operations available to transform from EPSG:4326
+	// (WGS 84 latitude/longitude) to EPSG:6454 (Illinois State Plane East).
+	auto list = CoordinateOperationFactory::create()->createOperations(wgs84_CRS, il_state_plane_east_CRS, coord_op_context);
+
+	// Check that we got a non-empty list of operations
+	// The list is sorted from the most relevant to the less relevant one.
+	// Cf
+	// https://proj.org/operations/operations_computation.html#filtering-and-sorting-of-coordinate-operations
+	// for more details on the sorting of those operations.
+	// For a transformation between a projected CRS and its base CRS, like
+	// we do here, there will be only one operation.
+	assert(!list.empty());
+
+	// Create an execution context (must only be used by one thread at a time)
+	PJ_CONTEXT* ctx = proj_context_create();
+
+	// Create a coordinate transformer from the first operation of the list
+	auto transformer = list[0]->coordinateTransformer(ctx);
+
+	double lat_deg = lat_rad * nConstants::RAD_TO_DEG;
+	double lng_deg = lng_rad * nConstants::RAD_TO_DEG;
+
+	// Perform the coordinate transformation.
+	PJ_COORD c = { {
+		lat_deg,    // latitude in degree
+		lng_deg,     // longitude in degree
+		0.0,     // z ordinate. unused
+		HUGE_VAL // time ordinate. unused
+	} };
+
+	c = transformer->transform(c);
+
+	double easting_m = c.v[0];
+	double northing_m = c.v[1];
+
+	// Destroy execution context
+	proj_context_destroy(ctx);
 
 	rfm::rappPoint_t result;
 
-	double elevation_m = mUIUC_ReferenceElevation_m;
+	double x_m = ref_north_m - northing_m;	// positive is to the south
+	double y_m = easting_m - ref_east_m;	// positive is to the east
 
-	result = { static_cast<std::int32_t>(northing_m * nConstants::M_TO_MM),
-		static_cast<std::int32_t>(easting_m * nConstants::M_TO_MM),
-		static_cast<std::int32_t>((height_m - mUIUC_ReferenceElevation_m) * nConstants::M_TO_MM) };
+	result.x_mm = static_cast<std::int32_t>(x_m * nConstants::M_TO_MM);
+	result.y_mm = static_cast<std::int32_t>(y_m * nConstants::M_TO_MM);
+	result.z_mm = static_cast<std::int32_t>((height_m - mUIUC_ReferenceElevation_m) * nConstants::M_TO_MM);
 
 	return result;
 }
+
+

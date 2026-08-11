@@ -88,6 +88,7 @@ find_package(VTK 9.0 REQUIRED COMPONENTS
   FiltersGeneral
   FiltersStatistics
 )
+find_package(PROJ REQUIRED)
 
 
 add_library(field_utils)
@@ -137,6 +138,8 @@ target_include_directories(field_utils PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../co
 
 target_link_libraries(field_utils PRIVATE ${VTK_LIBRARIES} )
 target_link_libraries(field_utils PRIVATE dlib::dlib )
+target_link_libraries(field_utils PRIVATE PROJ::proj )
+
 
 #
 # Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
