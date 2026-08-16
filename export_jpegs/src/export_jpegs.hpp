@@ -114,12 +114,20 @@ private:
 
 // Image handlers
 private:
+    void onTimestamp(uint8_t device_id, uint64_t timestamp_ns) override;
     void onActiveCameraId(uint8_t device_id, int id) override;
     void onFramesPerSecond(uint8_t device_id, int frames_per_sec) override;
     void onImageSize(uint8_t device_id, int width, int height) override;
+    void onMode(uint8_t device_id, int mode) override;
+    void onLapseTime(uint8_t device_id, int lapse_time_ms) override;
+
     void onBitmap(uint8_t device_id, const cBitmapBuffer& buffer) override;
     void onJPEG(uint8_t device_id, const cJpegBuffer& buffer) override;
     void onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer) override;
+
+    void onBitmap(uint8_t device_id, uint64_t timestamp_ns, const cBitmapBuffer& buffer) override;
+    void onJPEG(uint8_t device_id, uint64_t timestamp_ns, const cJpegBuffer& buffer) override;
+    void onMpegFrame(uint8_t device_id, uint64_t timestamp_ns, const cMpegFrameBuffer& buffer) override;
 
 // Spidercam handlers
     void onPosition(spidercam::sPosition_1_t position) override;

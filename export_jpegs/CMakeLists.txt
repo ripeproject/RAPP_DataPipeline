@@ -62,7 +62,7 @@ endif()
 
 # Use integer versions instead of strings for easier handling if required
 set(EXPORT_JPEGS_MAJOR 1)
-set(EXPORT_JPEGS_MINOR 0)
+set(EXPORT_JPEGS_MINOR 3)
 set(EXPORT_JPEGS_PATCH 0)
 
 ADD_DEFINITIONS(

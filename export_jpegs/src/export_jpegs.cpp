@@ -298,13 +298,31 @@ void cExportJpegs::onEndRecordingTimestamp(uint64_t timestamp_ns) {}
 void cExportJpegs::onHeartbeatTimestamp(uint64_t timestamp_ns) {}
 
 // Axis Commications handlers
+void cExportJpegs::onTimestamp(uint8_t device_id, uint64_t timestamp_ns) {}
 void cExportJpegs::onFramesPerSecond(uint8_t device_id, int frames_per_sec) {}
 void cExportJpegs::onActiveCameraId(uint8_t device_id, int id) {}
+void cExportJpegs::onMode(uint8_t device_id, int mode) {}
+void cExportJpegs::onLapseTime(uint8_t device_id, int lapse_time_ms) {}
 
 void cExportJpegs::onImageSize(uint8_t device_id, int width, int height)
 {
     mWidth = width;
     mHeight = height;
+}
+
+void cExportJpegs::onBitmap(uint8_t device_id, uint64_t timestamp_ns, const cBitmapBuffer& buffer)
+{
+    onBitmap(device_id, buffer);
+}
+
+void cExportJpegs::onJPEG(uint8_t device_id, uint64_t timestamp_ns, const cJpegBuffer& buffer)
+{
+    onJPEG(device_id, buffer);
+}
+
+void cExportJpegs::onMpegFrame(uint8_t device_id, uint64_t timestamp_ns, const cMpegFrameBuffer& buffer)
+{
+    onMpegFrame(device_id, buffer);
 }
 
 void cExportJpegs::onBitmap(uint8_t device_id, const cBitmapBuffer& buffer)
