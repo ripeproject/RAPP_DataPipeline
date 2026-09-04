@@ -5,7 +5,10 @@
 
 #include <stdexcept>
 
-void cAxisCommunicationsVerificationParser::onActiveCameraId(uint8_t instance_id, int id)
+void cAxisCommunicationsVerificationParser::onTimestamp(uint8_t device_id, uint64_t timestamp_ns)
+{}
+
+void cAxisCommunicationsVerificationParser::onActiveCameraId(uint8_t device_id, int id)
 {
     sensorPresent = true;
 
@@ -15,7 +18,7 @@ void cAxisCommunicationsVerificationParser::onActiveCameraId(uint8_t instance_id
     }
 }
 
-void cAxisCommunicationsVerificationParser::onFramesPerSecond(uint8_t instance_id, int frames_per_sec)
+void cAxisCommunicationsVerificationParser::onFramesPerSecond(uint8_t device_id, int frames_per_sec)
 {
     sensorPresent = true;
 
@@ -25,7 +28,7 @@ void cAxisCommunicationsVerificationParser::onFramesPerSecond(uint8_t instance_i
     }
 }
 
-void cAxisCommunicationsVerificationParser::onImageSize(uint8_t instance_id, int width, int height)
+void cAxisCommunicationsVerificationParser::onImageSize(uint8_t device_id, int width, int height)
 {
     sensorPresent = true;
 
@@ -43,22 +46,70 @@ void cAxisCommunicationsVerificationParser::onImageSize(uint8_t instance_id, int
     }
 }
 
-void cAxisCommunicationsVerificationParser::onBitmap(uint8_t instance_id, const cBitmapBuffer& buffer)
+void cAxisCommunicationsVerificationParser::onMode(uint8_t device_id, int mode)
+{
+    if ((mode < 0) || (mode > 2))
+    {
+        throw bdf::invalid_data("Invalid mode!");
+    }
+}
+
+void cAxisCommunicationsVerificationParser::onLapseTime(uint8_t device_id, int lapse_time_ms)
+{
+    if ((lapse_time_ms < 0) || (lapse_time_ms > 300'000))
+    {
+        throw bdf::invalid_data("Invalid lapse time ms!");
+    }
+}
+
+void cAxisCommunicationsVerificationParser::onBitmap(uint8_t device_id, const cBitmapBuffer& buffer)
 {
     sensorPresent = true;
     ++mNumImages;
 }
 
-void cAxisCommunicationsVerificationParser::onJPEG(uint8_t instance_id, const cJpegBuffer& buffer)
+void cAxisCommunicationsVerificationParser::onJPEG(uint8_t device_id, const cJpegBuffer& buffer)
 {
     sensorPresent = true;
     ++mNumImages;
 }
 
-void cAxisCommunicationsVerificationParser::onMpegFrame(uint8_t instance_id, const cMpegFrameBuffer& buffer)
+void cAxisCommunicationsVerificationParser::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer)
 {
     sensorPresent = true;
     ++mNumImages;
+}
+
+void cAxisCommunicationsVerificationParser::onBitmap(uint8_t device_id, uint64_t timestamp_ns, const cBitmapBuffer& buffer)
+{
+    sensorPresent = true;
+    ++mNumImages;
+}
+
+void cAxisCommunicationsVerificationParser::onJPEG(uint8_t device_id, uint64_t timestamp_ns, const cJpegBuffer& buffer)
+{
+    sensorPresent = true;
+    ++mNumImages;
+}
+
+void cAxisCommunicationsVerificationParser::onMpegFrame(uint8_t device_id, uint64_t timestamp_ns, const cMpegFrameBuffer& buffer)
+{
+    sensorPresent = true;
+    ++mNumImages;
+}
+
+void cAxisCommunicationsVerificationParser::processTimeStamp(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processTimeStamp(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processTimeStamp: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
 }
 
 void cAxisCommunicationsVerificationParser::processActiveCameraId(cDataBuffer& buffer)
@@ -84,6 +135,34 @@ void cAxisCommunicationsVerificationParser::processFramesPerSecond(cDataBuffer& 
     catch (const std::exception& e)
     {
         std::string msg = "processFramesPerSecond: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cAxisCommunicationsVerificationParser::processMode(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processMode(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processMode: ";
+        msg += e.what();
+        throw bdf::invalid_data(msg);
+    }
+}
+
+void cAxisCommunicationsVerificationParser::processLapseTime(cDataBuffer& buffer)
+{
+    try
+    {
+        cAxisCommunicationsParser::processLapseTime(buffer);
+    }
+    catch (const std::exception& e)
+    {
+        std::string msg = "processLapseTime: ";
         msg += e.what();
         throw bdf::invalid_data(msg);
     }
