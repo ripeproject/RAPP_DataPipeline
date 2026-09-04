@@ -142,7 +142,6 @@ void cFileProcessor::run()
     cHySpexSWIR384_File* pSwir = mSwirConverter.get();
     mFileReader.attach(static_cast<cHySpexSWIR_384_Parser*>(pSwir));
 
-
 	try
     {
         while (!mFileReader.eof())
