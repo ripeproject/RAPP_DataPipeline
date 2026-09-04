@@ -108,6 +108,7 @@ void cMainWindow::CreateControls()
 	mpBIL = new wxRadioButton(this, wxID_ANY, "BIL", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	mpBIP = new wxRadioButton(this, wxID_ANY, "BIP");
 	mpBSQ = new wxRadioButton(this, wxID_ANY, "BSQ");
+	mpBSQ->Enable(false);
 	mpBIL->SetValue(true);
 
 

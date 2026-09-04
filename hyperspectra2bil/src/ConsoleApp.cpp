@@ -102,8 +102,8 @@ int main(int argc, char** argv)
 			export_format = eExportFormat::BIL;
 		else if (nStringUtils::iequal(export_string, "BIP"))
 			export_format = eExportFormat::BIP;
-		else if (nStringUtils::iequal(export_string, "BSQ"))
-			export_format = eExportFormat::BSQ;
+//		else if (nStringUtils::iequal(export_string, "BSQ"))
+//			export_format = eExportFormat::BSQ;
 	}
 
 	if (!header_string.empty())
