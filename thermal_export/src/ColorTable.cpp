@@ -14,6 +14,9 @@ cColorTable::cColorTable(double min, double max, uint16_t table_size)
 	mDeltaValue = mMaxValue - mMinValue;
 }
 
+double cColorTable::getMinValue() const { return mMinValue; }
+double cColorTable::getMaxValue() const { return mMaxValue; }
+
 void cColorTable::setRange(double min, double max)
 {
 	mMinValue = min;

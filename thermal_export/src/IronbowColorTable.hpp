@@ -4,7 +4,7 @@
 #include "ColorTable.hpp"
 
 
-class cIronbowColorTable : cColorTable
+class cIronbowColorTable : public cColorTable
 {
 public:
 	cIronbowColorTable();

@@ -3,23 +3,28 @@
 
 #include <cbdf\TeledyneFlirParser.hpp>
 
-#include <cbdf/SpidercamParser.hpp>
-
 #include <opencv2/core.hpp>
 
 #include <filesystem>
 #include <string>
 #include <fstream>
+#include <memory>
+
+// Forward Declarations
+class cColorTable;
 
 
+enum class eColorTable { IRONBOW, RAINBOW, RAINBOW_HC, WHITE_HOT, BLACK_HOT, ARCTIC };
 
-class cTeledyneFlir_File : public cTeledyneFlirParser
+class cTeledyneFLIR_Exporter : public cTeledyneFlirParser
 {
 public:
-	cTeledyneFlir_File();
-	virtual ~cTeledyneFlir_File();
+	cTeledyneFLIR_Exporter();
+	~cTeledyneFLIR_Exporter();
 
     void setOutputPath(std::filesystem::path out);
+
+	void setColorTable(eColorTable color_table);
 
 	// Spidercam Parser Data
 	void onPosition(double x_mm, double y_mm, double z_mm, double speed_mmps);
@@ -29,6 +34,7 @@ public:
 	void onEndRecordingTimestamp(uint64_t timestamp_ns);
 
 private:
+	// Teledyne FLIR Parser Methods
 	void onModelName(uint8_t deviceID, std::string modelName) override;
 	void onFilter(uint8_t deviceID, std::string filter) override;
 	void onLens(uint8_t deviceID, std::string lens) override;
@@ -52,43 +58,44 @@ private:
 
 	void onImage(uint8_t device_id, nTeledyneAtlasConnect::cThermalImage image) override;
 
-protected:
-	virtual std::filesystem::path createHeaderFilename(char plotID);
 
-protected:
-	virtual std::filesystem::path createDataFilename(char plotID);
-	virtual void writeHeader(std::filesystem::path filename);
+    void writeImage(std::filesystem::path filename);
 
 private:
-	void openDataFile();
-
-protected:
     std::filesystem::path mOutputPath;
-	std::ofstream mOutputFile;
+	std::fstream mMetaData;
 
-	std::filesystem::path mDataFilename;
-	std::filesystem::path mHeaderFilename;
+	std::string mModelName;
+	std::string mFilter;
+	std::string mLens;
+	std::string mSerialNumber;
+	std::string mProgramVersion;
+	std::string mArticleNumber;
+	std::string mCalibrationTitle;
+	std::string mLensSerialNumber;
+	std::string mArcFileVersion;
+	std::string mArcDateTime;
+	std::string mArcSignature;
+	std::string mCountryCode;
 
-	std::size_t mSpatialSize = 0;
-	std::size_t mSpectralSize = 0;
+	double mFrameRate_Hz = 0;
+	double mMinFrameRate_Hz = 0;
+	double mMaxFrameRate_Hz = 0;
+	
+	float mMinThermalValue_K = 0;
+	float mMaxThermalValue_K = 0;
 
-	std::size_t mMaxSpatialSize = 0;
-	std::size_t mMaxSpectralSize = 0;
+	float mHorizonalFoV_deg = 0;
+	float mFocalLength = 0;
 
-	uint16_t mMaxPixelValue = 0;
-
-	enum eNumBits { ONE = 1, FOUR = 4, EIGHT = 8, SIXTEEN = 16 };
-	eNumBits  mNumBits = ONE;
-
-	double mFieldOfView_rad = 0.0;
-	uint32_t mFramePeriod_us = 0;
-	uint32_t mIntegrationTime_us = 0;
-
+	bool mScaleToImage = true;
+	std::unique_ptr<cColorTable> mColorTable;
 
 	char mPlotID = 'A';
 
-	std::size_t mActiveRow = 0;
+	cv::Mat mImage;
 
+	uint32_t    mFrameCount = 0;
 
     struct float3 { float x, y, z; };
     struct float4 { float x, y, z, s; };

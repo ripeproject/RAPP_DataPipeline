@@ -57,10 +57,8 @@ private:
 	wxRadioButton* mpRainbow = nullptr;
 	wxRadioButton* mpRainbowHC = nullptr;
 	wxRadioButton* mpArctic = nullptr;
-	wxRadioButton* mpLava = nullptr;
 	wxRadioButton* mpWhiteHot = nullptr;
 	wxRadioButton* mpBlackHot = nullptr;
-	wxRadioButton* mpIsotherms = nullptr;
 
 
 	wxButton* mpExportButton = nullptr;

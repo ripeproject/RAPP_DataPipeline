@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "TeledyneFLIR_Exporter.hpp"
+
 #include <cbdf/BlockDataFile.hpp>
 #include <cbdf/ExperimentParser.hpp>
 #include <cbdf/SpidercamParser.hpp>
@@ -10,7 +12,6 @@
 #include <memory>
 
 // Forward Declarations
-class cTeledyneFlir_File;
 
 
 class cFileProcessor : public cExperimentParser, public cSpidercamParser
@@ -19,6 +20,8 @@ public:
 	cFileProcessor(int id, std::filesystem::directory_entry in,
 				std::filesystem::path out);
 	~cFileProcessor();
+
+	void setColorTable(eColorTable color_table);
 
 	void process_file();
 	void run();
@@ -102,5 +105,5 @@ private:
 	std::filesystem::path mInputFile;
 	std::filesystem::path mOutputFile;
 
-	std::unique_ptr<cTeledyneFlir_File> mFlirConverter;
+	std::unique_ptr<cTeledyneFLIR_Exporter> mFlirConverter;
 };

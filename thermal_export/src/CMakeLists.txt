@@ -20,8 +20,8 @@ set(THERMAL_EXPORT_COMMON_FILES
 
 	ParserExceptions.hpp
 
-	TeledyneFLIR_File.hpp
-	TeledyneFLIR_File.cpp
+	TeledyneFLIR_Exporter.hpp
+	TeledyneFLIR_Exporter.cpp
 
 	FileProcessor.hpp
 	FileProcessor.cpp
@@ -47,8 +47,11 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE "../support/common")
+target_include_directories(console_app PRIVATE "../support/MathUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
+target_link_libraries(console_app INTERFACE igb::simple_matrix)
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
 target_link_libraries(console_app PRIVATE cbdf::info cbdf::ctrl)
 target_link_libraries(console_app PRIVATE cbdf::ir)
@@ -109,11 +112,14 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE "../support/common")
+	target_include_directories(gui_app PRIVATE "../support/MathUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 
 	target_link_libraries(gui_app PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 	target_link_libraries(gui_app PRIVATE ${wxWidgets_LIBRARIES})
+	target_link_libraries(gui_app INTERFACE igb::simple_matrix)
 	target_link_libraries(gui_app PRIVATE cbdf::cbdf)
 	target_link_libraries(gui_app PRIVATE cbdf::info cbdf::ctrl)
 	target_link_libraries(gui_app PRIVATE cbdf::ir)

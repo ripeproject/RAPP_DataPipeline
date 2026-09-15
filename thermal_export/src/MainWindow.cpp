@@ -1,7 +1,7 @@
 
 #include "MainWindow.hpp"
 
-#include "TeledyneFLIR_File.hpp"
+#include "TeledyneFLIR_Exporter.hpp"
 
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
@@ -110,10 +110,8 @@ void cMainWindow::CreateControls()
 	mpRainbow = new wxRadioButton(this, wxID_ANY, "Rainbow");
 	mpRainbowHC = new wxRadioButton(this, wxID_ANY, "Rainbow HC");
 	mpArctic = new wxRadioButton(this, wxID_ANY, "Arctic");
-	mpLava = new wxRadioButton(this, wxID_ANY, "Lava");
 	mpWhiteHot = new wxRadioButton(this, wxID_ANY, "White Hot");
 	mpBlackHot = new wxRadioButton(this, wxID_ANY, "Black Hot");
-	mpIsotherms = new wxRadioButton(this, wxID_ANY, "ISO Therms");
 
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
@@ -161,13 +159,9 @@ void cMainWindow::CreateLayout()
 	color_sz->AddSpacer(10);
 	color_sz->Add(mpArctic, wxSizerFlags().Proportion(0).Expand());
 	color_sz->AddSpacer(10);
-	color_sz->Add(mpLava, wxSizerFlags().Proportion(0).Expand());
-	color_sz->AddSpacer(10);
 	color_sz->Add(mpWhiteHot, wxSizerFlags().Proportion(0).Expand());
 	color_sz->AddSpacer(10);
 	color_sz->Add(mpBlackHot, wxSizerFlags().Proportion(0).Expand());
-	color_sz->AddSpacer(10);
-	color_sz->Add(mpIsotherms, wxSizerFlags().Proportion(0).Expand());
 	color_sz->AddStretchSpacer(1);
 
 	format_sz->Add(color_sz, wxSizerFlags().Proportion(1).Expand());
@@ -264,6 +258,19 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 {
 	using namespace nStringUtils;
 
+	eColorTable color_table = eColorTable::IRONBOW;
+
+	if (mpRainbow->GetValue())
+		color_table = eColorTable::RAINBOW;
+	else if (mpRainbowHC->GetValue())
+		color_table = eColorTable::RAINBOW_HC;
+	else if (mpArctic->GetValue())
+		color_table = eColorTable::ARCTIC;
+	else if (mpWhiteHot->GetValue())
+		color_table = eColorTable::WHITE_HOT;
+	else if (mpBlackHot->GetValue())
+		color_table = eColorTable::BLACK_HOT;
+
 	const std::filesystem::path input{ mSource.ToStdString() };
 
 	std::vector<directory_entry> files_to_process;
@@ -337,6 +344,8 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		}
 
 		cFileProcessor* fp = new cFileProcessor(mNumFilesToProcess++, in_file, out_file);
+
+		fp->setColorTable(color_table);
 
 		mFileProcessors.push(fp);
 	}

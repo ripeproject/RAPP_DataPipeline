@@ -140,6 +140,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 #******************************************************************************
 
 # Find all the packages needed by this code
+find_package(simple_matrix REQUIRED)
 
 find_package(lyra REQUIRED)
 find_package(Catch2 QUIET)
@@ -193,6 +194,8 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)
 
 # Add the support library source code directory
 # Note: the support directory is a symlink 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/common)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/MathUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/StringUtils)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/support/wxCustomWidgets)
 

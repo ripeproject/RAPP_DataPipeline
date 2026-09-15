@@ -1,7 +1,7 @@
 
 #include "FileProcessor.hpp"
 
-#include "TeledyneFLIR_File.hpp"
+#include "TeledyneFLIR_Exporter.hpp"
 
 #include <cbdf/BlockDataFileExceptions.hpp>
 
@@ -26,12 +26,19 @@ cFileProcessor::cFileProcessor(int id, std::filesystem::directory_entry in,
     mInputFile = in;
     mOutputFile = out;
 
-    mFlirConverter = std::make_unique<cTeledyneFlir_File>();
+    mFlirConverter = std::make_unique<cTeledyneFLIR_Exporter>();
+
+    mFlirConverter->setColorTable(eColorTable::IRONBOW);
 }
 
 cFileProcessor::~cFileProcessor()
 {
     mFileReader.close();
+}
+
+void cFileProcessor::setColorTable(eColorTable color_table)
+{
+    mFlirConverter->setColorTable(color_table);
 }
 
 bool cFileProcessor::open(std::filesystem::path out)
@@ -77,7 +84,7 @@ void cFileProcessor::run()
     mFileReader.attach(static_cast<cExperimentParser*>(this));
     mFileReader.attach(static_cast<cSpidercamParser*>(this));
 
-    cTeledyneFlir_File* pFLIR = mFlirConverter.get();
+    cTeledyneFLIR_Exporter* pFLIR = mFlirConverter.get();
 	mFileReader.attach(static_cast<cTeledyneFlirParser*>(pFLIR));
 
 	try

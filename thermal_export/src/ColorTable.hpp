@@ -17,6 +17,10 @@ public:
 public:
 	cColorTable(uint16_t table_size);
 	cColorTable(double min, double max, uint16_t table_size);
+	virtual ~cColorTable() {};
+
+	double getMinValue() const;
+	double getMaxValue() const;
 
 	void setRange(double min, double max);
 

@@ -3,7 +3,7 @@
 
 #include "ColorTable.hpp"
 
-class cBlackHotColorTable : cColorTable
+class cBlackHotColorTable : public cColorTable
 {
 public:
 	cBlackHotColorTable();

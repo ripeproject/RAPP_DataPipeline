@@ -3,7 +3,7 @@
 
 #include "ColorTable.hpp"
 
-class cRainbow_HC_ColorTable : cColorTable
+class cRainbow_HC_ColorTable : public cColorTable
 {
 public:
 	cRainbow_HC_ColorTable();
