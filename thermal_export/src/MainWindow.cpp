@@ -113,6 +113,8 @@ void cMainWindow::CreateControls()
 	mpWhiteHot = new wxRadioButton(this, wxID_ANY, "White Hot");
 	mpBlackHot = new wxRadioButton(this, wxID_ANY, "Black Hot");
 
+	mpUseCameraTempRange = new wxCheckBox(this, wxID_ANY, "Use Camera Range");
+
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
 	mpExportButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExport, this);
@@ -164,7 +166,11 @@ void cMainWindow::CreateLayout()
 	color_sz->Add(mpBlackHot, wxSizerFlags().Proportion(0).Expand());
 	color_sz->AddStretchSpacer(1);
 
-	format_sz->Add(color_sz, wxSizerFlags().Proportion(1).Expand());
+	format_sz->Add(color_sz);
+
+	format_sz->AddStretchSpacer(1);
+
+	format_sz->Add(mpUseCameraTempRange, 0, wxALIGN_CENTER_VERTICAL);
 
 	topsizer->Add(format_sz, wxSizerFlags().Proportion(0).Expand());
 
@@ -344,6 +350,9 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		}
 
 		cFileProcessor* fp = new cFileProcessor(mNumFilesToProcess++, in_file, out_file);
+
+		if (mpUseCameraTempRange->IsChecked())
+			fp->setScaleColorToCamera();
 
 		fp->setColorTable(color_table);
 

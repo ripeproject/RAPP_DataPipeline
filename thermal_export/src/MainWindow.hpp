@@ -60,6 +60,7 @@ private:
 	wxRadioButton* mpWhiteHot = nullptr;
 	wxRadioButton* mpBlackHot = nullptr;
 
+	wxCheckBox* mpUseCameraTempRange = nullptr;
 
 	wxButton* mpExportButton = nullptr;
 

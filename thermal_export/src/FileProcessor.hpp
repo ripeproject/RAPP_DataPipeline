@@ -21,6 +21,9 @@ public:
 				std::filesystem::path out);
 	~cFileProcessor();
 
+	void setScaleColorToImage(bool enable = true);
+	void setScaleColorToCamera(bool enable = true);
+
 	void setColorTable(eColorTable color_table);
 
 	void process_file();

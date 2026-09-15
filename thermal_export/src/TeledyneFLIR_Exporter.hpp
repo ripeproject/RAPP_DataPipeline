@@ -24,6 +24,9 @@ public:
 
     void setOutputPath(std::filesystem::path out);
 
+	void setScaleColorToImage(bool enable = true);
+	void setScaleColorToCamera(bool enable = true);
+
 	void setColorTable(eColorTable color_table);
 
 	// Spidercam Parser Data

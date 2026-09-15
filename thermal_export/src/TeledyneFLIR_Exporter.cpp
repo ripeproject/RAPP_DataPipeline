@@ -55,6 +55,16 @@ void cTeledyneFLIR_Exporter::setOutputPath(std::filesystem::path out)
     mMetaData.open(metafile, std::ios::out | std::ios::trunc);
 }
 
+void cTeledyneFLIR_Exporter::setScaleColorToImage(bool enable)
+{
+    mScaleToImage = enable;
+}
+
+void cTeledyneFLIR_Exporter::setScaleColorToCamera(bool enable)
+{
+    mScaleToImage = !enable;
+}
+
 void cTeledyneFLIR_Exporter::setColorTable(eColorTable color_table)
 {
     switch (color_table)

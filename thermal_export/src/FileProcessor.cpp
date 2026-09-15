@@ -36,6 +36,16 @@ cFileProcessor::~cFileProcessor()
     mFileReader.close();
 }
 
+void cFileProcessor::setScaleColorToImage(bool enable)
+{
+    mFlirConverter->setScaleColorToImage(enable);
+}
+
+void cFileProcessor::setScaleColorToCamera(bool enable)
+{
+    mFlirConverter->setScaleColorToCamera(enable);
+}
+
 void cFileProcessor::setColorTable(eColorTable color_table)
 {
     mFlirConverter->setColorTable(color_table);
