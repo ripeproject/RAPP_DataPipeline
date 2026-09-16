@@ -76,6 +76,8 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
+find_package(simple_matrix REQUIRED)
+
 
 add_library(kinematic_utils)
 

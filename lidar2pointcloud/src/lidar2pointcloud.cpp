@@ -7,7 +7,7 @@
 
 #include <cbdf/PointCloudTypes.hpp>
 
-#include <ouster_connect/simple_blas.h>
+#include <simple_matrix/simple_blas.hpp>
 #include <ouster_connect/ouster_utils.h>
 
 #include <eigen3/Eigen/Eigen>

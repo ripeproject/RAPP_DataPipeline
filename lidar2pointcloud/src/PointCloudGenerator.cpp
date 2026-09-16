@@ -13,7 +13,7 @@
 
 #include <cbdf/PointCloud.hpp>
 
-#include <ouster_connect/simple_blas.h>
+#include <simple_matrix/simple_blas.hpp>
 #include <ouster_connect/ouster_utils.h>
 
 #include <eigen3/Eigen/Eigen>
@@ -45,7 +45,7 @@ namespace
     };
 
     template<typename T1, typename T2>
-    inline void rotate(T1& x, T1& y, T1& z, const ouster::cRotationMatrix<T2>& r)
+    inline void rotate(T1& x, T1& y, T1& z, const simple_matrix::cRotationMatrix<T2>& r)
     {
         const auto& rX = r.column(0);
         const auto& rY = r.column(1);
@@ -61,7 +61,7 @@ namespace
     }
 
     template<typename T>
-    inline void rotate(std::vector<cPointCloudGenerator::sPoint_t>& lhs, const ouster::cRotationMatrix<T>& r)
+    inline void rotate(std::vector<cPointCloudGenerator::sPoint_t>& lhs, const simple_matrix::cRotationMatrix<T>& r)
     {
         const auto& rX = r.column(0);
         const auto& rY = r.column(1);
@@ -80,7 +80,7 @@ namespace
     }
 
     template<typename T>
-    inline void translate(std::vector<cPointCloudGenerator::sPoint_t>& lhs, const ouster::cTranslation<T>& t)
+    inline void translate(std::vector<cPointCloudGenerator::sPoint_t>& lhs, const simple_matrix::cTranslation<T>& t)
     {
         for (std::size_t i = 0; i < lhs.size(); ++i)
         {
@@ -106,7 +106,7 @@ namespace
         }
     }
 
-    ouster::cRotationMatrix<double> computeSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg)
+    simple_matrix::cRotationMatrix<double> computeSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg)
     {
         double pitch_rad = -pitch_deg * nConstants::DEG_TO_RAD;
         double roll_rad  = -roll_deg * nConstants::DEG_TO_RAD;
@@ -120,7 +120,7 @@ namespace
         Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
         Eigen::Matrix3d rotationMatrix = q.matrix();
 
-        ouster::cRotationMatrix<double> result;
+        simple_matrix::cRotationMatrix<double> result;
         result.identity();
 
         double e; // Used for debugging;
@@ -143,7 +143,7 @@ namespace
         return result;
     }
 
-    void fillGroundData(ouster::matrix_col_major<rfm::sPoint3D_t>& cloud_frame)
+    void fillGroundData(simple_matrix::matrix_col_major<rfm::sPoint3D_t>& cloud_frame)
     {
         for (int c = 0; c < cloud_frame.num_columns(); ++c)
         {
@@ -553,6 +553,8 @@ void cPointCloudGenerator::addLidarData(const cOusterLidarData& data)
 
 cPointCloudGenerator::sLUT_t cPointCloudGenerator::generateLookupTable()
 {
+    using namespace simple_matrix;
+
     if (mColumnsPerFrame <= 0 || mPixelsPerColumn <= 0)
         throw std::invalid_argument("lut dimensions must be greater than zero");
 
@@ -653,7 +655,7 @@ bool cPointCloudGenerator::computePointCloud(int id)
     auto frameID = mLidarData.front().frame_id();
     auto startTimestamp_ns = mLidarData.front().timestamp_ns();
 
-    ouster::matrix_col_major<rfm::sPoint3D_t> cloud_frame;
+    simple_matrix::matrix_col_major<rfm::sPoint3D_t> cloud_frame;
     cloud_frame.resize(mPixelsPerColumn, mColumnsPerFrame);
 
     if (mAbort)
@@ -681,7 +683,7 @@ bool cPointCloudGenerator::computePointCloud(int id)
         // Their example code seems to indicate that we need to destagger the image, but
         // that does not seem to be true!
         //auto lidar_data = destagger(data, mPixelShiftByRow);
-        auto lidar_data = ouster::to_matrix_row_major(lidar_frame.data());
+        auto lidar_data = simple_matrix::to_matrix_row_major(lidar_frame.data());
 
         rfm::sPoint3D_t point;
 

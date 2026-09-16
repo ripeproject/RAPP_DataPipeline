@@ -8,7 +8,7 @@
 #include <cbdf/SpiderCamInfoTypes.hpp>
 #include <cbdf/SsnxInfoTypes.hpp>
 
-#include <ouster_connect/simple_blas.h>
+#include <simple_matrix/simple_blas.hpp>
 #include <ouster_connect/ouster_utils.h>
 
 #include <vector>
@@ -68,4 +68,4 @@ std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
 void mergeDollyOrientation(int id, std::vector<kdt::sDollyInfo_t>& dolly, const std::vector<kdt::sDollyOrientation_t>& orientation);
 
 bool transform(double time_us, const std::vector<kdt::sDollyInfo_t>& path,
-	ouster::matrix_col_major<rfm::sPoint3D_t>& cloud, std::vector<kdt::sDollyInfo_t>* pComputedPath, double* displacement_mm = nullptr);
+	simple_matrix::matrix_col_major<rfm::sPoint3D_t>& cloud, std::vector<kdt::sDollyInfo_t>* pComputedPath, double* displacement_mm = nullptr);

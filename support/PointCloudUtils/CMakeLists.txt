@@ -79,6 +79,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find all the packages needed by this code
 
+
+find_package(simple_matrix REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(dlib REQUIRED)
 

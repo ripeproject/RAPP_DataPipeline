@@ -8,10 +8,10 @@
 
 #include <cbdf/PointCloud.hpp>
 
-#include <ouster_connect/simple_blas.h>
 #include <ouster_connect/ouster_utils.h>
 
 #include <eigen3/Eigen/Eigen>
+
 
 #ifdef USE_UPDATE_PROGRESS
     extern void update_progress(const int id, const int progress_pct);
@@ -21,7 +21,7 @@
 namespace
 {
     template<typename T1, typename T2>
-    inline void rotate(T1& x, T1& y, T1& z, const ouster::cRotationMatrix<T2>& r)
+    inline void rotate(T1& x, T1& y, T1& z, const simple_matrix::cRotationMatrix<T2>& r)
     {
         const auto& rX = r.column(0);
         const auto& rY = r.column(1);
@@ -37,7 +37,7 @@ namespace
     }
 
 
-    ouster::cRotationMatrix<double> computeSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg)
+    simple_matrix::cRotationMatrix<double> computeSensorOrientation(double yaw_deg, double pitch_deg, double roll_deg)
     {
         double pitch_rad = nMathUtils::wrap_neg_pi_to_pi(- pitch_deg * nConstants::DEG_TO_RAD);
         double roll_rad  = nMathUtils::wrap_neg_pi_to_pi(- roll_deg * nConstants::DEG_TO_RAD);
@@ -51,7 +51,7 @@ namespace
         Eigen::Quaternion<double> q = pitchAngle * rollAngle * yawAngle;
         Eigen::Matrix3d rotationMatrix = q.matrix();
 
-        ouster::cRotationMatrix<double> result;
+        simple_matrix::cRotationMatrix<double> result;
         result.identity();
 
         double e; // Used for debugging;
@@ -654,7 +654,7 @@ std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     if (imu.empty())
         return result;
 
-    ouster::cTransformMatrix<double>	imuTransform;
+    simple_matrix::cTransformMatrix<double>	imuTransform;
     imuTransform.set(transform.imu_to_sensor_transform, true);
 
     auto imuToSensor = imuTransform.rotation();
@@ -835,7 +835,7 @@ void mergeDollyOrientation(int id, std::vector<kdt::sDollyInfo_t>& dolly, const 
 }
 
 bool transform(double time_us, const std::vector<kdt::sDollyInfo_t>& path,
-                ouster::matrix_col_major<rfm::sPoint3D_t>& cloud,
+                simple_matrix::matrix_col_major<rfm::sPoint3D_t>& cloud,
                 std::vector<kdt::sDollyInfo_t>* pComputedPath, double* displacement_mm)
 {
     if (path.empty()) return false;

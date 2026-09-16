@@ -174,6 +174,7 @@ find_package(lz4 REQUIRED)
 
 
 # Find and include my libraries for data collection
+find_package(simple_matrix REQUIRED)
 find_package(cbdf REQUIRED cbdf info ctrl sensors processing_info pointcloud)
 
 # Required for the cbdf::sensors library
