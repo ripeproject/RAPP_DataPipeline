@@ -23,23 +23,26 @@ cTeledyneFLIR_Exporter::cTeledyneFLIR_Exporter() : cTeledyneFlirParser()
 
 cTeledyneFLIR_Exporter::~cTeledyneFLIR_Exporter()
 {
-    std::filesystem::path filename = mOutputPath;
-
-    std::string ext;
-
-    if (mPlotID != 'A')
+    if (mImageIsDirty)
     {
-        ext = ".";
-        ext += mPlotID;
+        std::filesystem::path filename = mOutputPath;
+
+        std::string ext;
+
+        if (mPlotID != 'A')
+        {
+            ext = ".";
+            ext += mPlotID;
+        }
+
+        ext += ".png";
+
+        filename += ext;
+
+        writeImage(filename);
+
+        mImage.release();
     }
-
-    ext += ".png";
-
-    filename += ext;
-
-    writeImage(filename);
-
-    mImage.release();
 
     mMetaData.close();
 }
@@ -278,6 +281,12 @@ void cTeledyneFLIR_Exporter::onImage(uint8_t device_id, nTeledyneAtlasConnect::c
 
     if (mMetaData.is_open())
     {
+        if (!mImageSizeWritten)
+        {
+            mMetaData << "Image Size: " << image.width() << " x " << image.height() << "\n";
+            mImageSizeWritten = true;
+        }
+
         mMetaData << "Plot " << mPlotID << " Thermal Range (K): " << range.minTemp_K << " to " << range.maxTemp_K << "\n";
     }
 
@@ -331,6 +340,8 @@ void cTeledyneFLIR_Exporter::onImage(uint8_t device_id, nTeledyneAtlasConnect::c
                 mImage.at<cv::Vec3b>(p) = { color.blue, color.green, color.red };
             }
         }
+
+        mImageIsDirty = true;
 
         std::filesystem::path filename = mOutputPath;
 
@@ -399,5 +410,7 @@ void cTeledyneFLIR_Exporter::writeImage(std::filesystem::path filename)
 {
     cv::String name = filename.string();
     cv::imwrite(name, mImage);
+
+    mImageIsDirty = false;
 }
 

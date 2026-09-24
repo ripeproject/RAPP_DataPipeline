@@ -91,12 +91,15 @@ private:
 	float mHorizonalFoV_deg = 0;
 	float mFocalLength = 0;
 
+	bool mImageSizeWritten = false;
+
 	bool mScaleToImage = true;
 	std::unique_ptr<cColorTable> mColorTable;
 
 	char mPlotID = 'A';
 
 	cv::Mat mImage;
+	bool mImageIsDirty = false;
 
 	uint32_t    mFrameCount = 0;
 

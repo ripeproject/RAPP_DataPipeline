@@ -3,7 +3,7 @@
 #include "MainWindow.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
-    #include "Resources/Export2Bil.xpm"
+    #include "Resources/ThermalExport.xpm"
 #endif
 
 #include <wx/aui/framemanager.h>
@@ -42,7 +42,7 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Export Hyperspectral Data to GIS Files (BIL, BIP, or BSQ)")
+	: wxFrame(NULL, wxID_ANY, "Export Thermal Data to CSV and PNG file")
 {
 	mpMainWindow = new cMainWindow(this);
 
@@ -119,7 +119,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	wxAboutDialogInfo info;
 	info.SetName(wxTheApp->GetAppDisplayName());
 	info.SetVersion("1.0", "0.1.0");
-	info.SetDescription(_("Export hyperspectral data in ceres data files to GIS based files.\n"));
+	info.SetDescription(_("Export thermal data in ceres data files to CVS based files.\n"));
 	info.SetCopyright(wxT("Copyright (c) 2023..26, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
@@ -127,8 +127,8 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 	info.AddDeveloper("Brett Feddersen");
 	info.SetLicense("BSD 3 - Clause License\n"
 		"\n"
-		"This license applies to all files in the hyperspectral2bil repository and source\n"
-		"distribution.This includes hyperspectral2bil’s source code, the examples, and\n"
+		"This license applies to all files in the thermal_export repository and source\n"
+		"distribution. This includes thermal_export’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
 		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"

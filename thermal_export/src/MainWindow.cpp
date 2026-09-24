@@ -20,6 +20,38 @@ using namespace std::filesystem;
 namespace
 {
 	wxEvtHandler* g_pEventHandler = nullptr;
+
+	std::map<int, int> prev_progress;
+
+	bool byMonthAndDay(const std::filesystem::directory_entry& a, const std::filesystem::directory_entry& b)
+	{
+		auto dir1 = a.path().filename().string();
+		auto dir2 = b.path().filename().string();
+
+		auto month1 = nStringUtils::toMonth(dir1);
+		auto month2 = nStringUtils::toMonth(dir2);
+
+		if (month1 < month2)
+			return true;
+
+		if (month1 == month2)
+		{
+			auto day1 = nStringUtils::toDay(dir1);
+			auto day2 = nStringUtils::toDay(dir2);
+
+			return day1 < day2;
+		}
+
+		return false;
+	}
+
+	template<typename T>
+	T to_value(std::optional<T> value, T default_value)
+	{
+		if (value.has_value())
+			return value.value();
+		return default_value;
+	}
 }
 
 void console_message(const std::string& msg)
@@ -72,7 +104,7 @@ cMainWindow::cMainWindow(wxWindow* parent)
 	CreateControls();
 	CreateLayout();
 
-	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Bil");
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("ThermalExport");
 
 	config->Read("Files/Source", &mSource);
 	config->Read("Files/Destination", &mDestinationDataDirectory);
@@ -80,7 +112,7 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 cMainWindow::~cMainWindow()
 {
-	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Bil");
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("ThermalExport");
 
 	config->Write("Files/Source", mSource);
 	config->Write("Files/Destination", mDestinationDataDirectory);
@@ -279,6 +311,8 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 
 	const std::filesystem::path input{ mSource.ToStdString() };
 
+	std::string month_dir;
+
 	std::vector<directory_entry> files_to_process;
 
 	/*
@@ -301,6 +335,13 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 	}
 	else
 	{
+		if (input.has_parent_path())
+		{
+			month_dir = input.filename().string();
+			if (!isMonthDirectory(month_dir))
+				month_dir.clear();
+		}
+
 		for (auto const& dir_entry : std::filesystem::directory_iterator{ input })
 		{
 			if (!dir_entry.is_regular_file())
@@ -341,6 +382,21 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		{
 			std::string out_filename = fe.filename;
 			out_file = mDestinationDataDirectory.ToStdString();
+
+			if (!month_dir.empty())
+			{
+				std::string last_dir;
+				if (out_file.has_parent_path())
+				{
+					last_dir = out_file.filename().string();
+				}
+
+				if (month_dir != last_dir)
+				{
+					out_file /= month_dir;
+				}
+			}
+
 			out_file /= addProcessedTimestamp(out_filename);
 
 			if (!fe.extension.empty())
