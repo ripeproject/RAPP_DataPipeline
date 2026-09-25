@@ -108,7 +108,7 @@ cMainWindow::cMainWindow(wxWindow* parent)
 	CreateControls();
 	CreateLayout();
 
-	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Png");
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Hyperspectral2Png");
 
 	config->Read("Files/Source", &mSource);
 	config->Read("Files/Destination", &mDestinationDataDirectory);
@@ -116,7 +116,7 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 cMainWindow::~cMainWindow()
 {
-	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Png");
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Hyperspectral2Png");
 
 	config->Write("Files/Source", mSource);
 	config->Write("Files/Destination", mDestinationDataDirectory);
@@ -357,7 +357,7 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 			if (!isCeresFile(dir_entry.path().string()))
 				return;
 		}
-		if ((ext == ".BIL") || (ext == ".bil"))
+		else if ((ext == ".BIL") || (ext == ".bil"))
 		{
 
 		}
@@ -380,7 +380,7 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 				if (!isCeresFile(dir_entry.path().string()))
 					continue;
 			}
-			if ((ext == ".BIL") || (ext == ".bil"))
+			else if ((ext == ".BIL") || (ext == ".bil"))
 			{
 
 			}

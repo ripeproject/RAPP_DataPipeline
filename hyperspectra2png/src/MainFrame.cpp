@@ -42,7 +42,7 @@ wxEND_EVENT_TABLE()
 
 //-----------------------------------------------------------------------------
 cMainFrame::cMainFrame()
-	: wxFrame(NULL, wxID_ANY, "Export to png")
+	: wxFrame(NULL, wxID_ANY, "Export Hypersceptral Data to PNG")
 {
 	mpMainWindow = new cMainWindow(this);
 

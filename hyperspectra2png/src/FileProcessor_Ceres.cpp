@@ -24,7 +24,10 @@ cFileProcessor_Ceres::cFileProcessor_Ceres(int id, std::filesystem::directory_en
                                 std::filesystem::path out) 
 :
     cFileProcessor(id, in, out)
-{}
+{
+    mVnirConverter = std::make_unique<cHySpexVNIR3000N_2_Png>();
+    mSwirConverter = std::make_unique<cHySpexSWIR384_2_Png>();
+}
 
 cFileProcessor_Ceres::~cFileProcessor_Ceres()
 {
