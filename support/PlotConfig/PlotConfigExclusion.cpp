@@ -17,6 +17,25 @@ cPlotConfigExclusion::cPlotConfigExclusion(ePlotExclusionType type)
 	: mType(type)
 {}
 
+cPlotConfigExclusion& cPlotConfigExclusion::operator=(const cPlotConfigExclusion& other)
+{
+	mDirty = other.mDirty;
+
+	setType(other.mType);
+
+	setCenterX_mm(other.mCenterX_mm);
+	setCenterY_mm(other.mCenterY_mm);
+
+	setRadius_mm(other.mRadius_mm);
+
+	setLength_mm(other.mLength_mm);
+	setWidth_mm(other.mWidth_mm);
+
+	setOrientation_deg(other.mOrientation_deg);
+
+	return *this;
+}
+
 void cPlotConfigExclusion::clear()
 {
 	mDirty = false;

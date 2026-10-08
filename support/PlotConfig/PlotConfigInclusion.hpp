@@ -17,13 +17,18 @@ class cPlotConfigInclusion
 {
 public:
 	cPlotConfigInclusion();
+	explicit cPlotConfigInclusion(ePlotInclusionType type);
 	~cPlotConfigInclusion() = default;
+
+	cPlotConfigInclusion& operator=(const cPlotConfigInclusion& other);
 
 	void clear();
 
 	bool empty() const;
 
 	bool isDirty() const;
+
+	ePlotInclusionType getType() const;
 
 	rfm::sPlotBoundingBox_t getBoundingBox() const;
 
@@ -35,6 +40,8 @@ public:
 	operator rfm::sPlotBoundingBox_t() const;
 	bool operator==(const cPlotConfigInclusion& rhs) const;
 	bool operator!=(const cPlotConfigInclusion& rhs) const;
+
+	void setType(ePlotInclusionType type);
 
 	void setCenterX_mm(uint32_t x_mm);
 	void setCenterY_mm(uint32_t y_mm);
@@ -50,6 +57,8 @@ protected:
 
 private:
 	bool mDirty = false;
+
+	ePlotInclusionType mType = ePlotInclusionType::CIRCLE;
 
 	uint32_t mCenterX_mm = 0;
 	uint32_t mCenterY_mm = 0;

@@ -9,6 +9,16 @@ namespace plot_config
 	{
 		return month * 100 + day;
 	}
+
+	inline int to_month(int date)
+	{
+		return date / 100;
+	}
+
+	inline int to_day(int date)
+	{
+		return date - (100 * (date / 100));
+	}
 }
 
 namespace
@@ -20,6 +30,10 @@ namespace
 
 	const uint32_t SUB_PLOT_MASK = 0x0000'00FF;
 }
+
+/********************************************************************
+ * PLOT CONFIG: SCAN
+ *******************************************************************/
 
 cPlotConfigScan::cPlotConfigScan()
 {}
@@ -43,6 +57,31 @@ bool cPlotConfigScan::isDirty() const
 const std::string& cPlotConfigScan::getMeasurementName() const
 {
 	return mMeasurementName;
+}
+
+std::string cPlotConfigScan::getSafeMeasurementName() const
+{
+	std::string name = mMeasurementName;
+
+	std::replace_if(name.begin(), name.end(),
+		[](std::string::value_type c)
+		{
+			switch (c)
+			{
+			case ':': return true;
+			case '\\': return true;
+			case '/': return true;
+			case '<': return true;
+			case '>': return true;
+			case '|': return true;
+			case '?': return true;
+			case '*': return true;
+			case '"': return true;
+			}
+			return std::isspace(c) != 0;
+		}, '_');
+
+	return name;
 }
 
 void cPlotConfigScan::setMeasurementName(const std::string& name)
@@ -307,6 +346,11 @@ nlohmann::json cPlotConfigScan::save()
 	return scanDoc;
 }
 
+
+/********************************************************************
+ * PLOT CONFIG: PLOT INFO
+ *******************************************************************/
+
 const cPlotConfigPlotInfo& cPlotConfigPlotInfo::operator=(const cPlotConfigPlotInfo& rhs)
 {
 	mDirty |= rhs.mDirty;
@@ -325,10 +369,34 @@ const cPlotConfigPlotInfo& cPlotConfigPlotInfo::operator=(const cPlotConfigPlotI
 	mLeafType = rhs.mLeafType;
 
 	mCorrections = rhs.mCorrections;
-//	mBounds = rhs.mBounds;
-//	mIsolationMethod = rhs.mIsolationMethod;
 
 	return *this;
+}
+
+bool cPlotConfigPlotInfo::operator==(const cPlotConfigPlotInfo& other) const
+{
+	bool equal = mPlotNumber == other.mPlotNumber;
+	equal &= mPlotName == other.mPlotName;
+
+	equal &= mDescription == other.mDescription;
+	equal &= mSpecies == other.mSpecies;
+	equal &= mCultivar == other.mCultivar;
+	equal &= mEvent == other.mEvent;
+	equal &= mConstructName == other.mConstructName;
+	equal &= mPotLabel == other.mPotLabel;
+	equal &= mSeedGeneration == other.mSeedGeneration;
+	equal &= mCopyNumber == other.mCopyNumber;
+	equal &= mTreatments == other.mTreatments;
+	equal &= mLeafType == other.mLeafType;
+
+	equal &= mCorrections == other.mCorrections;
+
+	return equal;
+}
+
+bool cPlotConfigPlotInfo::operator!=(const cPlotConfigPlotInfo& other) const
+{
+	return !operator==(other);
 }
 
 void cPlotConfigPlotInfo::clear()
@@ -719,6 +787,40 @@ std::vector<cPlotConfigExclusion>* const cPlotConfigPlotInfo::getExclusions(cons
 	return getExclusions(plot_config::to_date(month, day));
 }
 
+const std::vector<cPlotConfigInclusion>* const  cPlotConfigPlotInfo::getInclusions(const int date) const
+{
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getInclusions());
+
+	return &(it->second.getInclusions());
+}
+
+std::vector<cPlotConfigInclusion>* const  cPlotConfigPlotInfo::getInclusions(const int date)
+{
+	if (mCorrections.empty())
+		return nullptr;
+
+	auto it = find(date);
+	if (it == mCorrections.end())
+		return &(mCorrections.begin()->second.getInclusions());
+
+	return &(it->second.getInclusions());
+}
+
+const std::vector<cPlotConfigInclusion>* const  cPlotConfigPlotInfo::getInclusions(const int month, const int day) const
+{
+	return getInclusions(plot_config::to_date(month, day));
+}
+
+std::vector<cPlotConfigInclusion>* const  cPlotConfigPlotInfo::getInclusions(const int month, const int day)
+{
+	return getInclusions(plot_config::to_date(month, day));
+}
+
 void cPlotConfigPlotInfo::setPlotNumber(uint32_t num)
 {
 	uint32_t plotNumber = num;
@@ -882,6 +984,11 @@ cPlotConfigCorrection& cPlotConfigPlotInfo::add(const int month, const int day)
 	return mCorrections.add(month, day);
 }
 
+void cPlotConfigPlotInfo::clearCorrections()
+{
+	mCorrections.clear();
+}
+
 void cPlotConfigPlotInfo::setBounds(const int month, const int day, const cPlotConfigBoundary& bounds)
 {
 	auto it = find_exact(month, day);
@@ -916,6 +1023,55 @@ void cPlotConfigPlotInfo::setExclusions(const int month, const int day, const st
 	}
 	else
 		it->second.setExclusions(exclusions);
+}
+
+void cPlotConfigPlotInfo::setInclusions(const int month, const int day, const std::vector<cPlotConfigInclusion>& inclusions)
+{
+	auto it = find_exact(month, day);
+
+	if (it == mCorrections.end())
+	{
+		mCorrections.add(month, day).setInclusions(inclusions);
+	}
+	else
+		it->second.setInclusions(inclusions);
+}
+
+void cPlotConfigPlotInfo::update(const cPlotConfigPlotInfo& rhs)
+{
+	setPlotNumber(rhs.mPlotNumber);
+	setPlotName(rhs.mPlotName);
+	setDescription(rhs.mDescription);
+	setSpecies(rhs.mSpecies);
+	setCultivar(rhs.mCultivar);
+	setEvent(rhs.mEvent);
+	setConstructName(rhs.mConstructName);
+	setPotLabel(rhs.mPotLabel);
+	setSeedGeneration(rhs.mSeedGeneration);
+	setCopyNumber(rhs.mCopyNumber);
+	setLeafType(rhs.mLeafType);
+
+	setTreatments(rhs.mTreatments);
+
+	for (const auto& correction : rhs.mCorrections)
+	{
+		auto date = correction.first;
+
+		auto it = find(date);
+
+		if (it == end())
+		{
+			mCorrections.add(plot_config::to_month(date), plot_config::to_day(date)).assign(correction.second);
+
+		}
+		else
+		{
+			if (!it->second.same(correction.second))
+			{
+				mCorrections.add(plot_config::to_month(date), plot_config::to_day(date)).assign(correction.second);
+			}
+		}
+	}
 }
 
 void cPlotConfigPlotInfo::clearDirtyFlag()

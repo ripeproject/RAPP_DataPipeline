@@ -76,6 +76,11 @@ public:
 
 	const_iterator	find_by_measurement_name(const std::string& name) const;
 	iterator		find_by_measurement_name(const std::string& name);
+	const_iterator	find_by_safe_measurement_name(const std::string& name) const;
+	iterator		find_by_safe_measurement_name(const std::string& name);
+
+	const_iterator	find_by_pass_number(const std::string& name) const;
+	iterator		find_by_pass_number(const std::string& name);
 
 	cPlotConfigScan& add(const std::string& name);
 	void remove(const std::string& name);

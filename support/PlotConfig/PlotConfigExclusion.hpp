@@ -20,6 +20,8 @@ public:
 	explicit cPlotConfigExclusion(ePlotExclusionType type);
 	~cPlotConfigExclusion() = default;
 
+	cPlotConfigExclusion& operator=(const cPlotConfigExclusion& other);
+
 	void clear();
 
 	bool empty() const;

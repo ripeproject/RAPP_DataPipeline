@@ -14,6 +14,24 @@ cPlotConfigInclusion::cPlotConfigInclusion()
 {
 }
 
+cPlotConfigInclusion::cPlotConfigInclusion(ePlotInclusionType type)
+	: mType(type)
+{}
+
+cPlotConfigInclusion& cPlotConfigInclusion::operator=(const cPlotConfigInclusion& other)
+{
+	mDirty = other.mDirty;
+
+	setType(other.mType);
+
+	setCenterX_mm(other.mCenterX_mm);
+	setCenterY_mm(other.mCenterY_mm);
+
+	setRadius_mm(other.mRadius_mm);
+
+	return *this;
+}
+
 void cPlotConfigInclusion::clear()
 {
 	mDirty = false;
@@ -32,6 +50,11 @@ bool cPlotConfigInclusion::empty() const
 bool cPlotConfigInclusion::isDirty() const
 {
 	return mDirty;
+}
+
+ePlotInclusionType cPlotConfigInclusion::getType() const
+{
+	return mType;
 }
 
 cPlotConfigInclusion::operator rfm::sPlotBoundingBox_t() const
@@ -74,6 +97,12 @@ bool cPlotConfigInclusion::contains(rfm::rappPoint2D_t point) const
 bool cPlotConfigInclusion::contains(std::int32_t x_mm, std::int32_t y_mm) const
 {
 	return true;
+}
+
+void cPlotConfigInclusion::setType(ePlotInclusionType type)
+{
+	mDirty |= mType != type;
+	mType = type;
 }
 
 void cPlotConfigInclusion::setCenterX_mm(uint32_t x_mm)

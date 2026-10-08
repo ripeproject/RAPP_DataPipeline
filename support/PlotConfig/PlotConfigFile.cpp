@@ -8,6 +8,29 @@
 #include <stdexcept>
 
 
+namespace
+{
+	int to_pass_number(const std::string& name)
+	{
+		std::string num_str;
+
+		for (auto it = name.rbegin(); it != name.rend(); ++it)
+		{
+			if (std::isdigit(*it) == 0)
+				break;
+
+			num_str += *it;
+		}
+
+		std::reverse(num_str.begin(), num_str.end());
+
+		if (num_str.empty())
+			return -1;
+
+		return std::stoi(num_str);
+	}
+}
+
 cPlotConfigFile::cPlotConfigFile()
 {}
 
@@ -509,6 +532,54 @@ cPlotConfigFile::iterator cPlotConfigFile::find_by_measurement_name(const std::s
 	for (auto it = mScans.begin(); it != mScans.end(); ++it)
 	{
 		if (it->getMeasurementName() == name)
+			return it;
+	}
+
+	return mScans.end();
+}
+
+cPlotConfigFile::const_iterator cPlotConfigFile::find_by_safe_measurement_name(const std::string& name) const
+{
+	for (auto it = mScans.cbegin(); it != mScans.cend(); ++it)
+	{
+		if (it->getSafeMeasurementName() == name)
+			return it;
+	}
+
+	return mScans.cend();
+}
+
+cPlotConfigFile::iterator cPlotConfigFile::find_by_safe_measurement_name(const std::string& name)
+{
+	for (auto it = mScans.begin(); it != mScans.end(); ++it)
+	{
+		if (it->getSafeMeasurementName() == name)
+			return it;
+	}
+
+	return mScans.end();
+}
+
+cPlotConfigFile::const_iterator	cPlotConfigFile::find_by_pass_number(const std::string& name) const
+{
+	int scan_pass_number = to_pass_number(name);
+
+	for (auto it = mScans.cbegin(); it != mScans.cend(); ++it)
+	{
+		if (to_pass_number(it->getMeasurementName()) == scan_pass_number)
+			return it;
+	}
+
+	return mScans.cend();
+}
+
+cPlotConfigFile::iterator cPlotConfigFile::find_by_pass_number(const std::string& name)
+{
+	int scan_pass_number = to_pass_number(name);
+
+	for (auto it = mScans.begin(); it != mScans.end(); ++it)
+	{
+		if (to_pass_number(it->getMeasurementName()) == scan_pass_number)
 			return it;
 	}
 

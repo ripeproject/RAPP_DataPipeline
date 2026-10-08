@@ -21,6 +21,12 @@ class cPlotConfigPlotInfo;
 constexpr uint8_t	INVALID_SUB_PLOT_NUMBER = 255;
 
 
+/********************************************************************
+ * PLOT CONFIG: SCAN
+ * 
+ * Holds the plot information for a single LiDAR scan.  The scan
+ * contains multiple plots
+ *******************************************************************/
 class cPlotConfigScan
 {
 public:
@@ -36,6 +42,7 @@ public:
 	bool isDirty() const;
 
 	const std::string& getMeasurementName() const;
+	std::string getSafeMeasurementName() const;
 
 	void setMeasurementName(const std::string& name);
 
@@ -98,7 +105,13 @@ private:
 	friend class cPlotConfigFile;
 };
 
-
+/********************************************************************
+ * PLOT CONFIG: PLOT INFO
+ *
+ * Holds the information needed to describe a single plot.  The plot
+ * information contains multiple correction record based on when the
+ * LiDAR scan was conducted due to shifts in the measurement dolly.
+ *******************************************************************/
 class cPlotConfigPlotInfo
 {
 public:
@@ -111,6 +124,9 @@ public:
 
 	cPlotConfigPlotInfo(const cPlotConfigPlotInfo& rhs) = default;
 	const cPlotConfigPlotInfo& operator=(const cPlotConfigPlotInfo& rhs);
+
+	bool operator==(const cPlotConfigPlotInfo& other) const;
+	bool operator!=(const cPlotConfigPlotInfo& other) const;
 
 	void clear();
 
@@ -189,6 +205,12 @@ public:
 	const std::vector<cPlotConfigExclusion>* const getExclusions(const int month, const int day) const;
 	std::vector<cPlotConfigExclusion>* const getExclusions(const int month, const int day);
 
+	const std::vector<cPlotConfigInclusion>* const getInclusions(const int date) const;
+	std::vector<cPlotConfigInclusion>* const getInclusions(const int date);
+
+	const std::vector<cPlotConfigInclusion>* const getInclusions(const int month, const int day) const;
+	std::vector<cPlotConfigInclusion>* const getInclusions(const int month, const int day);
+
 	void setPlotNumber(uint32_t num);
 //	void setSubPlotNumber(uint8_t num);
 	void setPlotName(const std::string& name);
@@ -209,10 +231,14 @@ public:
 	void addTreatment(const std::string& treatment);
 
 	cPlotConfigCorrection& add(const int month, const int day);
+	void clearCorrections();
 
 	void setBounds(const int month, const int day, const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const int month, const int day, const cPlotConfigIsolationMethod& method);
 	void setExclusions(const int month, const int day, const std::vector<cPlotConfigExclusion>& exclusions);
+	void setInclusions(const int month, const int day, const std::vector<cPlotConfigInclusion>& exclusions);
+
+	void update(const cPlotConfigPlotInfo& rhs);
 
 	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);

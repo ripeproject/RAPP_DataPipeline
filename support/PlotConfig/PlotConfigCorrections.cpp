@@ -18,6 +18,65 @@ cPlotConfigCorrection::cPlotConfigCorrection(int month, int day)
 {
 }
 
+cPlotConfigCorrection& cPlotConfigCorrection::operator=(const cPlotConfigCorrection& other)
+{
+	mDirty = other.mDirty;
+
+	mEffectiveMonth = other.mEffectiveMonth;
+	mEffectiveDay = other.mEffectiveDay;
+
+	setBounds(other.mBounds);
+	setIsolationMethod(other.mIsolationMethod);
+
+	setInclusions(other.mInclusions);
+	setExclusions(other.mExclusions);
+
+	return *this;
+}
+
+bool cPlotConfigCorrection::operator==(const cPlotConfigCorrection& other) const
+{
+	bool equal = mEffectiveMonth == other.mEffectiveMonth;
+	equal &= mEffectiveDay == other.mEffectiveDay;
+
+	equal &= mBounds == other.mBounds;
+	equal &= mIsolationMethod == other.mIsolationMethod;
+
+	equal &= mExclusions == other.mExclusions;
+	equal &= mInclusions == other.mInclusions;
+
+	return equal;
+}
+
+bool cPlotConfigCorrection::operator!=(const cPlotConfigCorrection& other) const
+{
+	return !operator==(other);
+}
+
+cPlotConfigCorrection& cPlotConfigCorrection::assign(const cPlotConfigCorrection& other)
+{
+	mDirty = other.mDirty;
+
+	setBounds(other.mBounds);
+	setIsolationMethod(other.mIsolationMethod);
+
+	setInclusions(other.mInclusions);
+	setExclusions(other.mExclusions);
+
+	return *this;
+}
+
+bool cPlotConfigCorrection::same(const cPlotConfigCorrection& other) const
+{
+	bool equal = mBounds == other.mBounds;
+	equal &= mIsolationMethod == other.mIsolationMethod;
+
+	equal &= mExclusions == other.mExclusions;
+	equal &= mInclusions == other.mInclusions;
+
+	return equal;
+}
+
 const int cPlotConfigCorrection::date() const { return plot_config::to_date(mEffectiveMonth, mEffectiveDay); }
 const int cPlotConfigCorrection::month() const { return mEffectiveMonth; }
 const int cPlotConfigCorrection::day() const { return mEffectiveDay; }
@@ -27,6 +86,7 @@ void cPlotConfigCorrection::clear()
 	mBounds.clear();
 	mIsolationMethod.clear();
 	mExclusions.clear();
+	mInclusions.clear();
 	mDirty = false;
 }
 
@@ -37,6 +97,12 @@ bool cPlotConfigCorrection::isDirty() const
 	for (const auto& exclusion : mExclusions)
 	{
 		if (exclusion.isDirty())
+			return true;
+	}
+
+	for (const auto& inclusion : mInclusions)
+	{
+		if (inclusion.isDirty())
 			return true;
 	}
 
@@ -93,6 +159,22 @@ std::vector<cPlotConfigExclusion>& cPlotConfigCorrection::getExclusions()
 	return mExclusions;
 }
 
+
+bool cPlotConfigCorrection::hasInclusions() const
+{
+	return !mInclusions.empty();
+}
+
+const std::vector<cPlotConfigInclusion>& cPlotConfigCorrection::getInclusions() const
+{
+	return mInclusions;
+}
+
+std::vector<cPlotConfigInclusion>& cPlotConfigCorrection::getInclusions()
+{
+	return mInclusions;
+}
+
 void cPlotConfigCorrection::setBounds(const cPlotConfigBoundary& bounds)
 {
 	mBounds = bounds;
@@ -107,6 +189,12 @@ void cPlotConfigCorrection::setExclusions(const std::vector<cPlotConfigExclusion
 {
 	mDirty |= (mExclusions != exclusions);
 	mExclusions = exclusions;
+}
+
+void cPlotConfigCorrection::setInclusions(const std::vector<cPlotConfigInclusion>& inclusions)
+{
+	mDirty |= (mInclusions != inclusions);
+	mInclusions = inclusions;
 }
 
 cPlotConfigExclusion& cPlotConfigCorrection::add(const ePlotExclusionType type)
@@ -124,6 +212,21 @@ void cPlotConfigCorrection::clearExclusions()
 	mExclusions.clear();
 }
 
+cPlotConfigInclusion& cPlotConfigCorrection::add(const ePlotInclusionType type)
+{
+	mInclusions.emplace_back(type);
+
+	mDirty = true;
+
+	return mInclusions.back();
+}
+
+void cPlotConfigCorrection::clearInclusions()
+{
+	mDirty |= (mInclusions.size() > 0);
+	mInclusions.clear();
+}
+
 void cPlotConfigCorrection::clearDirtyFlag()
 {
 	mDirty = false;
@@ -134,6 +237,11 @@ void cPlotConfigCorrection::clearDirtyFlag()
 	for (auto& exclusion : mExclusions)
 	{
 		exclusion.setDirtyFlag(false);
+	}
+
+	for (auto& inclusion : mInclusions)
+	{
+		inclusion.setDirtyFlag(false);
 	}
 }
 
@@ -147,6 +255,11 @@ void cPlotConfigCorrection::setDirtyFlag(bool dirty)
 	for (auto& exclusion : mExclusions)
 	{
 		exclusion.setDirtyFlag(dirty);
+	}
+
+	for (auto& inclusion : mInclusions)
+	{
+		inclusion.setDirtyFlag(dirty);
 	}
 }
 
@@ -163,6 +276,17 @@ void cPlotConfigCorrection::load(const nlohmann::json& jdoc)
 			cPlotConfigExclusion e;
 			e.load(exclusion);
 			mExclusions.push_back(e);
+		}
+	}
+
+	if (jdoc.contains("inclusions"))
+	{
+		auto& inclusions = jdoc["inclusions"];
+		for (auto& inclusion : inclusions)
+		{
+			cPlotConfigInclusion e;
+			e.load(inclusion);
+			mInclusions.push_back(e);
 		}
 	}
 
@@ -195,6 +319,19 @@ nlohmann::json cPlotConfigCorrection::save()
 			correctionDoc["exclusions"] = exclusionDoc;
 	}
 
+	if (!mInclusions.empty())
+	{
+		nlohmann::json inclusionDoc;
+
+		for (auto& inclusion : mInclusions)
+		{
+			inclusionDoc.push_back(inclusion.save());
+		}
+
+		if (!inclusionDoc.is_null())
+			correctionDoc["inclusions"] = inclusionDoc;
+	}
+
 	mDirty = false;
 
 	return correctionDoc;
@@ -210,6 +347,32 @@ cPlotConfigCorrections::cPlotConfigCorrections()
 
 cPlotConfigCorrections::~cPlotConfigCorrections()
 {}
+
+bool cPlotConfigCorrections::operator==(const cPlotConfigCorrections& other) const
+{
+	if (mCorrections.size() != other.mCorrections.size())
+	{
+		if (other.mCorrections.size() == 1)
+		{
+			const auto& correction = other.front();
+			auto it = mCorrections.find(correction.date());
+
+			if (it != mCorrections.end())
+				return it->second.same(correction);
+		}
+
+		return false;
+	}
+
+	bool equal = mCorrections == other.mCorrections;
+
+	return equal;
+}
+
+bool cPlotConfigCorrections::operator!=(const cPlotConfigCorrections& other) const
+{
+	return !operator==(other);
+}
 
 void cPlotConfigCorrections::clear()
 {
@@ -360,6 +523,34 @@ const std::vector<cPlotConfigExclusion>& cPlotConfigCorrections::getExclusions(i
 std::vector<cPlotConfigExclusion>& cPlotConfigCorrections::getExclusions(int month, int day)
 {
 	return getExclusions(plot_config::to_date(month, day));
+}
+
+const std::vector<cPlotConfigInclusion>& cPlotConfigCorrections::getInclusions(int date) const
+{
+	auto it = find(date);
+	if (it == mCorrections.end())
+		throw std::logic_error("oops");
+
+	return it->second.getInclusions();
+}
+
+std::vector<cPlotConfigInclusion>& cPlotConfigCorrections::getInclusions(int date)
+{
+	auto it = find(date);
+	if (it == mCorrections.end())
+		throw std::logic_error("oops");
+
+	return it->second.getInclusions();
+}
+
+const std::vector<cPlotConfigInclusion>& cPlotConfigCorrections::getInclusions(int month, int day) const
+{
+	return getInclusions(plot_config::to_date(month, day));
+}
+
+std::vector<cPlotConfigInclusion>& cPlotConfigCorrections::getInclusions(int month, int day)
+{
+	return getInclusions(plot_config::to_date(month, day));
 }
 
 void cPlotConfigCorrections::clearDirtyFlag()

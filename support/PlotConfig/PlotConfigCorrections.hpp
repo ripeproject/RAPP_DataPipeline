@@ -25,6 +25,17 @@ public:
 	cPlotConfigCorrection(int month, int day);
 	~cPlotConfigCorrection() = default;
 
+	cPlotConfigCorrection& operator=(const cPlotConfigCorrection& other);
+
+	bool operator==(const cPlotConfigCorrection& other) const;
+	bool operator!=(const cPlotConfigCorrection& other) const;
+
+	// Similar to the assignment opereator, but does not change the date information!
+	cPlotConfigCorrection& assign(const cPlotConfigCorrection& other);
+
+	// Similar to equal, but does not compare the date information!
+	bool same(const cPlotConfigCorrection& other) const;
+
 	const int date() const;
 
 	const int month() const;
@@ -50,13 +61,22 @@ public:
 	const std::vector<cPlotConfigExclusion>& getExclusions() const;
 	std::vector<cPlotConfigExclusion>& getExclusions();
 
+	bool hasInclusions() const;
+
+	const std::vector<cPlotConfigInclusion>& getInclusions() const;
+	std::vector<cPlotConfigInclusion>& getInclusions();
+
 	void setBounds(const cPlotConfigBoundary& bounds);
 	void setIsolationMethod(const cPlotConfigIsolationMethod& method);
 
 	void setExclusions(const std::vector<cPlotConfigExclusion>& exclusions);
+	void setInclusions(const std::vector<cPlotConfigInclusion>& exclusions);
 
 	cPlotConfigExclusion& add(const ePlotExclusionType type);
 	void clearExclusions();
+
+	cPlotConfigInclusion& add(const ePlotInclusionType type);
+	void clearInclusions();
 
 	void clearDirtyFlag();
 	void setDirtyFlag(bool dirty);
@@ -68,8 +88,8 @@ protected:
 private:
 	bool mDirty = false;
 
-	const int mEffectiveMonth;
-	const int mEffectiveDay;
+	int mEffectiveMonth;
+	int mEffectiveDay;
 
 	cPlotConfigBoundary mBounds;
 	cPlotConfigIsolationMethod mIsolationMethod;
@@ -83,7 +103,6 @@ private:
 class cPlotConfigCorrections
 {
 public:
-public:
 	typedef std::map<int, cPlotConfigCorrection> PlotCorrections_t;
 
 	typedef PlotCorrections_t::iterator			iterator;
@@ -92,6 +111,9 @@ public:
 public:
 	cPlotConfigCorrections();
 	~cPlotConfigCorrections();
+
+	bool operator==(const cPlotConfigCorrections& other) const;
+	bool operator!=(const cPlotConfigCorrections& other) const;
 
 	void clear();
 
@@ -126,6 +148,12 @@ public:
 
 	const std::vector<cPlotConfigExclusion>& getExclusions(int month, int day) const;
 	std::vector<cPlotConfigExclusion>& getExclusions(int month, int day);
+
+	const std::vector<cPlotConfigInclusion>& getInclusions(int date) const;
+	std::vector<cPlotConfigInclusion>& getInclusions(int date);
+
+	const std::vector<cPlotConfigInclusion>& getInclusions(int month, int day) const;
+	std::vector<cPlotConfigInclusion>& getInclusions(int month, int day);
 
 	iterator		begin();
 	iterator		end();
