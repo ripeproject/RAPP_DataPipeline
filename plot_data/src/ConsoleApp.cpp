@@ -133,11 +133,31 @@ int main(int argc, char** argv)
 
 	// Bail out if we can't load the configuration data
 	cPlotDataConfigFile configData;
-	if (!configData.open(config_file))
+	try
 	{
-		std::cerr << "Error in configuration file: " << config_file << std::endl;
-		std::cerr << std::endl;
-		return 2;
+		if (!configData.open(config_file))
+		{
+			std::cerr << "Error in configuration file: " << config_file << std::endl;
+			std::cerr << std::endl;
+			return 2;
+		}
+	}
+	catch (const nlohmann::json::parse_error& e)
+	{
+		std::string msg;
+
+		msg = "Invalid configuration file \"";
+		msg += config_file;
+		msg += "\":\n\n";
+		msg += e.what();
+
+		console_message(msg);
+		return 99;
+	}
+	catch (const std::exception& e)
+	{
+		console_message(e.what());
+		return 99;
 	}
 
 	if (output_directory.empty())

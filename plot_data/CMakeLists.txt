@@ -133,6 +133,7 @@ find_package(fmt REQUIRED)
 find_package(CBDF REQUIRED cbdf info processing_info plot_info) # pointcloud ctrl sensors)
 find_package(Eigen3 REQUIRED)
 find_package(smirnov_grubbs REQUIRED)
+find_package(lz4 REQUIRED)
 #find_package(OpenSSL REQUIRED)
 #find_package(Open3D REQUIRED)
 

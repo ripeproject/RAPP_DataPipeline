@@ -339,7 +339,25 @@ void cMainWindow::OnCfgBrowse(wxCommandEvent& event)
 		if (!mDstDirectory.IsEmpty() && !mSrcDirectory.IsEmpty())
 			mpComputeButton->Enable();
 	}
+	catch (const nlohmann::json::parse_error& e)
+	{
+		wxString msg;
+
+		msg = "Invalid configuration file \"";
+		msg += config_file;
+		msg += "\":\n\n";
+		msg += e.what();
+
+		wxMessageDialog dlg(nullptr, msg, "Configuration File Error",
+			wxOK | wxICON_ERROR | wxCENTRE);
+
+		int result = dlg.ShowModal();
+	}
 	catch (const std::logic_error& e)
+	{
+		console_message(e.what());
+	}
+	catch (const std::exception& e)
 	{
 		console_message(e.what());
 	}

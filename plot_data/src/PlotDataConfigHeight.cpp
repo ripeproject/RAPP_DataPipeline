@@ -77,7 +77,7 @@ void cPlotDataConfigHeight::load(const nlohmann::json& jdoc)
 		mGroundLevelBound_mm = height["ground level bound (mm)"];
 
 	if (height.contains("height_percentile"))
-		mGroundLevelBound_mm = height["height_percentile"];
+		mHeightPercentile = height["height_percentile"];
 	else
 		mHeightPercentile = height["height percentile"];
 

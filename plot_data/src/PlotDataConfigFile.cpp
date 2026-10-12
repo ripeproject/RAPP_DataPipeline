@@ -56,18 +56,9 @@ bool cPlotDataConfigFile::open(const std::string& file_name)
 		return false;
 
 	nlohmann::json configDoc;
-	try
+
 	{
 		in >> configDoc;
-	}
-	catch (const nlohmann::json::parse_error& e)
-	{
-		auto msg = e.what();
-		return false;
-	}
-	catch (const std::exception& e)
-	{
-		return false;
 	}
 
 	clear();
