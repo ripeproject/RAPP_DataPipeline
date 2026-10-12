@@ -299,7 +299,7 @@ namespace
 {
 	template<class POINT>
 	rfm::sPlotBoundingBox_t compute_bounding_box_center_of_height(const std::vector<POINT>& points, rfm::sPlotBoundingBox_t box,
-		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+		std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct, rfm::rappPoint_t* pCOH = nullptr)
 	{
 		double width_mm = ((box.southEastCorner.x_mm - box.northEastCorner.x_mm) + (box.southWestCorner.x_mm - box.northWestCorner.x_mm)) / 2.0;
 		double length_mm = ((box.northEastCorner.y_mm - box.northWestCorner.y_mm) + (box.southEastCorner.y_mm - box.southWestCorner.y_mm)) / 2.0;
@@ -356,32 +356,35 @@ namespace
 		plot.southEastCorner.x_mm = south_mm;
 		plot.southEastCorner.y_mm = east_mm;
 
+		if (pCOH)
+			*pCOH = c1;
+
 		return plot;
 	}
 }
 
 rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const cRappPointCloud& pc, rfm::sPlotBoundingBox_t box,
-	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct, rfm::rappPoint_t* pCOH)
 {
-	return compute_bounding_box_center_of_height(pc.data(), box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+	return compute_bounding_box_center_of_height(pc.data(), box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct, pCOH);
 }
 
 rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const cPlotPointCloud& pc, rfm::sPlotBoundingBox_t box,
-	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct, rfm::rappPoint_t* pCOH)
 {
-	return compute_bounding_box_center_of_height(pc.data(), box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+	return compute_bounding_box_center_of_height(pc.data(), box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct, pCOH);
 }
 
 rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const std::vector<plot::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct, rfm::rappPoint_t* pCOH)
 {
-	return ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+	return ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct, pCOH);
 }
 
 rfm::sPlotBoundingBox_t plot::compute_bounding_box_center_of_height(const std::vector<rfm::sPoint3D_t>& points, rfm::sPlotBoundingBox_t box,
-	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct)
+	std::int32_t plot_width_mm, std::int32_t plot_length_mm, double height_threshold_pct, double max_displacement_pct, rfm::rappPoint_t* pCOH)
 {
-	return ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct);
+	return ::compute_bounding_box_center_of_height(points, box, plot_width_mm, plot_length_mm, height_threshold_pct, max_displacement_pct, pCOH);
 }
 
 
