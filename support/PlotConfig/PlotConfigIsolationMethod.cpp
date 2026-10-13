@@ -125,19 +125,19 @@ double cPlotConfigIsolationMethod::getBounds_pct() const
 
 void cPlotConfigIsolationMethod::setMethod(ePlotIsolationMethod method)
 {
-	mDirty = (mMethod != method);
+	mDirty |= (mMethod != method);
 	mMethod = method;
 }
 
 void cPlotConfigIsolationMethod::setPlotLength_mm(double length_mm)
 {
-	mDirty = (mPlotLength_mm != length_mm);
+	mDirty |= (mPlotLength_mm != length_mm);
 	mPlotLength_mm = length_mm;
 }
 
 void cPlotConfigIsolationMethod::setPlotWidth_mm(double width_mm)
 {
-	mDirty = (mPlotWidth_mm != width_mm);
+	mDirty |= (mPlotWidth_mm != width_mm);
 	mPlotWidth_mm = width_mm;
 }
 
@@ -152,7 +152,7 @@ void cPlotConfigIsolationMethod::setHeightThreshold_pct(double threshold_pct)
 	if (threshold_pct < 0.0)  threshold_pct = 0.0;
 	if (threshold_pct > 100.0)  threshold_pct = 100.0;
 
-	mDirty = (mHeightThreshold_pct != threshold_pct);
+	mDirty |= (mHeightThreshold_pct != threshold_pct);
 	mHeightThreshold_pct = threshold_pct;
 }
 
@@ -167,20 +167,20 @@ void cPlotConfigIsolationMethod::setMaxDisplacement_pct(double displacement_pct)
 	if (displacement_pct < 0.0)  displacement_pct = 0.0;
 	if (displacement_pct > 100.0)  displacement_pct = 100.0;
 
-	mDirty = (mMaxDisplacement_pct != displacement_pct);
+	mDirty |= (mMaxDisplacement_pct != displacement_pct);
 	mMaxDisplacement_pct = displacement_pct;
 }
 
 
 void cPlotConfigIsolationMethod::setTolerance_mm(double tolerance_mm)
 {
-	mDirty = (mTolerance_mm != tolerance_mm);
+	mDirty |= (mTolerance_mm != tolerance_mm);
 	mTolerance_mm = tolerance_mm;
 }
 
 void cPlotConfigIsolationMethod::setBounds_pct(double bounds_pct)
 {
-	mDirty = (mBounds_pct != bounds_pct);
+	mDirty |= (mBounds_pct != bounds_pct);
 	mBounds_pct = bounds_pct;
 }
 
