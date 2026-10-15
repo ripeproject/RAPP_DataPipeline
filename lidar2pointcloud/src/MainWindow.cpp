@@ -499,6 +499,11 @@ void cMainWindow::OnCompute(wxCommandEvent& WXUNUSED(event))
 	}
 	else
 	{
+		auto rel_path = mConfigData->getRelativePointCloudPath();
+
+		if (output.has_filename() && (rel_path != output.filename()))
+			output /= rel_path;
+
 		if (!month_dir.empty())
 		{
 			std::string last_dir;
