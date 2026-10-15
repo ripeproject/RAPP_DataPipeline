@@ -22,6 +22,8 @@ public:
 	explicit cLidarMapConfigScanInfo(const std::string& name);
 	~cLidarMapConfigScanInfo() = default;
 
+	bool operator==(const std::string& name) const;
+
 	void clear();
 	bool empty() const;
 
@@ -87,6 +89,7 @@ private:
 
 protected:
 	std::string mMeasurementName;
+	std::string mSafeMeasurementName;
 
 	// Dolly - Sensor Mounting Parameters
 	std::optional<double> mSensorMountPitch_deg;

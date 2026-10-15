@@ -573,7 +573,7 @@ bool cLidarMapConfigFile::contains(const std::string& name) const
 {
 	for (const auto& scan : mScans)
 	{
-		if (scan.getMeasurementName() == name)
+		if (scan == name)
 			return true;
 	}
 
@@ -646,7 +646,7 @@ cLidarMapConfigFile::iterator cLidarMapConfigFile::find_by_measurement_name(cons
 {
 	for (auto it = mScans.begin(); it != mScans.end(); ++it)
 	{
-		if (it->getMeasurementName() == name)
+		if (*it == name)
 		{
 			return it;
 		}

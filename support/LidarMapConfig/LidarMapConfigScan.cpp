@@ -30,6 +30,30 @@ namespace
 
 		return static_cast<rfm::rappPoint_t>(lhs.value()) != static_cast<rfm::rappPoint_t>(rhs.value());
 	}
+
+
+	std::string make_safe_name(std::string name)
+	{
+		std::replace_if(name.begin(), name.end(),
+			[](std::string::value_type c)
+			{
+				switch (c)
+				{
+				case ':': return true;
+				case '\\': return true;
+				case '/': return true;
+				case '<': return true;
+				case '>': return true;
+				case '|': return true;
+				case '?': return true;
+				case '*': return true;
+				case '"': return true;
+				}
+				return std::isspace(c) != 0;
+			}, '_');
+
+		return name;
+	}
 }
 
 cLidarMapConfigScanInfo::cLidarMapConfigScanInfo()
@@ -38,6 +62,12 @@ cLidarMapConfigScanInfo::cLidarMapConfigScanInfo()
 cLidarMapConfigScanInfo::cLidarMapConfigScanInfo(const std::string& name)
 	: mMeasurementName(name)
 {
+	mSafeMeasurementName = make_safe_name(mMeasurementName);
+}
+
+bool cLidarMapConfigScanInfo::operator==(const std::string& name) const
+{
+	return (mMeasurementName == name) || (mSafeMeasurementName == name);
 }
 
 void cLidarMapConfigScanInfo::clear()
@@ -45,6 +75,8 @@ void cLidarMapConfigScanInfo::clear()
 	mDirty = false;
 
 	mMeasurementName.clear();
+	mSafeMeasurementName.clear();
+
 	mSensorMountPitch_deg.reset();
 	mSensorMountRoll_deg.reset();
 	mSensorMountYaw_deg.reset();
@@ -104,6 +136,7 @@ void cLidarMapConfigScanInfo::setMeasurementName(const std::string& name)
 {
 	mDirty |= (mMeasurementName != name);
 	mMeasurementName = name;
+	mSafeMeasurementName = make_safe_name(mMeasurementName);
 }
 
 void cLidarMapConfigScanInfo::resetSensorMountPitch_deg()
@@ -245,6 +278,7 @@ void cLidarMapConfigScanInfo::load(const nlohmann::json& jdoc)
 	if (jdoc.contains("measurement name"))
 		mMeasurementName = jdoc["measurement name"];
 
+	mSafeMeasurementName = make_safe_name(mMeasurementName);
 
 	if (jdoc.contains("sensor mount orientation"))
 	{
