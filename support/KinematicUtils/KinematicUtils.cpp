@@ -838,9 +838,12 @@ bool transform(double time_us, const std::vector<kdt::sDollyInfo_t>& path,
                 simple_matrix::matrix_col_major<rfm::sPoint3D_t>& cloud,
                 std::vector<kdt::sDollyInfo_t>* pComputedPath, double* displacement_mm)
 {
-    if (path.empty()) return false;
-    if (time_us < 0.0) return false;
-    if (time_us > path.back().timestamp_us) return false;
+    if (path.empty())
+        return false;
+    if (time_us < 0.0)
+        return false;
+    if (time_us > path.back().timestamp_us)
+        return false;
 
     kdt::sDollyInfo_t dolly;
 
