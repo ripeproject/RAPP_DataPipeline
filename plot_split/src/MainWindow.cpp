@@ -442,11 +442,19 @@ void cMainWindow::OnPlotSplit(wxCommandEvent& WXUNUSED(event))
 	/*
 	 * Make sure the output directory exists
 	 */
+	auto rel_path = mConfigData.getRelativePlotPath();
+
 	std::filesystem::path output{ output_directory };
 
 	std::filesystem::directory_entry output_dir;
 
 	{
+		if (!rel_path.empty())
+		{
+			if (output.has_filename() && (rel_path != output.filename()))
+				output /= rel_path;
+		}
+
 		if (!month_dir.empty())
 		{
 			std::string last_dir;

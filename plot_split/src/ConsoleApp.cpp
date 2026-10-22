@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (!result)
+	if (!result || input_directory.empty() || output_directory.empty() || config_file.empty())
 	{
 		std::cerr << "Error in command line: " << result.message() << std::endl;
 		std::cerr << std::endl;
@@ -137,9 +137,6 @@ int main(int argc, char** argv)
 		std::cerr << std::endl;
 		return 2;
 	}
-
-	if (output_directory.empty())
-		output_directory = input_directory;
 
 	const std::filesystem::path input{ input_directory };
 
@@ -211,6 +208,7 @@ int main(int argc, char** argv)
 	 */
 
 	std::filesystem::path output{ output_directory };
+
 	std::filesystem::directory_entry output_dir;
 
 	if (isFile && output.has_extension())
@@ -219,6 +217,14 @@ int main(int argc, char** argv)
 	}
 	else
 	{
+		auto rel_path = configData.getRelativePlotPath();
+
+		if (!rel_path.empty())
+		{
+			if (output.has_filename() && (rel_path != output.filename()))
+				output /= rel_path;
+		}
+
 		if (!month_dir.empty())
 		{
 			std::string last_dir;
