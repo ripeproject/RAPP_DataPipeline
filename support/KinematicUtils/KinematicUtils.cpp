@@ -117,12 +117,18 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCa
     return computeDollyKinematics(-1, data, start_index, end_index);
 }
 
-std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data)
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data, bool use_speeds, double* scan_time_sec)
 {
-    return computeDollyKinematics(-1, data);
+    return computeDollyKinematics(-1, data, use_speeds, scan_time_sec);
 }
 
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
+    const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec)
+{
+    return computeDollyKinematics(-1, start, end, vel, ignoreInvalidGroundTrackData, scan_time_sec);
+}
+
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const nSsnxTypes::sPvtGeodetic_t& start, const nSsnxTypes::sPvtGeodetic_t& end,
     const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec)
 {
     return computeDollyKinematics(-1, start, end, vel, ignoreInvalidGroundTrackData, scan_time_sec);
@@ -300,7 +306,7 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
     return result;
 }
 
-std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSsnxTypes::sPvtGeodetic_t>& data)
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSsnxTypes::sPvtGeodetic_t>& data, bool use_speeds, double* scan_time_sec)
 {
     std::vector<kdt::sDollyInfo_t> result;
 
@@ -358,6 +364,17 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
         entry.vz_mmps = it->Vu_mps * nConstants::M_TO_MM;
 
         result.push_back(entry);
+    }
+
+    if (scan_time_sec)
+    {
+        if (result.empty())
+            *scan_time_sec = 0;
+        else
+        {
+            auto lastTimestamp_s = result.back().timestamp_us * nConstants::US_TO_SEC;
+            *scan_time_sec = lastTimestamp_s;
+        }
     }
 
     return result;
@@ -445,6 +462,16 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
     }
 
     return result;
+}
+
+
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const nSsnxTypes::sPvtGeodetic_t& start, const nSsnxTypes::sPvtGeodetic_t& end,
+    const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec)
+{
+    auto start_point = rfb::fromGPS(start.Lat_rad, start.Lon_rad, start.Height_m - start.Undulation_m);
+    auto end_point = rfb::fromGPS(end.Lat_rad, end.Lon_rad, end.Height_m - end.Undulation_m);
+
+    return computeDollyKinematics(id, start_point, end_point, vel, ignoreInvalidGroundTrackData, scan_time_sec);
 }
 
 std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
@@ -550,17 +577,12 @@ std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
     std::vector<kdt::sDollyOrientation_t> result;
 
     if ((scan_time_sec <= 0.0) || (table.empty()))
-        return result;
-
-    if (table.size() == 1)
     {
-        auto point = table.front();
-
         kdt::sDollyOrientation_t entry;
         entry.timestamp_us = 0;
-        entry.pitch_deg = point.pitch_deg;
-        entry.roll_deg = point.roll_deg;
-        entry.yaw_deg = point.yaw_deg;
+        entry.pitch_deg = nMathUtils::wrap_neg_180_to_180(mount_pitch_deg);
+        entry.roll_deg = nMathUtils::wrap_neg_180_to_180(mount_roll_deg);
+        entry.yaw_deg = nMathUtils::wrap_0_to_360(mount_yaw_deg);
 
         entry.pitchRate_dps = 0;
         entry.rollRate_dps = 0;
@@ -571,6 +593,26 @@ std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, 
         entry.timestamp_us = scan_time_sec * nConstants::SEC_TO_US;
         result.push_back(entry);
 
+        return result;
+    }
+
+    if (table.size() == 1)
+    {
+        auto point = table.front();
+
+        kdt::sDollyOrientation_t entry;
+        entry.timestamp_us = 0;
+        entry.pitch_deg = nMathUtils::wrap_neg_180_to_180(mount_pitch_deg + point.pitch_deg);
+        entry.roll_deg = nMathUtils::wrap_neg_180_to_180(mount_roll_deg + point.roll_deg);
+        entry.yaw_deg = nMathUtils::wrap_0_to_360(mount_yaw_deg + point.yaw_deg);
+
+        entry.pitchRate_dps = 0;
+        entry.rollRate_dps = 0;
+        entry.yawRate_dps = 0;
+
+        result.push_back(entry);
+
+        entry.timestamp_us = scan_time_sec * nConstants::SEC_TO_US;
         result.push_back(entry);
 
         return result;
@@ -777,10 +819,19 @@ void mergeDollyOrientation(int id, std::vector<kdt::sDollyInfo_t>& dolly, const 
 
         if (it == orientation.end())
         {
-            auto atitude = orientation.back();
-            pos.pitch_deg = atitude.pitch_deg;
-            pos.roll_deg = atitude.roll_deg;
-            pos.yaw_deg = atitude.yaw_deg;
+            if (orientation.empty())
+            {
+                pos.pitch_deg = 0;
+                pos.roll_deg = 0;
+                pos.yaw_deg = 0;
+            }
+            else
+            {
+                auto atitude = orientation.back();
+                pos.pitch_deg = atitude.pitch_deg;
+                pos.roll_deg = atitude.roll_deg;
+                pos.yaw_deg = atitude.yaw_deg;
+            }
 
             pos.pitchRate_dps = 0;
             pos.rollRate_dps = 0;

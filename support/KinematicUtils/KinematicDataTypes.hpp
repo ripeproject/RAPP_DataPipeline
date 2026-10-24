@@ -2,7 +2,7 @@
 #pragma once
 
 
-enum class eKinematicModel { CONSTANT_SPEED, SPIDERCAM, GPS_SPEEDS };
+enum class eKinematicModel { CONSTANT_SPEED, SPIDERCAM, GPS_SPEEDS, GPS_POSITION_ONLY, GPS_POSITION_SPEED};
 
 enum class eOrientationModel { CONSTANT, LINEAR, INTREP_CURVE, IMU };
 

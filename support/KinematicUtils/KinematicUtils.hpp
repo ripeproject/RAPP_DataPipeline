@@ -23,9 +23,12 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& st
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCamTypes::sPosition_t>& data, uint32_t startIndex, uint32_t endIndex);
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCamTypes::sPosition_t>& data, rfm::rappPoint_t startPos, rfm::rappPoint_t endPos);
 
-std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data);
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSsnxTypes::sPvtGeodetic_t>& data, bool use_speeds = true, double* scan_time_sec = nullptr);
 
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
+	const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec = nullptr);
+
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const nSsnxTypes::sPvtGeodetic_t& start, const nSsnxTypes::sPvtGeodetic_t& end,
 	const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec = nullptr);
 
 std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
@@ -48,9 +51,12 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoi
 
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSpiderCamTypes::sPosition_t>& data, uint32_t startIndex, uint32_t endIndex);
 
-std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSsnxTypes::sPvtGeodetic_t>& data);
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<nSsnxTypes::sPvtGeodetic_t>& data, bool use_speeds = true, double* scan_time_sec = nullptr);
 
 std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const rfm::rappPoint_t& start, const rfm::rappPoint_t& end,
+	const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec = nullptr);
+
+std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const nSsnxTypes::sPvtGeodetic_t& start, const nSsnxTypes::sPvtGeodetic_t& end,
 	const std::deque<nSsnxTypes::sPvtGeodetic_t>& vel, bool ignoreInvalidGroundTrackData, double* scan_time_sec = nullptr);
 
 std::vector<kdt::sDollyOrientation_t> computeDollyOrientationKinematics(int id, double mount_pitch_deg, double mount_roll_deg, double mount_yaw_deg,
