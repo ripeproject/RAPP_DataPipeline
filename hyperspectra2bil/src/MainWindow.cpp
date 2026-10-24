@@ -71,7 +71,7 @@ cMainWindow::cMainWindow(wxWindow* parent)
 	CreateControls();
 	CreateLayout();
 
-	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Bil");
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Hyperspectral2Bil");
 
 	config->Read("Files/Source", &mSource);
 	config->Read("Files/Destination", &mDestinationDataDirectory);
@@ -79,7 +79,7 @@ cMainWindow::cMainWindow(wxWindow* parent)
 
 cMainWindow::~cMainWindow()
 {
-	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Export2Bil");
+	std::unique_ptr<wxConfig> config = std::make_unique<wxConfig>("Hyperspectral2Bil");
 
 	config->Write("Files/Source", mSource);
 	config->Write("Files/Destination", mDestinationDataDirectory);
