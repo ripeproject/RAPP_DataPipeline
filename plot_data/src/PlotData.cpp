@@ -278,6 +278,9 @@ void cPlotData::addLAI_MetaInfo(const std::vector<std::string>& info)
 
 void cPlotData::addPlotLAI(int plot_id, int doy, double lai)
 {
+	if (lai < 0.0)
+		return;
+
 	sPlotLAI_Data_t data;
 
 	data.doy = doy;

@@ -492,10 +492,21 @@ void cFileProcessor::computePlotLAIs()
     if (!parameters.hasData())
         return;
 
+    auto algoType = parameters.getAlgorithmType();
+
     double k = parameters.getExtinctionCoefficient();
     int groundLevelBound_mm = static_cast<int>(parameters.getGroundLevelBound_mm());
 
-    mResults.addLAI_MetaInfo("algorithm: LAI");
+    switch (algoType)
+    {
+    case eLaiAlgorithmType::LPI:
+        mResults.addLAI_MetaInfo("algorithm: LPI");
+        break;
+    case eLaiAlgorithmType::CONVEX_HULL:
+    case eLaiAlgorithmType::OPEN3D:
+    case eLaiAlgorithmType::VOXEL_GRID:
+        break;
+    }
 
     bool hasFilters = parameters.hasFilters();
     const auto& filters = parameters.getFilters();
@@ -536,7 +547,19 @@ void cFileProcessor::computePlotLAIs()
 
         double lai = 0.0;
 
-        lai = nPlotUtils::computeLAI_lpi(plot, k, groundLevelBound_mm);
+        switch (algoType)
+        {
+        case eLaiAlgorithmType::LPI:
+        {
+            double k = parameters.getExtinctionCoefficient();
+            lai = nPlotUtils::computeLAI_lpi(plot, k, groundLevelBound_mm);
+            break;
+        }
+        case eLaiAlgorithmType::CONVEX_HULL:
+        case eLaiAlgorithmType::OPEN3D:
+        case eLaiAlgorithmType::VOXEL_GRID:
+            continue;
+        }
 
         mResults.addPlotLAI(plot.id(), mDayOfYear, lai);
     }
