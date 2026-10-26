@@ -733,6 +733,24 @@ void cLidarMapConfigKinematicParameters::load(const nlohmann::json& jdoc)
 		mKinematicModel = eKinematicModel::CONSTANT_SPEED;
 	}
 
+	if (jdoc.contains("kinematic model"))
+	{
+		std::string model = jdoc["kinematic model"];
+
+		if (model == "constant speed")
+			mKinematicModel = eKinematicModel::CONSTANT_SPEED;
+		else if (model == "spidercam")
+			mKinematicModel = eKinematicModel::SPIDERCAM;
+		else if (model == "spidercam start/stop with gps speeds")
+			mKinematicModel = eKinematicModel::SPIDERCAM_START_STOP_GPS_SPEEDS;
+		else if (model == "gps position only")
+			mKinematicModel = eKinematicModel::GPS_POSITION_ONLY;
+		else if (model == "gps start/stop with gps speeds")
+			mKinematicModel = eKinematicModel::GPS_START_STOP_GPS_SPEED;
+		else if (model == "filtered gps data")
+			mKinematicModel = eKinematicModel::GPS_FILTERED;
+	}
+
 	if (jdoc.contains("sensor orientation table"))
 	{
 		mOrientationModel = eOrientationModel::INTREP_CURVE;
@@ -1045,6 +1063,32 @@ nlohmann::json cLidarMapConfigKinematicParameters::save()
 
 		if (mVz_mmps.has_value())
 			scanDoc["Vz (mm/s)"] = mVz_mmps.value();
+	}
+	else if (mKinematicModel.has_value())
+	{
+		auto model = mKinematicModel.value();
+
+		switch (model)
+		{
+		case eKinematicModel::CONSTANT_SPEED:
+			scanDoc["kinematic model"] = "constant speed";
+			break;
+		case eKinematicModel::SPIDERCAM:
+			scanDoc["kinematic model"] = "spidercam";
+			break;
+		case eKinematicModel::SPIDERCAM_START_STOP_GPS_SPEEDS:
+			scanDoc["kinematic model"] = "spidercam start/stop with gps speeds";
+			break;
+		case eKinematicModel::GPS_POSITION_ONLY:
+			scanDoc["kinematic model"] = "gps position only";
+			break;
+		case eKinematicModel::GPS_START_STOP_GPS_SPEED:
+			scanDoc["kinematic model"] = "gps start/stop with gps speeds";
+			break;
+		case eKinematicModel::GPS_FILTERED:
+			scanDoc["kinematic model"] = "filtered gps data";
+			break;
+		}
 	}
 
 	if (mOrientationModel.has_value())
