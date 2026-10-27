@@ -116,6 +116,7 @@ public:
 	void resize(size_type count);
 	void resize(size_type count, const value_type& value);
 
+	void clearReferencePoint();
 	void setReferencePoint(rfm::rappPoint_t point, bool valid = true);
 
 	void rotate(double yaw_deg, double pitch_deg, double roll_deg);

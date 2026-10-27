@@ -435,6 +435,11 @@ void cRappPointCloud::resize(size_type count, const value_type& value)
 	mCloud.resize(count, value);
 }
 
+void cRappPointCloud::clearReferencePoint()
+{
+	mReferencePointValid = false;
+}
+
 void cRappPointCloud::setReferencePoint(rfm::rappPoint_t point, bool valid)
 {
 	mReferencePoint = point;
