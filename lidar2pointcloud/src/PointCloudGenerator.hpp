@@ -139,6 +139,8 @@ public:
 
 	bool referencePointValid() const;
 	rfm::rappPoint_t referencePoint() const;
+
+	void clearReferencePoint();
 	void setReferencePoint(rfm::rappPoint_t point, bool valid = true);
 
 	bool computePointCloud(int id);

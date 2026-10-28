@@ -39,14 +39,20 @@ namespace
 	{
 		switch (in)
 		{
-		case pointcloud::eKINEMATIC_MODEL::CONSTANT:
-			return pointcloud::eKINEMATIC_MODEL::CONSTANT_SENSOR_ROTATION;
-		case pointcloud::eKINEMATIC_MODEL::DOLLY:
-			return pointcloud::eKINEMATIC_MODEL::DOLLY_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::CONSTANT_SPEED:
+			return pointcloud::eKINEMATIC_MODEL::CONSTANT_SPEED_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::SPIDERCAM:
+			return pointcloud::eKINEMATIC_MODEL::SPIDERCAM_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::SPIDERCAM_START_STOP_GPS_SPEEDS:
+			return pointcloud::eKINEMATIC_MODEL::SPIDERCAM_START_STOP_GPS_SPEEDS_SENSOR_ROTATION;
 		case pointcloud::eKINEMATIC_MODEL::GPS:
 			return pointcloud::eKINEMATIC_MODEL::GPS_SENSOR_ROTATION;
-		case pointcloud::eKINEMATIC_MODEL::GPS_SPEEDS:
-			return pointcloud::eKINEMATIC_MODEL::GPS_SPEEDS_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::GPS_POSITION_ONLY:
+			return pointcloud::eKINEMATIC_MODEL::GPS_POSITION_ONLY_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::GPS_START_STOP_GPS_SPEEDS:
+			return pointcloud::eKINEMATIC_MODEL::GPS_START_STOP_GPS_SPEEDS_SENSOR_ROTATION;
+		case pointcloud::eKINEMATIC_MODEL::GPS_FILTERED:
+			return pointcloud::eKINEMATIC_MODEL::GPS_FILTERED_SENSOR_ROTATION;
 		}
 
 		return in;
@@ -146,6 +152,37 @@ void cLidar2PointCloud::setFinalOffset_deg(double yaw_deg, double pitch_deg, dou
 	mEndYawOffset_deg = yaw_deg;
 }
 
+void cLidar2PointCloud::setKinematicModel(eKinematicModel model)
+{
+	switch (model)
+	{
+		case eKinematicModel::CONSTANT_SPEED:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::CONSTANT_SPEED;
+			break;
+		case eKinematicModel::SPIDERCAM:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::SPIDERCAM;
+			break;
+		case eKinematicModel::SPIDERCAM_START_STOP_GPS_SPEEDS:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::SPIDERCAM_START_STOP_GPS_SPEEDS_SENSOR_ROTATION;
+			break;
+		case eKinematicModel::GPS_POSITION_ONLY:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS_POSITION_ONLY;
+			break;
+		case eKinematicModel::GPS_START_STOP_GPS_SPEED:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS_START_STOP_GPS_SPEEDS;
+			break;
+		case eKinematicModel::GPS:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS;
+			break;
+		case eKinematicModel::GPS_FILTERED:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS_FILTERED;
+			break;
+		default:
+			mKinematicModel = pointcloud::eKINEMATIC_MODEL::UNKNOWN;
+			break;
+	}
+}
+
 void cLidar2PointCloud::setOrientationInterpTable(const InterpTable_t& table)
 {
 	mOrientationInterpTable = table;
@@ -233,17 +270,44 @@ bool cLidar2PointCloud::computeDollyMovement()
 	validateStartPosition(mStartX_mm, mStartY_mm, mStartZ_mm);
 	validateEndPosition(mEndX_mm, mEndY_mm, mEndZ_mm);
 
-	if (!hasGpsData() && !hasSpiderData())
+	if (mKinematicModel == pointcloud::eKINEMATIC_MODEL::UNKNOWN)
 	{
-		computeDollyMovement_ConstantSpeed();
-	}
-	else if (!hasGpsData())
-	{
-		computeDollyMovement_SpiderCam();
+		if (!hasGpsData() && !hasSpiderData())
+		{
+			computeDollyMovement_ConstantSpeed();
+		}
+		else if (!hasGpsData())
+		{
+			computeDollyMovement_SpiderCam();
+		}
+		else
+		{
+			computeDollyMovement_SpiderCamStartStopWithGpsSpeeds();
+		}
 	}
 	else
 	{
-		computeDollyMovement_GpsSpeeds();
+		switch (mKinematicModel)
+		{
+		case pointcloud::eKINEMATIC_MODEL::CONSTANT_SPEED:
+			computeDollyMovement_ConstantSpeed();
+			break;
+		case pointcloud::eKINEMATIC_MODEL::SPIDERCAM:
+			computeDollyMovement_SpiderCam();
+			break;
+		case pointcloud::eKINEMATIC_MODEL::SPIDERCAM_START_STOP_GPS_SPEEDS:
+			computeDollyMovement_SpiderCamStartStopWithGpsSpeeds();
+			break;
+		case pointcloud::eKINEMATIC_MODEL::GPS:
+			computeDollyMovement_Gps();
+			break;
+		case pointcloud::eKINEMATIC_MODEL::GPS_POSITION_ONLY:
+			computeDollyMovement_GpsPositionOnly();
+			break;
+		case pointcloud::eKINEMATIC_MODEL::GPS_START_STOP_GPS_SPEEDS:
+			computeDollyMovement_GpsStartStopWithSpeeds();
+			break;
+		}
 	}
 
 	return mDollyMovement.size() > 0;
@@ -318,7 +382,6 @@ bool cLidar2PointCloud::computePointCloud()
 		}
 	}
 
-
 	if (!pPointCloudGenerator->referencePointValid())
 	{
 		std::string msg = "File \"";
@@ -341,7 +404,6 @@ bool cLidar2PointCloud::computePointCloud()
 		pPointCloudGenerator->setTranslateInterpTable(mTranslateInterpTable);
 		break;
 	}
-
 
 	pPointCloudGenerator->setRotationToGroundModel(mRotateToGroundModel);
 
@@ -405,7 +467,7 @@ void cLidar2PointCloud::computeDollyMovement_ConstantSpeed()
 		return;
 	}
 
-	mKinematicModel = pointcloud::eKINEMATIC_MODEL::CONSTANT;
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::CONSTANT_SPEED;
 
 	mDollyMovement = computeDollyKinematics(mID, start_pos, end_pos, speeds, &scanTime_sec);
 
@@ -430,12 +492,12 @@ void cLidar2PointCloud::computeDollyMovement_SpiderCam()
 	auto start_index = spiderCam->getStartIndex();
 	auto end_index = spiderCam->getEndIndex();
 
-	mKinematicModel = pointcloud::eKINEMATIC_MODEL::DOLLY;
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::SPIDERCAM;
 
 	mDollyMovement = computeDollyKinematics(mID, spiderCam->getPositionData(), start_index, end_index);
 }
 
-void cLidar2PointCloud::computeDollyMovement_GpsSpeeds()
+void cLidar2PointCloud::computeDollyMovement_SpiderCamStartStopWithGpsSpeeds()
 {
 	double scanTime_sec = getScanTime_sec();
 
@@ -474,7 +536,84 @@ void cLidar2PointCloud::computeDollyMovement_GpsSpeeds()
 
 	bool ignore = false;
 
-	mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS_SPEEDS;
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::SPIDERCAM_START_STOP_GPS_SPEEDS;
+
+	mDollyMovement = computeDollyKinematics(mID, start, end, gps, ignore, &scanTime_sec);
+}
+
+void cLidar2PointCloud::computeDollyMovement_Gps()
+{
+	double scanTime_sec = getScanTime_sec();
+
+	auto ssnx = getSsnxInfo();
+	if (!ssnx)
+	{
+		console_message("Error: No GPS Information!");
+		return;
+	}
+
+	auto gps = ssnx->getGeodeticPositions();
+
+	if (gps.empty())
+	{
+		console_message("Invalid Data: No GPS data has been loaded!");
+		return;
+	}
+
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS;
+
+	mDollyMovement = computeDollyKinematics(mID, gps, true, &scanTime_sec);
+}
+
+void cLidar2PointCloud::computeDollyMovement_GpsPositionOnly()
+{
+	double scanTime_sec = getScanTime_sec();
+
+	auto ssnx = getSsnxInfo();
+	if (!ssnx)
+	{
+		console_message("Error: No GPS Information!");
+		return;
+	}
+
+	auto gps = ssnx->getGeodeticPositions();
+
+	if (gps.empty())
+	{
+		console_message("Invalid Data: No GPS position data has been loaded!");
+		return;
+	}
+
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS_POSITION_ONLY;
+
+	mDollyMovement = computeDollyKinematics(mID, gps, false, &scanTime_sec);
+}
+
+void cLidar2PointCloud::computeDollyMovement_GpsStartStopWithSpeeds()
+{
+	double scanTime_sec = getScanTime_sec();
+
+	auto ssnx = getSsnxInfo();
+	if (!ssnx)
+	{
+		console_message("Error: No GPS Information!");
+		return;
+	}
+
+	auto gps = ssnx->getGeodeticPositions();
+
+	if (gps.empty())
+	{
+		console_message("Invalid Data: No GPS velocity data has been loaded!");
+		return;
+	}
+
+	auto start = gps.front();
+	auto end = gps.back();
+
+	bool ignore = false;
+
+	mKinematicModel = pointcloud::eKINEMATIC_MODEL::GPS_START_STOP_GPS_SPEEDS;
 
 	mDollyMovement = computeDollyKinematics(mID, start, end, gps, ignore, &scanTime_sec);
 }

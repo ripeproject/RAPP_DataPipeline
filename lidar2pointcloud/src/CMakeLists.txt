@@ -1,4 +1,26 @@
 
+#******************************************************************************
+# APPLICATION VERSION INFORMATION
+#******************************************************************************
+
+
+# Use integer versions instead of strings for easier handling if required
+SET(lidar2pointcloud_VERSION_MAJOR 1)
+SET(lidar2pointcloud_VERSION_MINOR 5)
+SET(lidar2pointcloud_VERSION_PATCH 0)
+SET(lidar2pointcloud_VERSION_TWEAK 0)
+
+ADD_DEFINITIONS(
+     -DLIDAR_2_POINTCLOUD_MAJOR=${lidar2pointcloud_VERSION_MAJOR}
+     -DLIDAR_2_POINTCLOUD_MINOR=${lidar2pointcloud_VERSION_MINOR}
+     -DLIDAR_2_POINTCLOUD_PATCH=${lidar2pointcloud_VERSION_PATCH}
+     -DLIDAR_2_POINTCLOUD_TWEAK=${lidar2pointcloud_VERSION_TWEAK}
+)
+
+SET(lidar2pointcloud_VERSION "${lidar2pointcloud_VERSION_MAJOR}.${lidar2pointcloud_VERSION_MINOR}.${lidar2pointcloud_VERSION_PATCH}.${lidar2pointcloud_VERSION_TWEAK}")
+
+ADD_DEFINITIONS(-DLIDAR_2_POINTCLOUD_VERSION="${lidar2pointcloud_VERSION}")
+
 
 # Create the version information code
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -36,7 +58,7 @@ set(LIDAR_TO_POINT_CLOUD_COMMON_FILES
 	FileProcessor.cpp
 	
 	version.hpp
-	version.cpp
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
 

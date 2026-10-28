@@ -77,29 +77,6 @@ set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
-#******************************************************************************
-# PROJECT VERSION INFORMATION
-#******************************************************************************
-
-
-# Use integer versions instead of strings for easier handling if required
-SET(lidar2pointcloud_VERSION_MAJOR 1)
-SET(lidar2pointcloud_VERSION_MINOR 0)
-SET(lidar2pointcloud_VERSION_PATCH 0)
-SET(lidar2pointcloud_VERSION_TWEAK 0)
-
-ADD_DEFINITIONS(
-     -DLIDAR_2_POINTCLOUD_MAJOR=${lidar2pointcloud_VERSION_MAJOR}
-     -DLIDAR_2_POINTCLOUD_MINOR=${lidar2pointcloud_VERSION_MINOR}
-     -DLIDAR_2_POINTCLOUD_PATCH=${lidar2pointcloud_VERSION_PATCH}
-     -DLIDAR_2_POINTCLOUD_TWEAK=${lidar2pointcloud_VERSION_TWEAK}
-)
-
-SET(lidar2pointcloud_VERSION "${lidar2pointcloud_VERSION_MAJOR}.${lidar2pointcloud_VERSION_MINOR}.${lidar2pointcloud_VERSION_PATCH}.${lidar2pointcloud_VERSION_TWEAK}")
-
-ADD_DEFINITIONS(-DLIDAR_2_POINTCLOUD_VERSION="${lidar2pointcloud_VERSION}")
-
-
 # Public version has format YY.V, where:
 # -- YY - two last digits of the year of release
 # -- V  - version of the release

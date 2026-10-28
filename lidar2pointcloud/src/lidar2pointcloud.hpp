@@ -84,6 +84,8 @@ public:
 	void setInitialOffset_deg(double yaw_deg, double pitch_deg, double roll_deg);
 	void setFinalOffset_deg(double yaw_deg, double pitch_deg, double roll_deg);
 
+	void setKinematicModel(eKinematicModel model);
+
 	void setOrientationInterpTable(const InterpTable_t& table);
 
 	void setTranslateToGroundModel(eTranslateToGroundModel model);
@@ -113,7 +115,10 @@ public:
 private:
 	void computeDollyMovement_ConstantSpeed();
 	void computeDollyMovement_SpiderCam();
-	void computeDollyMovement_GpsSpeeds();
+	void computeDollyMovement_SpiderCamStartStopWithGpsSpeeds();
+	void computeDollyMovement_Gps();
+	void computeDollyMovement_GpsPositionOnly();
+	void computeDollyMovement_GpsStartStopWithSpeeds();
 
 	void computeDollyOrientation_Constant();
 	void computeDollyOrientation_ConstantSpeed();

@@ -171,6 +171,11 @@ void cFileProcessor::process_file()
         to_value<double>(mParameters.getVy_mmps(), speeds.getVy_mmps()),
         to_value<double>(mParameters.getVz_mmps(), speeds.getVz_mmps()));
 
+    auto km = mParameters.getKinematicModel();
+
+    if (km.has_value())
+        converter->setKinematicModel(km.value());
+
     const auto& flatten = mDefaults.getFlattening();
 
     mFlattenPointCloud = flatten.getFlatteningPointCloud();
@@ -378,26 +383,36 @@ void cFileProcessor::process_file()
         }
     }
 
-    // Shift the point cloud to match the reference point
-    auto ref_point = mScanInfo.getReferencePoint();
-    if (ref_point.has_value())
+    auto kinematic_model = converter->getKinematicModel();
+
+    if ((kinematic_model == pointcloud::eKINEMATIC_MODEL::CONSTANT_SPEED)
+        || (kinematic_model == pointcloud::eKINEMATIC_MODEL::CONSTANT_SPEED_SENSOR_ROTATION)
+        || (kinematic_model == pointcloud::eKINEMATIC_MODEL::SPIDERCAM)
+        || (kinematic_model == pointcloud::eKINEMATIC_MODEL::SPIDERCAM_SENSOR_ROTATION)
+        || (kinematic_model == pointcloud::eKINEMATIC_MODEL::SPIDERCAM_START_STOP_GPS_SPEEDS)
+        || (kinematic_model == pointcloud::eKINEMATIC_MODEL::SPIDERCAM_START_STOP_GPS_SPEEDS_SENSOR_ROTATION))
     {
-        auto rp1 = ref_point.value();
-        
-        if (pointCloud.referenceValid())
+        // Shift the point cloud to match the reference point
+        auto ref_point = mScanInfo.getReferencePoint();
+        if (ref_point.has_value())
         {
-            auto rp2 = pointCloud.referencePoint();
+            auto rp1 = ref_point.value();
 
-            auto dx_mm = rp2.x_mm - rp1.x_mm;
-            auto dy_mm = rp2.y_mm - rp1.y_mm;
-            auto dz_mm = rp2.z_mm - rp1.z_mm;
-
-            if (translateModel != eTranslateToGroundModel::INTREP_CURVE)
+            if (pointCloud.referenceValid())
             {
-                dz_mm = 0;
-            }
+                auto rp2 = pointCloud.referencePoint();
 
-            pointCloud.translate(dx_mm, dy_mm, dz_mm);
+                auto dx_mm = rp2.x_mm - rp1.x_mm;
+                auto dy_mm = rp2.y_mm - rp1.y_mm;
+                auto dz_mm = rp2.z_mm - rp1.z_mm;
+
+                if (translateModel != eTranslateToGroundModel::INTREP_CURVE)
+                {
+                    dz_mm = 0;
+                }
+
+                pointCloud.translate(dx_mm, dy_mm, dz_mm);
+            }
         }
     }
 

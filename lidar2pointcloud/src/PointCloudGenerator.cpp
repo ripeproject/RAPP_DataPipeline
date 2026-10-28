@@ -286,6 +286,11 @@ rfm::rappPoint_t cPointCloudGenerator::referencePoint() const
     return mPointCloud.referencePoint();
 }
 
+void cPointCloudGenerator::clearReferencePoint()
+{
+    mPointCloud.clearReferencePoint();
+}
+
 void cPointCloudGenerator::setReferencePoint(rfm::rappPoint_t point, bool valid)
 {
     mPointCloud.setReferencePoint(point, valid);
