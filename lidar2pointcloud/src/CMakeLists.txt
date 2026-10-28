@@ -8,7 +8,7 @@
 SET(lidar2pointcloud_VERSION_MAJOR 1)
 SET(lidar2pointcloud_VERSION_MINOR 5)
 SET(lidar2pointcloud_VERSION_PATCH 0)
-SET(lidar2pointcloud_VERSION_TWEAK 0)
+SET(lidar2pointcloud_VERSION_TWEAK 1)
 
 ADD_DEFINITIONS(
      -DLIDAR_2_POINTCLOUD_MAJOR=${lidar2pointcloud_VERSION_MAJOR}
@@ -20,6 +20,14 @@ ADD_DEFINITIONS(
 SET(lidar2pointcloud_VERSION "${lidar2pointcloud_VERSION_MAJOR}.${lidar2pointcloud_VERSION_MINOR}.${lidar2pointcloud_VERSION_PATCH}.${lidar2pointcloud_VERSION_TWEAK}")
 
 ADD_DEFINITIONS(-DLIDAR_2_POINTCLOUD_VERSION="${lidar2pointcloud_VERSION}")
+
+
+# Configure version resource file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/LidarConvert.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/LidarConvert.rc
+    @ONLY
+)
 
 
 # Create the version information code
@@ -124,7 +132,6 @@ if(wxWidgets_FOUND)
 	if(WIN32)
 		# Include a RC file for windows
 		set(resource_files
-			./Resources/ripe.ico
 			./Resources/LidarConvert.rc
 		)
 
@@ -157,6 +164,7 @@ if(wxWidgets_FOUND)
 		MainFrame.cpp
 
 		${LIDAR_TO_POINT_CLOUD_COMMON_FILES}
+
 		${resource_files}
 		
 		GuiApp.cpp

@@ -1,0 +1,44 @@
+
+// note that the icon used by the Explorer (i.e. the programs icon) is the
+// first icon in the executable and the icons are sorted both by their order
+// and alphabetically (!), so put this icon first and give it a name
+// starting with "a"
+aaaaaaaa ICON "ripe.ico"
+
+// this icon is used with wxFrame::SetIcon()
+LidarConvert ICON "ripe.ico"
+
+// set this to 1 if you don't want to use manifest resource (manifest resource
+// is needed to enable visual styles on Windows XP - see docs/msw/winxp.txt
+// for more information)
+#define wxUSE_NO_MANIFEST 0
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION @lidar2pointcloud_VERSION_MAJOR@,@lidar2pointcloud_VERSION_MINOR@,@lidar2pointcloud_VERSION_PATCH@,@lidar2pointcloud_VERSION_TWEAK@
+ PRODUCTVERSION @lidar2pointcloud_VERSION_MAJOR@,@lidar2pointcloud_VERSION_MINOR@,@lidar2pointcloud_VERSION_PATCH@,0
+ FILEFLAGS 0x0L
+ FILEFLAGSMASK 0x3fL
+ FILEOS 0x00040004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "CompanyName", "University of Illinois at Urbana-Champaign"
+            VALUE "FileDescription", "Lidar Convert"
+            VALUE "FileVersion", "@lidar2pointcloud_VERSION_MAJOR@.@lidar2pointcloud_VERSION_MINOR@.@lidar2pointcloud_VERSION_PATCH@.@lidar2pointcloud_VERSION_TWEAK@\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023..2026 UIUC"
+            VALUE "InternalName", "lidar2pointcloud"
+            VALUE "OriginalFilename", "LidarConvert.exe"
+            VALUE "ProductName", "LidarConvert"
+            VALUE "ProductVersion", "@lidar2pointcloud_VERSION_MAJOR@.@lidar2pointcloud_VERSION_MINOR@.@lidar2pointcloud_VERSION_PATCH@\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
