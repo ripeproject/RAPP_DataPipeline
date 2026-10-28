@@ -747,6 +747,8 @@ void cLidarMapConfigKinematicParameters::load(const nlohmann::json& jdoc)
 			mKinematicModel = eKinematicModel::GPS_POSITION_ONLY;
 		else if (model == "gps start/stop with gps speeds")
 			mKinematicModel = eKinematicModel::GPS_START_STOP_GPS_SPEED;
+		else if (model == "gps")
+			mKinematicModel = eKinematicModel::GPS;
 		else if (model == "filtered gps data")
 			mKinematicModel = eKinematicModel::GPS_FILTERED;
 	}
@@ -1084,6 +1086,9 @@ nlohmann::json cLidarMapConfigKinematicParameters::save()
 			break;
 		case eKinematicModel::GPS_START_STOP_GPS_SPEED:
 			scanDoc["kinematic model"] = "gps start/stop with gps speeds";
+			break;
+		case eKinematicModel::GPS:
+			scanDoc["kinematic model"] = "gps";
 			break;
 		case eKinematicModel::GPS_FILTERED:
 			scanDoc["kinematic model"] = "filtered gps data";
