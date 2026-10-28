@@ -40,3 +40,4 @@ build
 .DS_Store
 /daily_checker/src/Resources/CeresDailyChecker.rc
 /daily_checker/src/Resources/DailyChecker.rc
+/lidar2pointcloud/src/Resources/LidarConvert.rc
