@@ -1,4 +1,41 @@
+#******************************************************************************
+# APPLICATION VERSION INFORMATION
+#******************************************************************************
 
+
+# Use integer versions instead of strings for easier handling if required
+SET(export_jpegs_VERSION_MAJOR 1)
+SET(export_jpegs_VERSION_MINOR 3)
+SET(export_jpegs_VERSION_PATCH 0)
+SET(export_jpegs_VERSION_TWEAK 1)
+
+ADD_DEFINITIONS(
+     -DEXPORT_JPEGS_MAJOR=${export_jpegs_VERSION_MAJOR}
+     -DEXPORT_JPEGS_MINOR=${export_jpegs_VERSION_MINOR}
+     -DEXPORT_JPEGS_PATCH=${export_jpegs_VERSION_PATCH}
+     -DEXPORT_JPEGS_TWEAK=${export_jpegs_VERSION_TWEAK}
+)
+
+SET(export_jpegs_VERSION "${export_jpegs_VERSION_MAJOR}.${export_jpegs_VERSION_MINOR}.${export_jpegs_VERSION_PATCH}.${export_jpegs_VERSION_TWEAK}")
+
+ADD_DEFINITIONS(-DEXPORT_JPEGS_VERSION="${export_jpegs_VERSION}")
+
+
+# Configure version resource file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/ExportJpegs.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/ExportJpegs.rc
+    @ONLY
+)
+
+# Create the version information code
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
+
+#******************************************************************************
+# APPLICATION
+#******************************************************************************
 
 set(EXPORT_JPEGS_COMMON_FILES
 
@@ -9,6 +46,9 @@ set(EXPORT_JPEGS_COMMON_FILES
 
 	FileProcessor.hpp
 	FileProcessor.cpp
+	
+	version.hpp
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
 
@@ -31,6 +71,7 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/FieldUtils")
 target_include_directories(console_app PRIVATE "../support/common")
@@ -97,6 +138,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/FieldUtils")
 	target_include_directories(gui_app PRIVATE "../support/common")

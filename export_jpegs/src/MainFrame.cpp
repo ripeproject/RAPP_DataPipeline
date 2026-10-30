@@ -6,6 +6,8 @@
     #include "Resources/ExportJpegs.xpm"
 #endif
 
+#include "./version.hpp"
+
 #include <wx/aui/framemanager.h>
 #include <wx/aui/auibook.h>
 #include <wx/aboutdlg.h>
@@ -117,10 +119,15 @@ void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxAboutDialogInfo info;
+
+	wxString version_number = std::to_string(getMajorVersion()) + "." + std::to_string(getMinorVersion()) + "." + std::to_string(getPatchVersion());
+	wxString long_version_number = "Version " + getVersionString();
+
 	info.SetName(wxTheApp->GetAppDisplayName());
-	info.SetVersion("1.0", "0.1.0");
+	info.SetVersion(version_number, long_version_number);
+
 	info.SetDescription(_("Export image data in ceres data files to JPEG based files.\n"));
-	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetCopyright(wxT("Copyright (c) 2023..2026, Carl R. Woese Institute for Genomic Biology, "
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(ExportJpegs));
