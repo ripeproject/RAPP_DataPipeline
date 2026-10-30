@@ -41,3 +41,4 @@ build
 /daily_checker/src/Resources/CeresDailyChecker.rc
 /daily_checker/src/Resources/DailyChecker.rc
 /lidar2pointcloud/src/Resources/LidarConvert.rc
+/export_jpegs/src/Resources/ExportJpegs.rc
