@@ -482,9 +482,12 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 // Spidercam handlers
 void cExportJpegs::onPosition(spidercam::sPosition_1_t position)
 {
-    mX_mm = position.X_mm;
-    mY_mm = position.Y_mm;
-    mZ_mm = position.Z_mm;
+    if (mUtcYear < 2026)
+    {
+        mX_mm = position.X_mm;
+        mY_mm = position.Y_mm;
+        mZ_mm = position.Z_mm;
+    }
 }
 void cExportJpegs::onStartPosition(spidercam::sPosition_1_t position) {}
 void cExportJpegs::onEndPosition(spidercam::sPosition_1_t position) {}
@@ -513,7 +516,13 @@ void cExportJpegs::onPVT_Geodetic(uint8_t device_id, ssnx::gps::PVT_Geodetic_2_t
     mElevation_m = mHeight_m - mUndulation_m;
 
     auto point1 = rfb::fromGPS(pos.Lat_rad, pos.Lon_rad, mElevation_m);
-    auto point2 = rfb::fromGPS(pos.Lat_rad, pos.Lon_rad, mHeight_m);
+
+    if (mUtcYear > 2025)
+    {
+        mX_mm = point1.x_mm;
+        mY_mm = point1.y_mm;
+        mZ_mm = point1.z_mm;
+    }
 }
 
 void cExportJpegs::onPosCovGeodetic(uint8_t device_id, ssnx::gps::PosCovGeodetic_1_t cov) {}
