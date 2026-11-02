@@ -92,26 +92,56 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(const std::deque<nSpiderCa
     uint32_t start_index = 0;
     uint32_t end_index = 0;
 
+    int last_d = std::numeric_limits<int>::max();
+
     for (start_index = 0; start_index < data.size(); ++start_index)
     {
         const auto& p = data[start_index];
-        if ((std::abs(static_cast<int32_t>(p.X_mm) - startPos.x_mm) < 10)
-            && (std::abs(static_cast<int32_t>(p.Y_mm) - startPos.y_mm) < 10)
-            && (std::abs(static_cast<int32_t>(p.Z_mm) - startPos.z_mm) < 10))
+        auto dx = std::abs(static_cast<int32_t>(p.X_mm) - startPos.x_mm);
+        auto dy = std::abs(static_cast<int32_t>(p.Y_mm) - startPos.y_mm);
+        auto dz = std::abs(static_cast<int32_t>(p.Z_mm) - startPos.z_mm);
+
+        auto d = dx + dy + dz;
+
+        if ((dx < 10) && (dy < 10) && (dz < 10))
         {
             break;
         }
+
+        if (d > last_d)
+        {
+            if (start_index > 0)
+                --start_index;
+
+            break;
+        }
+
+        last_d = d;
     }
+
+    last_d = std::numeric_limits<int>::max();
 
     for (end_index = start_index; end_index < data.size(); ++end_index)
     {
         const auto& p = data[end_index];
-        if ((std::abs(static_cast<int32_t>(p.X_mm) - endPos.x_mm) < 10)
-            && (std::abs(static_cast<int32_t>(p.Y_mm) - endPos.y_mm) < 10)
-            && (std::abs(static_cast<int32_t>(p.Z_mm) - endPos.z_mm) < 10))
+        auto dx = std::abs(static_cast<int32_t>(p.X_mm) - startPos.x_mm);
+        auto dy = std::abs(static_cast<int32_t>(p.Y_mm) - startPos.y_mm);
+        auto dz = std::abs(static_cast<int32_t>(p.Z_mm) - startPos.z_mm);
+
+        auto d = dx + dy + dz;
+
+        if ((dx < 10) && (dy < 10) && (dz < 10))
         {
             break;
         }
+
+        if (d > last_d)
+        {
+            ++end_index;
+            break;
+        }
+
+        last_d = d;
     }
 
     return computeDollyKinematics(-1, data, start_index, end_index);
@@ -236,6 +266,9 @@ std::vector<kdt::sDollyInfo_t> computeDollyKinematics(int id, const std::deque<n
     auto it = data.begin();
 
     std::advance(it, startIndex);
+
+    if (it == data.end())
+        return result;
 
     auto startTimestamp = it->timestamp;
 
