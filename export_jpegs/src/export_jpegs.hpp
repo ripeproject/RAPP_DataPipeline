@@ -29,6 +29,8 @@ struct sPosTime_t
     int     utcSecond = 0;
 };
 
+enum class eMode {ALL, CENTER_ONLY, WHOLE_PLOT};
+
 
 class cExportJpegs : public cExperimentParser, public cAxisCommunicationsParser, public cSsnxParser, public cSpidercamParser
 {
@@ -41,6 +43,8 @@ public:
     void setOutputPath(std::filesystem::path out);
     void setRootFileName(const std::string& filename);
     void setTimeStamp(const std::string& time_stamp);
+
+    void setMode(eMode mode);
 
     void setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file);
 
@@ -156,6 +160,8 @@ private:
 private:
     bool mAbort = false;
 
+    eMode mMode = eMode::ALL;
+
     std::filesystem::path mOutputPath;
     std::string mRootFileName;
     std::string mTimeStamp;
@@ -170,6 +176,7 @@ private:
     std::string mMeasurementTitle;
 
     uint32_t    mFrameCount = 0;
+    uint32_t    mPlotCount = 0;
     sPosTime_t  mCenterPos;
 
     int mWidth = 0;

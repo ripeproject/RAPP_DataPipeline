@@ -2,6 +2,7 @@
 #include "MainWindow.hpp"
 #include "FileProcessor.hpp"
 #include "StringUtils.hpp"
+#include "export_jpegs.hpp"
 
 #include <wx/thread.h>
 #include <wx/config.h>
@@ -120,6 +121,15 @@ void cMainWindow::CreateControls()
 	mpLoadCfgButton = new wxButton(this, wxID_ANY, "Browse");
 	mpLoadCfgButton->Bind(wxEVT_BUTTON, &cMainWindow::OnCfgFileBrowse, this);
 
+	mpAll = new wxRadioButton(this, wxID_ANY, "All", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	mpCenterOnly = new wxRadioButton(this, wxID_ANY, "Center Only");
+	mpWholePlot = new wxRadioButton(this, wxID_ANY, "Whole Plot");
+	mpAll->SetValue(true);
+
+	mpAll->Enable(false);
+	mpCenterOnly->Enable(false);
+	mpWholePlot->Enable(false);
+
 	mpExportButton = new wxButton(this, wxID_ANY, "Export");
 	mpExportButton->Disable();
 	mpExportButton->Bind(wxEVT_BUTTON, &cMainWindow::OnExport, this);
@@ -158,6 +168,18 @@ void cMainWindow::CreateLayout()
 	grid_sizer->Add(mpLoadCfgButton, 0, wxALIGN_CENTER_VERTICAL);
 
 	topsizer->Add(grid_sizer, wxSizerFlags().Proportion(0).Expand());
+
+	topsizer->AddSpacer(5);
+
+	auto* header_sz = new wxStaticBoxSizer(wxHORIZONTAL, this);
+	header_sz->Add(mpAll, wxSizerFlags().Proportion(0).Expand());
+	header_sz->AddSpacer(10);
+	header_sz->Add(mpCenterOnly, wxSizerFlags().Proportion(0).Expand());
+	header_sz->AddSpacer(10);
+	header_sz->Add(mpWholePlot, wxSizerFlags().Proportion(0).Expand());
+	header_sz->AddStretchSpacer(1);
+
+	topsizer->Add(header_sz, wxSizerFlags().Proportion(0).Expand());
 
 	topsizer->AddSpacer(5);
 	topsizer->Add(mpExportButton, wxSizerFlags().Proportion(0).Expand());
@@ -245,17 +267,38 @@ void cMainWindow::OnCfgFileBrowse(wxCommandEvent& event)
 		"Config files (*.json;*.plotsplit)|*.json;*.plotsplit", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (dlg.ShowModal() == wxID_CANCEL)
+	{
 		return;     // the user changed their mind...
+	}
 
 	mCfgFilename = dlg.GetPath();
 
-	std::string config_file = mCfgFilename.ToStdString();
-
 	mpLoadCfgFile->SetValue(mCfgFilename);
+
+	if (mCfgFilename.empty())
+	{
+		mpAll->SetValue(true);
+
+		mpAll->Enable(false);
+		mpCenterOnly->Enable(false);
+		mpWholePlot->Enable(false);
+
+		if (mPlotConfigData)
+			mPlotConfigData.reset();
+
+		return;
+	}
+
+	std::string config_file = mCfgFilename.ToStdString();
 
 	mPlotConfigData = std::make_shared<cPlotConfigFile>();
 
-	mPlotConfigData->open(config_file);
+	if (mPlotConfigData->open(config_file))
+	{
+		mpAll->Enable(true);
+		mpCenterOnly->Enable(true);
+		mpWholePlot->Enable(true);
+	}
 }
 
 void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
@@ -409,7 +452,16 @@ void cMainWindow::OnExport(wxCommandEvent& WXUNUSED(event))
 		numFilesToProcess += 1;
 
 		if (mPlotConfigData)
+		{
+			if (mpAll->GetValue())
+				fp->setMode(eMode::ALL);
+			if (mpCenterOnly->GetValue())
+				fp->setMode(eMode::CENTER_ONLY);
+			if (mpWholePlot->GetValue())
+				fp->setMode(eMode::WHOLE_PLOT);
+
 			fp->setPlotFile(mPlotConfigData);
+		}
 
 		fp->usePlotFilename(true);
 

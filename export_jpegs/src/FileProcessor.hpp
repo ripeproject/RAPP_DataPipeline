@@ -10,7 +10,7 @@
 // Forward Declarations
 class cExportJpegs;
 class cPlotConfigFile;
-
+enum class eMode;
 
 class cFileProcessor
 {
@@ -20,6 +20,8 @@ public:
 	~cFileProcessor();
 
 	void setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file);
+
+	void setMode(eMode mode);
 
 	void usePlotFilename(bool enable);
 	void usePlotPrefix(bool enable);

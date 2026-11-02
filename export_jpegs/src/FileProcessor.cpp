@@ -38,6 +38,11 @@ void cFileProcessor::setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file)
     mConverter->setPlotFile(plot_file);
 }
 
+void cFileProcessor::setMode(eMode mode)
+{
+    mConverter->setMode(mode);
+}
+
 void cFileProcessor::usePlotFilename(bool enable)
 {
     mConverter->usePlotFilename(enable);

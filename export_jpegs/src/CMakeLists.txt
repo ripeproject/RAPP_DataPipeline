@@ -5,9 +5,9 @@
 
 # Use integer versions instead of strings for easier handling if required
 SET(export_jpegs_VERSION_MAJOR 1)
-SET(export_jpegs_VERSION_MINOR 3)
+SET(export_jpegs_VERSION_MINOR 4)
 SET(export_jpegs_VERSION_PATCH 0)
-SET(export_jpegs_VERSION_TWEAK 1)
+SET(export_jpegs_VERSION_TWEAK 0)
 
 ADD_DEFINITIONS(
      -DEXPORT_JPEGS_MAJOR=${export_jpegs_VERSION_MAJOR}

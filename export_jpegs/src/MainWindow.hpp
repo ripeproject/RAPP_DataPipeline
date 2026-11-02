@@ -61,6 +61,10 @@ private:
 	wxTextCtrl* mpLoadCfgFile = nullptr;
 	wxButton* mpLoadCfgButton = nullptr;
 
+	wxRadioButton* mpAll = nullptr;
+	wxRadioButton* mpCenterOnly = nullptr;
+	wxRadioButton* mpWholePlot = nullptr;
+
 	wxButton* mpExportButton = nullptr;
 
 	cFileProgressCtrl* mpProgressCtrl = nullptr;

@@ -176,6 +176,11 @@ void cExportJpegs::setTimeStamp(const std::string& time_stamp)
     mTimeStamp = time_stamp;
 }
 
+void cExportJpegs::setMode(eMode mode)
+{
+    mMode = mode;
+}
+
 void cExportJpegs::setPlotFile(std::shared_ptr<cPlotConfigFile>& plot_file)
 {
     mPlotConfigData = plot_file;
@@ -336,13 +341,16 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 {
     cPlotConfigPlotInfo info;
 
-    if (mPlotConfigData && mPlots.empty())
+    if (mMode != eMode::ALL)
     {
-        auto it = mPlotConfigData->find_by_measurement_name(mRootFileName);
-
-        if (it != mPlotConfigData->end())
+        if (mPlotConfigData && mPlots.empty())
         {
-            mPlots = it->data();
+            auto it = mPlotConfigData->find_by_measurement_name(mRootFileName);
+
+            if (it != mPlotConfigData->end())
+            {
+                mPlots = it->data();
+            }
         }
     }
 
@@ -352,37 +360,100 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 
         if (plot.contains_point(date, mX_mm, mY_mm))
         {
-            if (mLastPlotNumber != plot.getPlotNumber())
+            if (mMode == eMode::CENTER_ONLY)
             {
-                mLastPlotNumber = plot.getPlotNumber();
-                mDistance_mm = std::numeric_limits<double>::max();
+                if (mLastPlotNumber != plot.getPlotNumber())
+                {
+                    mLastPlotNumber = plot.getPlotNumber();
+                    mDistance_mm = std::numeric_limits<double>::max();
+                }
+
+                info = plot;
+                auto center = plot.getBounds(date)->center();
+                double d_mm = sqrt((center.x_mm - mX_mm) * (center.x_mm - mX_mm) + (center.y_mm - mY_mm) * (center.y_mm - mY_mm));
+
+                if (d_mm < mDistance_mm)
+                {
+                    mDistance_mm = d_mm;
+
+                    mCenterPos.positionValid = mPositionValid;
+                    mCenterPos.lat_deg = mLat_deg;
+                    mCenterPos.lon_deg = mLon_deg;
+                    mCenterPos.elevation_m = mElevation_m;
+
+                    mCenterPos.dateTimeValid = mDateTimeValid;
+                    mCenterPos.utcYear = mUtcYear;
+                    mCenterPos.utcMonth = mUtcMonth;
+                    mCenterPos.utcDay = mUtcDay;
+                    mCenterPos.utcHour = mUtcHour;
+                    mCenterPos.utcMinute = mUtcMinute;
+                    mCenterPos.utcSecond = mUtcSecond;
+                }
+                else if (d_mm > mDistance_mm)
+                {
+                    if (!mCenterPos.positionValid)
+                        return;
+
+                    std::filesystem::path filename;
+
+                    if (mUsePlotFilename)
+                    {
+                        std::string fname = "Plot_" + std::to_string(info.getPlotNumber());
+
+                        fname += "_";
+                        fname += mTimeStamp;
+
+                        filename = mOutputPath / fname;
+
+                        std::string ext = ".jpeg";
+                        filename.replace_extension(ext);
+                    }
+                    else if (mUsePlotPrefix)
+                    {
+                        std::string fname = "Plot_" + std::to_string(info.getPlotNumber());
+
+                        fname += "_";
+                        fname += mRootFileName;
+                        fname += "_";
+                        fname += mTimeStamp;
+
+                        filename = mOutputPath / fname;
+
+                        std::string ext = ".jpeg";
+                        filename.replace_extension(ext);
+                    }
+                    else
+                    {
+                        std::string fname = mRootFileName;
+                        fname += "_";
+                        fname += mTimeStamp;
+
+                        filename = mOutputPath / fname;
+
+                        std::string ext;
+                        ext = "plot_" + std::to_string(info.getPlotNumber());
+                        ext += ".jpeg";
+                        filename.replace_extension(ext);
+                    }
+
+                    ::writeImage(filename, buffer, mCenterPos);
+
+                    mCenterPos.positionValid = false;
+                    mCenterPos.dateTimeValid = false;
+                }
+
+                return;
             }
 
-            info = plot;
-            auto center = plot.getBounds(date)->center();
-            double d_mm = sqrt((center.x_mm - mX_mm) * (center.x_mm - mX_mm) + (center.y_mm - mY_mm) * (center.y_mm - mY_mm));
-
-            if (d_mm < mDistance_mm)
+            if (mMode == eMode::WHOLE_PLOT)
             {
-                mDistance_mm = d_mm;
+                if (mLastPlotNumber != plot.getPlotNumber())
+                {
+                    mLastPlotNumber = plot.getPlotNumber();
+                    mPlotCount = 0;
+                }
 
-                mCenterPos.positionValid = mPositionValid;
-                mCenterPos.lat_deg = mLat_deg;
-                mCenterPos.lon_deg = mLon_deg;
-                mCenterPos.elevation_m = mElevation_m;
-
-                mCenterPos.dateTimeValid = mDateTimeValid;
-                mCenterPos.utcYear = mUtcYear;
-                mCenterPos.utcMonth = mUtcMonth;
-                mCenterPos.utcDay = mUtcDay;
-                mCenterPos.utcHour = mUtcHour;
-                mCenterPos.utcMinute = mUtcMinute;
-                mCenterPos.utcSecond = mUtcSecond;
-            }
-            else if (d_mm > mDistance_mm)
-            {
-                if (!mCenterPos.positionValid)
-                    return;
+                info = plot;
 
                 std::filesystem::path filename;
 
@@ -395,7 +466,9 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 
                     filename = mOutputPath / fname;
 
-                    std::string ext = ".jpeg";
+                    std::string ext = ".";
+                    ext += std::to_string(mPlotCount);
+                    ext += ".jpeg";
                     filename.replace_extension(ext);
                 }
                 else if (mUsePlotPrefix)
@@ -409,31 +482,37 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 
                     filename = mOutputPath / fname;
 
-                    std::string ext = ".jpeg";
+                    std::string ext = ".";
+                    ext += std::to_string(mPlotCount);
+                    ext += ".jpeg";
                     filename.replace_extension(ext);
                 }
                 else
                 {
                     std::string fname = mRootFileName;
+
                     fname += "_";
                     fname += mTimeStamp;
 
                     filename = mOutputPath / fname;
 
-                    std::string ext;
+                    std::string ext = ".";
                     ext = "plot_" + std::to_string(info.getPlotNumber());
+                    ext += ".";
+                    ext += std::to_string(mPlotCount);
                     ext += ".jpeg";
                     filename.replace_extension(ext);
                 }
 
-                ::writeImage(filename, buffer, mCenterPos);
+                ::writeImage(filename, buffer);
 
-                mCenterPos.positionValid = false;
-                mCenterPos.dateTimeValid = false;
+                ++mPlotCount;
+
+                return;
             }
-
-            return;
         }
+        else
+            mPlotCount = 0;
     }
 
     if (!mPlots.empty() && info.empty())
