@@ -6,9 +6,9 @@
 
 # Use integer versions instead of strings for easier handling if required
 SET(lidar2pointcloud_VERSION_MAJOR 1)
-SET(lidar2pointcloud_VERSION_MINOR 5)
+SET(lidar2pointcloud_VERSION_MINOR 6)
 SET(lidar2pointcloud_VERSION_PATCH 0)
-SET(lidar2pointcloud_VERSION_TWEAK 1)
+SET(lidar2pointcloud_VERSION_TWEAK 0)
 
 ADD_DEFINITIONS(
      -DLIDAR_2_POINTCLOUD_MAJOR=${lidar2pointcloud_VERSION_MAJOR}
