@@ -295,12 +295,12 @@ void cPlotData::addWeather(int doy, bool wind_data_valid, double wind_speed_mps,
 {
 	sWeatherData_t data;
 
-	data.wind_data_valid = false;
-	data.wind_speed_mps = 0.0;
-	data.wind_direction_deg = 0.0;
-	data.temp_C = 0.0;
-	data.rh_pct = 0.0;
-	data.par_umole = 0.0;
+	data.wind_data_valid = wind_data_valid;
+	data.wind_speed_mps = wind_speed_mps;
+	data.wind_direction_deg = wind_direction_deg;
+	data.temp_C = temp_C;
+	data.rh_pct = rh_pct;
+	data.par_umole = par_umole;
 
 	mWeatherPoints[doy].push_back(data);
 }
@@ -901,7 +901,87 @@ void cPlotData::write_weather_file_by_column(std::ofstream& out)
 {
 	out << "Date, " << "DayOfYear, " << "Wind Speed (m/s), " << "Wind Direction (deg), " << "Temperature (C), " << "Relative Humidity (%), " << "PAR (umole)\n";
 
+	for (auto date_it = mDates.begin(); date_it != mDates.end(); ++date_it)
+	{
+		out << date_it->month << "/" << date_it->day << "/" << date_it->year << ", ";
+		out << date_it->doy << ", ";
 
+		auto doy = date_it->doy;
+
+		auto weatherDOY = mWeatherPoints[doy];
+
+		sWeatherData_t avgWeather;
+
+		if (!weatherDOY.empty())
+		{
+			int i = 0;
+
+			for (const auto& weather : weatherDOY)
+			{
+				if (weather.wind_data_valid)
+				{
+					avgWeather.wind_speed_mps += weather.wind_speed_mps;
+					avgWeather.wind_direction_deg += weather.wind_direction_deg;
+					++i;
+				}
+
+				avgWeather.temp_C += weather.temp_C;
+				avgWeather.rh_pct += weather.rh_pct;
+				avgWeather.par_umole += weather.par_umole;
+			}
+
+			double n = weatherDOY.size();
+
+			if (i > 0)
+			{
+				avgWeather.wind_speed_mps /= i;
+				avgWeather.wind_direction_deg /= i;
+			}
+			avgWeather.temp_C /= n;
+			avgWeather.rh_pct /= n;
+			avgWeather.par_umole /= n;
+
+			if (i > 0)
+			{
+				out << avgWeather.wind_speed_mps << ", ";
+				out << avgWeather.wind_direction_deg << ", ";
+			}
+			else
+				out << "   " << ", " << "   " << ", ";
+
+			out << avgWeather.temp_C << ", ";
+			out << avgWeather.rh_pct << ", ";
+			out << avgWeather.par_umole << ", ";
+		}
+
+/*
+		for (auto it = mPlotNumPoints.begin(); it != plot_last; ++it)
+		{
+			const auto& numPoints = it->second;
+
+			auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+				{
+					return h.doy == doy;
+				}
+			);
+
+			if (points == numPoints.end())
+				out << ", ";
+			else
+				out << points->num_points << ", ";
+		}
+
+		const auto& numPoints = plot_last->second;
+
+		auto points = std::find_if(numPoints.begin(), numPoints.end(), [doy](const auto& h)
+			{
+				return h.doy == doy;
+			}
+		);
+*/
+
+		out << "\n";
+	}
 }
 
 void cPlotData::write_plot_num_points_file_by_row(std::ofstream& out)

@@ -1,5 +1,35 @@
 
 
+#******************************************************************************
+# PROJECT VERSION INFORMATION
+#******************************************************************************
+
+# Use integer versions instead of strings for easier handling if required
+SET(RappPlotData_VERSION_MAJOR 1)
+SET(RappPlotData_VERSION_MINOR 2)
+SET(RappPlotData_VERSION_PATCH 0)
+SET(RappPlotData_VERSION_TWEAK 0)
+
+ADD_DEFINITIONS(
+     -DRAPP_PLOT_DATA_MAJOR=${RappPlotData_VERSION_MAJOR}
+     -DRAPP_PLOT_DATA_MINOR=${RappPlotData_VERSION_MINOR}
+     -DRAPP_PLOT_DATA_PATCH=${RappPlotData_VERSION_PATCH}
+     -DRAPP_PLOT_DATA_TWEAK=${RappPlotData_VERSION_TWEAK}
+)
+
+SET(RappPlotData_VERSION "${RappPlotData_VERSION_MAJOR}.${RappPlotData_VERSION_MINOR}.${RappPlotData_VERSION_PATCH}.${RappPlotData_VERSION_TWEAK}")
+
+ADD_DEFINITIONS(-DRAPP_PLOT_DATA_VERSION="${RappPlotData_VERSION}")
+
+
+# Configure version resource file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/PlotData.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/PlotData.rc
+    @ONLY
+)
+
+
 # Create the version information code
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
