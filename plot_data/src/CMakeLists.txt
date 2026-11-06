@@ -7,7 +7,7 @@
 # Use integer versions instead of strings for easier handling if required
 SET(RappPlotData_VERSION_MAJOR 1)
 SET(RappPlotData_VERSION_MINOR 2)
-SET(RappPlotData_VERSION_PATCH 0)
+SET(RappPlotData_VERSION_PATCH 1)
 SET(RappPlotData_VERSION_TWEAK 0)
 
 ADD_DEFINITIONS(

@@ -951,7 +951,7 @@ void cPlotData::write_weather_file_by_column(std::ofstream& out)
 
 			out << avgWeather.temp_C << ", ";
 			out << avgWeather.rh_pct << ", ";
-			out << avgWeather.par_umole << ", ";
+			out << avgWeather.par_umole;
 		}
 
 /*
