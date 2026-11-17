@@ -1,0 +1,27 @@
+
+#include "version.hpp"
+
+std::string getVersionString()
+{
+	return "@HYPERSPECTRA_2_BIL_VERSION@";
+}
+
+unsigned int getMajorVersion()
+{
+	return @hyperspectral2bil_VERSION_MAJOR@ +0;
+}
+
+unsigned int getMinorVersion()
+{
+	return @hyperspectral2bil_VERSION_MINOR@ +0;
+}
+
+unsigned int getPatchVersion()
+{
+	return @hyperspectral2bil_VERSION_PATCH@ +0;
+}
+
+unsigned int getTweakVersion()
+{
+	return @hyperspectral2bil_VERSION_TWEAK@ +0;
+}

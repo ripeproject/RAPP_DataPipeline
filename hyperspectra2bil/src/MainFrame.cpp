@@ -1,6 +1,7 @@
 
 #include "MainFrame.hpp"
 #include "MainWindow.hpp"
+#include "./version.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
     #include "Resources/Export2Bil.xpm"
@@ -117,8 +118,13 @@ void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxAboutDialogInfo info;
+
+	wxString version_number = std::to_string(getMajorVersion()) + "." + std::to_string(getMinorVersion()) + "." + std::to_string(getPatchVersion());
+	wxString long_version_number = getVersionString();
+
 	info.SetName(wxTheApp->GetAppDisplayName());
-	info.SetVersion("1.0", "0.1.0");
+	info.SetVersion(version_number, long_version_number);
+
 	info.SetDescription(_("Export hyperspectral data in ceres data files to GIS based files.\n"));
 	info.SetCopyright(wxT("Copyright (c) 2023..26, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"

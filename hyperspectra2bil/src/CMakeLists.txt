@@ -1,6 +1,45 @@
 
+#******************************************************************************
+# APPLICATION VERSION 
+#******************************************************************************
 
-set(HYPER_SPECTRA_2_BIL_COMMON_FILES
+# Use integer versions instead of strings for easier handling if required
+set(hyperspectral2bil_VERSION_MAJOR 1)
+set(hyperspectral2bil_VERSION_MINOR 3)
+set(hyperspectral2bil_VERSION_PATCH 0)
+set(hyperspectral2bil_VERSION_TWEAK 0)
+
+add_definitions(
+     -DHYPERSPECTRA_2_BIL_MAJOR=${hyperspectral2bil_VERSION_MAJOR}
+     -DHYPERSPECTRA_2_BIL_MINOR=${hyperspectral2bil_VERSION_MINOR}
+     -DHYPERSPECTRA_2_BIL_PATCH=${hyperspectral2bil_VERSION_PATCH}
+     -DHYPERSPECTRA_2_BIL_TWEAK=${hyperspectral2bil_VERSION_TWEAK}
+)
+
+
+SET(hyperspectral2bil_VERSION "${hyperspectral2bil_VERSION_MAJOR}.${hyperspectral2bil_VERSION_MINOR}.${hyperspectral2bil_VERSION_PATCH}.${hyperspectral2bil_VERSION_TWEAK}")
+
+ADD_DEFINITIONS(-DHYPERSPECTRA_2_BIL_VERSION="${hyperspectral2bil_VERSION}")
+
+
+# Configure version resource file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Export2Bil.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Export2Bil.rc
+    @ONLY
+)
+
+
+# Create the version information code
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
+
+#******************************************************************************
+# APPLICATION 
+#******************************************************************************
+
+set(HYPERSPECTRA_2_BIL_COMMON_FILES
 
 	ParserExceptions.hpp
 
@@ -66,6 +105,9 @@ set(HYPER_SPECTRA_2_BIL_COMMON_FILES
 
 	FileProcessor.hpp
 	FileProcessor.cpp
+	
+	version.hpp
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
 
@@ -81,13 +123,14 @@ PRIVATE
 
 	BS_thread_pool.hpp
 
-	${HYPER_SPECTRA_2_BIL_COMMON_FILES}
+	${HYPERSPECTRA_2_BIL_COMMON_FILES}
 
 	ConsoleApp.cpp
 )
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 
 target_link_libraries(console_app PRIVATE cbdf::cbdf)
@@ -109,7 +152,7 @@ if(wxWidgets_FOUND)
 	if(WIN32)
 		# Include a RC file for windows
 		set(resource_files
-			./Resources/ripe.ico
+#			./Resources/ripe.ico
 			./Resources/Export2Bil.rc
 		)
 
@@ -141,7 +184,8 @@ if(wxWidgets_FOUND)
 		MainFrame.hpp
 		MainFrame.cpp
 
-		${HYPER_SPECTRA_2_BIL_COMMON_FILES}
+		${HYPERSPECTRA_2_BIL_COMMON_FILES}
+
 		${resource_files}
 		
 		GuiApp.cpp
@@ -150,6 +194,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")
 
