@@ -1,5 +1,44 @@
 
 
+#******************************************************************************
+# APPLICATION VERSION INFORMATION
+#******************************************************************************
+
+
+# Use integer versions instead of strings for easier handling if required
+SET(pointcloud2ply_VERSION_MAJOR 1)
+SET(pointcloud2ply_VERSION_MINOR 4)
+SET(pointcloud2ply_VERSION_PATCH 0)
+SET(pointcloud2ply_VERSION_TWEAK 0)
+
+ADD_DEFINITIONS(
+     -DPOINTCLOUD_2_PLY_MAJOR=$pointcloud2ply_VERSION_MAJOR}
+     -DPOINTCLOUD_2_PLY_MINOR=$pointcloud2ply_VERSION_MINOR}
+     -DPOINTCLOUD_2_PLY_PATCH=$pointcloud2ply_VERSION_PATCH}
+     -DPOINTCLOUD_2_PLY_TWEAK=$pointcloud2ply_VERSION_TWEAK}
+)
+
+SET(pointcloud2ply_VERSION "${pointcloud2ply_VERSION_MAJOR}.${pointcloud2ply_VERSION_MINOR}.${pointcloud2ply_VERSION_PATCH}.${pointcloud2ply_VERSION_TWEAK}")
+
+ADD_DEFINITIONS(-DPOINTCLOUD_2_PLY_VERSION="${pointcloud2ply_VERSION}")
+
+
+# Configure version resource file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Export2Ply.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Export2Ply.rc
+    @ONLY
+)
+
+# Create the version information code
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
+
+#******************************************************************************
+# APPLICATION
+#******************************************************************************
+
 set(POINT_CLOUD_2_PLY_COMMON_FILES
 
 	ParserExceptions.hpp
@@ -9,6 +48,9 @@ set(POINT_CLOUD_2_PLY_COMMON_FILES
 
 	FileProcessor.hpp
 	FileProcessor.cpp
+	
+	version.hpp
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
 
@@ -31,6 +73,7 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(console_app PRIVATE "../support/common")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
 target_include_directories(console_app PRIVATE "../support/Utilities")
@@ -88,6 +131,7 @@ if(wxWidgets_FOUND)
 		MainFrame.cpp
 
 		${POINT_CLOUD_2_PLY_COMMON_FILES}
+
 		${resource_files}
 		
 		GuiApp.cpp
@@ -96,6 +140,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 	target_include_directories(gui_app PRIVATE "../support/common")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")
 	target_include_directories(gui_app PRIVATE "../support/wxCustomWidgets")

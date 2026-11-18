@@ -1,6 +1,7 @@
 
 #include "MainFrame.hpp"
 #include "MainWindow.hpp"
+#include "./version.hpp"
 
 #ifndef wxHAS_IMAGES_IN_RESOURCES
     #include "Resources/Export2Ply.xpm"
@@ -128,10 +129,15 @@ void cMainFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxAboutDialogInfo info;
+
+	wxString version_number = std::to_string(getMajorVersion()) + "." + std::to_string(getMinorVersion()) + "." + std::to_string(getPatchVersion());
+	wxString long_version_number = "Version " + getVersionString();
+
 	info.SetName(wxTheApp->GetAppDisplayName());
-	info.SetVersion("1.0", "0.1.0");
+	info.SetVersion(version_number, long_version_number);
+
 	info.SetDescription(_("Export point cloud data in ceres data files to ply based files.\n"));
-	info.SetCopyright(wxT("Copyright (c) 2023, Carl R. Woese Institute for Genomic Biology,\n"
+	info.SetCopyright(wxT("Copyright (c) 2023..2026, Carl R. Woese Institute for Genomic Biology,\n"
 		"University of Illinois.\n"
 		"All rights reserved.\n"));
 	info.SetIcon(wxICON(Export2Ply));
@@ -142,7 +148,7 @@ void cMainFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 		"distribution.This includes pointcloud2ply’s source code, the examples, and\n"
 		"tests, as well as the documentation.\n"
 		"\n"
-		"Copyright(c) 2023, Carl R.Woese Institute for Genomic Biology\n"
+		"Copyright(c) 2023..2026, Carl R.Woese Institute for Genomic Biology\n"
 		"All rights reserved.\n"
 		"\n"
 		"Redistribution and use in source and binary forms, with or without\n"

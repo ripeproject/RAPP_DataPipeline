@@ -1,0 +1,27 @@
+
+#include "version.hpp"
+
+std::string getVersionString()
+{
+	return "@POINTCLOUD_2_PLY_VERSION@";
+}
+
+unsigned int getMajorVersion()
+{
+	return @pointcloud2ply_VERSION_MAJOR@ +0;
+}
+
+unsigned int getMinorVersion()
+{
+	return @pointcloud2ply_VERSION_MINOR@ +0;
+}
+
+unsigned int getPatchVersion()
+{
+	return @pointcloud2ply_VERSION_PATCH@ +0;
+}
+
+unsigned int getTweakVersion()
+{
+	return @pointcloud2ply_VERSION_TWEAK@ +0;
+}

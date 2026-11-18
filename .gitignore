@@ -44,3 +44,4 @@ build
 /export_jpegs/src/Resources/ExportJpegs.rc
 /plot_data/src/Resources/PlotData.rc
 /hyperspectra2bil/src/Resources/Export2Bil.rc
+/pointcloud2ply/src/Resources/Export2Ply.rc

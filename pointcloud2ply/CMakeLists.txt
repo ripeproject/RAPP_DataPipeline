@@ -73,17 +73,6 @@ add_definitions(
 
 set(POINTCLOUD_2_PLY_VERSION "${POINTCLOUD_2_PLY_MAJOR}.${POINTCLOUD_2_PLY_MINOR}.${POINTCLOUD_2_PLY_PATCH}")
 
-# Public version has format YY.V, where:
-# -- YY - two last digits of the year of release
-# -- V  - version of the release
-# Example: first release in year 2023 has version 1.23.0 and public version 23.1
-#MATH(EXPR CPP_CBDF "${CPP_CBDF_PATCH} + 1" OUTPUT_FORMAT DECIMAL)
-#SET(CPP_CBDF_PUBLIC_VERSION "1.0")
-#SET(PACKAGE cppCBDF)
-#STRING(TIMESTAMP CURRENTYEAR "%Y")
-#SET(COPYRIGHT_YEARS "2000-${CURRENTYEAR}")
-
-
 
 #******************************************************************************
 # PROJECT LANGUAGE SUPPORT
