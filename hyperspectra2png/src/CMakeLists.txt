@@ -1,5 +1,40 @@
 
 
+#******************************************************************************
+# APPLICATION VERSION INFORMATION
+#******************************************************************************
+
+
+# Use integer versions instead of strings for easier handling if required
+SET(hyperspectra2png_VERSION_MAJOR 1)
+SET(hyperspectra2png_VERSION_MINOR 1)
+SET(hyperspectra2png_VERSION_PATCH 0)
+SET(hyperspectra2png_VERSION_TWEAK 0)
+
+ADD_DEFINITIONS(
+     -DHYPERSPECTRA_2_PNG_MAJOR=$hyperspectra2png_VERSION_MAJOR}
+     -DHYPERSPECTRA_2_PNG_MINOR=$hyperspectra2png_VERSION_MINOR}
+     -DHYPERSPECTRA_2_PNG_PATCH=$hyperspectra2png_VERSION_PATCH}
+     -DHYPERSPECTRA_2_PNG_TWEAK=$hyperspectra2png_VERSION_TWEAK}
+)
+
+SET(hyperspectra2png_VERSION "${hyperspectra2png_VERSION_MAJOR}.${hyperspectra2png_VERSION_MINOR}.${hyperspectra2png_VERSION_PATCH}.${hyperspectra2png_VERSION_TWEAK}")
+
+ADD_DEFINITIONS(-DHYPERSPECTRA_2_PNG_VERSION="${hyperspectra2png_VERSION}")
+
+
+# Configure version resource file
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Export2Png.rc.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Export2Png.rc
+    @ONLY
+)
+
+# Create the version information code
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
+
+
 set(HYPER_SPECTRA_2_PNG_COMMON_FILES
 
 	ParserExceptions.hpp
@@ -21,6 +56,9 @@ set(HYPER_SPECTRA_2_PNG_COMMON_FILES
 
 	FileProcessor_BIL.hpp
 	FileProcessor_BIL.cpp
+	
+	version.hpp
+	${CMAKE_CURRENT_BINARY_DIR}/version.cpp
 )
 
 
@@ -43,6 +81,7 @@ PRIVATE
 
 
 target_include_directories(console_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+target_include_directories(console_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(console_app PRIVATE "../support/common")
 target_include_directories(console_app PRIVATE "../support/MathUtils")
 target_include_directories(console_app PRIVATE "../support/StringUtils")
@@ -101,6 +140,7 @@ if(wxWidgets_FOUND)
 		MainFrame.cpp
 
 		${HYPER_SPECTRA_2_PNG_COMMON_FILES}
+
 		${resource_files}
 		
 		GuiApp.cpp
@@ -109,6 +149,7 @@ if(wxWidgets_FOUND)
 	include(${wxWidgets_USE_FILE})
 
 	target_include_directories(gui_app PRIVATE ${CMAKE_INSTALL_PREFIX}/include)
+	target_include_directories(gui_app PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 	target_include_directories(gui_app PRIVATE "../support/common")
 	target_include_directories(gui_app PRIVATE "../support/MathUtils")
 	target_include_directories(gui_app PRIVATE "../support/StringUtils")

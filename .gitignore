@@ -45,3 +45,4 @@ build
 /plot_data/src/Resources/PlotData.rc
 /hyperspectra2bil/src/Resources/Export2Bil.rc
 /pointcloud2ply/src/Resources/Export2Ply.rc
+/hyperspectra2png/src/Resources/Export2Png.rc
