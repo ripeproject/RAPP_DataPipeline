@@ -8,9 +8,12 @@
 #include <cbdf/SsnxParser.hpp>
 #include <cbdf/SpidercamParser.hpp>
 
+#include <opencv2/core/mat.hpp>
+
 #include <filesystem>
 #include <string>
 #include <fstream>
+#include <vector>
 
 
 struct sPosTime_t
@@ -204,4 +207,11 @@ private:
     int     mUtcMinute = 0;
     int     mUtcSecond = 0;
     int     mDeltaLS = 0;
+
+
+    // Array for pictures
+    std::vector<cv::Mat> mImages;
+
+    // Define object to store the stitched image
+//    cv::Mat mPano;
 };

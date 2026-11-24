@@ -129,6 +129,7 @@ add_install_rpath_support(BIN_DIRS "${CMAKE_INSTALL_FULL_BINDIR}"
 find_package(lyra REQUIRED)
 find_package(Catch2 QUIET)
 find_package(nlohmann_json REQUIRED)
+find_package(OpenCV REQUIRED)
 find_package(exiv2 REQUIRED CONFIG NAMES exiv2)
 find_package(wxWidgets QUIET COMPONENTS core base)
 
@@ -176,6 +177,7 @@ if (APPLE)
   set(CMAKE_INSTALL_NAME_DIR "@executable_path/../Libraries")
 endif()
 
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 # Add the application/library source code directory
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src)

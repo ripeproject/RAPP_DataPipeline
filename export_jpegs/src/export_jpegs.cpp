@@ -5,9 +5,19 @@
 
 #include "RappFieldBoundary.hpp"
 
+// Include header files from OpenCV directory
+// required to stitch images.
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/stitching.hpp>
+
 #include <exiv2/exiv2.hpp>
 
 #include <iostream>
+
+// Define mode for stitching as panorama 
+// (One out of many functions of Stitcher)
+cv::Stitcher::Mode stitch_mode = cv::Stitcher::PANORAMA;
 
 extern uint32_t g_NumOfPictures;
 
@@ -503,6 +513,11 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
                     ext += ".jpeg";
                     filename.replace_extension(ext);
                 }
+
+                cv::Mat img(mHeight, mWidth, CV_8UC3);
+//                img.push_back(buffer.data());
+
+//                mImages.push_back(img);
 
                 ::writeImage(filename, buffer);
 

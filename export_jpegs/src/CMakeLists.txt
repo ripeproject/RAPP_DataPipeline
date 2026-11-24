@@ -84,6 +84,7 @@ target_link_libraries(console_app PRIVATE cbdf::info cbdf::ctrl cbdf::rgb cbdf::
 target_link_libraries(console_app PRIVATE string_utils)
 target_link_libraries(console_app PRIVATE field_utils)
 target_link_libraries(console_app PRIVATE plot_config)
+target_link_libraries(console_app PRIVATE ${OpenCV_LIBS})
 
 
 #
@@ -154,6 +155,7 @@ if(wxWidgets_FOUND)
 	target_link_libraries(gui_app PRIVATE field_utils)
 	target_link_libraries(gui_app PRIVATE plot_config)
 	target_link_libraries(gui_app PRIVATE wxCustomWidgets)
+	target_link_libraries(gui_app PRIVATE ${OpenCV_LIBS})
 
 	#
 	# Due to Qt's license, we must use the Qt DLLs.  For Windows, we must use MSVC dynamic runtime libraries
