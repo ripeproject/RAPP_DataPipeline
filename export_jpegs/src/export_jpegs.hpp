@@ -211,7 +211,4 @@ private:
 
     // Array for pictures
     std::vector<cv::Mat> mImages;
-
-    // Define object to store the stitched image
-//    cv::Mat mPano;
 };

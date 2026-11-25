@@ -514,12 +514,35 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
                     filename.replace_extension(ext);
                 }
 
+/*
                 cv::Mat img(mHeight, mWidth, CV_8UC3);
-//                img.push_back(buffer.data());
 
-//                mImages.push_back(img);
+                img.reserveBuffer(buffer.size());
+
+                auto es = img.elemSize();
+
+                for (int i = 0; i < buffer.size(); ++i)
+                {
+                    img.at<uchar>(i) = static_cast<uchar>(buffer[i]);
+                }
+*/
 
                 ::writeImage(filename, buffer);
+
+                cv::Mat img = cv::imread(filename.string());
+                if (img.empty())
+                {
+                    // Exit if image is not present
+                    std::cout << "Can't read image '" << filename << "'\n";
+                }
+                else
+                {
+                    auto c = img.cols;
+                    auto r = img.rows;
+                    auto es = img.elemSize();
+
+                    mImages.push_back(img);
+                }
 
                 ++mPlotCount;
 
@@ -532,6 +555,53 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
 
     if (!mPlots.empty() && info.empty())
     {
+        if (mImages.size() > 1)
+        {
+            mImages.resize(5);
+
+            cv::Mat pano;
+
+            // Create a Stitcher class object with mode panoroma
+            cv::Ptr<cv::Stitcher> stitcher = cv::Stitcher::create(stitch_mode);
+
+            // Command to stitch all the images present in the image array
+            cv::Stitcher::Status status = stitcher->stitch(mImages, pano);
+
+            if (status != cv::Stitcher::OK)
+            {
+                // Check if images could not be stitched
+                // status is OK if images are stitched successfully
+                std::cout << "Can't stitch images\n";
+            }
+            else
+            {
+                std::filesystem::path filename = mOutputPath / mRootFileName;
+
+                std::string ext;
+                if (info.empty())
+                {
+                    ext = std::to_string(mFrameCount);
+                }
+                else
+                {
+                    ext = "plot_" + std::to_string(info.getPlotNumber());
+                }
+
+                ext += ".";
+
+                ext += "jpeg";
+
+                filename.replace_extension(ext);
+
+
+                // Store a new image stitched from the given 
+                //set of images as "result.jpg"
+                cv::imwrite(filename.string(), pano);
+            }
+
+            mImages.clear();
+        }
+
         mDistance_mm = std::numeric_limits<double>::max();
         return;
     }
@@ -567,6 +637,33 @@ void cExportJpegs::onMpegFrame(uint8_t device_id, const cMpegFrameBuffer& buffer
     else
     {
         ::writeImage(filename, buffer);
+    }
+
+    if (mImages.size() > 1)
+    {
+        cv::Mat pano;
+
+        // Create a Stitcher class object with mode panoroma
+        cv::Ptr<cv::Stitcher> stitcher = cv::Stitcher::create(stitch_mode);
+
+        // Command to stitch all the images present in the image array
+        cv::Stitcher::Status status = stitcher->stitch(mImages, pano);
+
+        if (status != cv::Stitcher::OK)
+        {
+            // Check if images could not be stitched
+            // status is OK if images are stitched successfully
+            std::cout << "Can't stitch images\n";
+        }
+        else
+        {
+
+            // Store a new image stitched from the given 
+            //set of images as "result.jpg"
+            imwrite("result.jpg", pano);
+        }
+
+        mImages.clear();
     }
 
     ++mFrameCount;
